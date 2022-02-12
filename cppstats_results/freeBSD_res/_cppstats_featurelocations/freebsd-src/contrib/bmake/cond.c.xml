@@ -1,0 +1,1334 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/bmake/cond.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;errno.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"make.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"dir.h"</cpp:file></cpp:include>
+
+
+<expr_stmt><expr><call><name>MAKE_RCSID</name><argument_list>(<argument><expr><literal type="string">"$NetBSD: cond.c,v 1.302 2021/12/12 09:36:00 rillig Exp $"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<typedef>typedef <type><enum>enum <name>Token</name> <block>{
+<decl><name>TOK_FALSE</name></decl>, <decl><name>TOK_TRUE</name></decl>, <decl><name>TOK_AND</name></decl>, <decl><name>TOK_OR</name></decl>, <decl><name>TOK_NOT</name></decl>,
+<decl><name>TOK_LPAREN</name></decl>, <decl><name>TOK_RPAREN</name></decl>, <decl><name>TOK_EOF</name></decl>, <decl><name>TOK_NONE</name></decl>, <decl><name>TOK_ERROR</name></decl>
+}</block></enum></type> <name>Token</name>;</typedef>
+
+<typedef>typedef <type><enum>enum <name>CondResult</name> <block>{
+<decl><name>CR_FALSE</name></decl>, <decl><name>CR_TRUE</name></decl>, <decl><name>CR_ERROR</name></decl>
+}</block></enum></type> <name>CondResult</name>;</typedef>
+
+<typedef>typedef <type><enum>enum <name>ComparisonOp</name> <block>{
+<decl><name>LT</name></decl>, <decl><name>LE</name></decl>, <decl><name>GT</name></decl>, <decl><name>GE</name></decl>, <decl><name>EQ</name></decl>, <decl><name>NE</name></decl>
+}</block></enum></type> <name>ComparisonOp</name>;</typedef>
+
+<typedef>typedef <type><struct>struct <name>CondParser</name> <block>{
+
+
+
+
+
+
+<decl_stmt><decl><type><name>bool</name></type> <name>plain</name></decl>;</decl_stmt>
+
+
+<function_decl><type><name>bool</name></type> (<modifier>*</modifier><name>evalBare</name>)<parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl>
+<decl_stmt><decl><type><name>bool</name></type> <name>negateEvalBare</name></decl>;</decl_stmt>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<decl_stmt><decl><type><name>bool</name></type> <name>leftUnquotedOK</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>p</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Token</name></type> <name>curr</name></decl>;</decl_stmt>
+
+
+
+
+
+
+
+<decl_stmt><decl><type><name>bool</name></type> <name>printedError</name></decl>;</decl_stmt>
+}</block></struct></type> <name>CondParser</name>;</typedef>
+
+<function_decl><type><specifier>static</specifier> <name>CondResult</name></type> <name>CondParser_Or</name><parameter_list>(<parameter><decl><type><name>CondParser</name> <modifier>*</modifier></type><name>par</name></decl></parameter>, <parameter><decl><type><name>bool</name></type></decl></parameter>)</parameter_list>;</function_decl>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>unsigned</name> <name>int</name></type> <name>cond_depth</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>unsigned</name> <name>int</name></type> <name>cond_min_depth</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>char</name></type> <name><name>opname</name><index>[]</index><index>[<expr><literal type="number">3</literal></expr>]</index></name> <init>= <expr><block>{ <expr><literal type="string">"&lt;"</literal></expr>, <expr><literal type="string">"&lt;="</literal></expr>, <expr><literal type="string">"&gt;"</literal></expr>, <expr><literal type="string">"&gt;="</literal></expr>, <expr><literal type="string">"=="</literal></expr>, <expr><literal type="string">"!="</literal></expr> }</block></expr></init></decl>;</decl_stmt>
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>is_token</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>str</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>tok</name></decl></parameter>, <parameter><decl><type><name>unsigned</name> <name>char</name></type> <name>len</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><call><name>strncmp</name><argument_list>(<argument><expr><name>str</name></expr></argument>, <argument><expr><name>tok</name></expr></argument>, <argument><expr><operator>(</operator><name>size_t</name><operator>)</operator><name>len</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <operator>!</operator><call><name>ch_isalpha</name><argument_list>(<argument><expr><name><name>str</name><index>[<expr><name>len</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>Token</name></type>
+<name>ToToken</name><parameter_list>(<parameter><decl><type><name>bool</name></type> <name>cond</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><ternary><condition><expr><name>cond</name></expr> ?</condition><then> <expr><name>TOK_TRUE</name></expr> </then><else>: <expr><name>TOK_FALSE</name></expr></else></ternary></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>CondParser_SkipWhitespace</name><parameter_list>(<parameter><decl><type><name>CondParser</name> <modifier>*</modifier></type><name>par</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>cpp_skip_whitespace</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>par</name><operator>-&gt;</operator><name>p</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>size_t</name></type>
+<name>ParseWord</name><parameter_list>(<parameter><decl><type><name>CondParser</name> <modifier>*</modifier></type><name>par</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>pp</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>doEval</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>func</name></decl></parameter>,
+<parameter><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>out_arg</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>p</name> <init>= <expr><operator>*</operator><name>pp</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Buffer</name></type> <name>argBuf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>paren_depth</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>argLen</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>func</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>p</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>cpp_skip_hspace</name><argument_list>(<argument><expr><operator>&amp;</operator><name>p</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>Buf_InitSize</name><argument_list>(<argument><expr><operator>&amp;</operator><name>argBuf</name></expr></argument>, <argument><expr><literal type="number">16</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>paren_depth</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<for>for <control>(<init>;</init><condition>;</condition><incr/>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>char</name></type> <name>ch</name> <init>= <expr><operator>*</operator><name>p</name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>ch</name> <operator>==</operator> <literal type="char">'\0'</literal> <operator>||</operator> <name>ch</name> <operator>==</operator> <literal type="char">' '</literal> <operator>||</operator> <name>ch</name> <operator>==</operator> <literal type="char">'\t'</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>ch</name> <operator>==</operator> <literal type="char">'&amp;'</literal> <operator>||</operator> <name>ch</name> <operator>==</operator> <literal type="char">'|'</literal><operator>)</operator> <operator>&amp;&amp;</operator> <name>paren_depth</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>p</name> <operator>==</operator> <literal type="char">'$'</literal></expr>)</condition> <block>{<block_content>
+
+
+
+
+
+
+
+
+<decl_stmt><decl><type><name>VarEvalMode</name></type> <name>emode</name> <init>= <expr><ternary><condition><expr><name>doEval</name></expr>
+?</condition><then> <expr><name>VARE_UNDEFERR</name></expr>
+</then><else>: <expr><name>VARE_PARSE_ONLY</name></expr></else></ternary></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>FStr</name></type> <name>nestedVal</name></decl>;</decl_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>Var_Parse</name><argument_list>(<argument><expr><operator>&amp;</operator><name>p</name></expr></argument>, <argument><expr><name>SCOPE_CMDLINE</name></expr></argument>, <argument><expr><name>emode</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>nestedVal</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>Buf_AddStr</name><argument_list>(<argument><expr><operator>&amp;</operator><name>argBuf</name></expr></argument>, <argument><expr><name><name>nestedVal</name><operator>.</operator><name>str</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>FStr_Done</name><argument_list>(<argument><expr><operator>&amp;</operator><name>nestedVal</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>ch</name> <operator>==</operator> <literal type="char">'('</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>paren_depth</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name>ch</name> <operator>==</operator> <literal type="char">')'</literal> <operator>&amp;&amp;</operator> <operator>--</operator><name>paren_depth</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>Buf_AddByte</name><argument_list>(<argument><expr><operator>&amp;</operator><name>argBuf</name></expr></argument>, <argument><expr><operator>*</operator><name>p</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>p</name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><name>argLen</name> <operator>=</operator> <name><name>argBuf</name><operator>.</operator><name>len</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>out_arg</name> <operator>=</operator> <call><name>Buf_DoneData</name><argument_list>(<argument><expr><operator>&amp;</operator><name>argBuf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>cpp_skip_hspace</name><argument_list>(<argument><expr><operator>&amp;</operator><name>p</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>func</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <operator>*</operator><name>p</name><operator>++</operator> <operator>!=</operator> <literal type="char">')'</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>Parse_Error</name><argument_list>(<argument><expr><name>PARSE_FATAL</name></expr></argument>,
+<argument><expr><literal type="string">"Missing closing parenthesis for %s()"</literal></expr></argument>, <argument><expr><name>func</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>printedError</name></name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>pp</name> <operator>=</operator> <name>p</name></expr>;</expr_stmt>
+<return>return <expr><name>argLen</name></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>FuncDefined</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>FStr</name></type> <name>value</name> <init>= <expr><call><name>Var_Value</name><argument_list>(<argument><expr><name>SCOPE_CMDLINE</name></expr></argument>, <argument><expr><name>arg</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>result</name> <init>= <expr><name><name>value</name><operator>.</operator><name>str</name></name> <operator>!=</operator> <name>NULL</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>FStr_Done</name><argument_list>(<argument><expr><operator>&amp;</operator><name>value</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>FuncMake</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>StringListNode</name> <modifier>*</modifier></type><name>ln</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>ln</name> <operator>=</operator> <name><name>opts</name><operator>.</operator><name>create</name><operator>.</operator><name>first</name></name></expr>;</init> <condition><expr><name>ln</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>ln</name> <operator>=</operator> <name><name>ln</name><operator>-&gt;</operator><name>next</name></name></expr></incr>)</control><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<expr><call><name>Str_Match</name><argument_list>(<argument><expr><name><name>ln</name><operator>-&gt;</operator><name>datum</name></name></expr></argument>, <argument><expr><name>arg</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>true</name></expr>;</return></block_content></block></if></if_stmt></block_content></block></for>
+<return>return <expr><name>false</name></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>FuncExists</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>bool</name></type> <name>result</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>path</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>path</name> <operator>=</operator> <call><name>Dir_FindFile</name><argument_list>(<argument><expr><name>arg</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>dirSearchPath</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DEBUG2</name><argument_list>(<argument><expr><name>COND</name></expr></argument>, <argument><expr><literal type="string">"exists(%s) result is \"%s\"\n"</literal></expr></argument>,
+<argument><expr><name>arg</name></expr></argument>, <argument><expr><ternary><condition><expr><name>path</name> <operator>!=</operator> <name>NULL</name></expr> ?</condition><then> <expr><name>path</name></expr> </then><else>: <expr><literal type="string">""</literal></expr></else></ternary></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <name>path</name> <operator>!=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>path</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>FuncTarget</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>GNode</name> <modifier>*</modifier></type><name>gn</name> <init>= <expr><call><name>Targ_FindNode</name><argument_list>(<argument><expr><name>arg</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<return>return <expr><name>gn</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <call><name>GNode_IsTarget</name><argument_list>(<argument><expr><name>gn</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>FuncCommands</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>GNode</name> <modifier>*</modifier></type><name>gn</name> <init>= <expr><call><name>Targ_FindNode</name><argument_list>(<argument><expr><name>arg</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<return>return <expr><name>gn</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <call><name>GNode_IsTarget</name><argument_list>(<argument><expr><name>gn</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <operator>!</operator><call><name>Lst_IsEmpty</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>gn</name><operator>-&gt;</operator><name>commands</name></name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>TryParseNumber</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>str</name></decl></parameter>, <parameter><decl><type><name>double</name> <modifier>*</modifier></type><name>out_value</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>end</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>long</name></type> <name>ul_val</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>double</name></type> <name>dbl_val</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>str</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'\0'</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>out_value</name> <operator>=</operator> <literal type="number">0.0</literal></expr>;</expr_stmt>
+<return>return <expr><name>true</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>errno</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>ul_val</name> <operator>=</operator> <call><name>strtoul</name><argument_list>(<argument><expr><name>str</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>end</name></expr></argument>, <argument><expr><ternary><condition><expr><name><name>str</name><index>[<expr><literal type="number">1</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'x'</literal></expr> ?</condition><then> <expr><literal type="number">16</literal></expr> </then><else>: <expr><literal type="number">10</literal></expr></else></ternary></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>end</name> <operator>==</operator> <literal type="char">'\0'</literal> <operator>&amp;&amp;</operator> <name>errno</name> <operator>!=</operator> <name>ERANGE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>out_value</name> <operator>=</operator> <ternary><condition><expr><name><name>str</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'-'</literal></expr> ?</condition><then> <expr><operator>-</operator><operator>(</operator><name>double</name><operator>)</operator><operator>-</operator><name>ul_val</name></expr> </then><else>: <expr><operator>(</operator><name>double</name><operator>)</operator><name>ul_val</name></expr></else></ternary></expr>;</expr_stmt>
+<return>return <expr><name>true</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>end</name> <operator>!=</operator> <literal type="char">'\0'</literal> <operator>&amp;&amp;</operator> <operator>*</operator><name>end</name> <operator>!=</operator> <literal type="char">'.'</literal> <operator>&amp;&amp;</operator> <operator>*</operator><name>end</name> <operator>!=</operator> <literal type="char">'e'</literal> <operator>&amp;&amp;</operator> <operator>*</operator><name>end</name> <operator>!=</operator> <literal type="char">'E'</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>false</name></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>dbl_val</name> <operator>=</operator> <call><name>strtod</name><argument_list>(<argument><expr><name>str</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>end</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>end</name> <operator>!=</operator> <literal type="char">'\0'</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>false</name></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>out_value</name> <operator>=</operator> <name>dbl_val</name></expr>;</expr_stmt>
+<return>return <expr><name>true</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>is_separator</name><parameter_list>(<parameter><decl><type><name>char</name></type> <name>ch</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><name>ch</name> <operator>==</operator> <literal type="char">'\0'</literal> <operator>||</operator> <call><name>ch_isspace</name><argument_list>(<argument><expr><name>ch</name></expr></argument>)</argument_list></call> <operator>||</operator> <name>ch</name> <operator>==</operator> <literal type="char">'!'</literal> <operator>||</operator> <name>ch</name> <operator>==</operator> <literal type="char">'='</literal> <operator>||</operator>
+<name>ch</name> <operator>==</operator> <literal type="char">'&gt;'</literal> <operator>||</operator> <name>ch</name> <operator>==</operator> <literal type="char">'&lt;'</literal> <operator>||</operator> <name>ch</name> <operator>==</operator> <literal type="char">')'</literal></expr> ;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>CondParser_StringExpr</name><parameter_list>(<parameter><decl><type><name>CondParser</name> <modifier>*</modifier></type><name>par</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>start</name></decl></parameter>,
+<parameter><decl><type><name>bool</name></type> <name>doEval</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>quoted</name></decl></parameter>,
+<parameter><decl><type><name>Buffer</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>FStr</name> <modifier>*</modifier></type><name>inout_str</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>VarEvalMode</name></type> <name>emode</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>nested_p</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>atStart</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>VarParseResult</name></type> <name>parseResult</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>emode</name> <operator>=</operator> <ternary><condition><expr><name>doEval</name> <operator>&amp;&amp;</operator> <name>quoted</name></expr> ?</condition><then> <expr><name>VARE_WANTRES</name></expr>
+</then><else>: <expr><ternary><condition><expr><name>doEval</name></expr> ?</condition><then> <expr><name>VARE_UNDEFERR</name></expr>
+</then><else>: <expr><name>VARE_PARSE_ONLY</name></expr></else></ternary></expr></else></ternary></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>nested_p</name> <operator>=</operator> <name><name>par</name><operator>-&gt;</operator><name>p</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>atStart</name> <operator>=</operator> <name>nested_p</name> <operator>==</operator> <name>start</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>parseResult</name> <operator>=</operator> <call><name>Var_Parse</name><argument_list>(<argument><expr><operator>&amp;</operator><name>nested_p</name></expr></argument>, <argument><expr><name>SCOPE_CMDLINE</name></expr></argument>, <argument><expr><name>emode</name></expr></argument>, <argument><expr><name>inout_str</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>inout_str</name><operator>-&gt;</operator><name>str</name></name> <operator>==</operator> <name>var_Error</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>parseResult</name> <operator>==</operator> <name>VPR_ERR</name></expr>)</condition> <block>{<block_content>
+
+
+
+
+
+
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>printedError</name></name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+<expr_stmt><expr><call><name>FStr_Done</name><argument_list>(<argument><expr><name>inout_str</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+<expr_stmt><expr><operator>*</operator><name>inout_str</name> <operator>=</operator> <call><name>FStr_InitRefer</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>false</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>p</name></name> <operator>=</operator> <name>nested_p</name></expr>;</expr_stmt>
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>atStart</name> <operator>&amp;&amp;</operator> <call><name>is_separator</name><argument_list>(<argument><expr><name><name>par</name><operator>-&gt;</operator><name>p</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>false</name></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>Buf_AddStr</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><name><name>inout_str</name><operator>-&gt;</operator><name>str</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>FStr_Done</name><argument_list>(<argument><expr><name>inout_str</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>inout_str</name> <operator>=</operator> <call><name>FStr_InitRefer</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>true</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>CondParser_Leaf</name><parameter_list>(<parameter><decl><type><name>CondParser</name> <modifier>*</modifier></type><name>par</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>doEval</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>unquotedOK</name></decl></parameter>,
+<parameter><decl><type><name>FStr</name> <modifier>*</modifier></type><name>out_str</name></decl></parameter>, <parameter><decl><type><name>bool</name> <modifier>*</modifier></type><name>out_quoted</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>Buffer</name></type> <name>buf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>FStr</name></type> <name>str</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>quoted</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>start</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>Buf_Init</name><argument_list>(<argument><expr><operator>&amp;</operator><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>str</name> <operator>=</operator> <call><name>FStr_InitRefer</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>out_quoted</name> <operator>=</operator> <name>quoted</name> <operator>=</operator> <name><name>par</name><operator>-&gt;</operator><name>p</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'"'</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>start</name> <operator>=</operator> <name><name>par</name><operator>-&gt;</operator><name>p</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>quoted</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>p</name></name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<while>while <condition>(<expr><name><name>par</name><operator>-&gt;</operator><name>p</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>!=</operator> <literal type="char">'\0'</literal> <operator>&amp;&amp;</operator> <name><name>str</name><operator>.</operator><name>str</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<switch>switch <condition>(<expr><name><name>par</name><operator>-&gt;</operator><name>p</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr>)</condition> <block>{<block_content>
+<case>case <expr><literal type="char">'\\'</literal></expr>:</case>
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>p</name></name><operator>++</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>par</name><operator>-&gt;</operator><name>p</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>!=</operator> <literal type="char">'\0'</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>Buf_AddByte</name><argument_list>(<argument><expr><operator>&amp;</operator><name>buf</name></expr></argument>, <argument><expr><name><name>par</name><operator>-&gt;</operator><name>p</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>p</name></name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<continue>continue;</continue>
+<case>case <expr><literal type="char">'"'</literal></expr>:</case>
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>p</name></name><operator>++</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>quoted</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>got_str</name>;</goto></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>Buf_AddByte</name><argument_list>(<argument><expr><operator>&amp;</operator><name>buf</name></expr></argument>, <argument><expr><literal type="char">'"'</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+<case>case <expr><literal type="char">')'</literal></expr>:</case>
+<case>case <expr><literal type="char">'!'</literal></expr>:</case>
+<case>case <expr><literal type="char">'='</literal></expr>:</case>
+<case>case <expr><literal type="char">'&gt;'</literal></expr>:</case>
+<case>case <expr><literal type="char">'&lt;'</literal></expr>:</case>
+<case>case <expr><literal type="char">' '</literal></expr>:</case>
+<case>case <expr><literal type="char">'\t'</literal></expr>:</case>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>quoted</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>got_str</name>;</goto></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>Buf_AddByte</name><argument_list>(<argument><expr><operator>&amp;</operator><name>buf</name></expr></argument>, <argument><expr><name><name>par</name><operator>-&gt;</operator><name>p</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>p</name></name><operator>++</operator></expr>;</expr_stmt>
+<continue>continue;</continue>
+<case>case <expr><literal type="char">'$'</literal></expr>:</case>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>CondParser_StringExpr</name><argument_list>(<argument><expr><name>par</name></expr></argument>,
+<argument><expr><name>start</name></expr></argument>, <argument><expr><name>doEval</name></expr></argument>, <argument><expr><name>quoted</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>buf</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>str</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>cleanup</name>;</goto></block_content></block></if></if_stmt>
+<continue>continue;</continue>
+<default>default:</default>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>unquotedOK</name> <operator>&amp;&amp;</operator> <operator>!</operator><name>quoted</name> <operator>&amp;&amp;</operator> <operator>*</operator><name>start</name> <operator>!=</operator> <literal type="char">'$'</literal> <operator>&amp;&amp;</operator>
+<operator>!</operator><call><name>ch_isdigit</name><argument_list>(<argument><expr><operator>*</operator><name>start</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+
+
+
+
+<expr_stmt><expr><name>str</name> <operator>=</operator> <call><name>FStr_InitRefer</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>cleanup</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>Buf_AddByte</name><argument_list>(<argument><expr><operator>&amp;</operator><name>buf</name></expr></argument>, <argument><expr><name><name>par</name><operator>-&gt;</operator><name>p</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>p</name></name><operator>++</operator></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></switch>
+</block_content>}</block></while>
+<label><name>got_str</name>:</label>
+<expr_stmt><expr><name>str</name> <operator>=</operator> <call><name>FStr_InitOwn</name><argument_list>(<argument><expr><name><name>buf</name><operator>.</operator><name>data</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>buf</name><operator>.</operator><name>data</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<label><name>cleanup</name>:</label>
+<expr_stmt><expr><call><name>Buf_Done</name><argument_list>(<argument><expr><operator>&amp;</operator><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>out_str</name> <operator>=</operator> <name>str</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>EvalBare</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>CondParser</name> <modifier>*</modifier></type><name>par</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>bool</name></type> <name>res</name> <init>= <expr><call><name><name>par</name><operator>-&gt;</operator><name>evalBare</name></name><argument_list>(<argument><expr><name>arg</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<return>return <expr><ternary><condition><expr><name><name>par</name><operator>-&gt;</operator><name>negateEvalBare</name></name></expr> ?</condition><then> <expr><operator>!</operator><name>res</name></expr> </then><else>: <expr><name>res</name></expr></else></ternary></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>EvalNotEmpty</name><parameter_list>(<parameter><decl><type><name>CondParser</name> <modifier>*</modifier></type><name>par</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>value</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>quoted</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>double</name></type> <name>num</name></decl>;</decl_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>quoted</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name><name>value</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>!=</operator> <literal type="char">'\0'</literal></expr>;</return></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>TryParseNumber</name><argument_list>(<argument><expr><name>value</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>num</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>num</name> <operator>!=</operator> <literal type="number">0.0</literal></expr>;</return></block_content></block></if></if_stmt>
+
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>par</name><operator>-&gt;</operator><name>plain</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name><name>value</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>!=</operator> <literal type="char">'\0'</literal></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><call><name>EvalBare</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><name>value</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>EvalCompareNum</name><parameter_list>(<parameter><decl><type><name>double</name></type> <name>lhs</name></decl></parameter>, <parameter><decl><type><name>ComparisonOp</name></type> <name>op</name></decl></parameter>, <parameter><decl><type><name>double</name></type> <name>rhs</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>DEBUG3</name><argument_list>(<argument><expr><name>COND</name></expr></argument>, <argument><expr><literal type="string">"lhs = %f, rhs = %f, op = %.2s\n"</literal></expr></argument>, <argument><expr><name>lhs</name></expr></argument>, <argument><expr><name>rhs</name></expr></argument>, <argument><expr><name><name>opname</name><index>[<expr><name>op</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<switch>switch <condition>(<expr><name>op</name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>LT</name></expr>:</case>
+<return>return <expr><name>lhs</name> <operator>&lt;</operator> <name>rhs</name></expr>;</return>
+<case>case <expr><name>LE</name></expr>:</case>
+<return>return <expr><name>lhs</name> <operator>&lt;=</operator> <name>rhs</name></expr>;</return>
+<case>case <expr><name>GT</name></expr>:</case>
+<return>return <expr><name>lhs</name> <operator>&gt;</operator> <name>rhs</name></expr>;</return>
+<case>case <expr><name>GE</name></expr>:</case>
+<return>return <expr><name>lhs</name> <operator>&gt;=</operator> <name>rhs</name></expr>;</return>
+<case>case <expr><name>NE</name></expr>:</case>
+<return>return <expr><name>lhs</name> <operator>!=</operator> <name>rhs</name></expr>;</return>
+<default>default:</default>
+<return>return <expr><name>lhs</name> <operator>==</operator> <name>rhs</name></expr>;</return>
+</block_content>}</block></switch>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>Token</name></type>
+<name>EvalCompareStr</name><parameter_list>(<parameter><decl><type><name>CondParser</name> <modifier>*</modifier></type><name>par</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>lhs</name></decl></parameter>,
+<parameter><decl><type><name>ComparisonOp</name></type> <name>op</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>rhs</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>op</name> <operator>!=</operator> <name>EQ</name> <operator>&amp;&amp;</operator> <name>op</name> <operator>!=</operator> <name>NE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>Parse_Error</name><argument_list>(<argument><expr><name>PARSE_FATAL</name></expr></argument>,
+<argument><expr><literal type="string">"String comparison operator must be either == or !="</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>printedError</name></name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<return>return <expr><name>TOK_ERROR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>DEBUG3</name><argument_list>(<argument><expr><name>COND</name></expr></argument>, <argument><expr><literal type="string">"lhs = \"%s\", rhs = \"%s\", op = %.2s\n"</literal></expr></argument>,
+<argument><expr><name>lhs</name></expr></argument>, <argument><expr><name>rhs</name></expr></argument>, <argument><expr><name><name>opname</name><index>[<expr><name>op</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><call><name>ToToken</name><argument_list>(<argument><expr><operator>(</operator><name>op</name> <operator>==</operator> <name>EQ</name><operator>)</operator> <operator>==</operator> <operator>(</operator><call><name>strcmp</name><argument_list>(<argument><expr><name>lhs</name></expr></argument>, <argument><expr><name>rhs</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal><operator>)</operator></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>Token</name></type>
+<name>EvalCompare</name><parameter_list>(<parameter><decl><type><name>CondParser</name> <modifier>*</modifier></type><name>par</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>lhs</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>lhsQuoted</name></decl></parameter>,
+<parameter><decl><type><name>ComparisonOp</name></type> <name>op</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>rhs</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>rhsQuoted</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>double</name></type> <name>left</name></decl>, <decl><type ref="prev"/><name>right</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>rhsQuoted</name> <operator>&amp;&amp;</operator> <operator>!</operator><name>lhsQuoted</name></expr>)</condition><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<expr><call><name>TryParseNumber</name><argument_list>(<argument><expr><name>lhs</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>left</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <call><name>TryParseNumber</name><argument_list>(<argument><expr><name>rhs</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>right</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><call><name>ToToken</name><argument_list>(<argument><expr><call><name>EvalCompareNum</name><argument_list>(<argument><expr><name>left</name></expr></argument>, <argument><expr><name>op</name></expr></argument>, <argument><expr><name>right</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</return></block_content></block></if></if_stmt></block_content></block></if></if_stmt>
+
+<return>return <expr><call><name>EvalCompareStr</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><name>lhs</name></expr></argument>, <argument><expr><name>op</name></expr></argument>, <argument><expr><name>rhs</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>CondParser_ComparisonOp</name><parameter_list>(<parameter><decl><type><name>CondParser</name> <modifier>*</modifier></type><name>par</name></decl></parameter>, <parameter><decl><type><name>ComparisonOp</name> <modifier>*</modifier></type><name>out_op</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>p</name> <init>= <expr><name><name>par</name><operator>-&gt;</operator><name>p</name></name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>p</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'&lt;'</literal> <operator>&amp;&amp;</operator> <name><name>p</name><index>[<expr><literal type="number">1</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'='</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>out_op</name> <operator>=</operator> <name>LE</name></expr>;</expr_stmt>
+<goto>goto <name>length_2</name>;</goto>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>p</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'&lt;'</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>out_op</name> <operator>=</operator> <name>LT</name></expr>;</expr_stmt>
+<goto>goto <name>length_1</name>;</goto>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>p</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'&gt;'</literal> <operator>&amp;&amp;</operator> <name><name>p</name><index>[<expr><literal type="number">1</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'='</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>out_op</name> <operator>=</operator> <name>GE</name></expr>;</expr_stmt>
+<goto>goto <name>length_2</name>;</goto>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>p</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'&gt;'</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>out_op</name> <operator>=</operator> <name>GT</name></expr>;</expr_stmt>
+<goto>goto <name>length_1</name>;</goto>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>p</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'='</literal> <operator>&amp;&amp;</operator> <name><name>p</name><index>[<expr><literal type="number">1</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'='</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>out_op</name> <operator>=</operator> <name>EQ</name></expr>;</expr_stmt>
+<goto>goto <name>length_2</name>;</goto>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>p</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'!'</literal> <operator>&amp;&amp;</operator> <name><name>p</name><index>[<expr><literal type="number">1</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'='</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>out_op</name> <operator>=</operator> <name>NE</name></expr>;</expr_stmt>
+<goto>goto <name>length_2</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name>false</name></expr>;</return>
+
+<label><name>length_2</name>:</label>
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>p</name></name> <operator>=</operator> <name>p</name> <operator>+</operator> <literal type="number">2</literal></expr>;</expr_stmt>
+<return>return <expr><name>true</name></expr>;</return>
+<label><name>length_1</name>:</label>
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>p</name></name> <operator>=</operator> <name>p</name> <operator>+</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<return>return <expr><name>true</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>Token</name></type>
+<name>CondParser_Comparison</name><parameter_list>(<parameter><decl><type><name>CondParser</name> <modifier>*</modifier></type><name>par</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>doEval</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>Token</name></type> <name>t</name> <init>= <expr><name>TOK_ERROR</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>FStr</name></type> <name>lhs</name></decl>, <decl><type ref="prev"/><name>rhs</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ComparisonOp</name></type> <name>op</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>lhsQuoted</name></decl>, <decl><type ref="prev"/><name>rhsQuoted</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>CondParser_Leaf</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><name>doEval</name></expr></argument>, <argument><expr><name><name>par</name><operator>-&gt;</operator><name>leftUnquotedOK</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>lhs</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>lhsQuoted</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>lhs</name><operator>.</operator><name>str</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>done_lhs</name>;</goto></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>CondParser_SkipWhitespace</name><argument_list>(<argument><expr><name>par</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>CondParser_ComparisonOp</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>op</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><name>t</name> <operator>=</operator> <call><name>ToToken</name><argument_list>(<argument><expr><name>doEval</name> <operator>&amp;&amp;</operator> <call><name>EvalNotEmpty</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><name><name>lhs</name><operator>.</operator><name>str</name></name></expr></argument>, <argument><expr><name>lhsQuoted</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>done_lhs</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>CondParser_SkipWhitespace</name><argument_list>(<argument><expr><name>par</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>par</name><operator>-&gt;</operator><name>p</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'\0'</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>Parse_Error</name><argument_list>(<argument><expr><name>PARSE_FATAL</name></expr></argument>,
+<argument><expr><literal type="string">"Missing right-hand side of operator '%s'"</literal></expr></argument>, <argument><expr><name><name>opname</name><index>[<expr><name>op</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>printedError</name></name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<goto>goto <name>done_lhs</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>CondParser_Leaf</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><name>doEval</name></expr></argument>, <argument><expr><name>true</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>rhs</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>rhsQuoted</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>rhs</name><operator>.</operator><name>str</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>done_rhs</name>;</goto></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>doEval</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>t</name> <operator>=</operator> <name>TOK_FALSE</name></expr>;</expr_stmt>
+<goto>goto <name>done_rhs</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>t</name> <operator>=</operator> <call><name>EvalCompare</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><name><name>lhs</name><operator>.</operator><name>str</name></name></expr></argument>, <argument><expr><name>lhsQuoted</name></expr></argument>, <argument><expr><name>op</name></expr></argument>, <argument><expr><name><name>rhs</name><operator>.</operator><name>str</name></name></expr></argument>, <argument><expr><name>rhsQuoted</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<label><name>done_rhs</name>:</label>
+<expr_stmt><expr><call><name>FStr_Done</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rhs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<label><name>done_lhs</name>:</label>
+<expr_stmt><expr><call><name>FStr_Done</name><argument_list>(<argument><expr><operator>&amp;</operator><name>lhs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>t</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>CondParser_FuncCallEmpty</name><parameter_list>(<parameter><decl><type><name>CondParser</name> <modifier>*</modifier></type><name>par</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>doEval</name></decl></parameter>, <parameter><decl><type><name>Token</name> <modifier>*</modifier></type><name>out_token</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>cp</name> <init>= <expr><name><name>par</name><operator>-&gt;</operator><name>p</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Token</name></type> <name>tok</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>FStr</name></type> <name>val</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>is_token</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><literal type="string">"empty"</literal></expr></argument>, <argument><expr><literal type="number">5</literal></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>false</name></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>cp</name> <operator>+=</operator> <literal type="number">5</literal></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>cpp_skip_whitespace</name><argument_list>(<argument><expr><operator>&amp;</operator><name>cp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name> <operator>!=</operator> <literal type="char">'('</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>false</name></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>cp</name><operator>--</operator></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>Var_Parse</name><argument_list>(<argument><expr><operator>&amp;</operator><name>cp</name></expr></argument>, <argument><expr><name>SCOPE_CMDLINE</name></expr></argument>,
+<argument><expr><ternary><condition><expr><name>doEval</name></expr> ?</condition><then> <expr><name>VARE_WANTRES</name></expr> </then><else>: <expr><name>VARE_PARSE_ONLY</name></expr></else></ternary></expr></argument>, <argument><expr><operator>&amp;</operator><name>val</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>val</name><operator>.</operator><name>str</name></name> <operator>==</operator> <name>var_Error</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>tok</name> <operator>=</operator> <name>TOK_ERROR</name></expr>;</expr_stmt></block_content></block></if>
+<else>else <block>{<block_content>
+<expr_stmt><expr><call><name>cpp_skip_whitespace</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>val</name><operator>.</operator><name>str</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>tok</name> <operator>=</operator> <ternary><condition><expr><name><name>val</name><operator>.</operator><name>str</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>!=</operator> <literal type="char">'\0'</literal> <operator>&amp;&amp;</operator> <name>doEval</name></expr> ?</condition><then> <expr><name>TOK_FALSE</name></expr> </then><else>: <expr><name>TOK_TRUE</name></expr></else></ternary></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<expr_stmt><expr><call><name>FStr_Done</name><argument_list>(<argument><expr><operator>&amp;</operator><name>val</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>out_token</name> <operator>=</operator> <name>tok</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>p</name></name> <operator>=</operator> <name>cp</name></expr>;</expr_stmt>
+<return>return <expr><name>true</name></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>CondParser_FuncCall</name><parameter_list>(<parameter><decl><type><name>CondParser</name> <modifier>*</modifier></type><name>par</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>doEval</name></decl></parameter>, <parameter><decl><type><name>Token</name> <modifier>*</modifier></type><name>out_token</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<struct><specifier>static</specifier> <specifier>const</specifier> struct <name>fn_def</name> <block>{
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name></type> <name><name>fn_name</name><index>[<expr><literal type="number">9</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name>fn_name_len</name></decl>;</decl_stmt>
+<function_decl><type><name>bool</name></type> (<modifier>*</modifier><name>fn_eval</name>)<parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl>
+}</block> <decl><name><name>fns</name><index>[]</index></name> <init>= <expr><block>{
+<expr><block>{ <expr><literal type="string">"defined"</literal></expr>, <expr><literal type="number">7</literal></expr>, <expr><name>FuncDefined</name></expr> }</block></expr>,
+<expr><block>{ <expr><literal type="string">"make"</literal></expr>, <expr><literal type="number">4</literal></expr>, <expr><name>FuncMake</name></expr> }</block></expr>,
+<expr><block>{ <expr><literal type="string">"exists"</literal></expr>, <expr><literal type="number">6</literal></expr>, <expr><name>FuncExists</name></expr> }</block></expr>,
+<expr><block>{ <expr><literal type="string">"target"</literal></expr>, <expr><literal type="number">6</literal></expr>, <expr><name>FuncTarget</name></expr> }</block></expr>,
+<expr><block>{ <expr><literal type="string">"commands"</literal></expr>, <expr><literal type="number">8</literal></expr>, <expr><name>FuncCommands</name></expr> }</block></expr>
+}</block></expr></init></decl>;</struct>
+<decl_stmt><decl><type><specifier>const</specifier> <name><name>struct</name> <name>fn_def</name></name> <modifier>*</modifier></type><name>fn</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>arg</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>arglen</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>cp</name> <init>= <expr><name><name>par</name><operator>-&gt;</operator><name>p</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name><name>struct</name> <name>fn_def</name></name> <modifier>*</modifier></type><name>last_fn</name> <init>= <expr><name>fns</name> <operator>+</operator> <sizeof>sizeof <name>fns</name></sizeof> <operator>/</operator> <sizeof>sizeof <name><name>fns</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></sizeof> <operator>-</operator> <literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>fn</name> <operator>=</operator> <name>fns</name></expr>;</init> <condition><expr><operator>!</operator><call><name>is_token</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><name><name>fn</name><operator>-&gt;</operator><name>fn_name</name></name></expr></argument>, <argument><expr><name><name>fn</name><operator>-&gt;</operator><name>fn_name_len</name></name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>fn</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<expr><name>fn</name> <operator>==</operator> <name>last_fn</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>false</name></expr>;</return></block_content></block></if></if_stmt></block_content></block></for>
+
+<expr_stmt><expr><name>cp</name> <operator>+=</operator> <name><name>fn</name><operator>-&gt;</operator><name>fn_name_len</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>cpp_skip_whitespace</name><argument_list>(<argument><expr><operator>&amp;</operator><name>cp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name> <operator>!=</operator> <literal type="char">'('</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>false</name></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>arglen</name> <operator>=</operator> <call><name>ParseWord</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>cp</name></expr></argument>, <argument><expr><name>doEval</name></expr></argument>, <argument><expr><name><name>fn</name><operator>-&gt;</operator><name>fn_name</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>arg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>out_token</name> <operator>=</operator> <call><name>ToToken</name><argument_list>(<argument><expr><name>arglen</name> <operator>!=</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <operator>(</operator><operator>!</operator><name>doEval</name> <operator>||</operator> <call><name><name>fn</name><operator>-&gt;</operator><name>fn_eval</name></name><argument_list>(<argument><expr><name>arg</name></expr></argument>)</argument_list></call><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>arg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>p</name></name> <operator>=</operator> <name>cp</name></expr>;</expr_stmt>
+<return>return <expr><name>true</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>Token</name></type>
+<name>CondParser_ComparisonOrLeaf</name><parameter_list>(<parameter><decl><type><name>CondParser</name> <modifier>*</modifier></type><name>par</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>doEval</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>Token</name></type> <name>t</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>arg</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>cp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>cp1</name></decl>;</decl_stmt>
+
+
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <name><name>par</name><operator>-&gt;</operator><name>p</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>ch_isdigit</name><argument_list>(<argument><expr><name><name>cp</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>)</argument_list></call> <operator>||</operator> <name><name>cp</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'-'</literal> <operator>||</operator> <name><name>cp</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'+'</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><call><name>CondParser_Comparison</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><name>doEval</name></expr></argument>)</argument_list></call></expr>;</return></block_content></block></if></if_stmt>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>ParseWord</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>cp</name></expr></argument>, <argument><expr><name>doEval</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>arg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>cp1</name> <operator>=</operator> <name>cp</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>cpp_skip_whitespace</name><argument_list>(<argument><expr><operator>&amp;</operator><name>cp1</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp1</name> <operator>==</operator> <literal type="char">'='</literal> <operator>||</operator> <operator>*</operator><name>cp1</name> <operator>==</operator> <literal type="char">'!'</literal> <operator>||</operator> <operator>*</operator><name>cp1</name> <operator>==</operator> <literal type="char">'&lt;'</literal> <operator>||</operator> <operator>*</operator><name>cp1</name> <operator>==</operator> <literal type="char">'&gt;'</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><call><name>CondParser_Comparison</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><name>doEval</name></expr></argument>)</argument_list></call></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>p</name></name> <operator>=</operator> <name>cp</name></expr>;</expr_stmt>
+
+
+
+
+
+
+
+<expr_stmt><expr><name>t</name> <operator>=</operator> <call><name>ToToken</name><argument_list>(<argument><expr><operator>!</operator><name>doEval</name> <operator>||</operator> <call><name>EvalBare</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><name>arg</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>arg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>t</name></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>Token</name></type>
+<name>CondParser_Token</name><parameter_list>(<parameter><decl><type><name>CondParser</name> <modifier>*</modifier></type><name>par</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>doEval</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>Token</name></type> <name>t</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>t</name> <operator>=</operator> <name><name>par</name><operator>-&gt;</operator><name>curr</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>t</name> <operator>!=</operator> <name>TOK_NONE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>curr</name></name> <operator>=</operator> <name>TOK_NONE</name></expr>;</expr_stmt>
+<return>return <expr><name>t</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>cpp_skip_hspace</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>par</name><operator>-&gt;</operator><name>p</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<switch>switch <condition>(<expr><name><name>par</name><operator>-&gt;</operator><name>p</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr>)</condition> <block>{<block_content>
+
+<case>case <expr><literal type="char">'('</literal></expr>:</case>
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>p</name></name><operator>++</operator></expr>;</expr_stmt>
+<return>return <expr><name>TOK_LPAREN</name></expr>;</return>
+
+<case>case <expr><literal type="char">')'</literal></expr>:</case>
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>p</name></name><operator>++</operator></expr>;</expr_stmt>
+<return>return <expr><name>TOK_RPAREN</name></expr>;</return>
+
+<case>case <expr><literal type="char">'|'</literal></expr>:</case>
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>p</name></name><operator>++</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>par</name><operator>-&gt;</operator><name>p</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'|'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>p</name></name><operator>++</operator></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name><name>opts</name><operator>.</operator><name>strict</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>Parse_Error</name><argument_list>(<argument><expr><name>PARSE_FATAL</name></expr></argument>, <argument><expr><literal type="string">"Unknown operator '|'"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>printedError</name></name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<return>return <expr><name>TOK_ERROR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name>TOK_OR</name></expr>;</return>
+
+<case>case <expr><literal type="char">'&amp;'</literal></expr>:</case>
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>p</name></name><operator>++</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>par</name><operator>-&gt;</operator><name>p</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'&amp;'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>p</name></name><operator>++</operator></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name><name>opts</name><operator>.</operator><name>strict</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>Parse_Error</name><argument_list>(<argument><expr><name>PARSE_FATAL</name></expr></argument>, <argument><expr><literal type="string">"Unknown operator '&amp;'"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>printedError</name></name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<return>return <expr><name>TOK_ERROR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name>TOK_AND</name></expr>;</return>
+
+<case>case <expr><literal type="char">'!'</literal></expr>:</case>
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>p</name></name><operator>++</operator></expr>;</expr_stmt>
+<return>return <expr><name>TOK_NOT</name></expr>;</return>
+
+<case>case <expr><literal type="char">'#'</literal></expr>:</case>
+<case>case <expr><literal type="char">'\n'</literal></expr>:</case>
+
+<case>case <expr><literal type="char">'\0'</literal></expr>:</case>
+<return>return <expr><name>TOK_EOF</name></expr>;</return>
+
+<case>case <expr><literal type="char">'"'</literal></expr>:</case>
+<case>case <expr><literal type="char">'$'</literal></expr>:</case>
+<return>return <expr><call><name>CondParser_Comparison</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><name>doEval</name></expr></argument>)</argument_list></call></expr>;</return>
+
+<default>default:</default>
+<if_stmt><if>if <condition>(<expr><call><name>CondParser_FuncCallEmpty</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><name>doEval</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>t</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>t</name></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>CondParser_FuncCall</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><name>doEval</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>t</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>t</name></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><call><name>CondParser_ComparisonOrLeaf</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><name>doEval</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></switch>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>CondParser_Skip</name><parameter_list>(<parameter><decl><type><name>CondParser</name> <modifier>*</modifier></type><name>par</name></decl></parameter>, <parameter><decl><type><name>Token</name></type> <name>t</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>Token</name></type> <name>actual</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>actual</name> <operator>=</operator> <call><name>CondParser_Token</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><name>false</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>actual</name> <operator>==</operator> <name>t</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>true</name></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>par</name><operator>-&gt;</operator><name>curr</name></name> <operator>==</operator> <name>TOK_NONE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>actual</name> <operator>!=</operator> <name>TOK_NONE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>par</name><operator>-&gt;</operator><name>curr</name></name> <operator>=</operator> <name>actual</name></expr>;</expr_stmt>
+<return>return <expr><name>false</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>CondResult</name></type>
+<name>CondParser_Term</name><parameter_list>(<parameter><decl><type><name>CondParser</name> <modifier>*</modifier></type><name>par</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>doEval</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>CondResult</name></type> <name>res</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Token</name></type> <name>t</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>t</name> <operator>=</operator> <call><name>CondParser_Token</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><name>doEval</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>t</name> <operator>==</operator> <name>TOK_TRUE</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>CR_TRUE</name></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>t</name> <operator>==</operator> <name>TOK_FALSE</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>CR_FALSE</name></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>t</name> <operator>==</operator> <name>TOK_LPAREN</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>res</name> <operator>=</operator> <call><name>CondParser_Or</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><name>doEval</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>res</name> <operator>==</operator> <name>CR_ERROR</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>CR_ERROR</name></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>CondParser_Token</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><name>doEval</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>TOK_RPAREN</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>CR_ERROR</name></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><name>res</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>t</name> <operator>==</operator> <name>TOK_NOT</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>res</name> <operator>=</operator> <call><name>CondParser_Term</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><name>doEval</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>res</name> <operator>==</operator> <name>CR_TRUE</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>res</name> <operator>=</operator> <name>CR_FALSE</name></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name>res</name> <operator>==</operator> <name>CR_FALSE</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>res</name> <operator>=</operator> <name>CR_TRUE</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><name>res</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><name>CR_ERROR</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>CondResult</name></type>
+<name>CondParser_And</name><parameter_list>(<parameter><decl><type><name>CondParser</name> <modifier>*</modifier></type><name>par</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>doEval</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>CondResult</name></type> <name>res</name></decl>, <decl><type ref="prev"/><name>rhs</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>res</name> <operator>=</operator> <name>CR_TRUE</name></expr>;</expr_stmt>
+<do>do <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>rhs</name> <operator>=</operator> <call><name>CondParser_Term</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><name>doEval</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>CR_ERROR</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>CR_ERROR</name></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>rhs</name> <operator>==</operator> <name>CR_FALSE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>res</name> <operator>=</operator> <name>CR_FALSE</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>doEval</name> <operator>=</operator> <name>false</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block> while <condition>(<expr><call><name>CondParser_Skip</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><name>TOK_AND</name></expr></argument>)</argument_list></call></expr>)</condition>;</do>
+
+<return>return <expr><name>res</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>CondResult</name></type>
+<name>CondParser_Or</name><parameter_list>(<parameter><decl><type><name>CondParser</name> <modifier>*</modifier></type><name>par</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>doEval</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>CondResult</name></type> <name>res</name></decl>, <decl><type ref="prev"/><name>rhs</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>res</name> <operator>=</operator> <name>CR_FALSE</name></expr>;</expr_stmt>
+<do>do <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>rhs</name> <operator>=</operator> <call><name>CondParser_And</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><name>doEval</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>CR_ERROR</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>CR_ERROR</name></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>rhs</name> <operator>==</operator> <name>CR_TRUE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>res</name> <operator>=</operator> <name>CR_TRUE</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>doEval</name> <operator>=</operator> <name>false</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block> while <condition>(<expr><call><name>CondParser_Skip</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><name>TOK_OR</name></expr></argument>)</argument_list></call></expr>)</condition>;</do>
+
+<return>return <expr><name>res</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>CondEvalResult</name></type>
+<name>CondParser_Eval</name><parameter_list>(<parameter><decl><type><name>CondParser</name> <modifier>*</modifier></type><name>par</name></decl></parameter>, <parameter><decl><type><name>bool</name> <modifier>*</modifier></type><name>out_value</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>CondResult</name></type> <name>res</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>DEBUG1</name><argument_list>(<argument><expr><name>COND</name></expr></argument>, <argument><expr><literal type="string">"CondParser_Eval: %s\n"</literal></expr></argument>, <argument><expr><name><name>par</name><operator>-&gt;</operator><name>p</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>res</name> <operator>=</operator> <call><name>CondParser_Or</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><name>true</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>res</name> <operator>==</operator> <name>CR_ERROR</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>COND_INVALID</name></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>CondParser_Token</name><argument_list>(<argument><expr><name>par</name></expr></argument>, <argument><expr><name>false</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>TOK_EOF</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>COND_INVALID</name></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>out_value</name> <operator>=</operator> <name>res</name> <operator>==</operator> <name>CR_TRUE</name></expr>;</expr_stmt>
+<return>return <expr><name>COND_PARSE</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>CondEvalResult</name></type>
+<name>CondEvalExpression</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>cond</name></decl></parameter>, <parameter><decl><type><name>bool</name> <modifier>*</modifier></type><name>out_value</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>plain</name></decl></parameter>,
+<parameter><function_decl><type><name>bool</name></type> (<modifier>*</modifier><name>evalBare</name>)<parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type></decl></parameter>)</parameter_list></function_decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>negate</name></decl></parameter>,
+<parameter><decl><type><name>bool</name></type> <name>eprint</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>leftUnquotedOK</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>CondParser</name></type> <name>par</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>CondEvalResult</name></type> <name>rval</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>cpp_skip_hspace</name><argument_list>(<argument><expr><operator>&amp;</operator><name>cond</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>par</name><operator>.</operator><name>plain</name></name> <operator>=</operator> <name>plain</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>par</name><operator>.</operator><name>evalBare</name></name> <operator>=</operator> <name>evalBare</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>par</name><operator>.</operator><name>negateEvalBare</name></name> <operator>=</operator> <name>negate</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>par</name><operator>.</operator><name>leftUnquotedOK</name></name> <operator>=</operator> <name>leftUnquotedOK</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>par</name><operator>.</operator><name>p</name></name> <operator>=</operator> <name>cond</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>par</name><operator>.</operator><name>curr</name></name> <operator>=</operator> <name>TOK_NONE</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>par</name><operator>.</operator><name>printedError</name></name> <operator>=</operator> <name>false</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>rval</name> <operator>=</operator> <call><name>CondParser_Eval</name><argument_list>(<argument><expr><operator>&amp;</operator><name>par</name></expr></argument>, <argument><expr><name>out_value</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>rval</name> <operator>==</operator> <name>COND_INVALID</name> <operator>&amp;&amp;</operator> <name>eprint</name> <operator>&amp;&amp;</operator> <operator>!</operator><name><name>par</name><operator>.</operator><name>printedError</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Parse_Error</name><argument_list>(<argument><expr><name>PARSE_FATAL</name></expr></argument>, <argument><expr><literal type="string">"Malformed conditional (%s)"</literal></expr></argument>, <argument><expr><name>cond</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<return>return <expr><name>rval</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><name>CondEvalResult</name></type>
+<name>Cond_EvalCondition</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>cond</name></decl></parameter>, <parameter><decl><type><name>bool</name> <modifier>*</modifier></type><name>out_value</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><call><name>CondEvalExpression</name><argument_list>(<argument><expr><name>cond</name></expr></argument>, <argument><expr><name>out_value</name></expr></argument>, <argument><expr><name>true</name></expr></argument>,
+<argument><expr><name>FuncDefined</name></expr></argument>, <argument><expr><name>false</name></expr></argument>, <argument><expr><name>false</name></expr></argument>, <argument><expr><name>true</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>IsEndif</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>p</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><name><name>p</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'e'</literal> <operator>&amp;&amp;</operator> <name><name>p</name><index>[<expr><literal type="number">1</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'n'</literal> <operator>&amp;&amp;</operator> <name><name>p</name><index>[<expr><literal type="number">2</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'d'</literal> <operator>&amp;&amp;</operator>
+<name><name>p</name><index>[<expr><literal type="number">3</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'i'</literal> <operator>&amp;&amp;</operator> <name><name>p</name><index>[<expr><literal type="number">4</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'f'</literal> <operator>&amp;&amp;</operator> <operator>!</operator><call><name>ch_isalpha</name><argument_list>(<argument><expr><name><name>p</name><index>[<expr><literal type="number">5</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>DetermineKindOfConditional</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>pp</name></decl></parameter>, <parameter><decl><type><name>bool</name> <modifier>*</modifier></type><name>out_plain</name></decl></parameter>,
+<parameter><function_decl><type><name>bool</name></type> (<modifier>*</modifier><modifier>*</modifier><name>out_evalBare</name>)<parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type></decl></parameter>)</parameter_list></function_decl></parameter>,
+<parameter><decl><type><name>bool</name> <modifier>*</modifier></type><name>out_negate</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>p</name> <init>= <expr><operator>*</operator><name>pp</name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>p</name> <operator>+=</operator> <literal type="number">2</literal></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>out_plain</name> <operator>=</operator> <name>false</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>out_evalBare</name> <operator>=</operator> <name>FuncDefined</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>out_negate</name> <operator>=</operator> <name>false</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>p</name> <operator>==</operator> <literal type="char">'n'</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>p</name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>out_negate</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>is_token</name><argument_list>(<argument><expr><name>p</name></expr></argument>, <argument><expr><literal type="string">"def"</literal></expr></argument>, <argument><expr><literal type="number">3</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>p</name> <operator>+=</operator> <literal type="number">3</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><call><name>is_token</name><argument_list>(<argument><expr><name>p</name></expr></argument>, <argument><expr><literal type="string">"make"</literal></expr></argument>, <argument><expr><literal type="number">4</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>p</name> <operator>+=</operator> <literal type="number">4</literal></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>out_evalBare</name> <operator>=</operator> <name>FuncMake</name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><call><name>is_token</name><argument_list>(<argument><expr><name>p</name></expr></argument>, <argument><expr><literal type="string">""</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <operator>!</operator><operator>*</operator><name>out_negate</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>out_plain</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+
+
+
+
+
+
+<return>return <expr><name>false</name></expr>;</return>
+</block_content>}</block></else></if_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>pp</name> <operator>=</operator> <name>p</name></expr>;</expr_stmt>
+<return>return <expr><name>true</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><name>CondEvalResult</name></type>
+<name>Cond_EvalLine</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>line</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<typedef>typedef <type><enum>enum <name>IfState</name> <block>{
+
+
+<decl><name>IFS_INITIAL</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>,
+
+
+
+<decl><name>IFS_ACTIVE</name> <init>= <expr><literal type="number">1</literal> <operator>&lt;&lt;</operator> <literal type="number">0</literal></expr></init></decl>,
+
+
+<decl><name>IFS_SEEN_ELSE</name> <init>= <expr><literal type="number">1</literal> <operator>&lt;&lt;</operator> <literal type="number">1</literal></expr></init></decl>,
+
+
+<decl><name>IFS_WAS_ACTIVE</name> <init>= <expr><literal type="number">1</literal> <operator>&lt;&lt;</operator> <literal type="number">2</literal></expr></init></decl>
+
+}</block></enum></type> <name>IfState</name>;</typedef>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name><name>enum</name> <name>IfState</name></name> <modifier>*</modifier></type><name>cond_states</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>unsigned</name> <name>int</name></type> <name>cond_states_cap</name> <init>= <expr><literal type="number">128</literal></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>bool</name></type> <name>plain</name></decl>;</decl_stmt>
+<function_decl><type><name>bool</name></type> (<modifier>*</modifier><name>evalBare</name>)<parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl>
+<decl_stmt><decl><type><name>bool</name></type> <name>negate</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>isElif</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>value</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>IfState</name></type> <name>state</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>p</name> <init>= <expr><name>line</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>cond_states</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>cond_states</name> <operator>=</operator> <call><name>bmake_malloc</name><argument_list>(
+<argument><expr><name>cond_states_cap</name> <operator>*</operator> <sizeof>sizeof <name/></sizeof>*<name>cond_states</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>cond_states</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>=</operator> <name>IFS_ACTIVE</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>p</name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>cpp_skip_hspace</name><argument_list>(<argument><expr><operator>&amp;</operator><name>p</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>IsEndif</name><argument_list>(<argument><expr><name>p</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>p</name><index>[<expr><literal type="number">5</literal></expr>]</index></name> <operator>!=</operator> <literal type="char">'\0'</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>Parse_Error</name><argument_list>(<argument><expr><name>PARSE_FATAL</name></expr></argument>,
+<argument><expr><literal type="string">"The .endif directive does not take arguments"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>cond_depth</name> <operator>==</operator> <name>cond_min_depth</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>Parse_Error</name><argument_list>(<argument><expr><name>PARSE_FATAL</name></expr></argument>, <argument><expr><literal type="string">"if-less endif"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>COND_PARSE</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><name>cond_depth</name><operator>--</operator></expr>;</expr_stmt>
+<return>return <expr><ternary><condition><expr><name><name>cond_states</name><index>[<expr><name>cond_depth</name></expr>]</index></name> <operator>&amp;</operator> <name>IFS_ACTIVE</name></expr>
+?</condition><then> <expr><name>COND_PARSE</name></expr> </then><else>: <expr><name>COND_SKIP</name></expr></else></ternary></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>p</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'e'</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>p</name><index>[<expr><literal type="number">1</literal></expr>]</index></name> <operator>!=</operator> <literal type="char">'l'</literal></expr>)</condition> <block>{<block_content>
+
+
+
+
+
+<return>return <expr><name>COND_INVALID</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><name>p</name> <operator>+=</operator> <literal type="number">2</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>is_token</name><argument_list>(<argument><expr><name>p</name></expr></argument>, <argument><expr><literal type="string">"se"</literal></expr></argument>, <argument><expr><literal type="number">2</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><name><name>p</name><index>[<expr><literal type="number">2</literal></expr>]</index></name> <operator>!=</operator> <literal type="char">'\0'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Parse_Error</name><argument_list>(<argument><expr><name>PARSE_FATAL</name></expr></argument>,
+<argument><expr><literal type="string">"The .else directive "</literal>
+<literal type="string">"does not take arguments"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>cond_depth</name> <operator>==</operator> <name>cond_min_depth</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>Parse_Error</name><argument_list>(<argument><expr><name>PARSE_FATAL</name></expr></argument>, <argument><expr><literal type="string">"if-less else"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>COND_PARSE</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>state</name> <operator>=</operator> <name><name>cond_states</name><index>[<expr><name>cond_depth</name></expr>]</index></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>state</name> <operator>==</operator> <name>IFS_INITIAL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <name>IFS_ACTIVE</name> <operator>|</operator> <name>IFS_SEEN_ELSE</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>state</name> <operator>&amp;</operator> <name>IFS_SEEN_ELSE</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Parse_Error</name><argument_list>(<argument><expr><name>PARSE_WARNING</name></expr></argument>,
+<argument><expr><literal type="string">"extra else"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <name>IFS_WAS_ACTIVE</name> <operator>|</operator> <name>IFS_SEEN_ELSE</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><name><name>cond_states</name><index>[<expr><name>cond_depth</name></expr>]</index></name> <operator>=</operator> <name>state</name></expr>;</expr_stmt>
+
+<return>return <expr><ternary><condition><expr><name>state</name> <operator>&amp;</operator> <name>IFS_ACTIVE</name></expr> ?</condition><then> <expr><name>COND_PARSE</name></expr> </then><else>: <expr><name>COND_SKIP</name></expr></else></ternary></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>isElif</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>isElif</name> <operator>=</operator> <name>false</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>p</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>!=</operator> <literal type="char">'i'</literal> <operator>||</operator> <name><name>p</name><index>[<expr><literal type="number">1</literal></expr>]</index></name> <operator>!=</operator> <literal type="char">'f'</literal></expr>)</condition> <block>{<block_content>
+
+
+
+
+<return>return <expr><name>COND_INVALID</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>DetermineKindOfConditional</name><argument_list>(<argument><expr><operator>&amp;</operator><name>p</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>plain</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>evalBare</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>negate</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>COND_INVALID</name></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>isElif</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>cond_depth</name> <operator>==</operator> <name>cond_min_depth</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>Parse_Error</name><argument_list>(<argument><expr><name>PARSE_FATAL</name></expr></argument>, <argument><expr><literal type="string">"if-less elif"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>COND_PARSE</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <name><name>cond_states</name><index>[<expr><name>cond_depth</name></expr>]</index></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>state</name> <operator>&amp;</operator> <name>IFS_SEEN_ELSE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>Parse_Error</name><argument_list>(<argument><expr><name>PARSE_WARNING</name></expr></argument>, <argument><expr><literal type="string">"extra elif"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>cond_states</name><index>[<expr><name>cond_depth</name></expr>]</index></name> <operator>=</operator>
+<name>IFS_WAS_ACTIVE</name> <operator>|</operator> <name>IFS_SEEN_ELSE</name></expr>;</expr_stmt>
+<return>return <expr><name>COND_SKIP</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>state</name> <operator>!=</operator> <name>IFS_INITIAL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>cond_states</name><index>[<expr><name>cond_depth</name></expr>]</index></name> <operator>=</operator> <name>IFS_WAS_ACTIVE</name></expr>;</expr_stmt>
+<return>return <expr><name>COND_SKIP</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><name>cond_depth</name> <operator>+</operator> <literal type="number">1</literal> <operator>&gt;=</operator> <name>cond_states_cap</name></expr>)</condition> <block>{<block_content>
+
+
+
+
+
+<expr_stmt><expr><name>cond_states_cap</name> <operator>+=</operator> <literal type="number">32</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>cond_states</name> <operator>=</operator> <call><name>bmake_realloc</name><argument_list>(<argument><expr><name>cond_states</name></expr></argument>,
+<argument><expr><name>cond_states_cap</name> <operator>*</operator>
+<sizeof>sizeof <name/></sizeof>*<name>cond_states</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <name><name>cond_states</name><index>[<expr><name>cond_depth</name></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>cond_depth</name><operator>++</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name>state</name> <operator>&amp;</operator> <name>IFS_ACTIVE</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+
+
+
+
+<expr_stmt><expr><name><name>cond_states</name><index>[<expr><name>cond_depth</name></expr>]</index></name> <operator>=</operator> <name>IFS_WAS_ACTIVE</name></expr>;</expr_stmt>
+<return>return <expr><name>COND_SKIP</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>CondEvalExpression</name><argument_list>(<argument><expr><name>p</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>value</name></expr></argument>, <argument><expr><name>plain</name></expr></argument>, <argument><expr><name>evalBare</name></expr></argument>, <argument><expr><name>negate</name></expr></argument>,
+<argument><expr><name>true</name></expr></argument>, <argument><expr><name>false</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>COND_INVALID</name></expr>)</condition> <block>{<block_content>
+
+
+
+<expr_stmt><expr><name><name>cond_states</name><index>[<expr><name>cond_depth</name></expr>]</index></name> <operator>=</operator> <name>IFS_WAS_ACTIVE</name></expr>;</expr_stmt>
+<return>return <expr><name>COND_SKIP</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>value</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>cond_states</name><index>[<expr><name>cond_depth</name></expr>]</index></name> <operator>=</operator> <name>IFS_INITIAL</name></expr>;</expr_stmt>
+<return>return <expr><name>COND_SKIP</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>cond_states</name><index>[<expr><name>cond_depth</name></expr>]</index></name> <operator>=</operator> <name>IFS_ACTIVE</name></expr>;</expr_stmt>
+<return>return <expr><name>COND_PARSE</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type>
+<name>Cond_restore_depth</name><parameter_list>(<parameter><decl><type><name>unsigned</name> <name>int</name></type> <name>saved_depth</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name> <name>int</name></type> <name>open_conds</name> <init>= <expr><name>cond_depth</name> <operator>-</operator> <name>cond_min_depth</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>open_conds</name> <operator>!=</operator> <literal type="number">0</literal> <operator>||</operator> <name>saved_depth</name> <operator>&gt;</operator> <name>cond_depth</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>Parse_Error</name><argument_list>(<argument><expr><name>PARSE_FATAL</name></expr></argument>, <argument><expr><literal type="string">"%u open conditional%s"</literal></expr></argument>,
+<argument><expr><name>open_conds</name></expr></argument>, <argument><expr><ternary><condition><expr><name>open_conds</name> <operator>==</operator> <literal type="number">1</literal></expr> ?</condition><then> <expr><literal type="string">""</literal></expr> </then><else>: <expr><literal type="string">"s"</literal></expr></else></ternary></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>cond_depth</name> <operator>=</operator> <name>cond_min_depth</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>cond_min_depth</name> <operator>=</operator> <name>saved_depth</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>unsigned</name> <name>int</name></type>
+<name>Cond_save_depth</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name> <name>int</name></type> <name>depth</name> <init>= <expr><name>cond_min_depth</name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>cond_min_depth</name> <operator>=</operator> <name>cond_depth</name></expr>;</expr_stmt>
+<return>return <expr><name>depth</name></expr>;</return>
+</block_content>}</block></function>
+</unit>

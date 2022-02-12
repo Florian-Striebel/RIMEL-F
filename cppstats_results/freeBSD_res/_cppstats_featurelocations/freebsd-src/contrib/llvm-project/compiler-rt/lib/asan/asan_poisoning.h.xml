@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/llvm-project/compiler-rt/lib/asan/asan_poisoning.h">
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"asan_interceptors.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"asan_internal.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"asan_mapping.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"sanitizer_common/sanitizer_flags.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"sanitizer_common/sanitizer_platform.h"</cpp:file></cpp:include>
+
+<decl_stmt><decl><type><name>namespace</name></type> <name>__asan</name> <block>{<block_content>
+
+
+<function_decl><type><name>void</name></type> <name>SetCanPoisonMemory</name><parameter_list>(<parameter><decl><type><name>bool</name></type> <name>value</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><name>bool</name></type> <name>CanPoisonMemory</name><parameter_list>()</parameter_list>;</function_decl>
+
+
+<function_decl><type><name>void</name></type> <name>PoisonShadow</name><parameter_list>(<parameter><decl><type><name>uptr</name></type> <name>addr</name></decl></parameter>, <parameter><decl><type><name>uptr</name></type> <name>size</name></decl></parameter>, <parameter><decl><type><name>u8</name></type> <name>value</name></decl></parameter>)</parameter_list>;</function_decl>
+
+
+
+<function_decl><type><name>void</name></type> <name>PoisonShadowPartialRightRedzone</name><parameter_list>(<parameter><decl><type><name>uptr</name></type> <name>addr</name></decl></parameter>,
+<parameter><decl><type><name>uptr</name></type> <name>size</name></decl></parameter>,
+<parameter><decl><type><name>uptr</name></type> <name>redzone_size</name></decl></parameter>,
+<parameter><decl><type><name>u8</name></type> <name>value</name></decl></parameter>)</parameter_list>;</function_decl>
+
+
+
+
+<function><type><name>ALWAYS_INLINE</name> <name>void</name></type> <name>FastPoisonShadow</name><parameter_list>(<parameter><decl><type><name>uptr</name></type> <name>aligned_beg</name></decl></parameter>, <parameter><decl><type><name>uptr</name></type> <name>aligned_size</name></decl></parameter>,
+<parameter><decl><type><name>u8</name></type> <name>value</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>DCHECK</name><argument_list>(<argument><expr><operator>!</operator><name>value</name> <operator>||</operator> <call><name>CanPoisonMemory</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SANITIZER_FUCHSIA</name></expr></cpp:if>
+<expr_stmt><expr><call><name>__sanitizer_fill_shadow</name><argument_list>(<argument><expr><name>aligned_beg</name></expr></argument>, <argument><expr><name>aligned_size</name></expr></argument>, <argument><expr><name>value</name></expr></argument>,
+<argument><expr><call><name>common_flags</name><argument_list>()</argument_list></call><operator>-&gt;</operator><name>clear_shadow_mmap_threshold</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<decl_stmt><decl><type><name>uptr</name></type> <name>shadow_beg</name> <init>= <expr><call><name>MEM_TO_SHADOW</name><argument_list>(<argument><expr><name>aligned_beg</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uptr</name></type> <name>shadow_end</name> <init>= <expr><call><name>MEM_TO_SHADOW</name><argument_list>(
+<argument><expr><name>aligned_beg</name> <operator>+</operator> <name>aligned_size</name> <operator>-</operator> <name>SHADOW_GRANULARITY</name></expr></argument>)</argument_list></call> <operator>+</operator> <literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>value</name> <operator>||</operator> <name>SANITIZER_WINDOWS</name> <operator>==</operator> <literal type="number">1</literal> <operator>||</operator>
+<name>shadow_end</name> <operator>-</operator> <name>shadow_beg</name> <operator>&lt;</operator> <call><name>common_flags</name><argument_list>()</argument_list></call><operator>-&gt;</operator><name>clear_shadow_mmap_threshold</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><call><name>REAL</name><argument_list>(<argument><expr><name>memset</name></expr></argument>)</argument_list></call><argument_list>(<argument><expr><operator>(</operator><name>void</name><operator>*</operator><operator>)</operator><name>shadow_beg</name></expr></argument>, <argument><expr><name>value</name></expr></argument>, <argument><expr><name>shadow_end</name> <operator>-</operator> <name>shadow_beg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<decl_stmt><decl><type><name>uptr</name></type> <name>page_size</name> <init>= <expr><call><name>GetPageSizeCached</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uptr</name></type> <name>page_beg</name> <init>= <expr><call><name>RoundUpTo</name><argument_list>(<argument><expr><name>shadow_beg</name></expr></argument>, <argument><expr><name>page_size</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uptr</name></type> <name>page_end</name> <init>= <expr><call><name>RoundDownTo</name><argument_list>(<argument><expr><name>shadow_end</name></expr></argument>, <argument><expr><name>page_size</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>page_beg</name> <operator>&gt;=</operator> <name>page_end</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><call><name>REAL</name><argument_list>(<argument><expr><name>memset</name></expr></argument>)</argument_list></call><argument_list>(<argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name>shadow_beg</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>shadow_end</name> <operator>-</operator> <name>shadow_beg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>page_beg</name> <operator>!=</operator> <name>shadow_beg</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><call><name>REAL</name><argument_list>(<argument><expr><name>memset</name></expr></argument>)</argument_list></call><argument_list>(<argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name>shadow_beg</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>page_beg</name> <operator>-</operator> <name>shadow_beg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>page_end</name> <operator>!=</operator> <name>shadow_end</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><call><name>REAL</name><argument_list>(<argument><expr><name>memset</name></expr></argument>)</argument_list></call><argument_list>(<argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name>page_end</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>shadow_end</name> <operator>-</operator> <name>page_end</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>ReserveShadowMemoryRange</name><argument_list>(<argument><expr><name>page_beg</name></expr></argument>, <argument><expr><name>page_end</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><name>nullptr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></else></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+<function><type><name>ALWAYS_INLINE</name> <name>void</name></type> <name>FastPoisonShadowPartialRightRedzone</name><parameter_list>(
+<parameter><decl><type><name>uptr</name></type> <name>aligned_addr</name></decl></parameter>, <parameter><decl><type><name>uptr</name></type> <name>size</name></decl></parameter>, <parameter><decl><type><name>uptr</name></type> <name>redzone_size</name></decl></parameter>, <parameter><decl><type><name>u8</name></type> <name>value</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>DCHECK</name><argument_list>(<argument><expr><call><name>CanPoisonMemory</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>poison_partial</name> <init>= <expr><call><name>flags</name><argument_list>()</argument_list></call><operator>-&gt;</operator><name>poison_partial</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>u8</name> <modifier>*</modifier></type><name>shadow</name> <init>= <expr><operator>(</operator><name>u8</name><operator>*</operator><operator>)</operator><call><name>MEM_TO_SHADOW</name><argument_list>(<argument><expr><name>aligned_addr</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<for>for <control>(<init><decl><type><name>uptr</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>redzone_size</name></expr>;</condition> <incr><expr><name>i</name> <operator>+=</operator> <name>SHADOW_GRANULARITY</name></expr><operator>,</operator> <expr><name>shadow</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>i</name> <operator>+</operator> <name>SHADOW_GRANULARITY</name> <operator>&lt;=</operator> <name>size</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>shadow</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>i</name> <operator>&gt;=</operator> <name>size</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>shadow</name> <operator>=</operator> <ternary><condition><expr><operator>(</operator><name>SHADOW_GRANULARITY</name> <operator>==</operator> <literal type="number">128</literal><operator>)</operator></expr> ?</condition><then> <expr><literal type="number">0xff</literal></expr> </then><else>: <expr><name>value</name></expr></else></ternary></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+<expr_stmt><expr><operator>*</operator><name>shadow</name> <operator>=</operator> <ternary><condition><expr><name>poison_partial</name></expr> ?</condition><then> <expr><call><name><name>static_cast</name><argument_list type="generic">&lt;<argument><expr><name>u8</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>size</name> <operator>-</operator> <name>i</name></expr></argument>)</argument_list></call></expr> </then><else>: <expr><literal type="number">0</literal></expr></else></ternary></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+
+
+<function_decl><type><name>void</name></type> <name>FlushUnneededASanShadowMemory</name><parameter_list>(<parameter><decl><type><name>uptr</name></type> <name>p</name></decl></parameter>, <parameter><decl><type><name>uptr</name></type> <name>size</name></decl></parameter>)</parameter_list>;</function_decl>
+
+</block_content>}</block></decl></decl_stmt>
+</unit>

@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/libcbor/src/cbor.c">
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"cbor.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"cbor/internal/builder_callbacks.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"cbor/internal/loaders.h"</cpp:file></cpp:include>
+
+<function><type><name>cbor_item_t</name> <modifier>*</modifier></type><name>cbor_load</name><parameter_list>(<parameter><decl><type><name>cbor_data</name></type> <name>source</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>source_size</name></decl></parameter>,
+<parameter><decl><type><name><name>struct</name> <name>cbor_load_result</name></name> <modifier>*</modifier></type><name>result</name></decl></parameter>)</parameter_list> <block>{<block_content>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name><name>struct</name> <name>cbor_callbacks</name></name></type> <name>callbacks</name> <init>= <expr><block>{
+<expr><operator>.</operator><name>uint8</name> <operator>=</operator> <operator>&amp;</operator><name>cbor_builder_uint8_callback</name></expr>,
+<expr><operator>.</operator><name>uint16</name> <operator>=</operator> <operator>&amp;</operator><name>cbor_builder_uint16_callback</name></expr>,
+<expr><operator>.</operator><name>uint32</name> <operator>=</operator> <operator>&amp;</operator><name>cbor_builder_uint32_callback</name></expr>,
+<expr><operator>.</operator><name>uint64</name> <operator>=</operator> <operator>&amp;</operator><name>cbor_builder_uint64_callback</name></expr>,
+
+<expr><operator>.</operator><name>negint8</name> <operator>=</operator> <operator>&amp;</operator><name>cbor_builder_negint8_callback</name></expr>,
+<expr><operator>.</operator><name>negint16</name> <operator>=</operator> <operator>&amp;</operator><name>cbor_builder_negint16_callback</name></expr>,
+<expr><operator>.</operator><name>negint32</name> <operator>=</operator> <operator>&amp;</operator><name>cbor_builder_negint32_callback</name></expr>,
+<expr><operator>.</operator><name>negint64</name> <operator>=</operator> <operator>&amp;</operator><name>cbor_builder_negint64_callback</name></expr>,
+
+<expr><operator>.</operator><name>byte_string</name> <operator>=</operator> <operator>&amp;</operator><name>cbor_builder_byte_string_callback</name></expr>,
+<expr><operator>.</operator><name>byte_string_start</name> <operator>=</operator> <operator>&amp;</operator><name>cbor_builder_byte_string_start_callback</name></expr>,
+
+<expr><operator>.</operator><name>string</name> <operator>=</operator> <operator>&amp;</operator><name>cbor_builder_string_callback</name></expr>,
+<expr><operator>.</operator><name>string_start</name> <operator>=</operator> <operator>&amp;</operator><name>cbor_builder_string_start_callback</name></expr>,
+
+<expr><operator>.</operator><name>array_start</name> <operator>=</operator> <operator>&amp;</operator><name>cbor_builder_array_start_callback</name></expr>,
+<expr><operator>.</operator><name>indef_array_start</name> <operator>=</operator> <operator>&amp;</operator><name>cbor_builder_indef_array_start_callback</name></expr>,
+
+<expr><operator>.</operator><name>map_start</name> <operator>=</operator> <operator>&amp;</operator><name>cbor_builder_map_start_callback</name></expr>,
+<expr><operator>.</operator><name>indef_map_start</name> <operator>=</operator> <operator>&amp;</operator><name>cbor_builder_indef_map_start_callback</name></expr>,
+
+<expr><operator>.</operator><name>tag</name> <operator>=</operator> <operator>&amp;</operator><name>cbor_builder_tag_callback</name></expr>,
+
+<expr><operator>.</operator><name>null</name> <operator>=</operator> <operator>&amp;</operator><name>cbor_builder_null_callback</name></expr>,
+<expr><operator>.</operator><name>undefined</name> <operator>=</operator> <operator>&amp;</operator><name>cbor_builder_undefined_callback</name></expr>,
+<expr><operator>.</operator><name>boolean</name> <operator>=</operator> <operator>&amp;</operator><name>cbor_builder_boolean_callback</name></expr>,
+<expr><operator>.</operator><name>float2</name> <operator>=</operator> <operator>&amp;</operator><name>cbor_builder_float2_callback</name></expr>,
+<expr><operator>.</operator><name>float4</name> <operator>=</operator> <operator>&amp;</operator><name>cbor_builder_float4_callback</name></expr>,
+<expr><operator>.</operator><name>float8</name> <operator>=</operator> <operator>&amp;</operator><name>cbor_builder_float8_callback</name></expr>,
+<expr><operator>.</operator><name>indef_break</name> <operator>=</operator> <operator>&amp;</operator><name>cbor_builder_indef_break_callback</name></expr>}</block></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>source_size</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>result</name><operator>-&gt;</operator><name>error</name><operator>.</operator><name>code</name></name> <operator>=</operator> <name>CBOR_ERR_NODATA</name></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>_cbor_stack</name></name></type> <name>stack</name> <init>= <expr><call><name>_cbor_stack_init</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><name><name>struct</name> <name>_cbor_decoder_context</name></name></type> <name>context</name> <init>= <expr><operator>(</operator>struct <name>_cbor_decoder_context</name><operator>)</operator><block>{
+<expr><operator>.</operator><name>stack</name> <operator>=</operator> <operator>&amp;</operator><name>stack</name></expr>, <expr><operator>.</operator><name>creation_failed</name> <operator>=</operator> <name>false</name></expr>, <expr><operator>.</operator><name>syntax_error</name> <operator>=</operator> <name>false</name></expr>}</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>cbor_decoder_result</name></name></type> <name>decode_result</name></decl>;</decl_stmt>
+<expr_stmt><expr><operator>*</operator><name>result</name> <operator>=</operator>
+<operator>(</operator>struct <name>cbor_load_result</name><operator>)</operator><block>{<expr><operator>.</operator><name>read</name> <operator>=</operator> <literal type="number">0</literal></expr>, <expr><operator>.</operator><name>error</name> <operator>=</operator> <block>{<expr><operator>.</operator><name>code</name> <operator>=</operator> <name>CBOR_ERR_NONE</name></expr>}</block></expr>}</block></expr>;</expr_stmt>
+
+<do>do <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>source_size</name> <operator>&gt;</operator> <name><name>result</name><operator>-&gt;</operator><name>read</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>decode_result</name> <operator>=</operator>
+<call><name>cbor_stream_decode</name><argument_list>(<argument><expr><name>source</name> <operator>+</operator> <name><name>result</name><operator>-&gt;</operator><name>read</name></name></expr></argument>, <argument><expr><name>source_size</name> <operator>-</operator> <name><name>result</name><operator>-&gt;</operator><name>read</name></name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>callbacks</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>context</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name><name>result</name><operator>-&gt;</operator><name>error</name></name> <operator>=</operator> <operator>(</operator>struct <name>cbor_error</name><operator>)</operator><block>{<expr><operator>.</operator><name>code</name> <operator>=</operator> <name>CBOR_ERR_NOTENOUGHDATA</name></expr>,
+<expr><operator>.</operator><name>position</name> <operator>=</operator> <name><name>result</name><operator>-&gt;</operator><name>read</name></name></expr>}</block></expr>;</expr_stmt>
+<goto>goto <name>error</name>;</goto>
+</block_content>}</block></else></if_stmt>
+
+<switch>switch <condition>(<expr><name><name>decode_result</name><operator>.</operator><name>status</name></name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>CBOR_DECODER_FINISHED</name></expr>:</case>
+
+<block>{<block_content>
+<expr_stmt><expr><name><name>result</name><operator>-&gt;</operator><name>read</name></name> <operator>+=</operator> <name><name>decode_result</name><operator>.</operator><name>read</name></name></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block>
+<case>case <expr><name>CBOR_DECODER_NEDATA</name></expr>:</case>
+
+<block>{<block_content>
+<expr_stmt><expr><name><name>result</name><operator>-&gt;</operator><name>error</name><operator>.</operator><name>code</name></name> <operator>=</operator> <name>CBOR_ERR_NOTENOUGHDATA</name></expr>;</expr_stmt>
+<goto>goto <name>error</name>;</goto>
+</block_content>}</block>
+<case>case <expr><name>CBOR_DECODER_ERROR</name></expr>:</case>
+
+<block>{<block_content>
+<expr_stmt><expr><name><name>result</name><operator>-&gt;</operator><name>error</name><operator>.</operator><name>code</name></name> <operator>=</operator> <name>CBOR_ERR_MALFORMATED</name></expr>;</expr_stmt>
+<goto>goto <name>error</name>;</goto>
+</block_content>}</block>
+</block_content>}</block></switch>
+
+<if_stmt><if>if <condition>(<expr><name><name>context</name><operator>.</operator><name>creation_failed</name></name></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><name><name>result</name><operator>-&gt;</operator><name>error</name><operator>.</operator><name>code</name></name> <operator>=</operator> <name>CBOR_ERR_MEMERROR</name></expr>;</expr_stmt>
+<goto>goto <name>error</name>;</goto>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>context</name><operator>.</operator><name>syntax_error</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>result</name><operator>-&gt;</operator><name>error</name><operator>.</operator><name>code</name></name> <operator>=</operator> <name>CBOR_ERR_SYNTAXERROR</name></expr>;</expr_stmt>
+<goto>goto <name>error</name>;</goto>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block> while <condition>(<expr><name><name>stack</name><operator>.</operator><name>size</name></name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition>;</do>
+
+
+<decl_stmt><decl><type><name>cbor_item_t</name> <modifier>*</modifier></type><name>result_item</name> <init>= <expr><name><name>context</name><operator>.</operator><name>root</name></name></expr></init></decl>;</decl_stmt>
+<return>return <expr><name>result_item</name></expr>;</return>
+
+<label><name>error</name>:</label>
+<expr_stmt><expr><name><name>result</name><operator>-&gt;</operator><name>error</name><operator>.</operator><name>position</name></name> <operator>=</operator> <name><name>result</name><operator>-&gt;</operator><name>read</name></name></expr>;</expr_stmt>
+
+
+
+<while>while <condition>(<expr><name><name>stack</name><operator>.</operator><name>size</name></name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>cbor_decref</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>stack</name><operator>.</operator><name>top</name><operator>-&gt;</operator><name>item</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>_cbor_stack_pop</name><argument_list>(<argument><expr><operator>&amp;</operator><name>stack</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></while>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>cbor_item_t</name> <modifier>*</modifier></type><name>_cbor_copy_int</name><parameter_list>(<parameter><decl><type><name>cbor_item_t</name> <modifier>*</modifier></type><name>item</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>negative</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>cbor_item_t</name> <modifier>*</modifier></type><name>res</name></decl>;</decl_stmt>
+<switch>switch <condition>(<expr><call><name>cbor_int_get_width</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>CBOR_INT_8</name></expr>:</case>
+<expr_stmt><expr><name>res</name> <operator>=</operator> <call><name>cbor_build_uint8</name><argument_list>(<argument><expr><call><name>cbor_get_uint8</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>CBOR_INT_16</name></expr>:</case>
+<expr_stmt><expr><name>res</name> <operator>=</operator> <call><name>cbor_build_uint16</name><argument_list>(<argument><expr><call><name>cbor_get_uint16</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>CBOR_INT_32</name></expr>:</case>
+<expr_stmt><expr><name>res</name> <operator>=</operator> <call><name>cbor_build_uint32</name><argument_list>(<argument><expr><call><name>cbor_get_uint32</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>CBOR_INT_64</name></expr>:</case>
+<expr_stmt><expr><name>res</name> <operator>=</operator> <call><name>cbor_build_uint64</name><argument_list>(<argument><expr><call><name>cbor_get_uint64</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<default>default:</default>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></switch>
+
+<if_stmt><if>if <condition>(<expr><name>negative</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><call><name>cbor_mark_negint</name><argument_list>(<argument><expr><name>res</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<return>return <expr><name>res</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>cbor_item_t</name> <modifier>*</modifier></type><name>_cbor_copy_float_ctrl</name><parameter_list>(<parameter><decl><type><name>cbor_item_t</name> <modifier>*</modifier></type><name>item</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<switch>switch <condition>(<expr><call><name>cbor_float_get_width</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>CBOR_FLOAT_0</name></expr>:</case>
+<return>return <expr><call><name>cbor_build_ctrl</name><argument_list>(<argument><expr><call><name>cbor_ctrl_value</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</return>
+<case>case <expr><name>CBOR_FLOAT_16</name></expr>:</case>
+<return>return <expr><call><name>cbor_build_float2</name><argument_list>(<argument><expr><call><name>cbor_float_get_float2</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</return>
+<case>case <expr><name>CBOR_FLOAT_32</name></expr>:</case>
+<return>return <expr><call><name>cbor_build_float4</name><argument_list>(<argument><expr><call><name>cbor_float_get_float4</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</return>
+<case>case <expr><name>CBOR_FLOAT_64</name></expr>:</case>
+<return>return <expr><call><name>cbor_build_float8</name><argument_list>(<argument><expr><call><name>cbor_float_get_float8</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></switch>
+
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>cbor_item_t</name> <modifier>*</modifier></type><name>cbor_copy</name><parameter_list>(<parameter><decl><type><name>cbor_item_t</name> <modifier>*</modifier></type><name>item</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<switch>switch <condition>(<expr><call><name>cbor_typeof</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>CBOR_TYPE_UINT</name></expr>:</case>
+<return>return <expr><call><name>_cbor_copy_int</name><argument_list>(<argument><expr><name>item</name></expr></argument>, <argument><expr><name>false</name></expr></argument>)</argument_list></call></expr>;</return>
+<case>case <expr><name>CBOR_TYPE_NEGINT</name></expr>:</case>
+<return>return <expr><call><name>_cbor_copy_int</name><argument_list>(<argument><expr><name>item</name></expr></argument>, <argument><expr><name>true</name></expr></argument>)</argument_list></call></expr>;</return>
+<case>case <expr><name>CBOR_TYPE_BYTESTRING</name></expr>:</case>
+<if_stmt><if>if <condition>(<expr><call><name>cbor_bytestring_is_definite</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<return>return <expr><call><name>cbor_build_bytestring</name><argument_list>(<argument><expr><call><name>cbor_bytestring_handle</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>cbor_bytestring_length</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<decl_stmt><decl><type><name>cbor_item_t</name> <modifier>*</modifier></type><name>res</name> <init>= <expr><call><name>cbor_new_indefinite_bytestring</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>cbor_bytestring_chunk_count</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>cbor_bytestring_add_chunk</name><argument_list>(
+<argument><expr><name>res</name></expr></argument>,
+<argument><expr><call><name>cbor_move</name><argument_list>(<argument><expr><call><name>cbor_copy</name><argument_list>(<argument><expr><call><name>cbor_bytestring_chunks_handle</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call><index>[<expr><name>i</name></expr>]</index></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+<return>return <expr><name>res</name></expr>;</return>
+</block_content>}</block></else></if_stmt>
+<case>case <expr><name>CBOR_TYPE_STRING</name></expr>:</case>
+<if_stmt><if>if <condition>(<expr><call><name>cbor_string_is_definite</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<return>return <expr><call><name>cbor_build_stringn</name><argument_list>(<argument><expr><operator>(</operator><specifier>const</specifier> <name>char</name> <operator>*</operator><operator>)</operator><call><name>cbor_string_handle</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>cbor_string_length</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<decl_stmt><decl><type><name>cbor_item_t</name> <modifier>*</modifier></type><name>res</name> <init>= <expr><call><name>cbor_new_indefinite_string</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>cbor_string_chunk_count</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>cbor_string_add_chunk</name><argument_list>(
+<argument><expr><name>res</name></expr></argument>, <argument><expr><call><name>cbor_move</name><argument_list>(<argument><expr><call><name>cbor_copy</name><argument_list>(<argument><expr><call><name>cbor_string_chunks_handle</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call><index>[<expr><name>i</name></expr>]</index></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+<return>return <expr><name>res</name></expr>;</return>
+</block_content>}</block></else></if_stmt>
+<case>case <expr><name>CBOR_TYPE_ARRAY</name></expr>:</case> <block>{<block_content>
+<decl_stmt><decl><type><name>cbor_item_t</name> <modifier>*</modifier></type><name>res</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>cbor_array_is_definite</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>res</name> <operator>=</operator> <call><name>cbor_new_definite_array</name><argument_list>(<argument><expr><call><name>cbor_array_size</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>res</name> <operator>=</operator> <call><name>cbor_new_indefinite_array</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>cbor_array_size</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>cbor_array_push</name><argument_list>(
+<argument><expr><name>res</name></expr></argument>, <argument><expr><call><name>cbor_move</name><argument_list>(<argument><expr><call><name>cbor_copy</name><argument_list>(<argument><expr><call><name>cbor_move</name><argument_list>(<argument><expr><call><name>cbor_array_get</name><argument_list>(<argument><expr><name>item</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+<return>return <expr><name>res</name></expr>;</return>
+</block_content>}</block>
+<case>case <expr><name>CBOR_TYPE_MAP</name></expr>:</case> <block>{<block_content>
+<decl_stmt><decl><type><name>cbor_item_t</name> <modifier>*</modifier></type><name>res</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>cbor_map_is_definite</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>res</name> <operator>=</operator> <call><name>cbor_new_definite_map</name><argument_list>(<argument><expr><call><name>cbor_map_size</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>res</name> <operator>=</operator> <call><name>cbor_new_indefinite_map</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<decl_stmt><decl><type><name><name>struct</name> <name>cbor_pair</name></name> <modifier>*</modifier></type><name>it</name> <init>= <expr><call><name>cbor_map_handle</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>cbor_map_size</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<macro><name>cbor_map_add</name><argument_list>(<argument>res</argument>, <argument>(struct cbor_pair){
+.key = cbor_move(cbor_copy(it[i].key))</argument>,
+<argument>.value = cbor_move(cbor_copy(it[i].value))}</argument>)</argument_list></macro><empty_stmt>;</empty_stmt></block_content></block></for>
+<return>return <expr><name>res</name></expr>;</return>
+</block_content>}</block>
+<case>case <expr><name>CBOR_TYPE_TAG</name></expr>:</case>
+<return>return <expr><call><name>cbor_build_tag</name><argument_list>(
+<argument><expr><call><name>cbor_tag_value</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>cbor_move</name><argument_list>(<argument><expr><call><name>cbor_copy</name><argument_list>(<argument><expr><call><name>cbor_move</name><argument_list>(<argument><expr><call><name>cbor_tag_item</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</return>
+<case>case <expr><name>CBOR_TYPE_FLOAT_CTRL</name></expr>:</case>
+<return>return <expr><call><name>_cbor_copy_float_ctrl</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></switch>
+
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>CBOR_PRETTY_PRINTER</name></expr></cpp:if>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;inttypes.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;locale.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;wchar.h&gt;</cpp:file></cpp:include>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>__STDC_FORMAT_MACROS</name></cpp:macro></cpp:define>
+
+<function><type><specifier>static</specifier> <name>int</name></type> <name>_pow</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>b</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ex</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>ex</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>res</name> <init>= <expr><name>b</name></expr></init></decl>;</decl_stmt>
+<while>while <condition>(<expr><operator>--</operator><name>ex</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>res</name> <operator>*=</operator> <name>b</name></expr>;</expr_stmt></block_content></block></while>
+<return>return <expr><name>res</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type> <name>_cbor_nested_describe</name><parameter_list>(<parameter><decl><type><name>cbor_item_t</name> <modifier>*</modifier></type><name>item</name></decl></parameter>, <parameter><decl><type><name>FILE</name> <modifier>*</modifier></type><name>out</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>indent</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>setlocale</name><argument_list>(<argument><expr><name>LC_ALL</name></expr></argument>, <argument><expr><literal type="string">""</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<switch>switch <condition>(<expr><call><name>cbor_typeof</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>CBOR_TYPE_UINT</name></expr>:</case> <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"%*s[CBOR_TYPE_UINT] "</literal></expr></argument>, <argument><expr><name>indent</name></expr></argument>, <argument><expr><literal type="string">" "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"Width: %dB, "</literal></expr></argument>, <argument><expr><call><name>_pow</name><argument_list>(<argument><expr><literal type="number">2</literal></expr></argument>, <argument><expr><call><name>cbor_int_get_width</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"Value: %"</literal> <name>PRIu64</name> <literal type="string">"\n"</literal></expr></argument>, <argument><expr><call><name>cbor_get_int</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block><empty_stmt>;</empty_stmt>
+<case>case <expr><name>CBOR_TYPE_NEGINT</name></expr>:</case> <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"%*s[CBOR_TYPE_NEGINT] "</literal></expr></argument>, <argument><expr><name>indent</name></expr></argument>, <argument><expr><literal type="string">" "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"Width: %dB, "</literal></expr></argument>, <argument><expr><call><name>_pow</name><argument_list>(<argument><expr><literal type="number">2</literal></expr></argument>, <argument><expr><call><name>cbor_int_get_width</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"Value: -%"</literal> <name>PRIu64</name> <literal type="string">" -1\n"</literal></expr></argument>, <argument><expr><call><name>cbor_get_int</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block><empty_stmt>;</empty_stmt>
+<case>case <expr><name>CBOR_TYPE_BYTESTRING</name></expr>:</case> <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"%*s[CBOR_TYPE_BYTESTRING] "</literal></expr></argument>, <argument><expr><name>indent</name></expr></argument>, <argument><expr><literal type="string">" "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>cbor_bytestring_is_indefinite</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"Indefinite, with %zu chunks:\n"</literal></expr></argument>,
+<argument><expr><call><name>cbor_bytestring_chunk_count</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>cbor_bytestring_chunk_count</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>_cbor_nested_describe</name><argument_list>(<argument><expr><call><name>cbor_bytestring_chunks_handle</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call><index>[<expr><name>i</name></expr>]</index></expr></argument>, <argument><expr><name>out</name></expr></argument>,
+<argument><expr><name>indent</name> <operator>+</operator> <literal type="number">4</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"Definite, length %zuB\n"</literal></expr></argument>, <argument><expr><call><name>cbor_bytestring_length</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<break>break;</break>
+</block_content>}</block><empty_stmt>;</empty_stmt>
+<case>case <expr><name>CBOR_TYPE_STRING</name></expr>:</case> <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"%*s[CBOR_TYPE_STRING] "</literal></expr></argument>, <argument><expr><name>indent</name></expr></argument>, <argument><expr><literal type="string">" "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>cbor_string_is_indefinite</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"Indefinite, with %zu chunks:\n"</literal></expr></argument>,
+<argument><expr><call><name>cbor_string_chunk_count</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>cbor_string_chunk_count</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>_cbor_nested_describe</name><argument_list>(<argument><expr><call><name>cbor_string_chunks_handle</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call><index>[<expr><name>i</name></expr>]</index></expr></argument>, <argument><expr><name>out</name></expr></argument>,
+<argument><expr><name>indent</name> <operator>+</operator> <literal type="number">4</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"Definite, length %zuB, %zu codepoints\n"</literal></expr></argument>,
+<argument><expr><call><name>cbor_string_length</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><call><name>cbor_string_codepoint_count</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"%*s"</literal></expr></argument>, <argument><expr><name>indent</name> <operator>+</operator> <literal type="number">4</literal></expr></argument>, <argument><expr><literal type="string">" "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>fwrite</name><argument_list>(<argument><expr><call><name>cbor_string_handle</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><operator>(</operator><name>int</name><operator>)</operator><call><name>cbor_string_length</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>out</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<break>break;</break>
+</block_content>}</block><empty_stmt>;</empty_stmt>
+<case>case <expr><name>CBOR_TYPE_ARRAY</name></expr>:</case> <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"%*s[CBOR_TYPE_ARRAY] "</literal></expr></argument>, <argument><expr><name>indent</name></expr></argument>, <argument><expr><literal type="string">" "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>cbor_array_is_definite</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"Definite, size: %zu\n"</literal></expr></argument>, <argument><expr><call><name>cbor_array_size</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"Indefinite, size: %zu\n"</literal></expr></argument>, <argument><expr><call><name>cbor_array_size</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>cbor_array_size</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>_cbor_nested_describe</name><argument_list>(<argument><expr><call><name>cbor_array_handle</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call><index>[<expr><name>i</name></expr>]</index></expr></argument>, <argument><expr><name>out</name></expr></argument>, <argument><expr><name>indent</name> <operator>+</operator> <literal type="number">4</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+<break>break;</break>
+</block_content>}</block><empty_stmt>;</empty_stmt>
+<case>case <expr><name>CBOR_TYPE_MAP</name></expr>:</case> <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"%*s[CBOR_TYPE_MAP] "</literal></expr></argument>, <argument><expr><name>indent</name></expr></argument>, <argument><expr><literal type="string">" "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>cbor_map_is_definite</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"Definite, size: %zu\n"</literal></expr></argument>, <argument><expr><call><name>cbor_map_size</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"Indefinite, size: %zu\n"</literal></expr></argument>, <argument><expr><call><name>cbor_map_size</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>cbor_map_size</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>_cbor_nested_describe</name><argument_list>(<argument><expr><call><name>cbor_map_handle</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call><index>[<expr><name>i</name></expr>]</index><operator>.</operator><name>key</name></expr></argument>, <argument><expr><name>out</name></expr></argument>, <argument><expr><name>indent</name> <operator>+</operator> <literal type="number">4</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>_cbor_nested_describe</name><argument_list>(<argument><expr><call><name>cbor_map_handle</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call><index>[<expr><name>i</name></expr>]</index><operator>.</operator><name>value</name></expr></argument>, <argument><expr><name>out</name></expr></argument>, <argument><expr><name>indent</name> <operator>+</operator> <literal type="number">4</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+<break>break;</break>
+</block_content>}</block><empty_stmt>;</empty_stmt>
+<case>case <expr><name>CBOR_TYPE_TAG</name></expr>:</case> <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"%*s[CBOR_TYPE_TAG] "</literal></expr></argument>, <argument><expr><name>indent</name></expr></argument>, <argument><expr><literal type="string">" "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"Value: %"</literal> <name>PRIu64</name> <literal type="string">"\n"</literal></expr></argument>, <argument><expr><call><name>cbor_tag_value</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>_cbor_nested_describe</name><argument_list>(<argument><expr><call><name>cbor_move</name><argument_list>(<argument><expr><call><name>cbor_tag_item</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>out</name></expr></argument>, <argument><expr><name>indent</name> <operator>+</operator> <literal type="number">4</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block><empty_stmt>;</empty_stmt>
+<case>case <expr><name>CBOR_TYPE_FLOAT_CTRL</name></expr>:</case> <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"%*s[CBOR_TYPE_FLOAT_CTRL] "</literal></expr></argument>, <argument><expr><name>indent</name></expr></argument>, <argument><expr><literal type="string">" "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>cbor_float_ctrl_is_ctrl</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>cbor_is_bool</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"Bool: %s\n"</literal></expr></argument>, <argument><expr><ternary><condition><expr><call><name>cbor_get_bool</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr> ?</condition><then> <expr><literal type="string">"true"</literal></expr> </then><else>: <expr><literal type="string">"false"</literal></expr></else></ternary></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><call><name>cbor_is_undef</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"Undefined\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><call><name>cbor_is_null</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"Null\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"Simple value %d\n"</literal></expr></argument>, <argument><expr><call><name>cbor_ctrl_value</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"Width: %dB, "</literal></expr></argument>, <argument><expr><call><name>_pow</name><argument_list>(<argument><expr><literal type="number">2</literal></expr></argument>, <argument><expr><call><name>cbor_float_get_width</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="string">"value: %lf\n"</literal></expr></argument>, <argument><expr><call><name>cbor_float_get_float</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<break>break;</break>
+</block_content>}</block><empty_stmt>;</empty_stmt>
+</block_content>}</block></switch>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type> <name>cbor_describe</name><parameter_list>(<parameter><decl><type><name>cbor_item_t</name> <modifier>*</modifier></type><name>item</name></decl></parameter>, <parameter><decl><type><name>FILE</name> <modifier>*</modifier></type><name>out</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>_cbor_nested_describe</name><argument_list>(<argument><expr><name>item</name></expr></argument>, <argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

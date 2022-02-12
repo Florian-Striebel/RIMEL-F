@@ -1,0 +1,449 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/libarchive/libarchive/archive_write_add_filter_compress.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"archive_platform.h"</cpp:file></cpp:include>
+
+<expr_stmt><expr><call><name>__FBSDID</name><argument_list>(<argument><expr><literal type="string">"$FreeBSD: head/lib/libarchive/archive_write_set_compression_compress.c 201111 2009-12-28 03:33:05Z kientzle $"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_ERRNO_H</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;errno.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_STDLIB_H</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_STRING_H</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;string.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"archive.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"archive_private.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"archive_write_private.h"</cpp:file></cpp:include>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>HSIZE</name></cpp:macro> <cpp:value>69001</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>HSHIFT</name></cpp:macro> <cpp:value>8</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>CHECK_GAP</name></cpp:macro> <cpp:value>10000</cpp:value></cpp:define>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MAXCODE</name><parameter_list>(<parameter><type><name>bits</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((1 &lt;&lt; (bits)) - 1)</cpp:value></cpp:define>
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>FIRST</name></cpp:macro> <cpp:value>257</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>CLEAR</name></cpp:macro> <cpp:value>256</cpp:value></cpp:define>
+
+<struct>struct <name>private_data</name> <block>{
+<decl_stmt><decl><type><name>int64_t</name></type> <name>in_count</name></decl>, <decl><type ref="prev"/><name>out_count</name></decl>, <decl><type ref="prev"/><name>checkpoint</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>int</name></type> <name>code_len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>cur_maxcode</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>max_maxcode</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name><name>hashtab</name> <index>[<expr><name>HSIZE</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>short</name></type> <name><name>codetab</name> <index>[<expr><name>HSIZE</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>first_free</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>compress_ratio</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>int</name></type> <name>cur_code</name></decl>, <decl><type ref="prev"/><name>cur_fcode</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>int</name></type> <name>bit_offset</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name>bit_buf</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>compressed</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>compressed_buffer_size</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>compressed_offset</name></decl>;</decl_stmt>
+}</block>;</struct>
+
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>archive_compressor_compress_open</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>archive_write_filter</name></name> <modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>archive_compressor_compress_write</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>archive_write_filter</name></name> <modifier>*</modifier></type></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>size_t</name></type></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>archive_compressor_compress_close</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>archive_write_filter</name></name> <modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>archive_compressor_compress_free</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>archive_write_filter</name></name> <modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>ARCHIVE_VERSION_NUMBER</name> <operator>&lt;</operator> <literal type="number">4000000</literal></expr></cpp:if>
+<function><type><name>int</name></type>
+<name>archive_write_set_compression_compress</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>archive</name></name> <modifier>*</modifier></type><name>a</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>__archive_write_filters_free</name><argument_list>(<argument><expr><name>a</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><call><name>archive_write_add_filter_compress</name><argument_list>(<argument><expr><name>a</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+
+<function><type><name>int</name></type>
+<name>archive_write_add_filter_compress</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>archive</name></name> <modifier>*</modifier></type><name>_a</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>archive_write</name></name> <modifier>*</modifier></type><name>a</name> <init>= <expr><operator>(</operator>struct <name>archive_write</name> <operator>*</operator><operator>)</operator><name>_a</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>archive_write_filter</name></name> <modifier>*</modifier></type><name>f</name> <init>= <expr><call><name>__archive_write_allocate_filter</name><argument_list>(<argument><expr><name>_a</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>archive_check_magic</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>a</name><operator>-&gt;</operator><name>archive</name></name></expr></argument>, <argument><expr><name>ARCHIVE_WRITE_MAGIC</name></expr></argument>,
+<argument><expr><name>ARCHIVE_STATE_NEW</name></expr></argument>, <argument><expr><literal type="string">"archive_write_add_filter_compress"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>f</name><operator>-&gt;</operator><name>open</name></name> <operator>=</operator> <operator>&amp;</operator><name>archive_compressor_compress_open</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>f</name><operator>-&gt;</operator><name>code</name></name> <operator>=</operator> <name>ARCHIVE_FILTER_COMPRESS</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>f</name><operator>-&gt;</operator><name>name</name></name> <operator>=</operator> <literal type="string">"compress"</literal></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>archive_compressor_compress_open</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>archive_write_filter</name></name> <modifier>*</modifier></type><name>f</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>private_data</name></name> <modifier>*</modifier></type><name>state</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>bs</name> <init>= <expr><literal type="number">65536</literal></expr></init></decl>, <decl><type ref="prev"/><name>bpb</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>f</name><operator>-&gt;</operator><name>code</name></name> <operator>=</operator> <name>ARCHIVE_FILTER_COMPRESS</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>f</name><operator>-&gt;</operator><name>name</name></name> <operator>=</operator> <literal type="string">"compress"</literal></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>state</name> <operator>=</operator> <operator>(</operator>struct <name>private_data</name> <operator>*</operator><operator>)</operator><call><name>calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>state</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>state</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>archive_set_error</name><argument_list>(<argument><expr><name><name>f</name><operator>-&gt;</operator><name>archive</name></name></expr></argument>, <argument><expr><name>ENOMEM</name></expr></argument>,
+<argument><expr><literal type="string">"Can't allocate data for compression"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FATAL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>f</name><operator>-&gt;</operator><name>archive</name><operator>-&gt;</operator><name>magic</name></name> <operator>==</operator> <name>ARCHIVE_WRITE_MAGIC</name></expr>)</condition> <block>{<block_content>
+
+
+<expr_stmt><expr><name>bpb</name> <operator>=</operator> <call><name>archive_write_get_bytes_per_block</name><argument_list>(<argument><expr><name><name>f</name><operator>-&gt;</operator><name>archive</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>bpb</name> <operator>&gt;</operator> <name>bs</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>bs</name> <operator>=</operator> <name>bpb</name></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name>bpb</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>bs</name> <operator>-=</operator> <name>bs</name> <operator>%</operator> <name>bpb</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>compressed_buffer_size</name></name> <operator>=</operator> <name>bs</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>compressed</name></name> <operator>=</operator> <call><name>malloc</name><argument_list>(<argument><expr><name><name>state</name><operator>-&gt;</operator><name>compressed_buffer_size</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>state</name><operator>-&gt;</operator><name>compressed</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>archive_set_error</name><argument_list>(<argument><expr><name><name>f</name><operator>-&gt;</operator><name>archive</name></name></expr></argument>, <argument><expr><name>ENOMEM</name></expr></argument>,
+<argument><expr><literal type="string">"Can't allocate data for compression buffer"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>state</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FATAL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>f</name><operator>-&gt;</operator><name>write</name></name> <operator>=</operator> <name>archive_compressor_compress_write</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>f</name><operator>-&gt;</operator><name>close</name></name> <operator>=</operator> <name>archive_compressor_compress_close</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>f</name><operator>-&gt;</operator><name>free</name></name> <operator>=</operator> <name>archive_compressor_compress_free</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>max_maxcode</name></name> <operator>=</operator> <literal type="number">0x10000</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>in_count</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>bit_buf</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>bit_offset</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>out_count</name></name> <operator>=</operator> <literal type="number">3</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>compress_ratio</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>checkpoint</name></name> <operator>=</operator> <name>CHECK_GAP</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>code_len</name></name> <operator>=</operator> <literal type="number">9</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>cur_maxcode</name></name> <operator>=</operator> <call><name>MAXCODE</name><argument_list>(<argument><expr><name><name>state</name><operator>-&gt;</operator><name>code_len</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>first_free</name></name> <operator>=</operator> <name>FIRST</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><name><name>state</name><operator>-&gt;</operator><name>hashtab</name></name></expr></argument>, <argument><expr><literal type="number">0xff</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name><name>state</name><operator>-&gt;</operator><name>hashtab</name></name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>compressed</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>=</operator> <literal type="number">0x1f</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>compressed</name><index>[<expr><literal type="number">1</literal></expr>]</index></name> <operator>=</operator> <literal type="number">0x9d</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>compressed</name><index>[<expr><literal type="number">2</literal></expr>]</index></name> <operator>=</operator> <literal type="number">0x90</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>compressed_offset</name></name> <operator>=</operator> <literal type="number">3</literal></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>f</name><operator>-&gt;</operator><name>data</name></name> <operator>=</operator> <name>state</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>unsigned</name> <name>char</name></type> <name><name>rmask</name><index>[<expr><literal type="number">9</literal></expr>]</index></name> <init>=
+<expr><block>{<expr><literal type="number">0x00</literal></expr>, <expr><literal type="number">0x01</literal></expr>, <expr><literal type="number">0x03</literal></expr>, <expr><literal type="number">0x07</literal></expr>, <expr><literal type="number">0x0f</literal></expr>, <expr><literal type="number">0x1f</literal></expr>, <expr><literal type="number">0x3f</literal></expr>, <expr><literal type="number">0x7f</literal></expr>, <expr><literal type="number">0xff</literal></expr>}</block></expr></init></decl>;</decl_stmt>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>output_byte</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>archive_write_filter</name></name> <modifier>*</modifier></type><name>f</name></decl></parameter>, <parameter><decl><type><name>unsigned</name> <name>char</name></type> <name>c</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>private_data</name></name> <modifier>*</modifier></type><name>state</name> <init>= <expr><name><name>f</name><operator>-&gt;</operator><name>data</name></name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>compressed</name><index>[<expr><name><name>state</name><operator>-&gt;</operator><name>compressed_offset</name></name><operator>++</operator></expr>]</index></name> <operator>=</operator> <name>c</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>++</operator><name><name>state</name><operator>-&gt;</operator><name>out_count</name></name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>state</name><operator>-&gt;</operator><name>compressed_buffer_size</name></name> <operator>==</operator> <name><name>state</name><operator>-&gt;</operator><name>compressed_offset</name></name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>ret</name> <init>= <expr><call><name>__archive_write_filter</name><argument_list>(<argument><expr><name><name>f</name><operator>-&gt;</operator><name>next_filter</name></name></expr></argument>,
+<argument><expr><name><name>state</name><operator>-&gt;</operator><name>compressed</name></name></expr></argument>, <argument><expr><name><name>state</name><operator>-&gt;</operator><name>compressed_buffer_size</name></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>ret</name> <operator>!=</operator> <name>ARCHIVE_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>ARCHIVE_FATAL</name></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>compressed_offset</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><name>ARCHIVE_OK</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>output_code</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>archive_write_filter</name></name> <modifier>*</modifier></type><name>f</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ocode</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>private_data</name></name> <modifier>*</modifier></type><name>state</name> <init>= <expr><name><name>f</name><operator>-&gt;</operator><name>data</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>bits</name></decl>, <decl><type ref="prev"/><name>ret</name></decl>, <decl><type ref="prev"/><name>clear_flg</name></decl>, <decl><type ref="prev"/><name>bit_offset</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>clear_flg</name> <operator>=</operator> <name>ocode</name> <operator>==</operator> <name>CLEAR</name></expr>;</expr_stmt>
+
+
+
+
+
+<expr_stmt><expr><name>bit_offset</name> <operator>=</operator> <name><name>state</name><operator>-&gt;</operator><name>bit_offset</name></name> <operator>%</operator> <literal type="number">8</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>bit_buf</name></name> <operator>|=</operator> <operator>(</operator><name>ocode</name> <operator>&lt;&lt;</operator> <name>bit_offset</name><operator>)</operator> <operator>&amp;</operator> <literal type="number">0xff</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>output_byte</name><argument_list>(<argument><expr><name>f</name></expr></argument>, <argument><expr><name><name>state</name><operator>-&gt;</operator><name>bit_buf</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>bits</name> <operator>=</operator> <name><name>state</name><operator>-&gt;</operator><name>code_len</name></name> <operator>-</operator> <operator>(</operator><literal type="number">8</literal> <operator>-</operator> <name>bit_offset</name><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name>ocode</name> <operator>&gt;&gt;=</operator> <literal type="number">8</literal> <operator>-</operator> <name>bit_offset</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>bits</name> <operator>&gt;=</operator> <literal type="number">8</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>output_byte</name><argument_list>(<argument><expr><name>f</name></expr></argument>, <argument><expr><name>ocode</name> <operator>&amp;</operator> <literal type="number">0xff</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>ocode</name> <operator>&gt;&gt;=</operator> <literal type="number">8</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>bits</name> <operator>-=</operator> <literal type="number">8</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>bit_offset</name></name> <operator>+=</operator> <name><name>state</name><operator>-&gt;</operator><name>code_len</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>bit_buf</name></name> <operator>=</operator> <name>ocode</name> <operator>&amp;</operator> <name><name>rmask</name><index>[<expr><name>bits</name></expr>]</index></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>state</name><operator>-&gt;</operator><name>bit_offset</name></name> <operator>==</operator> <name><name>state</name><operator>-&gt;</operator><name>code_len</name></name> <operator>*</operator> <literal type="number">8</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>bit_offset</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>clear_flg</name> <operator>||</operator> <name><name>state</name><operator>-&gt;</operator><name>first_free</name></name> <operator>&gt;</operator> <name><name>state</name><operator>-&gt;</operator><name>cur_maxcode</name></name></expr>)</condition> <block>{<block_content>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>state</name><operator>-&gt;</operator><name>bit_offset</name></name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<while>while <condition>(<expr><name><name>state</name><operator>-&gt;</operator><name>bit_offset</name></name> <operator>&lt;</operator> <name><name>state</name><operator>-&gt;</operator><name>code_len</name></name> <operator>*</operator> <literal type="number">8</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <call><name>output_byte</name><argument_list>(<argument><expr><name>f</name></expr></argument>, <argument><expr><name><name>state</name><operator>-&gt;</operator><name>bit_buf</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ret</name> <operator>!=</operator> <name>ARCHIVE_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>ret</name></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>bit_offset</name></name> <operator>+=</operator> <literal type="number">8</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>bit_buf</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></while>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>bit_buf</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>bit_offset</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>clear_flg</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>code_len</name></name> <operator>=</operator> <literal type="number">9</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>cur_maxcode</name></name> <operator>=</operator> <call><name>MAXCODE</name><argument_list>(<argument><expr><name><name>state</name><operator>-&gt;</operator><name>code_len</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>code_len</name></name><operator>++</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>state</name><operator>-&gt;</operator><name>code_len</name></name> <operator>==</operator> <literal type="number">16</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>cur_maxcode</name></name> <operator>=</operator> <name><name>state</name><operator>-&gt;</operator><name>max_maxcode</name></name></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>cur_maxcode</name></name> <operator>=</operator> <call><name>MAXCODE</name><argument_list>(<argument><expr><name><name>state</name><operator>-&gt;</operator><name>code_len</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>output_flush</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>archive_write_filter</name></name> <modifier>*</modifier></type><name>f</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>private_data</name></name> <modifier>*</modifier></type><name>state</name> <init>= <expr><name><name>f</name><operator>-&gt;</operator><name>data</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ret</name></decl>;</decl_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>state</name><operator>-&gt;</operator><name>bit_offset</name></name> <operator>%</operator> <literal type="number">8</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>code_len</name></name> <operator>=</operator> <operator>(</operator><name><name>state</name><operator>-&gt;</operator><name>bit_offset</name></name> <operator>%</operator> <literal type="number">8</literal> <operator>+</operator> <literal type="number">7</literal><operator>)</operator> <operator>/</operator> <literal type="number">8</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <call><name>output_byte</name><argument_list>(<argument><expr><name>f</name></expr></argument>, <argument><expr><name><name>state</name><operator>-&gt;</operator><name>bit_buf</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ret</name> <operator>!=</operator> <name>ARCHIVE_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>ret</name></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>archive_compressor_compress_write</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>archive_write_filter</name></name> <modifier>*</modifier></type><name>f</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>buff</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>length</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>private_data</name></name> <modifier>*</modifier></type><name>state</name> <init>= <expr><operator>(</operator>struct <name>private_data</name> <operator>*</operator><operator>)</operator><name><name>f</name><operator>-&gt;</operator><name>data</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ratio</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>c</name></decl>, <decl><type ref="prev"/><name>disp</name></decl>, <decl><type ref="prev"/><name>ret</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>bp</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>length</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>ARCHIVE_OK</name></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>bp</name> <operator>=</operator> <name>buff</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>state</name><operator>-&gt;</operator><name>in_count</name></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>cur_code</name></name> <operator>=</operator> <operator>*</operator><name>bp</name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><operator>++</operator><name><name>state</name><operator>-&gt;</operator><name>in_count</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>--</operator><name>length</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<while>while <condition>(<expr><name>length</name><operator>--</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>c</name> <operator>=</operator> <operator>*</operator><name>bp</name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>in_count</name></name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>cur_fcode</name></name> <operator>=</operator> <operator>(</operator><name>c</name> <operator>&lt;&lt;</operator> <literal type="number">16</literal><operator>)</operator> <operator>+</operator> <name><name>state</name><operator>-&gt;</operator><name>cur_code</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>i</name> <operator>=</operator> <operator>(</operator><operator>(</operator><name>c</name> <operator>&lt;&lt;</operator> <name>HSHIFT</name><operator>)</operator> <operator>^</operator> <name><name>state</name><operator>-&gt;</operator><name>cur_code</name></name><operator>)</operator></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>state</name><operator>-&gt;</operator><name>hashtab</name><index>[<expr><name>i</name></expr>]</index></name> <operator>==</operator> <name><name>state</name><operator>-&gt;</operator><name>cur_fcode</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>cur_code</name></name> <operator>=</operator> <name><name>state</name><operator>-&gt;</operator><name>codetab</name><index>[<expr><name>i</name></expr>]</index></name></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>state</name><operator>-&gt;</operator><name>hashtab</name><index>[<expr><name>i</name></expr>]</index></name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>nomatch</name>;</goto></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>i</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>disp</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>disp</name> <operator>=</operator> <name>HSIZE</name> <operator>-</operator> <name>i</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<label><name>probe</name>:</label>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>i</name> <operator>-=</operator> <name>disp</name><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>i</name> <operator>+=</operator> <name>HSIZE</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>state</name><operator>-&gt;</operator><name>hashtab</name><index>[<expr><name>i</name></expr>]</index></name> <operator>==</operator> <name><name>state</name><operator>-&gt;</operator><name>cur_fcode</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>cur_code</name></name> <operator>=</operator> <name><name>state</name><operator>-&gt;</operator><name>codetab</name><index>[<expr><name>i</name></expr>]</index></name></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>state</name><operator>-&gt;</operator><name>hashtab</name><index>[<expr><name>i</name></expr>]</index></name> <operator>&gt;=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>probe</name>;</goto></block_content></block></if></if_stmt>
+<label><name>nomatch</name>:</label>
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <call><name>output_code</name><argument_list>(<argument><expr><name>f</name></expr></argument>, <argument><expr><name><name>state</name><operator>-&gt;</operator><name>cur_code</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ret</name> <operator>!=</operator> <name>ARCHIVE_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>ret</name></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>cur_code</name></name> <operator>=</operator> <name>c</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>state</name><operator>-&gt;</operator><name>first_free</name></name> <operator>&lt;</operator> <name><name>state</name><operator>-&gt;</operator><name>max_maxcode</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>codetab</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <name><name>state</name><operator>-&gt;</operator><name>first_free</name></name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>hashtab</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <name><name>state</name><operator>-&gt;</operator><name>cur_fcode</name></name></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>state</name><operator>-&gt;</operator><name>in_count</name></name> <operator>&lt;</operator> <name><name>state</name><operator>-&gt;</operator><name>checkpoint</name></name></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>checkpoint</name></name> <operator>=</operator> <name><name>state</name><operator>-&gt;</operator><name>in_count</name></name> <operator>+</operator> <name>CHECK_GAP</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>state</name><operator>-&gt;</operator><name>in_count</name></name> <operator>&lt;=</operator> <literal type="number">0x007fffff</literal> <operator>&amp;&amp;</operator> <name><name>state</name><operator>-&gt;</operator><name>out_count</name></name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>ratio</name> <operator>=</operator> <operator>(</operator><name>int</name><operator>)</operator><operator>(</operator><name><name>state</name><operator>-&gt;</operator><name>in_count</name></name> <operator>*</operator> <literal type="number">256</literal> <operator>/</operator> <name><name>state</name><operator>-&gt;</operator><name>out_count</name></name><operator>)</operator></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><operator>(</operator><name>ratio</name> <operator>=</operator> <operator>(</operator><name>int</name><operator>)</operator><operator>(</operator><name><name>state</name><operator>-&gt;</operator><name>out_count</name></name> <operator>/</operator> <literal type="number">256</literal><operator>)</operator><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>ratio</name> <operator>=</operator> <literal type="number">0x7fffffff</literal></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>ratio</name> <operator>=</operator> <operator>(</operator><name>int</name><operator>)</operator><operator>(</operator><name><name>state</name><operator>-&gt;</operator><name>in_count</name></name> <operator>/</operator> <name>ratio</name><operator>)</operator></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ratio</name> <operator>&gt;</operator> <name><name>state</name><operator>-&gt;</operator><name>compress_ratio</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>compress_ratio</name></name> <operator>=</operator> <name>ratio</name></expr>;</expr_stmt></block_content></block></if>
+<else>else <block>{<block_content>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>compress_ratio</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><name><name>state</name><operator>-&gt;</operator><name>hashtab</name></name></expr></argument>, <argument><expr><literal type="number">0xff</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name><name>state</name><operator>-&gt;</operator><name>hashtab</name></name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>state</name><operator>-&gt;</operator><name>first_free</name></name> <operator>=</operator> <name>FIRST</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <call><name>output_code</name><argument_list>(<argument><expr><name>f</name></expr></argument>, <argument><expr><name>CLEAR</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ret</name> <operator>!=</operator> <name>ARCHIVE_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>ret</name></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></while>
+
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>archive_compressor_compress_close</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>archive_write_filter</name></name> <modifier>*</modifier></type><name>f</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>private_data</name></name> <modifier>*</modifier></type><name>state</name> <init>= <expr><operator>(</operator>struct <name>private_data</name> <operator>*</operator><operator>)</operator><name><name>f</name><operator>-&gt;</operator><name>data</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ret</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <call><name>output_code</name><argument_list>(<argument><expr><name>f</name></expr></argument>, <argument><expr><name><name>state</name><operator>-&gt;</operator><name>cur_code</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ret</name> <operator>!=</operator> <name>ARCHIVE_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>ret</name></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <call><name>output_flush</name><argument_list>(<argument><expr><name>f</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ret</name> <operator>!=</operator> <name>ARCHIVE_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>ret</name></expr>;</return></block_content></block></if></if_stmt>
+
+
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <call><name>__archive_write_filter</name><argument_list>(<argument><expr><name><name>f</name><operator>-&gt;</operator><name>next_filter</name></name></expr></argument>,
+<argument><expr><name><name>state</name><operator>-&gt;</operator><name>compressed</name></name></expr></argument>, <argument><expr><name><name>state</name><operator>-&gt;</operator><name>compressed_offset</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ret</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>archive_compressor_compress_free</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>archive_write_filter</name></name> <modifier>*</modifier></type><name>f</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>private_data</name></name> <modifier>*</modifier></type><name>state</name> <init>= <expr><operator>(</operator>struct <name>private_data</name> <operator>*</operator><operator>)</operator><name><name>f</name><operator>-&gt;</operator><name>data</name></name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>state</name><operator>-&gt;</operator><name>compressed</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>state</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+</unit>

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/results/freeBSD_res/_cppstats/freebsd-src/cddl/contrib/opensolaris/lib/libdtrace/powerpc/dt_isadep.c"><cpp:pragma>#<cpp:directive>pragma</cpp:directive> <name>ident</name> <cpp:literal>"%Z%%M% %I% %E% SMI"</cpp:literal></cpp:pragma>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;assert.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;errno.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;string.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;libgen.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;dt_impl.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;dt_pid.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;libproc_compat.h&gt;</cpp:file></cpp:include>
+<function><type><name>int</name></type>
+<name>dt_pid_create_entry_probe</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>ps_prochandle</name></name> <modifier>*</modifier></type><name>P</name></decl></parameter>, <parameter><decl><type><name>dtrace_hdl_t</name> <modifier>*</modifier></type><name>dtp</name></decl></parameter>,
+<parameter><decl><type><name>fasttrap_probe_spec_t</name> <modifier>*</modifier></type><name>ftp</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>GElf_Sym</name> <modifier>*</modifier></type><name>symp</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><name><name>ftp</name><operator>-&gt;</operator><name>ftps_type</name></name> <operator>=</operator> <name>DTFTP_ENTRY</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ftp</name><operator>-&gt;</operator><name>ftps_pc</name></name> <operator>=</operator> <operator>(</operator><name>uintptr_t</name><operator>)</operator><name><name>symp</name><operator>-&gt;</operator><name>st_value</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ftp</name><operator>-&gt;</operator><name>ftps_size</name></name> <operator>=</operator> <operator>(</operator><name>size_t</name><operator>)</operator><name><name>symp</name><operator>-&gt;</operator><name>st_size</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ftp</name><operator>-&gt;</operator><name>ftps_noffs</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ftp</name><operator>-&gt;</operator><name>ftps_offs</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>ioctl</name><argument_list>(<argument><expr><name><name>dtp</name><operator>-&gt;</operator><name>dt_ftfd</name></name></expr></argument>, <argument><expr><name>FASTTRAPIOC_MAKEPROBE</name></expr></argument>, <argument><expr><name>ftp</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>dt_dprintf</name><argument_list>(<argument><expr><literal type="string">"fasttrap probe creation ioctl failed: %s\n"</literal></expr></argument>,
+<argument><expr><call><name>strerror</name><argument_list>(<argument><expr><name>errno</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><call><name>dt_set_errno</name><argument_list>(<argument><expr><name>dtp</name></expr></argument>, <argument><expr><name>errno</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>int</name></type>
+<name>dt_pid_create_return_probe</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>ps_prochandle</name></name> <modifier>*</modifier></type><name>P</name></decl></parameter>, <parameter><decl><type><name>dtrace_hdl_t</name> <modifier>*</modifier></type><name>dtp</name></decl></parameter>,
+<parameter><decl><type><name>fasttrap_probe_spec_t</name> <modifier>*</modifier></type><name>ftp</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>GElf_Sym</name> <modifier>*</modifier></type><name>symp</name></decl></parameter>, <parameter><decl><type><name>uint64_t</name> <modifier>*</modifier></type><name>stret</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>temp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint32_t</name> <modifier>*</modifier></type><name>text</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>srdepth</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>text</name> <operator>=</operator> <call><name>malloc</name><argument_list>(<argument><expr><name><name>symp</name><operator>-&gt;</operator><name>st_size</name></name> <operator>+</operator> <literal type="number">4</literal></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>dt_dprintf</name><argument_list>(<argument><expr><literal type="string">"mr sparkle: malloc() failed\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>DT_PROC_ERR</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>Pread</name><argument_list>(<argument><expr><name>P</name></expr></argument>, <argument><expr><name>text</name></expr></argument>, <argument><expr><name><name>symp</name><operator>-&gt;</operator><name>st_size</name></name></expr></argument>, <argument><expr><name><name>symp</name><operator>-&gt;</operator><name>st_value</name></name></expr></argument>)</argument_list></call> <operator>!=</operator> <name><name>symp</name><operator>-&gt;</operator><name>st_size</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>dt_dprintf</name><argument_list>(<argument><expr><literal type="string">"mr sparkle: Pread() failed\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>text</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>DT_PROC_ERR</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>text</name><index>[<expr><name><name>symp</name><operator>-&gt;</operator><name>st_size</name></name> <operator>/</operator> <literal type="number">4</literal></expr>]</index></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ftp</name><operator>-&gt;</operator><name>ftps_type</name></name> <operator>=</operator> <name>DTFTP_RETURN</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ftp</name><operator>-&gt;</operator><name>ftps_pc</name></name> <operator>=</operator> <name><name>symp</name><operator>-&gt;</operator><name>st_value</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ftp</name><operator>-&gt;</operator><name>ftps_size</name></name> <operator>=</operator> <name><name>symp</name><operator>-&gt;</operator><name>st_size</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ftp</name><operator>-&gt;</operator><name>ftps_noffs</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name><name>symp</name><operator>-&gt;</operator><name>st_size</name></name> <operator>/</operator> <literal type="number">4</literal></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>text</name><index>[<expr><name>i</name></expr>]</index></name> <operator>&amp;</operator> <literal type="number">0xfc000001</literal><operator>)</operator> <operator>!=</operator> <literal type="number">0x48000000</literal> <operator>&amp;&amp;</operator>
+<name><name>text</name><index>[<expr><name>i</name></expr>]</index></name> <operator>!=</operator> <literal type="number">0x4e800020</literal></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>text</name><index>[<expr><name>i</name></expr>]</index></name> <operator>&amp;</operator> <literal type="number">0xfc000000</literal><operator>)</operator> <operator>==</operator> <literal type="number">0x48000000</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>temp</name> <operator>=</operator> <operator>(</operator><name><name>text</name><index>[<expr><name>i</name></expr>]</index></name> <operator>&amp;</operator> <literal type="number">0x03fffffc</literal><operator>)</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name><name>text</name><index>[<expr><name>i</name></expr>]</index></name> <operator>&amp;</operator> <literal type="number">0x02</literal><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>temp</name> <operator>+=</operator> <name><name>symp</name><operator>-&gt;</operator><name>st_value</name></name> <operator>+</operator> <name>i</name> <operator>*</operator> <literal type="number">4</literal></expr>;</expr_stmt>
+</block_content>}</block></if>
+<else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>temp</name> <operator>&amp;</operator> <literal type="number">0x02000000</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>temp</name> <operator>|=</operator> <operator>(</operator><name>UINTPTR_MAX</name> <operator>-</operator> <literal type="number">0x03ffffff</literal><operator>)</operator></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>temp</name> <operator>&gt;=</operator> <name><name>symp</name><operator>-&gt;</operator><name>st_value</name></name> <operator>&amp;&amp;</operator>
+<name>temp</name> <operator>&lt;=</operator> <operator>(</operator><name><name>symp</name><operator>-&gt;</operator><name>st_value</name></name> <operator>+</operator> <name><name>symp</name><operator>-&gt;</operator><name>st_size</name></name><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>dt_dprintf</name><argument_list>(<argument><expr><literal type="string">"return at offset %x\n"</literal></expr></argument>, <argument><expr><name>i</name> <operator>*</operator> <literal type="number">4</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ftp</name><operator>-&gt;</operator><name>ftps_offs</name><index>[<expr><name><name>ftp</name><operator>-&gt;</operator><name>ftps_noffs</name></name><operator>++</operator></expr>]</index></name> <operator>=</operator> <name>i</name> <operator>*</operator> <literal type="number">4</literal></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>text</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>ftp</name><operator>-&gt;</operator><name>ftps_noffs</name></name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>ioctl</name><argument_list>(<argument><expr><name><name>dtp</name><operator>-&gt;</operator><name>dt_ftfd</name></name></expr></argument>, <argument><expr><name>FASTTRAPIOC_MAKEPROBE</name></expr></argument>, <argument><expr><name>ftp</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>dt_dprintf</name><argument_list>(<argument><expr><literal type="string">"fasttrap probe creation ioctl failed: %s\n"</literal></expr></argument>,
+<argument><expr><call><name>strerror</name><argument_list>(<argument><expr><name>errno</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><call><name>dt_set_errno</name><argument_list>(<argument><expr><name>dtp</name></expr></argument>, <argument><expr><name>errno</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><operator>(</operator><name><name>ftp</name><operator>-&gt;</operator><name>ftps_noffs</name></name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>int</name></type>
+<name>dt_pid_create_offset_probe</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>ps_prochandle</name></name> <modifier>*</modifier></type><name>P</name></decl></parameter>, <parameter><decl><type><name>dtrace_hdl_t</name> <modifier>*</modifier></type><name>dtp</name></decl></parameter>,
+<parameter><decl><type><name>fasttrap_probe_spec_t</name> <modifier>*</modifier></type><name>ftp</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>GElf_Sym</name> <modifier>*</modifier></type><name>symp</name></decl></parameter>, <parameter><decl><type><name>ulong_t</name></type> <name>off</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>off</name> <operator>&amp;</operator> <literal type="number">0x3</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>DT_PROC_ALIGN</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>ftp</name><operator>-&gt;</operator><name>ftps_type</name></name> <operator>=</operator> <name>DTFTP_OFFSETS</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ftp</name><operator>-&gt;</operator><name>ftps_pc</name></name> <operator>=</operator> <operator>(</operator><name>uintptr_t</name><operator>)</operator><name><name>symp</name><operator>-&gt;</operator><name>st_value</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ftp</name><operator>-&gt;</operator><name>ftps_size</name></name> <operator>=</operator> <operator>(</operator><name>size_t</name><operator>)</operator><name><name>symp</name><operator>-&gt;</operator><name>st_size</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ftp</name><operator>-&gt;</operator><name>ftps_noffs</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ftp</name><operator>-&gt;</operator><name>ftps_offs</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>=</operator> <name>off</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>ioctl</name><argument_list>(<argument><expr><name><name>dtp</name><operator>-&gt;</operator><name>dt_ftfd</name></name></expr></argument>, <argument><expr><name>FASTTRAPIOC_MAKEPROBE</name></expr></argument>, <argument><expr><name>ftp</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>dt_dprintf</name><argument_list>(<argument><expr><literal type="string">"fasttrap probe creation ioctl failed: %s\n"</literal></expr></argument>,
+<argument><expr><call><name>strerror</name><argument_list>(<argument><expr><name>errno</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><call><name>dt_set_errno</name><argument_list>(<argument><expr><name>dtp</name></expr></argument>, <argument><expr><name>errno</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>int</name></type>
+<name>dt_pid_create_glob_offset_probes</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>ps_prochandle</name></name> <modifier>*</modifier></type><name>P</name></decl></parameter>, <parameter><decl><type><name>dtrace_hdl_t</name> <modifier>*</modifier></type><name>dtp</name></decl></parameter>,
+<parameter><decl><type><name>fasttrap_probe_spec_t</name> <modifier>*</modifier></type><name>ftp</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>GElf_Sym</name> <modifier>*</modifier></type><name>symp</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>pattern</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ulong_t</name></type> <name>i</name></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>ftp</name><operator>-&gt;</operator><name>ftps_type</name></name> <operator>=</operator> <name>DTFTP_OFFSETS</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ftp</name><operator>-&gt;</operator><name>ftps_pc</name></name> <operator>=</operator> <operator>(</operator><name>uintptr_t</name><operator>)</operator><name><name>symp</name><operator>-&gt;</operator><name>st_value</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ftp</name><operator>-&gt;</operator><name>ftps_size</name></name> <operator>=</operator> <operator>(</operator><name>size_t</name><operator>)</operator><name><name>symp</name><operator>-&gt;</operator><name>st_size</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ftp</name><operator>-&gt;</operator><name>ftps_noffs</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>strcmp</name><argument_list>(<argument><expr><literal type="string">"*"</literal></expr></argument>, <argument><expr><name>pattern</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name><name>symp</name><operator>-&gt;</operator><name>st_size</name></name></expr>;</condition> <incr><expr><name>i</name> <operator>+=</operator> <literal type="number">4</literal></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name><name>ftp</name><operator>-&gt;</operator><name>ftps_offs</name><index>[<expr><name><name>ftp</name><operator>-&gt;</operator><name>ftps_noffs</name></name><operator>++</operator></expr>]</index></name> <operator>=</operator> <name>i</name></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<decl_stmt><decl><type><name>char</name></type> <name><name>name</name><index>[<expr><sizeof>sizeof <argument_list>(<argument><expr><name>i</name></expr></argument>)</argument_list></sizeof> <operator>*</operator> <literal type="number">2</literal> <operator>+</operator> <literal type="number">1</literal></expr>]</index></name></decl>;</decl_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name><name>symp</name><operator>-&gt;</operator><name>st_size</name></name></expr>;</condition> <incr><expr><name>i</name> <operator>+=</operator> <literal type="number">4</literal></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>sprintf</name><argument_list>(<argument><expr><name>name</name></expr></argument>, <argument><expr><literal type="string">"%lx"</literal></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>gmatch</name><argument_list>(<argument><expr><name>name</name></expr></argument>, <argument><expr><name>pattern</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>ftp</name><operator>-&gt;</operator><name>ftps_offs</name><index>[<expr><name><name>ftp</name><operator>-&gt;</operator><name>ftps_noffs</name></name><operator>++</operator></expr>]</index></name> <operator>=</operator> <name>i</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>ioctl</name><argument_list>(<argument><expr><name><name>dtp</name><operator>-&gt;</operator><name>dt_ftfd</name></name></expr></argument>, <argument><expr><name>FASTTRAPIOC_MAKEPROBE</name></expr></argument>, <argument><expr><name>ftp</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>dt_dprintf</name><argument_list>(<argument><expr><literal type="string">"fasttrap probe creation ioctl failed: %s\n"</literal></expr></argument>,
+<argument><expr><call><name>strerror</name><argument_list>(<argument><expr><name>errno</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><call><name>dt_set_errno</name><argument_list>(<argument><expr><name>dtp</name></expr></argument>, <argument><expr><name>errno</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><operator>(</operator><name><name>ftp</name><operator>-&gt;</operator><name>ftps_noffs</name></name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+</unit>

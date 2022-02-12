@@ -1,0 +1,395 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/elftoolchain/libelftc/elftc_string_table.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/param.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/queue.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;assert.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;errno.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;gelf.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;string.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"libelftc.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"_libelftc.h"</cpp:file></cpp:include>
+
+<expr_stmt><expr><call><name>ELFTC_VCSID</name><argument_list>(<argument><expr><literal type="string">"$Id: elftc_string_table.c 3750 2019-06-28 01:12:10Z emaste $"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ELFTC_STRING_TABLE_DEFAULT_SIZE</name></cpp:macro> <cpp:value>(4*1024)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ELFTC_STRING_TABLE_EXPECTED_STRING_SIZE</name></cpp:macro> <cpp:value>16</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ELFTC_STRING_TABLE_EXPECTED_CHAIN_LENGTH</name></cpp:macro> <cpp:value>8</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ELFTC_STRING_TABLE_POOL_SIZE_INCREMENT</name></cpp:macro> <cpp:value>(4*1024)</cpp:value></cpp:define>
+
+<struct>struct <name>_Elftc_String_Table_Entry</name> <block>{
+<decl_stmt><decl><type><name>ssize_t</name></type> <name>ste_idx</name></decl>;</decl_stmt>
+<macro><name>SLIST_ENTRY</name><argument_list>(<argument>_Elftc_String_Table_Entry</argument>)</argument_list></macro> <expr_stmt><expr><name>ste_next</name></expr>;</expr_stmt>
+}</block>;</struct>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ELFTC_STRING_TABLE_COMPACTION_FLAG</name></cpp:macro> <cpp:value>0x1</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ELFTC_STRING_TABLE_LENGTH</name><parameter_list>(<parameter><type><name>st</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((st)-&gt;st_len &gt;&gt; 1)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ELFTC_STRING_TABLE_CLEAR_COMPACTION_FLAG</name><parameter_list>(<parameter><type><name>st</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>do { (st)-&gt;st_len &amp;= ~ELFTC_STRING_TABLE_COMPACTION_FLAG; } while (0)</cpp:value></cpp:define>
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ELFTC_STRING_TABLE_SET_COMPACTION_FLAG</name><parameter_list>(<parameter><type><name>st</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>do { (st)-&gt;st_len |= ELFTC_STRING_TABLE_COMPACTION_FLAG; } while (0)</cpp:value></cpp:define>
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ELFTC_STRING_TABLE_UPDATE_LENGTH</name><parameter_list>(<parameter><type><name>st</name></type></parameter>, <parameter><type><name>len</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>do { (st)-&gt;st_len = ((st)-&gt;st_len &amp; ELFTC_STRING_TABLE_COMPACTION_FLAG) | ((len) &lt;&lt; 1); } while (0)</cpp:value></cpp:define>
+
+
+
+
+
+
+<struct>struct <name>_Elftc_String_Table</name> <block>{
+<decl_stmt><decl><type><name>size_t</name></type> <name>st_len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>st_nbuckets</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>st_string_pool_size</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>st_string_pool</name></decl>;</decl_stmt>
+<macro><name>SLIST_HEAD</name><argument_list>(<argument>_Elftc_String_Table_Bucket</argument>,
+<argument>_Elftc_String_Table_Entry</argument>)</argument_list></macro> <expr_stmt><expr><name><name>st_buckets</name><index>[]</index></name></expr>;</expr_stmt>
+}</block>;</struct>
+
+<function><type><specifier>static</specifier> <name><name>struct</name> <name>_Elftc_String_Table_Entry</name></name> <modifier>*</modifier></type>
+<name>elftc_string_table_find_hash_entry</name><parameter_list>(<parameter><decl><type><name>Elftc_String_Table</name> <modifier>*</modifier></type><name>st</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>string</name></decl></parameter>,
+<parameter><decl><type><name>int</name> <modifier>*</modifier></type><name>rhashindex</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>_Elftc_String_Table_Entry</name></name> <modifier>*</modifier></type><name>ste</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>hashindex</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>s</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>hashindex</name> <operator>=</operator> <call><name>libelftc_hash_string</name><argument_list>(<argument><expr><name>string</name></expr></argument>)</argument_list></call> <operator>%</operator> <name><name>st</name><operator>-&gt;</operator><name>st_nbuckets</name></name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>rhashindex</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>*</operator><name>rhashindex</name> <operator>=</operator> <name>hashindex</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<macro><name>SLIST_FOREACH</name><argument_list>(<argument>ste</argument>, <argument>&amp;st-&gt;st_buckets[hashindex]</argument>, <argument>ste_next</argument>)</argument_list></macro> <block>{<block_content>
+<expr_stmt><expr><name>s</name> <operator>=</operator> <name><name>st</name><operator>-&gt;</operator><name>st_string_pool</name></name> <operator>+</operator> <call><name>labs</name><argument_list>(<argument><expr><name><name>ste</name><operator>-&gt;</operator><name>ste_idx</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>s</name> <operator>&gt;</operator> <name><name>st</name><operator>-&gt;</operator><name>st_string_pool</name></name> <operator>&amp;&amp;</operator>
+<name>s</name> <operator>&lt;</operator> <name><name>st</name><operator>-&gt;</operator><name>st_string_pool</name></name> <operator>+</operator> <name><name>st</name><operator>-&gt;</operator><name>st_string_pool_size</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>strcmp</name><argument_list>(<argument><expr><name>s</name></expr></argument>, <argument><expr><name>string</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ste</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block>
+
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>elftc_string_table_add_to_pool</name><parameter_list>(<parameter><decl><type><name>Elftc_String_Table</name> <modifier>*</modifier></type><name>st</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>string</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>newpool</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>len</name></decl>, <decl><type ref="prev"/><name>newsize</name></decl>, <decl><type ref="prev"/><name>stlen</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>len</name> <operator>=</operator> <call><name>strlen</name><argument_list>(<argument><expr><name>string</name></expr></argument>)</argument_list></call> <operator>+</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>stlen</name> <operator>=</operator> <call><name>ELFTC_STRING_TABLE_LENGTH</name><argument_list>(<argument><expr><name>st</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>stlen</name> <operator>+</operator> <name>len</name> <operator>&gt;=</operator> <name><name>st</name><operator>-&gt;</operator><name>st_string_pool_size</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>newsize</name> <operator>=</operator> <call><name>roundup</name><argument_list>(<argument><expr><name><name>st</name><operator>-&gt;</operator><name>st_string_pool_size</name></name> <operator>+</operator>
+<name>ELFTC_STRING_TABLE_POOL_SIZE_INCREMENT</name></expr></argument>,
+<argument><expr><name>ELFTC_STRING_TABLE_POOL_SIZE_INCREMENT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>newpool</name> <operator>=</operator> <call><name>realloc</name><argument_list>(<argument><expr><name><name>st</name><operator>-&gt;</operator><name>st_string_pool</name></name></expr></argument>, <argument><expr><name>newsize</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator>
+<name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>st</name><operator>-&gt;</operator><name>st_string_pool</name></name> <operator>=</operator> <name>newpool</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>st</name><operator>-&gt;</operator><name>st_string_pool_size</name></name> <operator>=</operator> <name>newsize</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name><name>st</name><operator>-&gt;</operator><name>st_string_pool</name></name> <operator>+</operator> <name>stlen</name></expr></argument>, <argument><expr><name>string</name></expr></argument>, <argument><expr><name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ELFTC_STRING_TABLE_UPDATE_LENGTH</name><argument_list>(<argument><expr><name>st</name></expr></argument>, <argument><expr><name>stlen</name> <operator>+</operator> <name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>stlen</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>Elftc_String_Table</name> <modifier>*</modifier></type>
+<name>elftc_string_table_create</name><parameter_list>(<parameter><decl><type><name>size_t</name></type> <name>sizehint</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>_Elftc_String_Table</name></name> <modifier>*</modifier></type><name>st</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>n</name></decl>, <decl><type ref="prev"/><name>nbuckets</name></decl>, <decl><type ref="prev"/><name>tablesize</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>sizehint</name> <operator>&lt;</operator> <name>ELFTC_STRING_TABLE_DEFAULT_SIZE</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>sizehint</name> <operator>=</operator> <name>ELFTC_STRING_TABLE_DEFAULT_SIZE</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>nbuckets</name> <operator>=</operator> <name>sizehint</name> <operator>/</operator> <operator>(</operator><name>ELFTC_STRING_TABLE_EXPECTED_CHAIN_LENGTH</name> <operator>*</operator>
+<name>ELFTC_STRING_TABLE_EXPECTED_STRING_SIZE</name><operator>)</operator></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>tablesize</name> <operator>=</operator> <sizeof>sizeof<argument_list>(<argument><expr>struct <name>_Elftc_String_Table</name></expr></argument>)</argument_list></sizeof> <operator>+</operator>
+<name>nbuckets</name> <operator>*</operator> <sizeof>sizeof<argument_list>(<argument><expr>struct <name>_Elftc_String_Table_Bucket</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>st</name> <operator>=</operator> <call><name>malloc</name><argument_list>(<argument><expr><name>tablesize</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>st</name><operator>-&gt;</operator><name>st_string_pool</name></name> <operator>=</operator> <call><name>malloc</name><argument_list>(<argument><expr><name>sizehint</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>st</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<for>for <control>(<init><expr><name>n</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>n</name> <operator>&lt;</operator> <name>nbuckets</name></expr>;</condition> <incr><expr><name>n</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>SLIST_INIT</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>st</name><operator>-&gt;</operator><name>st_buckets</name><index>[<expr><name>n</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+
+<expr_stmt><expr><name><name>st</name><operator>-&gt;</operator><name>st_len</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>st</name><operator>-&gt;</operator><name>st_nbuckets</name></name> <operator>=</operator> <name>nbuckets</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>st</name><operator>-&gt;</operator><name>st_string_pool_size</name></name> <operator>=</operator> <name>sizehint</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name><name>st</name><operator>-&gt;</operator><name>st_string_pool</name></name> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ELFTC_STRING_TABLE_UPDATE_LENGTH</name><argument_list>(<argument><expr><name>st</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>st</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type>
+<name>elftc_string_table_destroy</name><parameter_list>(<parameter><decl><type><name>Elftc_String_Table</name> <modifier>*</modifier></type><name>st</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>n</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>_Elftc_String_Table_Entry</name></name> <modifier>*</modifier></type><name>s</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>t</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>n</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>n</name> <operator>&lt;</operator> <name><name>st</name><operator>-&gt;</operator><name>st_nbuckets</name></name></expr>;</condition> <incr><expr><name>n</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<macro><name>SLIST_FOREACH_SAFE</name><argument_list>(<argument>s</argument>, <argument>&amp;st-&gt;st_buckets[n]</argument>, <argument>ste_next</argument>, <argument>t</argument>)</argument_list></macro>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>s</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>st</name><operator>-&gt;</operator><name>st_string_pool</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>st</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>Elftc_String_Table</name> <modifier>*</modifier></type>
+<name>elftc_string_table_from_section</name><parameter_list>(<parameter><decl><type><name>Elf_Scn</name> <modifier>*</modifier></type><name>scn</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>sizehint</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>Elf_Data</name> <modifier>*</modifier></type><name>d</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>GElf_Shdr</name></type> <name>sh</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>s</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>end</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elftc_String_Table</name> <modifier>*</modifier></type><name>st</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>len</name></decl>;</decl_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>gelf_getshdr</name><argument_list>(<argument><expr><name>scn</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>sh</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<name><name>sh</name><operator>.</operator><name>sh_type</name></name> <operator>!=</operator> <name>SHT_STRTAB</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>errno</name> <operator>=</operator> <name>EINVAL</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>d</name> <operator>=</operator> <call><name>elf_getdata</name><argument_list>(<argument><expr><name>scn</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<name><name>d</name><operator>-&gt;</operator><name>d_size</name></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>errno</name> <operator>=</operator> <name>EINVAL</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>st</name> <operator>=</operator> <call><name>elftc_string_table_create</name><argument_list>(<argument><expr><name>sizehint</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>s</name> <operator>=</operator> <name><name>d</name><operator>-&gt;</operator><name>d_buf</name></name></expr>;</expr_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>s</name> <operator>!=</operator> <literal type="char">'\0'</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>errno</name> <operator>=</operator> <name>EINVAL</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>end</name> <operator>=</operator> <name>s</name> <operator>+</operator> <name><name>d</name><operator>-&gt;</operator><name>d_size</name></name></expr>;</expr_stmt>
+
+
+
+
+
+<for>for <control>(<init><expr><name>s</name> <operator>+=</operator> <literal type="number">1</literal></expr>;</init> <condition><expr><name>s</name> <operator>&lt;</operator> <name>end</name></expr>;</condition> <incr><expr><name>s</name> <operator>+=</operator> <name>len</name></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>elftc_string_table_insert</name><argument_list>(<argument><expr><name>st</name></expr></argument>, <argument><expr><name>s</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>fail</name>;</goto></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>len</name> <operator>=</operator> <call><name>strlen</name><argument_list>(<argument><expr><name>s</name></expr></argument>)</argument_list></call> <operator>+</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<return>return <expr><operator>(</operator><name>st</name><operator>)</operator></expr>;</return>
+
+<label><name>fail</name>:</label>
+<if_stmt><if>if <condition>(<expr><name>st</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>elftc_string_table_destroy</name><argument_list>(<argument><expr><name>st</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>elftc_string_table_image</name><parameter_list>(<parameter><decl><type><name>Elftc_String_Table</name> <modifier>*</modifier></type><name>st</name></decl></parameter>, <parameter><decl><type><name>size_t</name> <modifier>*</modifier></type><name>size</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>r</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>s</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>end</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>_Elftc_String_Table_Entry</name></name> <modifier>*</modifier></type><name>ste</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>_Elftc_String_Table_Bucket</name></name> <modifier>*</modifier></type><name>head</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>copied</name></decl>, <decl><type ref="prev"/><name>offset</name></decl>, <decl><type ref="prev"/><name>length</name></decl>, <decl><type ref="prev"/><name>newsize</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>hashindex</name></decl>;</decl_stmt>
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>st</name><operator>-&gt;</operator><name>st_len</name></name> <operator>&amp;</operator> <name>ELFTC_STRING_TABLE_COMPACTION_FLAG</name><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>size</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>*</operator><name>size</name> <operator>=</operator> <call><name>ELFTC_STRING_TABLE_LENGTH</name><argument_list>(<argument><expr><name>st</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><name><name>st</name><operator>-&gt;</operator><name>st_string_pool</name></name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><operator>*</operator><name><name>st</name><operator>-&gt;</operator><name>st_string_pool</name></name> <operator>==</operator> <literal type="char">'\0'</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>newsize</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>end</name> <operator>=</operator> <name><name>st</name><operator>-&gt;</operator><name>st_string_pool</name></name> <operator>+</operator> <call><name>ELFTC_STRING_TABLE_LENGTH</name><argument_list>(<argument><expr><name>st</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<for>for <control>(<init><expr><name>r</name> <operator>=</operator> <name>s</name> <operator>=</operator> <name><name>st</name><operator>-&gt;</operator><name>st_string_pool</name></name> <operator>+</operator> <literal type="number">1</literal></expr>;</init>
+<condition><expr><name>s</name> <operator>&lt;</operator> <name>end</name></expr>;</condition>
+<incr><expr><name>s</name> <operator>+=</operator> <name>length</name></expr><operator>,</operator> <expr><name>r</name> <operator>+=</operator> <name>copied</name></expr></incr>)</control> <block>{<block_content>
+
+<expr_stmt><expr><name>copied</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>length</name> <operator>=</operator> <call><name>strlen</name><argument_list>(<argument><expr><name>s</name></expr></argument>)</argument_list></call> <operator>+</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>ste</name> <operator>=</operator> <call><name>elftc_string_table_find_hash_entry</name><argument_list>(<argument><expr><name>st</name></expr></argument>, <argument><expr><name>s</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>hashindex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>head</name> <operator>=</operator> <operator>&amp;</operator><name><name>st</name><operator>-&gt;</operator><name>st_buckets</name><index>[<expr><name>hashindex</name></expr>]</index></name></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>ste</name> <operator>!=</operator> <name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>ste</name><operator>-&gt;</operator><name>ste_idx</name></name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>SLIST_REMOVE</name><argument_list>(<argument><expr><name>head</name></expr></argument>, <argument><expr><name>ste</name></expr></argument>, <argument><expr><name>_Elftc_String_Table_Entry</name></expr></argument>,
+<argument><expr><name>ste_next</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>ste</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><name>offset</name> <operator>=</operator> <name>newsize</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>newsize</name> <operator>+=</operator> <name>length</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>copied</name> <operator>=</operator> <name>length</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>r</name> <operator>==</operator> <name>s</name></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>memmove</name><argument_list>(<argument><expr><name>r</name></expr></argument>, <argument><expr><name>s</name></expr></argument>, <argument><expr><name>copied</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><name><name>ste</name><operator>-&gt;</operator><name>ste_idx</name></name> <operator>=</operator> <name>offset</name></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><call><name>ELFTC_STRING_TABLE_CLEAR_COMPACTION_FLAG</name><argument_list>(<argument><expr><name>st</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ELFTC_STRING_TABLE_UPDATE_LENGTH</name><argument_list>(<argument><expr><name>st</name></expr></argument>, <argument><expr><name>newsize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>size</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>*</operator><name>size</name> <operator>=</operator> <name>newsize</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name><name>st</name><operator>-&gt;</operator><name>st_string_pool</name></name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>size_t</name></type>
+<name>elftc_string_table_insert</name><parameter_list>(<parameter><decl><type><name>Elftc_String_Table</name> <modifier>*</modifier></type><name>st</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>string</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>_Elftc_String_Table_Entry</name></name> <modifier>*</modifier></type><name>ste</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ssize_t</name></type> <name>idx</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>hashindex</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>hashindex</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>ste</name> <operator>=</operator> <call><name>elftc_string_table_find_hash_entry</name><argument_list>(<argument><expr><name>st</name></expr></argument>, <argument><expr><name>string</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>hashindex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>hashindex</name> <operator>&gt;=</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name>hashindex</name> <operator>&lt;</operator> <name><name>st</name><operator>-&gt;</operator><name>st_nbuckets</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ste</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>ste</name> <operator>=</operator> <call><name>malloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>ste</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>ste</name><operator>-&gt;</operator><name>ste_idx</name></name> <operator>=</operator> <call><name>elftc_string_table_add_to_pool</name><argument_list>(<argument><expr><name>st</name></expr></argument>,
+<argument><expr><name>string</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>ste</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>SLIST_INSERT_HEAD</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>st</name><operator>-&gt;</operator><name>st_buckets</name><index>[<expr><name>hashindex</name></expr>]</index></name></expr></argument>, <argument><expr><name>ste</name></expr></argument>, <argument><expr><name>ste_next</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>idx</name> <operator>=</operator> <name><name>ste</name><operator>-&gt;</operator><name>ste_idx</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>idx</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>ste</name><operator>-&gt;</operator><name>ste_idx</name></name> <operator>=</operator> <name>idx</name> <operator>=</operator> <operator>-</operator><name>idx</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>idx</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>size_t</name></type>
+<name>elftc_string_table_lookup</name><parameter_list>(<parameter><decl><type><name>Elftc_String_Table</name> <modifier>*</modifier></type><name>st</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>string</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>_Elftc_String_Table_Entry</name></name> <modifier>*</modifier></type><name>ste</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ssize_t</name></type> <name>idx</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>hashindex</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>ste</name> <operator>=</operator> <call><name>elftc_string_table_find_hash_entry</name><argument_list>(<argument><expr><name>st</name></expr></argument>, <argument><expr><name>string</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>hashindex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>hashindex</name> <operator>&gt;=</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name>hashindex</name> <operator>&lt;</operator> <name><name>st</name><operator>-&gt;</operator><name>st_nbuckets</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ste</name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <operator>(</operator><name>idx</name> <operator>=</operator> <name><name>ste</name><operator>-&gt;</operator><name>ste_idx</name></name><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>idx</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>elftc_string_table_remove</name><parameter_list>(<parameter><decl><type><name>Elftc_String_Table</name> <modifier>*</modifier></type><name>st</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>string</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>_Elftc_String_Table_Entry</name></name> <modifier>*</modifier></type><name>ste</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ssize_t</name></type> <name>idx</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>ste</name> <operator>=</operator> <call><name>elftc_string_table_find_hash_entry</name><argument_list>(<argument><expr><name>st</name></expr></argument>, <argument><expr><name>string</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ste</name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <operator>(</operator><name>idx</name> <operator>=</operator> <name><name>ste</name><operator>-&gt;</operator><name>ste_idx</name></name><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ELFTC_FAILURE</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>idx</name> <operator>&gt;</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <operator>(</operator><name>size_t</name><operator>)</operator><name>idx</name> <operator>&lt;</operator> <call><name>ELFTC_STRING_TABLE_LENGTH</name><argument_list>(<argument><expr><name>st</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>ste</name><operator>-&gt;</operator><name>ste_idx</name></name> <operator>=</operator> <operator>-</operator><name>idx</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>ELFTC_STRING_TABLE_SET_COMPACTION_FLAG</name><argument_list>(<argument><expr><name>st</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>ELFTC_SUCCESS</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>elftc_string_table_to_string</name><parameter_list>(<parameter><decl><type><name>Elftc_String_Table</name> <modifier>*</modifier></type><name>st</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>offset</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>s</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>s</name> <operator>=</operator> <name><name>st</name><operator>-&gt;</operator><name>st_string_pool</name></name> <operator>+</operator> <name>offset</name></expr>;</expr_stmt>
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>offset</name> <operator>==</operator> <literal type="number">0</literal> <operator>||</operator> <name>offset</name> <operator>&gt;=</operator> <call><name>ELFTC_STRING_TABLE_LENGTH</name><argument_list>(<argument><expr><name>st</name></expr></argument>)</argument_list></call> <operator>||</operator>
+<operator>*</operator><name>s</name> <operator>==</operator> <literal type="char">'\0'</literal> <operator>||</operator> <operator>*</operator><operator>(</operator><name>s</name> <operator>-</operator> <literal type="number">1</literal><operator>)</operator> <operator>!=</operator> <literal type="char">'\0'</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>errno</name> <operator>=</operator> <name>EINVAL</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>s</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+</unit>

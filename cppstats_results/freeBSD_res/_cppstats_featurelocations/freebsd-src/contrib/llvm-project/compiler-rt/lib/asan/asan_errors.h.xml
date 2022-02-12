@@ -1,0 +1,458 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/llvm-project/compiler-rt/lib/asan/asan_errors.h">
+
+
+
+
+
+
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>ASAN_ERRORS_H</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ASAN_ERRORS_H</name></cpp:macro></cpp:define>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"asan_descriptions.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"asan_scariness_score.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"sanitizer_common/sanitizer_common.h"</cpp:file></cpp:include>
+
+<decl_stmt><decl><type><name>namespace</name></type> <name>__asan</name> <block>{<block_content>
+
+
+
+
+
+
+<struct>struct <name>ErrorBase</name> <block>{
+<decl_stmt><decl><type><name>ScarinessScoreBase</name></type> <name>scariness</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>u32</name></type> <name>tid</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>ErrorBase</name><argument_list>()</argument_list></call> <operator>=</operator> default</expr>;</expr_stmt>
+<macro><name>explicit</name></macro> <macro><name>ErrorBase</name><argument_list>(<argument>u32 tid_</argument>)</argument_list></macro> : <macro><name>tid</name><argument_list>(<argument>tid_</argument>)</argument_list></macro> <block>{<block_content/>}</block>
+<macro><name>ErrorBase</name><argument_list>(<argument>u32 tid_</argument>, <argument>int initial_score</argument>, <argument>const char *reason</argument>)</argument_list></macro> : <macro><name>tid</name><argument_list>(<argument>tid_</argument>)</argument_list></macro> <block>{<block_content>
+<expr_stmt><expr><call><name><name>scariness</name><operator>.</operator><name>Clear</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name><name>scariness</name><operator>.</operator><name>Scare</name></name><argument_list>(<argument><expr><name>initial_score</name></expr></argument>, <argument><expr><name>reason</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block>
+}</block>;</struct>
+
+<decl_stmt><decl><type><name><name>struct</name> <name>ErrorDeadlySignal</name></name></type> <range>: <expr><name>ErrorBase</name> <block>{
+<expr><name>SignalContext</name> <name>signal</name></expr>;
+
+<expr><call><name>ErrorDeadlySignal</name><argument_list>()</argument_list></call> <operator>=</operator> default</expr>;
+<macro><name>ErrorDeadlySignal</name><argument_list>(<argument>u32 tid</argument>, <argument>const SignalContext &amp;sig</argument>)</argument_list></macro>
+<operator>:</operator> <expr><call><name>ErrorBase</name><argument_list>(<argument><expr><name>tid</name></expr></argument>)</argument_list></call></expr>,
+<macro><name>signal</name><argument_list>(<argument>sig</argument>)</argument_list></macro> <expr><block>{
+<expr><call><name><name>scariness</name><operator>.</operator><name>Clear</name></name><argument_list>()</argument_list></call></expr>;
+<if_stmt><if>if <condition>(<expr><call><name><name>signal</name><operator>.</operator><name>IsStackOverflow</name></name><argument_list>()</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name><name>scariness</name><operator>.</operator><name>Scare</name></name><argument_list>(<argument><expr><literal type="number">10</literal></expr></argument>, <argument><expr><literal type="string">"stack-overflow"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt/>}</block_content> else if (!signal.is_memory_access</block></if></if_stmt>) <block>{
+<expr><call><name><name>scariness</name><operator>.</operator><name>Scare</name></name><argument_list>(<argument><expr><literal type="number">10</literal></expr></argument>, <argument><expr><literal type="string">"signal"</literal></expr></argument>)</argument_list></call></expr>;
+}</block></block></expr> <if_stmt><if type="elseif">else if <condition>(<expr><name><name>signal</name><operator>.</operator><name>is_true_faulting_addr</name></name> <operator>&amp;&amp;</operator>
+<name><name>signal</name><operator>.</operator><name>addr</name></name> <operator>&lt;</operator> <call><name>GetPageSizeCached</name><argument_list>()</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name><name>scariness</name><operator>.</operator><name>Scare</name></name><argument_list>(<argument><expr><literal type="number">10</literal></expr></argument>, <argument><expr><literal type="string">"null-deref"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt/>}</block_content> else if (signal.addr == signal.pc</block></if></if_stmt>) <block>{
+<expr><call><name><name>scariness</name><operator>.</operator><name>Scare</name></name><argument_list>(<argument><expr><literal type="number">60</literal></expr></argument>, <argument><expr><literal type="string">"wild-jump"</literal></expr></argument>)</argument_list></call></expr>;
+}</block></block></expr></range></decl></decl_stmt> <if_stmt><if type="elseif">else if <condition>(<expr><name><name>signal</name><operator>.</operator><name>write_flag</name></name> <operator>==</operator> <name>SignalContext</name><operator>::</operator><name>WRITE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name><name>scariness</name><operator>.</operator><name>Scare</name></name><argument_list>(<argument><expr><literal type="number">30</literal></expr></argument>, <argument><expr><literal type="string">"wild-addr-write"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>signal</name><operator>.</operator><name>write_flag</name></name> <operator>==</operator> <name>SignalContext</name><operator>::</operator><name>READ</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name><name>scariness</name><operator>.</operator><name>Scare</name></name><argument_list>(<argument><expr><literal type="number">20</literal></expr></argument>, <argument><expr><literal type="string">"wild-addr-read"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name><name>scariness</name><operator>.</operator><name>Scare</name></name><argument_list>(<argument><expr><literal type="number">25</literal></expr></argument>, <argument><expr><literal type="string">"wild-addr"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></decl></decl_stmt>
+<function_decl><type><name>void</name></type> <name>Print</name><parameter_list>()</parameter_list>;</function_decl>
+};
+
+<decl_stmt><decl><type><name><name>struct</name> <name>ErrorDoubleFree</name></name></type> <range>: <expr><name>ErrorBase</name> <block>{
+<expr><specifier>const</specifier> <name>BufferedStackTrace</name> <operator>*</operator><name>second_free_stack</name></expr>;
+<expr><name>HeapAddressDescription</name> <name>addr_description</name></expr>;
+
+<expr><call><name>ErrorDoubleFree</name><argument_list>()</argument_list></call> <operator>=</operator> default</expr>;
+<macro><name>ErrorDoubleFree</name><argument_list>(<argument>u32 tid</argument>, <argument>BufferedStackTrace *stack</argument>, <argument>uptr addr</argument>)</argument_list></macro>
+<operator>:</operator> <expr><call><name>ErrorBase</name><argument_list>(<argument><expr><name>tid</name></expr></argument>, <argument><expr><literal type="number">42</literal></expr></argument>, <argument><expr><literal type="string">"double-free"</literal></expr></argument>)</argument_list></call></expr>,
+<macro><name>second_free_stack</name><argument_list>(<argument>stack</argument>)</argument_list></macro> <expr><block>{
+<expr><call><name>CHECK_GT</name><argument_list>(<argument><expr><name><name>second_free_stack</name><operator>-&gt;</operator><name>size</name></name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;
+<expr><call><name>GetHeapAddressInformation</name><argument_list>(<argument><expr><name>addr</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>addr_description</name></expr></argument>)</argument_list></call></expr>;
+}</block>
+<name>void</name> <call><name>Print</name><argument_list>()</argument_list></call></expr>;
+}</block></expr></range></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name><name>struct</name> <name>ErrorNewDeleteTypeMismatch</name></name></type> <range>: <expr><name>ErrorBase</name> <block>{
+<expr><specifier>const</specifier> <name>BufferedStackTrace</name> <operator>*</operator><name>free_stack</name></expr>;
+<expr><name>HeapAddressDescription</name> <name>addr_description</name></expr>;
+<expr><name>uptr</name> <name>delete_size</name></expr>;
+<expr><name>uptr</name> <name>delete_alignment</name></expr>;
+
+<expr><call><name>ErrorNewDeleteTypeMismatch</name><argument_list>()</argument_list></call> <operator>=</operator> default</expr>;
+<macro><name>ErrorNewDeleteTypeMismatch</name><argument_list>(<argument>u32 tid</argument>, <argument>BufferedStackTrace *stack</argument>, <argument>uptr addr</argument>,
+<argument>uptr delete_size_</argument>, <argument>uptr delete_alignment_</argument>)</argument_list></macro>
+<operator>:</operator> <expr><call><name>ErrorBase</name><argument_list>(<argument><expr><name>tid</name></expr></argument>, <argument><expr><literal type="number">10</literal></expr></argument>, <argument><expr><literal type="string">"new-delete-type-mismatch"</literal></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>free_stack</name><argument_list>(<argument><expr><name>stack</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>delete_size</name><argument_list>(<argument><expr><name>delete_size_</name></expr></argument>)</argument_list></call></expr>,
+<macro><name>delete_alignment</name><argument_list>(<argument>delete_alignment_</argument>)</argument_list></macro> <expr><block>{
+<expr><call><name>GetHeapAddressInformation</name><argument_list>(<argument><expr><name>addr</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>addr_description</name></expr></argument>)</argument_list></call></expr>;
+}</block>
+<name>void</name> <call><name>Print</name><argument_list>()</argument_list></call></expr>;
+}</block></expr></range></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name><name>struct</name> <name>ErrorFreeNotMalloced</name></name></type> <range>: <expr><name>ErrorBase</name> <block>{
+<expr><specifier>const</specifier> <name>BufferedStackTrace</name> <operator>*</operator><name>free_stack</name></expr>;
+<expr><name>AddressDescription</name> <name>addr_description</name></expr>;
+
+<expr><call><name>ErrorFreeNotMalloced</name><argument_list>()</argument_list></call> <operator>=</operator> default</expr>;
+<macro><name>ErrorFreeNotMalloced</name><argument_list>(<argument>u32 tid</argument>, <argument>BufferedStackTrace *stack</argument>, <argument>uptr addr</argument>)</argument_list></macro>
+<operator>:</operator> <expr><call><name>ErrorBase</name><argument_list>(<argument><expr><name>tid</name></expr></argument>, <argument><expr><literal type="number">40</literal></expr></argument>, <argument><expr><literal type="string">"bad-free"</literal></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>free_stack</name><argument_list>(<argument><expr><name>stack</name></expr></argument>)</argument_list></call></expr>,
+<macro><name>addr_description</name><argument_list>(<argument>addr</argument>, <argument>false</argument>)</argument_list></macro> <expr><block>{}</block>
+<name>void</name> <call><name>Print</name><argument_list>()</argument_list></call></expr>;
+}</block></expr></range></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name><name>struct</name> <name>ErrorAllocTypeMismatch</name></name></type> <range>: <expr><name>ErrorBase</name> <block>{
+<expr><specifier>const</specifier> <name>BufferedStackTrace</name> <operator>*</operator><name>dealloc_stack</name></expr>;
+<expr><name>AllocType</name> <name>alloc_type</name></expr>, <expr><name>dealloc_type</name></expr>;
+<expr><name>AddressDescription</name> <name>addr_description</name></expr>;
+
+<expr><call><name>ErrorAllocTypeMismatch</name><argument_list>()</argument_list></call> <operator>=</operator> default</expr>;
+<macro><name>ErrorAllocTypeMismatch</name><argument_list>(<argument>u32 tid</argument>, <argument>BufferedStackTrace *stack</argument>, <argument>uptr addr</argument>,
+<argument>AllocType alloc_type_</argument>, <argument>AllocType dealloc_type_</argument>)</argument_list></macro>
+<operator>:</operator> <expr><call><name>ErrorBase</name><argument_list>(<argument><expr><name>tid</name></expr></argument>, <argument><expr><literal type="number">10</literal></expr></argument>, <argument><expr><literal type="string">"alloc-dealloc-mismatch"</literal></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>dealloc_stack</name><argument_list>(<argument><expr><name>stack</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>alloc_type</name><argument_list>(<argument><expr><name>alloc_type_</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>dealloc_type</name><argument_list>(<argument><expr><name>dealloc_type_</name></expr></argument>)</argument_list></call></expr>,
+<macro><name>addr_description</name><argument_list>(<argument>addr</argument>, <argument><literal type="number">1</literal></argument>, <argument>false</argument>)</argument_list></macro> <expr><block>{}</block>
+<name>void</name> <call><name>Print</name><argument_list>()</argument_list></call></expr>;
+}</block></expr></range></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name><name>struct</name> <name>ErrorMallocUsableSizeNotOwned</name></name></type> <range>: <expr><name>ErrorBase</name> <block>{
+<expr><specifier>const</specifier> <name>BufferedStackTrace</name> <operator>*</operator><name>stack</name></expr>;
+<expr><name>AddressDescription</name> <name>addr_description</name></expr>;
+
+<expr><call><name>ErrorMallocUsableSizeNotOwned</name><argument_list>()</argument_list></call> <operator>=</operator> default</expr>;
+<macro><name>ErrorMallocUsableSizeNotOwned</name><argument_list>(<argument>u32 tid</argument>, <argument>BufferedStackTrace *stack_</argument>, <argument>uptr addr</argument>)</argument_list></macro>
+<operator>:</operator> <expr><call><name>ErrorBase</name><argument_list>(<argument><expr><name>tid</name></expr></argument>, <argument><expr><literal type="number">10</literal></expr></argument>, <argument><expr><literal type="string">"bad-malloc_usable_size"</literal></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>stack</name><argument_list>(<argument><expr><name>stack_</name></expr></argument>)</argument_list></call></expr>,
+<macro><name>addr_description</name><argument_list>(<argument>addr</argument>, <argument>false</argument>)</argument_list></macro> <expr><block>{}</block>
+<name>void</name> <call><name>Print</name><argument_list>()</argument_list></call></expr>;
+}</block></expr></range></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name><name>struct</name> <name>ErrorSanitizerGetAllocatedSizeNotOwned</name></name></type> <range>: <expr><name>ErrorBase</name> <block>{
+<expr><specifier>const</specifier> <name>BufferedStackTrace</name> <operator>*</operator><name>stack</name></expr>;
+<expr><name>AddressDescription</name> <name>addr_description</name></expr>;
+
+<expr><call><name>ErrorSanitizerGetAllocatedSizeNotOwned</name><argument_list>()</argument_list></call> <operator>=</operator> default</expr>;
+<macro><name>ErrorSanitizerGetAllocatedSizeNotOwned</name><argument_list>(<argument>u32 tid</argument>, <argument>BufferedStackTrace *stack_</argument>,
+<argument>uptr addr</argument>)</argument_list></macro>
+<operator>:</operator> <expr><call><name>ErrorBase</name><argument_list>(<argument><expr><name>tid</name></expr></argument>, <argument><expr><literal type="number">10</literal></expr></argument>, <argument><expr><literal type="string">"bad-__sanitizer_get_allocated_size"</literal></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>stack</name><argument_list>(<argument><expr><name>stack_</name></expr></argument>)</argument_list></call></expr>,
+<macro><name>addr_description</name><argument_list>(<argument>addr</argument>, <argument>false</argument>)</argument_list></macro> <expr><block>{}</block>
+<name>void</name> <call><name>Print</name><argument_list>()</argument_list></call></expr>;
+}</block></expr></range></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name><name>struct</name> <name>ErrorCallocOverflow</name></name></type> <range>: <expr><name>ErrorBase</name> <block>{
+<expr><specifier>const</specifier> <name>BufferedStackTrace</name> <operator>*</operator><name>stack</name></expr>;
+<expr><name>uptr</name> <name>count</name></expr>;
+<expr><name>uptr</name> <name>size</name></expr>;
+
+<expr><call><name>ErrorCallocOverflow</name><argument_list>()</argument_list></call> <operator>=</operator> default</expr>;
+<macro><name>ErrorCallocOverflow</name><argument_list>(<argument>u32 tid</argument>, <argument>BufferedStackTrace *stack_</argument>, <argument>uptr count_</argument>,
+<argument>uptr size_</argument>)</argument_list></macro>
+<operator>:</operator> <expr><call><name>ErrorBase</name><argument_list>(<argument><expr><name>tid</name></expr></argument>, <argument><expr><literal type="number">10</literal></expr></argument>, <argument><expr><literal type="string">"calloc-overflow"</literal></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>stack</name><argument_list>(<argument><expr><name>stack_</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>count</name><argument_list>(<argument><expr><name>count_</name></expr></argument>)</argument_list></call></expr>,
+<macro><name>size</name><argument_list>(<argument>size_</argument>)</argument_list></macro> <expr><block>{}</block>
+<name>void</name> <call><name>Print</name><argument_list>()</argument_list></call></expr>;
+}</block></expr></range></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name><name>struct</name> <name>ErrorReallocArrayOverflow</name></name></type> <range>: <expr><name>ErrorBase</name> <block>{
+<expr><specifier>const</specifier> <name>BufferedStackTrace</name> <operator>*</operator><name>stack</name></expr>;
+<expr><name>uptr</name> <name>count</name></expr>;
+<expr><name>uptr</name> <name>size</name></expr>;
+
+<expr><call><name>ErrorReallocArrayOverflow</name><argument_list>()</argument_list></call> <operator>=</operator> default</expr>;
+<macro><name>ErrorReallocArrayOverflow</name><argument_list>(<argument>u32 tid</argument>, <argument>BufferedStackTrace *stack_</argument>, <argument>uptr count_</argument>,
+<argument>uptr size_</argument>)</argument_list></macro>
+<operator>:</operator> <expr><call><name>ErrorBase</name><argument_list>(<argument><expr><name>tid</name></expr></argument>, <argument><expr><literal type="number">10</literal></expr></argument>, <argument><expr><literal type="string">"reallocarray-overflow"</literal></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>stack</name><argument_list>(<argument><expr><name>stack_</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>count</name><argument_list>(<argument><expr><name>count_</name></expr></argument>)</argument_list></call></expr>,
+<macro><name>size</name><argument_list>(<argument>size_</argument>)</argument_list></macro> <expr><block>{}</block>
+<name>void</name> <call><name>Print</name><argument_list>()</argument_list></call></expr>;
+}</block></expr></range></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name><name>struct</name> <name>ErrorPvallocOverflow</name></name></type> <range>: <expr><name>ErrorBase</name> <block>{
+<expr><specifier>const</specifier> <name>BufferedStackTrace</name> <operator>*</operator><name>stack</name></expr>;
+<expr><name>uptr</name> <name>size</name></expr>;
+
+<expr><call><name>ErrorPvallocOverflow</name><argument_list>()</argument_list></call> <operator>=</operator> default</expr>;
+<macro><name>ErrorPvallocOverflow</name><argument_list>(<argument>u32 tid</argument>, <argument>BufferedStackTrace *stack_</argument>, <argument>uptr size_</argument>)</argument_list></macro>
+<operator>:</operator> <expr><call><name>ErrorBase</name><argument_list>(<argument><expr><name>tid</name></expr></argument>, <argument><expr><literal type="number">10</literal></expr></argument>, <argument><expr><literal type="string">"pvalloc-overflow"</literal></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>stack</name><argument_list>(<argument><expr><name>stack_</name></expr></argument>)</argument_list></call></expr>,
+<macro><name>size</name><argument_list>(<argument>size_</argument>)</argument_list></macro> <expr><block>{}</block>
+<name>void</name> <call><name>Print</name><argument_list>()</argument_list></call></expr>;
+}</block></expr></range></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name><name>struct</name> <name>ErrorInvalidAllocationAlignment</name></name></type> <range>: <expr><name>ErrorBase</name> <block>{
+<expr><specifier>const</specifier> <name>BufferedStackTrace</name> <operator>*</operator><name>stack</name></expr>;
+<expr><name>uptr</name> <name>alignment</name></expr>;
+
+<expr><call><name>ErrorInvalidAllocationAlignment</name><argument_list>()</argument_list></call> <operator>=</operator> default</expr>;
+<macro><name>ErrorInvalidAllocationAlignment</name><argument_list>(<argument>u32 tid</argument>, <argument>BufferedStackTrace *stack_</argument>,
+<argument>uptr alignment_</argument>)</argument_list></macro>
+<operator>:</operator> <expr><call><name>ErrorBase</name><argument_list>(<argument><expr><name>tid</name></expr></argument>, <argument><expr><literal type="number">10</literal></expr></argument>, <argument><expr><literal type="string">"invalid-allocation-alignment"</literal></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>stack</name><argument_list>(<argument><expr><name>stack_</name></expr></argument>)</argument_list></call></expr>,
+<macro><name>alignment</name><argument_list>(<argument>alignment_</argument>)</argument_list></macro> <expr><block>{}</block>
+<name>void</name> <call><name>Print</name><argument_list>()</argument_list></call></expr>;
+}</block></expr></range></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name><name>struct</name> <name>ErrorInvalidAlignedAllocAlignment</name></name></type> <range>: <expr><name>ErrorBase</name> <block>{
+<expr><specifier>const</specifier> <name>BufferedStackTrace</name> <operator>*</operator><name>stack</name></expr>;
+<expr><name>uptr</name> <name>size</name></expr>;
+<expr><name>uptr</name> <name>alignment</name></expr>;
+
+<expr><call><name>ErrorInvalidAlignedAllocAlignment</name><argument_list>()</argument_list></call> <operator>=</operator> default</expr>;
+<macro><name>ErrorInvalidAlignedAllocAlignment</name><argument_list>(<argument>u32 tid</argument>, <argument>BufferedStackTrace *stack_</argument>,
+<argument>uptr size_</argument>, <argument>uptr alignment_</argument>)</argument_list></macro>
+<operator>:</operator> <expr><call><name>ErrorBase</name><argument_list>(<argument><expr><name>tid</name></expr></argument>, <argument><expr><literal type="number">10</literal></expr></argument>, <argument><expr><literal type="string">"invalid-aligned-alloc-alignment"</literal></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>stack</name><argument_list>(<argument><expr><name>stack_</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>size</name><argument_list>(<argument><expr><name>size_</name></expr></argument>)</argument_list></call></expr>,
+<macro><name>alignment</name><argument_list>(<argument>alignment_</argument>)</argument_list></macro> <expr><block>{}</block>
+<name>void</name> <call><name>Print</name><argument_list>()</argument_list></call></expr>;
+}</block></expr></range></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name><name>struct</name> <name>ErrorInvalidPosixMemalignAlignment</name></name></type> <range>: <expr><name>ErrorBase</name> <block>{
+<expr><specifier>const</specifier> <name>BufferedStackTrace</name> <operator>*</operator><name>stack</name></expr>;
+<expr><name>uptr</name> <name>alignment</name></expr>;
+
+<expr><call><name>ErrorInvalidPosixMemalignAlignment</name><argument_list>()</argument_list></call> <operator>=</operator> default</expr>;
+<macro><name>ErrorInvalidPosixMemalignAlignment</name><argument_list>(<argument>u32 tid</argument>, <argument>BufferedStackTrace *stack_</argument>,
+<argument>uptr alignment_</argument>)</argument_list></macro>
+<operator>:</operator> <expr><call><name>ErrorBase</name><argument_list>(<argument><expr><name>tid</name></expr></argument>, <argument><expr><literal type="number">10</literal></expr></argument>, <argument><expr><literal type="string">"invalid-posix-memalign-alignment"</literal></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>stack</name><argument_list>(<argument><expr><name>stack_</name></expr></argument>)</argument_list></call></expr>,
+<macro><name>alignment</name><argument_list>(<argument>alignment_</argument>)</argument_list></macro> <expr><block>{}</block>
+<name>void</name> <call><name>Print</name><argument_list>()</argument_list></call></expr>;
+}</block></expr></range></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name><name>struct</name> <name>ErrorAllocationSizeTooBig</name></name></type> <range>: <expr><name>ErrorBase</name> <block>{
+<expr><specifier>const</specifier> <name>BufferedStackTrace</name> <operator>*</operator><name>stack</name></expr>;
+<expr><name>uptr</name> <name>user_size</name></expr>;
+<expr><name>uptr</name> <name>total_size</name></expr>;
+<expr><name>uptr</name> <name>max_size</name></expr>;
+
+<expr><call><name>ErrorAllocationSizeTooBig</name><argument_list>()</argument_list></call> <operator>=</operator> default</expr>;
+<macro><name>ErrorAllocationSizeTooBig</name><argument_list>(<argument>u32 tid</argument>, <argument>BufferedStackTrace *stack_</argument>,
+<argument>uptr user_size_</argument>, <argument>uptr total_size_</argument>, <argument>uptr max_size_</argument>)</argument_list></macro>
+<operator>:</operator> <expr><call><name>ErrorBase</name><argument_list>(<argument><expr><name>tid</name></expr></argument>, <argument><expr><literal type="number">10</literal></expr></argument>, <argument><expr><literal type="string">"allocation-size-too-big"</literal></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>stack</name><argument_list>(<argument><expr><name>stack_</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>user_size</name><argument_list>(<argument><expr><name>user_size_</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>total_size</name><argument_list>(<argument><expr><name>total_size_</name></expr></argument>)</argument_list></call></expr>,
+<macro><name>max_size</name><argument_list>(<argument>max_size_</argument>)</argument_list></macro> <expr><block>{}</block>
+<name>void</name> <call><name>Print</name><argument_list>()</argument_list></call></expr>;
+}</block></expr></range></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name><name>struct</name> <name>ErrorRssLimitExceeded</name></name></type> <range>: <expr><name>ErrorBase</name> <block>{
+<expr><specifier>const</specifier> <name>BufferedStackTrace</name> <operator>*</operator><name>stack</name></expr>;
+
+<expr><call><name>ErrorRssLimitExceeded</name><argument_list>()</argument_list></call> <operator>=</operator> default</expr>;
+<macro><name>ErrorRssLimitExceeded</name><argument_list>(<argument>u32 tid</argument>, <argument>BufferedStackTrace *stack_</argument>)</argument_list></macro>
+<operator>:</operator> <expr><call><name>ErrorBase</name><argument_list>(<argument><expr><name>tid</name></expr></argument>, <argument><expr><literal type="number">10</literal></expr></argument>, <argument><expr><literal type="string">"rss-limit-exceeded"</literal></expr></argument>)</argument_list></call></expr>,
+<macro><name>stack</name><argument_list>(<argument>stack_</argument>)</argument_list></macro> <expr><block>{}</block>
+<name>void</name> <call><name>Print</name><argument_list>()</argument_list></call></expr>;
+}</block></expr></range></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name><name>struct</name> <name>ErrorOutOfMemory</name></name></type> <range>: <expr><name>ErrorBase</name> <block>{
+<expr><specifier>const</specifier> <name>BufferedStackTrace</name> <operator>*</operator><name>stack</name></expr>;
+<expr><name>uptr</name> <name>requested_size</name></expr>;
+
+<expr><call><name>ErrorOutOfMemory</name><argument_list>()</argument_list></call> <operator>=</operator> default</expr>;
+<macro><name>ErrorOutOfMemory</name><argument_list>(<argument>u32 tid</argument>, <argument>BufferedStackTrace *stack_</argument>, <argument>uptr requested_size_</argument>)</argument_list></macro>
+<operator>:</operator> <expr><call><name>ErrorBase</name><argument_list>(<argument><expr><name>tid</name></expr></argument>, <argument><expr><literal type="number">10</literal></expr></argument>, <argument><expr><literal type="string">"out-of-memory"</literal></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>stack</name><argument_list>(<argument><expr><name>stack_</name></expr></argument>)</argument_list></call></expr>,
+<macro><name>requested_size</name><argument_list>(<argument>requested_size_</argument>)</argument_list></macro> <expr><block>{}</block>
+<name>void</name> <call><name>Print</name><argument_list>()</argument_list></call></expr>;
+}</block></expr></range></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name><name>struct</name> <name>ErrorStringFunctionMemoryRangesOverlap</name></name></type> <range>: <expr><name>ErrorBase</name> <block>{
+<expr><specifier>const</specifier> <name>BufferedStackTrace</name> <operator>*</operator><name>stack</name></expr>;
+<expr><name>uptr</name> <name>length1</name></expr>, <expr><name>length2</name></expr>;
+<expr><name>AddressDescription</name> <name>addr1_description</name></expr>;
+<expr><name>AddressDescription</name> <name>addr2_description</name></expr>;
+<expr><specifier>const</specifier> <name>char</name> <operator>*</operator><name>function</name></expr>;
+
+<expr><call><name>ErrorStringFunctionMemoryRangesOverlap</name><argument_list>()</argument_list></call> <operator>=</operator> default</expr>;
+<macro><name>ErrorStringFunctionMemoryRangesOverlap</name><argument_list>(<argument>u32 tid</argument>, <argument>BufferedStackTrace *stack_</argument>,
+<argument>uptr addr1</argument>, <argument>uptr length1_</argument>, <argument>uptr addr2</argument>,
+<argument>uptr length2_</argument>, <argument>const char *function_</argument>)</argument_list></macro>
+<operator>:</operator> <expr><call><name>ErrorBase</name><argument_list>(<argument><expr><name>tid</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>stack</name><argument_list>(<argument><expr><name>stack_</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>length1</name><argument_list>(<argument><expr><name>length1_</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>length2</name><argument_list>(<argument><expr><name>length2_</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>addr1_description</name><argument_list>(<argument><expr><name>addr1</name></expr></argument>, <argument><expr><name>length1</name></expr></argument>, <argument><expr><name>false</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>addr2_description</name><argument_list>(<argument><expr><name>addr2</name></expr></argument>, <argument><expr><name>length2</name></expr></argument>, <argument><expr><name>false</name></expr></argument>)</argument_list></call></expr>,
+<macro><name>function</name><argument_list>(<argument>function_</argument>)</argument_list></macro> <expr><block>{
+<expr><name>char</name> <name><name>bug_type</name><index>[<expr><literal type="number">100</literal></expr>]</index></name></expr>;
+<expr><call><name>internal_snprintf</name><argument_list>(<argument><expr><name>bug_type</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>bug_type</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><literal type="string">"%s-param-overlap"</literal></expr></argument>, <argument><expr><name>function</name></expr></argument>)</argument_list></call></expr>;
+<expr><call><name><name>scariness</name><operator>.</operator><name>Clear</name></name><argument_list>()</argument_list></call></expr>;
+<expr><call><name><name>scariness</name><operator>.</operator><name>Scare</name></name><argument_list>(<argument><expr><literal type="number">10</literal></expr></argument>, <argument><expr><name>bug_type</name></expr></argument>)</argument_list></call></expr>;
+}</block>
+<name>void</name> <call><name>Print</name><argument_list>()</argument_list></call></expr>;
+}</block></expr></range></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name><name>struct</name> <name>ErrorStringFunctionSizeOverflow</name></name></type> <range>: <expr><name>ErrorBase</name> <block>{
+<expr><specifier>const</specifier> <name>BufferedStackTrace</name> <operator>*</operator><name>stack</name></expr>;
+<expr><name>AddressDescription</name> <name>addr_description</name></expr>;
+<expr><name>uptr</name> <name>size</name></expr>;
+
+<expr><call><name>ErrorStringFunctionSizeOverflow</name><argument_list>()</argument_list></call> <operator>=</operator> default</expr>;
+<macro><name>ErrorStringFunctionSizeOverflow</name><argument_list>(<argument>u32 tid</argument>, <argument>BufferedStackTrace *stack_</argument>,
+<argument>uptr addr</argument>, <argument>uptr size_</argument>)</argument_list></macro>
+<operator>:</operator> <expr><call><name>ErrorBase</name><argument_list>(<argument><expr><name>tid</name></expr></argument>, <argument><expr><literal type="number">10</literal></expr></argument>, <argument><expr><literal type="string">"negative-size-param"</literal></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>stack</name><argument_list>(<argument><expr><name>stack_</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>addr_description</name><argument_list>(<argument><expr><name>addr</name></expr></argument>, <argument><expr><name>false</name></expr></argument>)</argument_list></call></expr>,
+<macro><name>size</name><argument_list>(<argument>size_</argument>)</argument_list></macro> <expr><block>{}</block>
+<name>void</name> <call><name>Print</name><argument_list>()</argument_list></call></expr>;
+}</block></expr></range></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name><name>struct</name> <name>ErrorBadParamsToAnnotateContiguousContainer</name></name></type> <range>: <expr><name>ErrorBase</name> <block>{
+<expr><specifier>const</specifier> <name>BufferedStackTrace</name> <operator>*</operator><name>stack</name></expr>;
+<expr><name>uptr</name> <name>beg</name></expr>, <expr><name>end</name></expr>, <expr><name>old_mid</name></expr>, <expr><name>new_mid</name></expr>;
+
+<expr><call><name>ErrorBadParamsToAnnotateContiguousContainer</name><argument_list>()</argument_list></call> <operator>=</operator> default</expr>;
+
+<macro><name>ErrorBadParamsToAnnotateContiguousContainer</name><argument_list>(<argument>u32 tid</argument>,
+<argument>BufferedStackTrace *stack_</argument>,
+<argument>uptr beg_</argument>, <argument>uptr end_</argument>,
+<argument>uptr old_mid_</argument>, <argument>uptr new_mid_</argument>)</argument_list></macro>
+<operator>:</operator> <expr><call><name>ErrorBase</name><argument_list>(<argument><expr><name>tid</name></expr></argument>, <argument><expr><literal type="number">10</literal></expr></argument>, <argument><expr><literal type="string">"bad-__sanitizer_annotate_contiguous_container"</literal></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>stack</name><argument_list>(<argument><expr><name>stack_</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>beg</name><argument_list>(<argument><expr><name>beg_</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>end</name><argument_list>(<argument><expr><name>end_</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>old_mid</name><argument_list>(<argument><expr><name>old_mid_</name></expr></argument>)</argument_list></call></expr>,
+<macro><name>new_mid</name><argument_list>(<argument>new_mid_</argument>)</argument_list></macro> <expr><block>{}</block>
+<name>void</name> <call><name>Print</name><argument_list>()</argument_list></call></expr>;
+}</block></expr></range></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name><name>struct</name> <name>ErrorODRViolation</name></name></type> <range>: <expr><name>ErrorBase</name> <block>{
+<expr><name>__asan_global</name> <name>global1</name></expr>, <expr><name>global2</name></expr>;
+<expr><name>u32</name> <name>stack_id1</name></expr>, <expr><name>stack_id2</name></expr>;
+
+<expr><call><name>ErrorODRViolation</name><argument_list>()</argument_list></call> <operator>=</operator> default</expr>;
+<macro><name>ErrorODRViolation</name><argument_list>(<argument>u32 tid</argument>, <argument>const __asan_global *g1</argument>, <argument>u32 stack_id1_</argument>,
+<argument>const __asan_global *g2</argument>, <argument>u32 stack_id2_</argument>)</argument_list></macro>
+<operator>:</operator> <expr><call><name>ErrorBase</name><argument_list>(<argument><expr><name>tid</name></expr></argument>, <argument><expr><literal type="number">10</literal></expr></argument>, <argument><expr><literal type="string">"odr-violation"</literal></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>global1</name><argument_list>(<argument><expr><operator>*</operator><name>g1</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>global2</name><argument_list>(<argument><expr><operator>*</operator><name>g2</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>stack_id1</name><argument_list>(<argument><expr><name>stack_id1_</name></expr></argument>)</argument_list></call></expr>,
+<macro><name>stack_id2</name><argument_list>(<argument>stack_id2_</argument>)</argument_list></macro> <expr><block>{}</block>
+<name>void</name> <call><name>Print</name><argument_list>()</argument_list></call></expr>;
+}</block></expr></range></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name><name>struct</name> <name>ErrorInvalidPointerPair</name></name></type> <range>: <expr><name>ErrorBase</name> <block>{
+<expr><name>uptr</name> <name>pc</name></expr>, <expr><name>bp</name></expr>, <expr><name>sp</name></expr>;
+<expr><name>AddressDescription</name> <name>addr1_description</name></expr>;
+<expr><name>AddressDescription</name> <name>addr2_description</name></expr>;
+
+<expr><call><name>ErrorInvalidPointerPair</name><argument_list>()</argument_list></call> <operator>=</operator> default</expr>;
+<macro><name>ErrorInvalidPointerPair</name><argument_list>(<argument>u32 tid</argument>, <argument>uptr pc_</argument>, <argument>uptr bp_</argument>, <argument>uptr sp_</argument>, <argument>uptr p1</argument>,
+<argument>uptr p2</argument>)</argument_list></macro>
+<operator>:</operator> <expr><call><name>ErrorBase</name><argument_list>(<argument><expr><name>tid</name></expr></argument>, <argument><expr><literal type="number">10</literal></expr></argument>, <argument><expr><literal type="string">"invalid-pointer-pair"</literal></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>pc</name><argument_list>(<argument><expr><name>pc_</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>bp</name><argument_list>(<argument><expr><name>bp_</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>sp</name><argument_list>(<argument><expr><name>sp_</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>addr1_description</name><argument_list>(<argument><expr><name>p1</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>false</name></expr></argument>)</argument_list></call></expr>,
+<macro><name>addr2_description</name><argument_list>(<argument>p2</argument>, <argument><literal type="number">1</literal></argument>, <argument>false</argument>)</argument_list></macro> <expr><block>{}</block>
+<name>void</name> <call><name>Print</name><argument_list>()</argument_list></call></expr>;
+}</block></expr></range></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name><name>struct</name> <name>ErrorGeneric</name></name></type> <range>: <expr><name>ErrorBase</name> <block>{
+<expr><name>AddressDescription</name> <name>addr_description</name></expr>;
+<expr><name>uptr</name> <name>pc</name></expr>, <expr><name>bp</name></expr>, <expr><name>sp</name></expr>;
+<expr><name>uptr</name> <name>access_size</name></expr>;
+<expr><specifier>const</specifier> <name>char</name> <operator>*</operator><name>bug_descr</name></expr>;
+<expr><name>bool</name> <name>is_write</name></expr>;
+<expr><name>u8</name> <name>shadow_val</name></expr>;
+
+<expr><call><name>ErrorGeneric</name><argument_list>()</argument_list></call> <operator>=</operator> default</expr>;
+<macro><name>ErrorGeneric</name><argument_list>(<argument>u32 tid</argument>, <argument>uptr addr</argument>, <argument>uptr pc_</argument>, <argument>uptr bp_</argument>, <argument>uptr sp_</argument>, <argument>bool is_write_</argument>,
+<argument>uptr access_size_</argument>)</argument_list></macro>;
+<expr><name>void</name> <call><name>Print</name><argument_list>()</argument_list></call></expr>;
+}</block></expr></range></decl>;</decl_stmt>
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ASAN_FOR_EACH_ERROR_KIND</name><parameter_list>(<parameter><type><name>macro</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>macro(DeadlySignal) macro(DoubleFree) macro(NewDeleteTypeMismatch) macro(FreeNotMalloced) macro(AllocTypeMismatch) macro(MallocUsableSizeNotOwned) macro(SanitizerGetAllocatedSizeNotOwned) macro(CallocOverflow) macro(ReallocArrayOverflow) macro(PvallocOverflow) macro(InvalidAllocationAlignment) macro(InvalidAlignedAllocAlignment) macro(InvalidPosixMemalignAlignment) macro(AllocationSizeTooBig) macro(RssLimitExceeded) macro(OutOfMemory) macro(StringFunctionMemoryRangesOverlap) macro(StringFunctionSizeOverflow) macro(BadParamsToAnnotateContiguousContainer) macro(ODRViolation) macro(InvalidPointerPair) macro(Generic)</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ASAN_DEFINE_ERROR_KIND</name><parameter_list>(<parameter><type><name>name</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>kErrorKind##name,</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ASAN_ERROR_DESCRIPTION_MEMBER</name><parameter_list>(<parameter><type><name>name</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>Error##name name;</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ASAN_ERROR_DESCRIPTION_CONSTRUCTOR</name><parameter_list>(<parameter><type><name>name</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>ErrorDescription(Error##name const &amp;e) : kind(kErrorKind##name) { internal_memcpy(&amp;name, &amp;e, sizeof(name)); }</cpp:value></cpp:define>
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ASAN_ERROR_DESCRIPTION_PRINT</name><parameter_list>(<parameter><type><name>name</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>case kErrorKind##name: return name.Print();</cpp:value></cpp:define>
+
+
+
+<enum>enum <name>ErrorKind</name> <block>{
+<decl><name>kErrorKindInvalid</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>,
+<decl><name>ASAN_FOR_EACH_ERROR_KIND</name><argument_list>(<argument><expr><name>ASAN_DEFINE_ERROR_KIND</name></expr></argument>)</argument_list></decl>
+}</block>;</enum>
+
+<struct>struct <name>ErrorDescription</name> <block>{
+<decl_stmt><decl><type><name>ErrorKind</name></type> <name>kind</name></decl>;</decl_stmt>
+
+
+
+
+
+<union>union <block>{
+<decl_stmt><decl><type><name>ErrorBase</name></type> <name>Base</name></decl>;</decl_stmt>
+<macro><name>ASAN_FOR_EACH_ERROR_KIND</name><argument_list>(<argument>ASAN_ERROR_DESCRIPTION_MEMBER</argument>)</argument_list></macro>
+}</block>;</union>
+
+<macro><name>ErrorDescription</name><argument_list>()</argument_list></macro> <block>{<block_content> <expr_stmt><expr><call><name>internal_memset</name><argument_list>(<argument><expr><name>this</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>this</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt> </block_content>}</block>
+<function><type><name>explicit</name></type> <name>ErrorDescription</name><parameter_list>(<parameter><decl><type><name>LinkerInitialized</name></type></decl></parameter>)</parameter_list> <block>{<block_content/>}</block></function>
+<macro><name>ASAN_FOR_EACH_ERROR_KIND</name><argument_list>(<argument>ASAN_ERROR_DESCRIPTION_CONSTRUCTOR</argument>)</argument_list></macro>
+
+<function><type><name>bool</name></type> <name>IsValid</name><parameter_list>()</parameter_list> <block>{<block_content> <return>return <expr><name>kind</name> <operator>!=</operator> <name>kErrorKindInvalid</name></expr>;</return> </block_content>}</block></function>
+<function><type><name>void</name></type> <name>Print</name><parameter_list>()</parameter_list> <block>{<block_content>
+<switch>switch <condition>(<expr><name>kind</name></expr>)</condition> <block>{<block_content>
+<macro><name>ASAN_FOR_EACH_ERROR_KIND</name><argument_list>(<argument>ASAN_ERROR_DESCRIPTION_PRINT</argument>)</argument_list></macro>
+<case>case <expr><name>kErrorKindInvalid</name></expr>:</case>
+<expr_stmt><expr><call><name>CHECK</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></switch>
+<expr_stmt><expr><call><name>CHECK</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+}</block>;</struct>
+
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>ASAN_FOR_EACH_ERROR_KIND</name></cpp:undef>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>ASAN_DEFINE_ERROR_KIND</name></cpp:undef>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>ASAN_ERROR_DESCRIPTION_MEMBER</name></cpp:undef>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>ASAN_ERROR_DESCRIPTION_CONSTRUCTOR</name></cpp:undef>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>ASAN_ERROR_DESCRIPTION_PRINT</name></cpp:undef>
+
+}
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

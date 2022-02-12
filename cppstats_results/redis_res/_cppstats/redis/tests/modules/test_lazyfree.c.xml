@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/results/redis_res/_cppstats/redis/tests/modules/test_lazyfree.c"><cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"redismodule.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdio.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;ctype.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;string.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdint.h&gt;</cpp:file></cpp:include>
+<decl_stmt><decl><type><specifier>static</specifier> <name>RedisModuleType</name> <modifier>*</modifier></type><name>LazyFreeLinkType</name></decl>;</decl_stmt>
+<struct>struct <name>LazyFreeLinkNode</name> <block>{
+<decl_stmt><decl><type><name>int64_t</name></type> <name>value</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>LazyFreeLinkNode</name></name> <modifier>*</modifier></type><name>next</name></decl>;</decl_stmt>
+}</block>;</struct>
+<struct>struct <name>LazyFreeLinkObject</name> <block>{
+<decl_stmt><decl><type><name><name>struct</name> <name>LazyFreeLinkNode</name></name> <modifier>*</modifier></type><name>head</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>len</name></decl>;</decl_stmt>
+}</block>;</struct>
+<function><type><name><name>struct</name> <name>LazyFreeLinkObject</name></name> <modifier>*</modifier></type><name>createLazyFreeLinkObject</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>LazyFreeLinkObject</name></name> <modifier>*</modifier></type><name>o</name></decl>;</decl_stmt>
+<expr_stmt><expr><name>o</name> <operator>=</operator> <call><name>RedisModule_Alloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>o</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>o</name><operator>-&gt;</operator><name>head</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>o</name><operator>-&gt;</operator><name>len</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<return>return <expr><name>o</name></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>void</name></type> <name>LazyFreeLinkInsert</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>LazyFreeLinkObject</name></name> <modifier>*</modifier></type><name>o</name></decl></parameter>, <parameter><decl><type><name>int64_t</name></type> <name>ele</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>LazyFreeLinkNode</name></name> <modifier>*</modifier></type><name>next</name> <init>= <expr><name><name>o</name><operator>-&gt;</operator><name>head</name></name></expr></init></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>newnode</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>prev</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<while>while<condition>(<expr><name>next</name> <operator>&amp;&amp;</operator> <name><name>next</name><operator>-&gt;</operator><name>value</name></name> <operator>&lt;</operator> <name>ele</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>prev</name> <operator>=</operator> <name>next</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>next</name> <operator>=</operator> <name><name>next</name><operator>-&gt;</operator><name>next</name></name></expr>;</expr_stmt>
+</block_content>}</block></while>
+<expr_stmt><expr><name>newnode</name> <operator>=</operator> <call><name>RedisModule_Alloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>newnode</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>newnode</name><operator>-&gt;</operator><name>value</name></name> <operator>=</operator> <name>ele</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>newnode</name><operator>-&gt;</operator><name>next</name></name> <operator>=</operator> <name>next</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>prev</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>prev</name><operator>-&gt;</operator><name>next</name></name> <operator>=</operator> <name>newnode</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name><name>o</name><operator>-&gt;</operator><name>head</name></name> <operator>=</operator> <name>newnode</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><name><name>o</name><operator>-&gt;</operator><name>len</name></name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><name>void</name></type> <name>LazyFreeLinkReleaseObject</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>LazyFreeLinkObject</name></name> <modifier>*</modifier></type><name>o</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>LazyFreeLinkNode</name></name> <modifier>*</modifier></type><name>cur</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>next</name></decl>;</decl_stmt>
+<expr_stmt><expr><name>cur</name> <operator>=</operator> <name><name>o</name><operator>-&gt;</operator><name>head</name></name></expr>;</expr_stmt>
+<while>while<condition>(<expr><name>cur</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>next</name> <operator>=</operator> <name><name>cur</name><operator>-&gt;</operator><name>next</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_Free</name><argument_list>(<argument><expr><name>cur</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>cur</name> <operator>=</operator> <name>next</name></expr>;</expr_stmt>
+</block_content>}</block></while>
+<expr_stmt><expr><call><name>RedisModule_Free</name><argument_list>(<argument><expr><name>o</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><name>int</name></type> <name>LazyFreeLinkInsert_RedisCommand</name><parameter_list>(<parameter><decl><type><name>RedisModuleCtx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>RedisModuleString</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>argc</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>RedisModule_AutoMemory</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>argc</name> <operator>!=</operator> <literal type="number">3</literal></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><call><name>RedisModule_WrongArity</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</return></block_content></block></if></if_stmt>
+<decl_stmt><decl><type><name>RedisModuleKey</name> <modifier>*</modifier></type><name>key</name> <init>= <expr><call><name>RedisModule_OpenKey</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>,<argument><expr><name><name>argv</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>,
+<argument><expr><name>REDISMODULE_READ</name><operator>|</operator><name>REDISMODULE_WRITE</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>type</name> <init>= <expr><call><name>RedisModule_KeyType</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>type</name> <operator>!=</operator> <name>REDISMODULE_KEYTYPE_EMPTY</name> <operator>&amp;&amp;</operator>
+<call><name>RedisModule_ModuleTypeGetType</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>LazyFreeLinkType</name></expr>)</condition>
+<block>{<block_content>
+<return>return <expr><call><name>RedisModule_ReplyWithError</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>,<argument><expr><name>REDISMODULE_ERRORMSG_WRONGTYPE</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<decl_stmt><decl><type><name>long</name> <name>long</name></type> <name>value</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><call><name>RedisModule_StringToLongLong</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr><literal type="number">2</literal></expr>]</index></name></expr></argument>,<argument><expr><operator>&amp;</operator><name>value</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>REDISMODULE_OK</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<return>return <expr><call><name>RedisModule_ReplyWithError</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>,<argument><expr><literal type="string">"ERR invalid value: must be a signed 64 bit integer"</literal></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>LazyFreeLinkObject</name></name> <modifier>*</modifier></type><name>hto</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>type</name> <operator>==</operator> <name>REDISMODULE_KEYTYPE_EMPTY</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>hto</name> <operator>=</operator> <call><name>createLazyFreeLinkObject</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_ModuleTypeSetValue</name><argument_list>(<argument><expr><name>key</name></expr></argument>,<argument><expr><name>LazyFreeLinkType</name></expr></argument>,<argument><expr><name>hto</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>hto</name> <operator>=</operator> <call><name>RedisModule_ModuleTypeGetValue</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><call><name>LazyFreeLinkInsert</name><argument_list>(<argument><expr><name>hto</name></expr></argument>,<argument><expr><name>value</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_SignalKeyAsReady</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>,<argument><expr><name><name>argv</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_ReplyWithLongLong</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>,<argument><expr><name><name>hto</name><operator>-&gt;</operator><name>len</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_ReplicateVerbatim</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>int</name></type> <name>LazyFreeLinkLen_RedisCommand</name><parameter_list>(<parameter><decl><type><name>RedisModuleCtx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>RedisModuleString</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>argc</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>RedisModule_AutoMemory</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>argc</name> <operator>!=</operator> <literal type="number">2</literal></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><call><name>RedisModule_WrongArity</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</return></block_content></block></if></if_stmt>
+<decl_stmt><decl><type><name>RedisModuleKey</name> <modifier>*</modifier></type><name>key</name> <init>= <expr><call><name>RedisModule_OpenKey</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>,<argument><expr><name><name>argv</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>,
+<argument><expr><name>REDISMODULE_READ</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>type</name> <init>= <expr><call><name>RedisModule_KeyType</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>type</name> <operator>!=</operator> <name>REDISMODULE_KEYTYPE_EMPTY</name> <operator>&amp;&amp;</operator>
+<call><name>RedisModule_ModuleTypeGetType</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>LazyFreeLinkType</name></expr>)</condition>
+<block>{<block_content>
+<return>return <expr><call><name>RedisModule_ReplyWithError</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>,<argument><expr><name>REDISMODULE_ERRORMSG_WRONGTYPE</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>LazyFreeLinkObject</name></name> <modifier>*</modifier></type><name>hto</name> <init>= <expr><call><name>RedisModule_ModuleTypeGetValue</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>RedisModule_ReplyWithLongLong</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>,<argument><expr><ternary><condition><expr><name>hto</name></expr> ?</condition><then> <expr><name><name>hto</name><operator>-&gt;</operator><name>len</name></name></expr> </then><else>: <expr><literal type="number">0</literal></expr></else></ternary></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>void</name> <modifier>*</modifier></type><name>LazyFreeLinkRdbLoad</name><parameter_list>(<parameter><decl><type><name>RedisModuleIO</name> <modifier>*</modifier></type><name>rdb</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>encver</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>encver</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>elements</name> <init>= <expr><call><name>RedisModule_LoadUnsigned</name><argument_list>(<argument><expr><name>rdb</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>LazyFreeLinkObject</name></name> <modifier>*</modifier></type><name>hto</name> <init>= <expr><call><name>createLazyFreeLinkObject</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<while>while<condition>(<expr><name>elements</name><operator>--</operator></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>int64_t</name></type> <name>ele</name> <init>= <expr><call><name>RedisModule_LoadSigned</name><argument_list>(<argument><expr><name>rdb</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>LazyFreeLinkInsert</name><argument_list>(<argument><expr><name>hto</name></expr></argument>,<argument><expr><name>ele</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></while>
+<return>return <expr><name>hto</name></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>void</name></type> <name>LazyFreeLinkRdbSave</name><parameter_list>(<parameter><decl><type><name>RedisModuleIO</name> <modifier>*</modifier></type><name>rdb</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>value</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>LazyFreeLinkObject</name></name> <modifier>*</modifier></type><name>hto</name> <init>= <expr><name>value</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>LazyFreeLinkNode</name></name> <modifier>*</modifier></type><name>node</name> <init>= <expr><name><name>hto</name><operator>-&gt;</operator><name>head</name></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>RedisModule_SaveUnsigned</name><argument_list>(<argument><expr><name>rdb</name></expr></argument>,<argument><expr><name><name>hto</name><operator>-&gt;</operator><name>len</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<while>while<condition>(<expr><name>node</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>RedisModule_SaveSigned</name><argument_list>(<argument><expr><name>rdb</name></expr></argument>,<argument><expr><name><name>node</name><operator>-&gt;</operator><name>value</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>node</name> <operator>=</operator> <name><name>node</name><operator>-&gt;</operator><name>next</name></name></expr>;</expr_stmt>
+</block_content>}</block></while>
+</block_content>}</block></function>
+<function><type><name>void</name></type> <name>LazyFreeLinkAofRewrite</name><parameter_list>(<parameter><decl><type><name>RedisModuleIO</name> <modifier>*</modifier></type><name>aof</name></decl></parameter>, <parameter><decl><type><name>RedisModuleString</name> <modifier>*</modifier></type><name>key</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>value</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>LazyFreeLinkObject</name></name> <modifier>*</modifier></type><name>hto</name> <init>= <expr><name>value</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>LazyFreeLinkNode</name></name> <modifier>*</modifier></type><name>node</name> <init>= <expr><name><name>hto</name><operator>-&gt;</operator><name>head</name></name></expr></init></decl>;</decl_stmt>
+<while>while<condition>(<expr><name>node</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>RedisModule_EmitAOF</name><argument_list>(<argument><expr><name>aof</name></expr></argument>,<argument><expr><literal type="string">"LAZYFREELINK.INSERT"</literal></expr></argument>,<argument><expr><literal type="string">"sl"</literal></expr></argument>,<argument><expr><name>key</name></expr></argument>,<argument><expr><name><name>node</name><operator>-&gt;</operator><name>value</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>node</name> <operator>=</operator> <name><name>node</name><operator>-&gt;</operator><name>next</name></name></expr>;</expr_stmt>
+</block_content>}</block></while>
+</block_content>}</block></function>
+<function><type><name>void</name></type> <name>LazyFreeLinkFree</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>value</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>LazyFreeLinkReleaseObject</name><argument_list>(<argument><expr><name>value</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><name>size_t</name></type> <name>LazyFreeLinkFreeEffort</name><parameter_list>(<parameter><decl><type><name>RedisModuleString</name> <modifier>*</modifier></type><name>key</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>value</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>REDISMODULE_NOT_USED</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name><name>struct</name> <name>LazyFreeLinkObject</name></name> <modifier>*</modifier></type><name>hto</name> <init>= <expr><name>value</name></expr></init></decl>;</decl_stmt>
+<return>return <expr><name><name>hto</name><operator>-&gt;</operator><name>len</name></name></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>void</name></type> <name>LazyFreeLinkUnlink</name><parameter_list>(<parameter><decl><type><name>RedisModuleString</name> <modifier>*</modifier></type><name>key</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>value</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>REDISMODULE_NOT_USED</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>REDISMODULE_NOT_USED</name><argument_list>(<argument><expr><name>value</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><name>int</name></type> <name>RedisModule_OnLoad</name><parameter_list>(<parameter><decl><type><name>RedisModuleCtx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>RedisModuleString</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>argc</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>REDISMODULE_NOT_USED</name><argument_list>(<argument><expr><name>argv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>REDISMODULE_NOT_USED</name><argument_list>(<argument><expr><name>argc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_Init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>,<argument><expr><literal type="string">"lazyfreetest"</literal></expr></argument>,<argument><expr><literal type="number">1</literal></expr></argument>,<argument><expr><name>REDISMODULE_APIVER_1</name></expr></argument>)</argument_list></call>
+<operator>==</operator> <name>REDISMODULE_ERR</name></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><name>REDISMODULE_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_GetTypeMethodVersion</name><argument_list>()</argument_list></call> <operator>&lt;</operator> <name>REDISMODULE_TYPE_METHOD_VERSION</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>REDISMODULE_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<decl_stmt><decl><type><name>RedisModuleTypeMethods</name></type> <name>tm</name> <init>= <expr><block>{
+<expr><operator>.</operator><name>version</name> <operator>=</operator> <name>REDISMODULE_TYPE_METHOD_VERSION</name></expr>,
+<expr><operator>.</operator><name>rdb_load</name> <operator>=</operator> <name>LazyFreeLinkRdbLoad</name></expr>,
+<expr><operator>.</operator><name>rdb_save</name> <operator>=</operator> <name>LazyFreeLinkRdbSave</name></expr>,
+<expr><operator>.</operator><name>aof_rewrite</name> <operator>=</operator> <name>LazyFreeLinkAofRewrite</name></expr>,
+<expr><operator>.</operator><name>free</name> <operator>=</operator> <name>LazyFreeLinkFree</name></expr>,
+<expr><operator>.</operator><name>free_effort</name> <operator>=</operator> <name>LazyFreeLinkFreeEffort</name></expr>,
+<expr><operator>.</operator><name>unlink</name> <operator>=</operator> <name>LazyFreeLinkUnlink</name></expr>,
+}</block></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>LazyFreeLinkType</name> <operator>=</operator> <call><name>RedisModule_CreateDataType</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>,<argument><expr><literal type="string">"test_lazy"</literal></expr></argument>,<argument><expr><literal type="number">0</literal></expr></argument>,<argument><expr><operator>&amp;</operator><name>tm</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>LazyFreeLinkType</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><name>REDISMODULE_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_CreateCommand</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>,<argument><expr><literal type="string">"lazyfreelink.insert"</literal></expr></argument>,
+<argument><expr><name>LazyFreeLinkInsert_RedisCommand</name></expr></argument>,<argument><expr><literal type="string">"write deny-oom"</literal></expr></argument>,<argument><expr><literal type="number">1</literal></expr></argument>,<argument><expr><literal type="number">1</literal></expr></argument>,<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call> <operator>==</operator> <name>REDISMODULE_ERR</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>REDISMODULE_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_CreateCommand</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>,<argument><expr><literal type="string">"lazyfreelink.len"</literal></expr></argument>,
+<argument><expr><name>LazyFreeLinkLen_RedisCommand</name></expr></argument>,<argument><expr><literal type="string">"readonly"</literal></expr></argument>,<argument><expr><literal type="number">1</literal></expr></argument>,<argument><expr><literal type="number">1</literal></expr></argument>,<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call> <operator>==</operator> <name>REDISMODULE_ERR</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>REDISMODULE_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></function>
+</unit>

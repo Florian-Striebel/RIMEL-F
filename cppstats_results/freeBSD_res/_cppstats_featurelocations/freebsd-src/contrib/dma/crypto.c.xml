@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/dma/crypto.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;openssl/x509.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;openssl/md5.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;openssl/ssl.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;openssl/err.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;openssl/pem.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;openssl/rand.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;strings.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;string.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;syslog.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"dma.h"</cpp:file></cpp:include>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>init_cert_file</name><parameter_list>(<parameter><decl><type><name>SSL_CTX</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>path</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>error</name></decl>;</decl_stmt>
+
+
+<expr_stmt><expr><name>error</name> <operator>=</operator> <call><name>SSL_CTX_use_certificate_chain_file</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>path</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>error</name> <operator>&lt;</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syslog</name><argument_list>(<argument><expr><name>LOG_ERR</name></expr></argument>, <argument><expr><literal type="string">"SSL: Cannot load certificate `%s': %s"</literal></expr></argument>, <argument><expr><name>path</name></expr></argument>, <argument><expr><call><name>ssl_errstr</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><name>error</name> <operator>=</operator> <call><name>SSL_CTX_use_PrivateKey_file</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>path</name></expr></argument>, <argument><expr><name>SSL_FILETYPE_PEM</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>error</name> <operator>&lt;</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syslog</name><argument_list>(<argument><expr><name>LOG_ERR</name></expr></argument>, <argument><expr><literal type="string">"SSL: Cannot load private key `%s': %s"</literal></expr></argument>, <argument><expr><name>path</name></expr></argument>, <argument><expr><call><name>ssl_errstr</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<expr_stmt><expr><name>error</name> <operator>=</operator> <call><name>SSL_CTX_check_private_key</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>error</name> <operator>&lt;</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syslog</name><argument_list>(<argument><expr><name>LOG_ERR</name></expr></argument>, <argument><expr><literal type="string">"SSL: Cannot check private key: %s"</literal></expr></argument>, <argument><expr><call><name>ssl_errstr</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>verify_server_fingerprint</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>X509</name> <modifier>*</modifier></type><name>cert</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>fingerprint</name><index>[<expr><name>EVP_MAX_MD_SIZE</name></expr>]</index></name> <init>= <expr><block>{<expr><literal type="number">0</literal></expr>}</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>int</name></type> <name>fingerprint_len</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if<condition>(<expr><operator>!</operator><call><name>X509_digest</name><argument_list>(<argument><expr><name>cert</name></expr></argument>, <argument><expr><call><name>EVP_sha256</name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><name>fingerprint</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>fingerprint_len</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syslog</name><argument_list>(<argument><expr><name>LOG_WARNING</name></expr></argument>, <argument><expr><literal type="string">"failed to load fingerprint of server certicate: %s"</literal></expr></argument>,
+<argument><expr><call><name>ssl_errstr</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if<condition>(<expr><name>fingerprint_len</name> <operator>!=</operator> <name>SHA256_DIGEST_LENGTH</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syslog</name><argument_list>(<argument><expr><name>LOG_WARNING</name></expr></argument>, <argument><expr><literal type="string">"sha256 fingerprint has unexpected length of %d bytes"</literal></expr></argument>,
+<argument><expr><name>fingerprint_len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if<condition>(<expr><call><name>memcmp</name><argument_list>(<argument><expr><name>fingerprint</name></expr></argument>, <argument><expr><name><name>config</name><operator>.</operator><name>fingerprint</name></name></expr></argument>, <argument><expr><name>SHA256_DIGEST_LENGTH</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syslog</name><argument_list>(<argument><expr><name>LOG_WARNING</name></expr></argument>, <argument><expr><literal type="string">"fingerprints do not match"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>syslog</name><argument_list>(<argument><expr><name>LOG_DEBUG</name></expr></argument>, <argument><expr><literal type="string">"successfully verified server certificate fingerprint"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>smtp_init_crypto</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>fd</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>feature</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>smtp_features</name></name><modifier>*</modifier></type> <name>features</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>SSL_CTX</name> <modifier>*</modifier></type><name>ctx</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>(</operator><name>OPENSSL_VERSION_NUMBER</name> <operator>&gt;=</operator> <literal type="number">0x00909000L</literal><operator>)</operator></expr></cpp:if>
+<decl_stmt><decl><type><specifier>const</specifier> <name>SSL_METHOD</name> <modifier>*</modifier></type><name>meth</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<decl_stmt><decl><type><name>SSL_METHOD</name> <modifier>*</modifier></type><name>meth</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<decl_stmt><decl><type><name>X509</name> <modifier>*</modifier></type><name>cert</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>error</name></decl>;</decl_stmt>
+
+
+
+<expr_stmt><expr><call><name>SSL_library_init</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SSL_load_error_strings</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>(</operator><name>OPENSSL_VERSION_NUMBER</name> <operator>&gt;=</operator> <literal type="number">0x10100000L</literal><operator>)</operator></expr></cpp:if>
+<expr_stmt><expr><name>meth</name> <operator>=</operator> <call><name>TLS_client_method</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><name>meth</name> <operator>=</operator> <call><name>SSLv23_client_method</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<expr_stmt><expr><name>ctx</name> <operator>=</operator> <call><name>SSL_CTX_new</name><argument_list>(<argument><expr><name>meth</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ctx</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syslog</name><argument_list>(<argument><expr><name>LOG_WARNING</name></expr></argument>, <argument><expr><literal type="string">"remote delivery deferred: SSL init failed: %s"</literal></expr></argument>, <argument><expr><call><name>ssl_errstr</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>config</name><operator>.</operator><name>certfile</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>error</name> <operator>=</operator> <call><name>init_cert_file</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name><name>config</name><operator>.</operator><name>certfile</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>error</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syslog</name><argument_list>(<argument><expr><name>LOG_WARNING</name></expr></argument>, <argument><expr><literal type="string">"remote delivery deferred"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><operator>(</operator><name>feature</name> <operator>&amp;</operator> <name>SECURETRANSFER</name><operator>)</operator> <operator>!=</operator> <literal type="number">0</literal><operator>)</operator> <operator>&amp;&amp;</operator>
+<operator>(</operator><name>feature</name> <operator>&amp;</operator> <name>STARTTLS</name><operator>)</operator> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><name><name>config</name><operator>.</operator><name>features</name></name> <operator>|=</operator> <name>NOSSL</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>perform_server_greeting</name><argument_list>(<argument><expr><name>fd</name></expr></argument>, <argument><expr><name>features</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>send_remote_command</name><argument_list>(<argument><expr><name>fd</name></expr></argument>, <argument><expr><literal type="string">"STARTTLS"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>read_remote</name><argument_list>(<argument><expr><name>fd</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">2</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>feature</name> <operator>&amp;</operator> <name>TLS_OPP</name><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syslog</name><argument_list>(<argument><expr><name>LOG_ERR</name></expr></argument>, <argument><expr><literal type="string">"remote delivery deferred: STARTTLS not available: %s"</literal></expr></argument>, <argument><expr><name>neterr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>syslog</name><argument_list>(<argument><expr><name>LOG_INFO</name></expr></argument>, <argument><expr><literal type="string">"in opportunistic TLS mode, STARTTLS not available: %s"</literal></expr></argument>, <argument><expr><name>neterr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>syslog</name><argument_list>(<argument><expr><name>LOG_ERR</name></expr></argument>, <argument><expr><literal type="string">"remote delivery deferred: could not perform server greeting: %s"</literal></expr></argument>,
+<argument><expr><name>neterr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></else></if_stmt>
+
+
+<expr_stmt><expr><name><name>config</name><operator>.</operator><name>features</name></name> <operator>&amp;=</operator> <operator>~</operator><name>NOSSL</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>config</name><operator>.</operator><name>ssl</name></name> <operator>=</operator> <call><name>SSL_new</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>config</name><operator>.</operator><name>ssl</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syslog</name><argument_list>(<argument><expr><name>LOG_NOTICE</name></expr></argument>, <argument><expr><literal type="string">"remote delivery deferred: SSL struct creation failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>ssl_errstr</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><call><name>SSL_set_connect_state</name><argument_list>(<argument><expr><name><name>config</name><operator>.</operator><name>ssl</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><name>error</name> <operator>=</operator> <call><name>SSL_set_fd</name><argument_list>(<argument><expr><name><name>config</name><operator>.</operator><name>ssl</name></name></expr></argument>, <argument><expr><name>fd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>error</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syslog</name><argument_list>(<argument><expr><name>LOG_NOTICE</name></expr></argument>, <argument><expr><literal type="string">"remote delivery deferred: SSL set fd failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>ssl_errstr</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><name>error</name> <operator>=</operator> <call><name>SSL_connect</name><argument_list>(<argument><expr><name><name>config</name><operator>.</operator><name>ssl</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>error</name> <operator>!=</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syslog</name><argument_list>(<argument><expr><name>LOG_ERR</name></expr></argument>, <argument><expr><literal type="string">"remote delivery deferred: SSL handshake failed fatally: %s"</literal></expr></argument>,
+<argument><expr><call><name>ssl_errstr</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><name>cert</name> <operator>=</operator> <call><name>SSL_get_peer_certificate</name><argument_list>(<argument><expr><name><name>config</name><operator>.</operator><name>ssl</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>cert</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syslog</name><argument_list>(<argument><expr><name>LOG_WARNING</name></expr></argument>, <argument><expr><literal type="string">"remote delivery deferred: Peer did not provide certificate: %s"</literal></expr></argument>,
+<argument><expr><call><name>ssl_errstr</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if<condition>(<expr><name><name>config</name><operator>.</operator><name>fingerprint</name></name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <call><name>verify_server_fingerprint</name><argument_list>(<argument><expr><name>cert</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>X509_free</name><argument_list>(<argument><expr><name>cert</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>X509_free</name><argument_list>(<argument><expr><name>cert</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+<function><type><name>void</name></type>
+<name>hmac_md5</name><parameter_list>(<parameter><decl><type><name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>text</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>text_len</name></decl></parameter>, <parameter><decl><type><name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>key</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>key_len</name></decl></parameter>,
+<parameter><decl><type><name>unsigned</name> <name>char</name><modifier>*</modifier></type> <name>digest</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>MD5_CTX</name></type> <name>context</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>k_ipad</name><index>[<expr><literal type="number">65</literal></expr>]</index></name></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>k_opad</name><index>[<expr><literal type="number">65</literal></expr>]</index></name></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>tk</name><index>[<expr><literal type="number">16</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>key_len</name> <operator>&gt;</operator> <literal type="number">64</literal></expr>)</condition> <block>{<block_content>
+
+<decl_stmt><decl><type><name>MD5_CTX</name></type> <name>tctx</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>MD5_Init</name><argument_list>(<argument><expr><operator>&amp;</operator><name>tctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>MD5_Update</name><argument_list>(<argument><expr><operator>&amp;</operator><name>tctx</name></expr></argument>, <argument><expr><name>key</name></expr></argument>, <argument><expr><name>key_len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>MD5_Final</name><argument_list>(<argument><expr><name>tk</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>tctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>key</name> <operator>=</operator> <name>tk</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>key_len</name> <operator>=</operator> <literal type="number">16</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<expr_stmt><expr><call><name>bzero</name><argument_list>( <argument><expr><name>k_ipad</name></expr></argument>, <argument><expr><sizeof>sizeof <name>k_ipad</name></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>bzero</name><argument_list>( <argument><expr><name>k_opad</name></expr></argument>, <argument><expr><sizeof>sizeof <name>k_opad</name></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>bcopy</name><argument_list>( <argument><expr><name>key</name></expr></argument>, <argument><expr><name>k_ipad</name></expr></argument>, <argument><expr><name>key_len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>bcopy</name><argument_list>( <argument><expr><name>key</name></expr></argument>, <argument><expr><name>k_opad</name></expr></argument>, <argument><expr><name>key_len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<for>for <control>(<init><expr><name>i</name><operator>=</operator><literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name><operator>&lt;</operator><literal type="number">64</literal></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name><name>k_ipad</name><index>[<expr><name>i</name></expr>]</index></name> <operator>^=</operator> <literal type="number">0x36</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>k_opad</name><index>[<expr><name>i</name></expr>]</index></name> <operator>^=</operator> <literal type="number">0x5c</literal></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+
+
+<expr_stmt><expr><call><name>MD5_Init</name><argument_list>(<argument><expr><operator>&amp;</operator><name>context</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>MD5_Update</name><argument_list>(<argument><expr><operator>&amp;</operator><name>context</name></expr></argument>, <argument><expr><name>k_ipad</name></expr></argument>, <argument><expr><literal type="number">64</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>MD5_Update</name><argument_list>(<argument><expr><operator>&amp;</operator><name>context</name></expr></argument>, <argument><expr><name>text</name></expr></argument>, <argument><expr><name>text_len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>MD5_Final</name><argument_list>(<argument><expr><name>digest</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>context</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+<expr_stmt><expr><call><name>MD5_Init</name><argument_list>(<argument><expr><operator>&amp;</operator><name>context</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>MD5_Update</name><argument_list>(<argument><expr><operator>&amp;</operator><name>context</name></expr></argument>, <argument><expr><name>k_opad</name></expr></argument>, <argument><expr><literal type="number">64</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>MD5_Update</name><argument_list>(<argument><expr><operator>&amp;</operator><name>context</name></expr></argument>, <argument><expr><name>digest</name></expr></argument>, <argument><expr><literal type="number">16</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>MD5_Final</name><argument_list>(<argument><expr><name>digest</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>context</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>int</name></type>
+<name>smtp_auth_md5</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>fd</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>login</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>password</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>digest</name><index>[<expr><name>BUF_SIZE</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name><name>buffer</name><index>[<expr><name>BUF_SIZE</name></expr>]</index></name></decl>, <decl><type ref="prev"/><name><name>ascii_digest</name><index>[<expr><literal type="number">33</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>temp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>len</name></decl>, <decl><type ref="prev"/><name>i</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>char</name></type> <name><name>hextab</name><index>[]</index></name> <init>= <expr><literal type="string">"0123456789abcdef"</literal></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>temp</name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><name>BUF_SIZE</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><name>buffer</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>buffer</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><name>digest</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>digest</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><name>ascii_digest</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>ascii_digest</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><call><name>send_remote_command</name><argument_list>(<argument><expr><name>fd</name></expr></argument>, <argument><expr><literal type="string">"AUTH CRAM-MD5"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>read_remote</name><argument_list>(<argument><expr><name>fd</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>buffer</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><name>buffer</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">3</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syslog</name><argument_list>(<argument><expr><name>LOG_DEBUG</name></expr></argument>, <argument><expr><literal type="string">"smarthost authentication:"</literal>
+<literal type="string">" AUTH cram-md5 not available: %s"</literal></expr></argument>, <argument><expr><name>neterr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>temp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><call><name>base64_decode</name><argument_list>(<argument><expr><name>buffer</name> <operator>+</operator> <literal type="number">4</literal></expr></argument>, <argument><expr><name>temp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>hmac_md5</name><argument_list>(<argument><expr><operator>(</operator><name>unsigned</name> <name>char</name> <operator>*</operator><operator>)</operator><name>temp</name></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name>temp</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><operator>(</operator><name>unsigned</name> <name>char</name> <operator>*</operator><operator>)</operator><name>password</name></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name>password</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>digest</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>temp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>ascii_digest</name><index>[<expr><literal type="number">32</literal></expr>]</index></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <literal type="number">16</literal></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name><name>ascii_digest</name><index>[<expr><literal type="number">2</literal><operator>*</operator><name>i</name></expr>]</index></name> <operator>=</operator> <name><name>hextab</name><index>[<expr><name><name>digest</name><index>[<expr><name>i</name></expr>]</index></name> <operator>&gt;&gt;</operator> <literal type="number">4</literal></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ascii_digest</name><index>[<expr><literal type="number">2</literal><operator>*</operator><name>i</name><operator>+</operator><literal type="number">1</literal></expr>]</index></name> <operator>=</operator> <name><name>hextab</name><index>[<expr><name><name>digest</name><index>[<expr><name>i</name></expr>]</index></name> <operator>&amp;</operator> <literal type="number">15</literal></expr>]</index></name></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+
+<expr_stmt><expr><call><name>snprintf</name><argument_list>(<argument><expr><name>buffer</name></expr></argument>, <argument><expr><name>BUF_SIZE</name></expr></argument>, <argument><expr><literal type="string">"%s %s"</literal></expr></argument>, <argument><expr><name>login</name></expr></argument>, <argument><expr><name>ascii_digest</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><name>len</name> <operator>=</operator> <call><name>base64_encode</name><argument_list>(<argument><expr><name>buffer</name></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name>buffer</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><operator>&amp;</operator><name>temp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>len</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syslog</name><argument_list>(<argument><expr><name>LOG_ERR</name></expr></argument>, <argument><expr><literal type="string">"can not encode auth reply: %m"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><call><name>send_remote_command</name><argument_list>(<argument><expr><name>fd</name></expr></argument>, <argument><expr><literal type="string">"%s"</literal></expr></argument>, <argument><expr><name>temp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>temp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>read_remote</name><argument_list>(<argument><expr><name>fd</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">2</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syslog</name><argument_list>(<argument><expr><name>LOG_WARNING</name></expr></argument>, <argument><expr><literal type="string">"remote delivery deferred:"</literal>
+<literal type="string">" AUTH cram-md5 failed: %s"</literal></expr></argument>, <argument><expr><name>neterr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">2</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+</unit>

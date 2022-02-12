@@ -1,0 +1,964 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/dialog/fselect.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;dlg_internals.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;dlg_keys.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/types.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/stat.h&gt;</cpp:file></cpp:include>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HAVE_DIRENT_H</name></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;dirent.h&gt;</cpp:file></cpp:include>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>NAMLEN</name><parameter_list>(<parameter><type><name>dirent</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>strlen((dirent)-&gt;d_name)</cpp:value></cpp:define>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>dirent</name></cpp:macro> <cpp:value>direct</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>NAMLEN</name><parameter_list>(<parameter><type><name>dirent</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>(dirent)-&gt;d_namlen</cpp:value></cpp:define>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HAVE_SYS_NDIR_H</name></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/ndir.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HAVE_SYS_DIR_H</name></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/dir.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HAVE_NDIR_H</name></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;ndir.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>_FILE_OFFSET_BITS</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <call><name>defined</name><argument_list>(<argument><expr><name>HAVE_STRUCT_DIRENT64</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>_LP64</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <operator>(</operator><name>_FILE_OFFSET_BITS</name> <operator>==</operator> <literal type="number">64</literal><operator>)</operator></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>DIRENT</name></cpp:macro> <cpp:value>struct dirent64</cpp:value></cpp:define>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>DIRENT</name></cpp:macro> <cpp:value>struct dirent</cpp:value></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>DIRENT</name></cpp:macro> <cpp:value>struct dirent</cpp:value></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>EXT_WIDE</name></cpp:macro> <cpp:value>1</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>HDR_HIGH</name></cpp:macro> <cpp:value>1</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>BTN_HIGH</name></cpp:macro> <cpp:value>(1 + 2 * MARGIN)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MIN_HIGH</name></cpp:macro> <cpp:value>(HDR_HIGH - MARGIN + (BTN_HIGH * 2) + 4 * MARGIN)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MIN_WIDE</name></cpp:macro> <cpp:value>(2 * MAX(dlg_count_columns(d_label), dlg_count_columns(f_label)) + 6 * MARGIN + 2 * EXT_WIDE)</cpp:value></cpp:define>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MOUSE_D</name></cpp:macro> <cpp:value>(KEY_MAX + 0)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MOUSE_F</name></cpp:macro> <cpp:value>(KEY_MAX + 10000)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MOUSE_T</name></cpp:macro> <cpp:value>(KEY_MAX + 20000)</cpp:value></cpp:define>
+
+<typedef>typedef <type><enum>enum <block>{
+<decl><name>sDIRS</name> <init>= <expr><operator>-</operator><literal type="number">3</literal></expr></init></decl>
+,<decl><name>sFILES</name> <init>= <expr><operator>-</operator><literal type="number">2</literal></expr></init></decl>
+,<decl><name>sTEXT</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>
+}</block></enum></type> <name>STATES</name>;</typedef>
+
+<typedef>typedef <type><struct>struct <block>{
+<decl_stmt><decl><type><name>WINDOW</name> <modifier>*</modifier></type><name>par</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>WINDOW</name> <modifier>*</modifier></type><name>win</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>length</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>offset</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>choice</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>mousex</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name></type> <name>allocd</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>data</name></decl>;</decl_stmt>
+}</block></struct></type> <name>LIST</name>;</typedef>
+
+<typedef>typedef <type><struct>struct <block>{
+<decl_stmt><decl><type><name>int</name></type> <name>length</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>data</name></decl>;</decl_stmt>
+}</block></struct></type> <name>MATCH</name>;</typedef>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>init_list</name><parameter_list>(<parameter><decl><type><name>LIST</name> <modifier>*</modifier></type> <name>list</name></decl></parameter>, <parameter><decl><type><name>WINDOW</name> <modifier>*</modifier></type><name>par</name></decl></parameter>, <parameter><decl><type><name>WINDOW</name> <modifier>*</modifier></type><name>win</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>mousex</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><name><name>list</name><operator>-&gt;</operator><name>par</name></name> <operator>=</operator> <name>par</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>list</name><operator>-&gt;</operator><name>win</name></name> <operator>=</operator> <name>win</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>list</name><operator>-&gt;</operator><name>length</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>list</name><operator>-&gt;</operator><name>offset</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>list</name><operator>-&gt;</operator><name>choice</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>list</name><operator>-&gt;</operator><name>mousex</name></name> <operator>=</operator> <name>mousex</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>list</name><operator>-&gt;</operator><name>allocd</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>list</name><operator>-&gt;</operator><name>data</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_mouse_mkbigregion</name><argument_list>(<argument><expr><call><name>getbegy</name><argument_list>(<argument><expr><name>win</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><call><name>getbegx</name><argument_list>(<argument><expr><name>win</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>getmaxy</name><argument_list>(<argument><expr><name>win</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><call><name>getmaxx</name><argument_list>(<argument><expr><name>win</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name>mousex</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument> )</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>leaf_of</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>path</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>leaf</name> <init>= <expr><call><name>strrchr</name><argument_list>(<argument><expr><name>path</name></expr></argument>, <argument><expr><literal type="char">'/'</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>leaf</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>leaf</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>leaf</name> <operator>=</operator> <name>path</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<return>return <expr><name>leaf</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>data_of</name><parameter_list>(<parameter><decl><type><name>LIST</name> <modifier>*</modifier></type> <name>list</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>list</name> <operator>!=</operator> <literal type="number">0</literal>
+<operator>&amp;&amp;</operator> <name><name>list</name><operator>-&gt;</operator><name>data</name></name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name><name>list</name><operator>-&gt;</operator><name>data</name><index>[<expr><name><name>list</name><operator>-&gt;</operator><name>choice</name></name></expr>]</index></name></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>free_list</name><parameter_list>(<parameter><decl><type><name>LIST</name> <modifier>*</modifier></type> <name>list</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>reinit</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>list</name><operator>-&gt;</operator><name>data</name></name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>n</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>n</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name><name>list</name><operator>-&gt;</operator><name>data</name><index>[<expr><name>n</name></expr>]</index></name> <operator>!=</operator> <literal type="number">0</literal></expr>;</condition> <incr><expr><name>n</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>list</name><operator>-&gt;</operator><name>data</name><index>[<expr><name>n</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>list</name><operator>-&gt;</operator><name>data</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>list</name><operator>-&gt;</operator><name>data</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>reinit</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>init_list</name><argument_list>(<argument><expr><name>list</name></expr></argument>, <argument><expr><name><name>list</name><operator>-&gt;</operator><name>par</name></name></expr></argument>, <argument><expr><name><name>list</name><operator>-&gt;</operator><name>win</name></name></expr></argument>, <argument><expr><name><name>list</name><operator>-&gt;</operator><name>mousex</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>add_to_list</name><parameter_list>(<parameter><decl><type><name>LIST</name> <modifier>*</modifier></type> <name>list</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>text</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name></type> <name>need</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>need</name> <operator>=</operator> <operator>(</operator><name>unsigned</name><operator>)</operator> <operator>(</operator><name><name>list</name><operator>-&gt;</operator><name>length</name></name> <operator>+</operator> <literal type="number">1</literal><operator>)</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>need</name> <operator>+</operator> <literal type="number">1</literal> <operator>&gt;</operator> <name><name>list</name><operator>-&gt;</operator><name>allocd</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>list</name><operator>-&gt;</operator><name>allocd</name></name> <operator>=</operator> <literal type="number">2</literal> <operator>*</operator> <operator>(</operator><name>need</name> <operator>+</operator> <literal type="number">1</literal><operator>)</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>list</name><operator>-&gt;</operator><name>data</name></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>list</name><operator>-&gt;</operator><name>data</name></name> <operator>=</operator> <call><name>dlg_malloc</name><argument_list>(<argument><expr><name>char</name> <operator>*</operator></expr></argument>, <argument><expr><name><name>list</name><operator>-&gt;</operator><name>allocd</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name><name>list</name><operator>-&gt;</operator><name>data</name></name> <operator>=</operator> <call><name>dlg_realloc</name><argument_list>(<argument><expr><name>char</name> <operator>*</operator></expr></argument>, <argument><expr><name><name>list</name><operator>-&gt;</operator><name>allocd</name></name></expr></argument>, <argument><expr><name><name>list</name><operator>-&gt;</operator><name>data</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><call><name>assert_ptr</name><argument_list>(<argument><expr><name><name>list</name><operator>-&gt;</operator><name>data</name></name></expr></argument>, <argument><expr><literal type="string">"add_to_list"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>list</name><operator>-&gt;</operator><name>data</name><index>[<expr><name><name>list</name><operator>-&gt;</operator><name>length</name></name><operator>++</operator></expr>]</index></name> <operator>=</operator> <call><name>dlg_strclone</name><argument_list>(<argument><expr><name>text</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>list</name><operator>-&gt;</operator><name>data</name><index>[<expr><name><name>list</name><operator>-&gt;</operator><name>length</name></name></expr>]</index></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>keep_visible</name><parameter_list>(<parameter><decl><type><name>LIST</name> <modifier>*</modifier></type> <name>list</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>high</name> <init>= <expr><call><name>getmaxy</name><argument_list>(<argument><expr><name><name>list</name><operator>-&gt;</operator><name>win</name></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>list</name><operator>-&gt;</operator><name>choice</name></name> <operator>&lt;</operator> <name><name>list</name><operator>-&gt;</operator><name>offset</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>list</name><operator>-&gt;</operator><name>offset</name></name> <operator>=</operator> <name><name>list</name><operator>-&gt;</operator><name>choice</name></name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>list</name><operator>-&gt;</operator><name>choice</name></name> <operator>-</operator> <name><name>list</name><operator>-&gt;</operator><name>offset</name></name> <operator>&gt;=</operator> <name>high</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>list</name><operator>-&gt;</operator><name>offset</name></name> <operator>=</operator> <name><name>list</name><operator>-&gt;</operator><name>choice</name></name> <operator>-</operator> <name>high</name> <operator>+</operator> <literal type="number">1</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>Value</name><parameter_list>(<parameter><type><name>c</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>(int)((c) &amp; 0xff)</cpp:value></cpp:define>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>find_choice</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>target</name></decl></parameter>, <parameter><decl><type><name>LIST</name> <modifier>*</modifier></type> <name>list</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>choice</name> <init>= <expr><name><name>list</name><operator>-&gt;</operator><name>choice</name></name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>target</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>list</name><operator>-&gt;</operator><name>choice</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>n</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>len_1</name></decl>, <decl><type ref="prev"/><name>cmp_1</name></decl>;</decl_stmt>
+
+
+
+
+
+<expr_stmt><expr><name>len_1</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>cmp_1</name> <operator>=</operator> <literal type="number">256</literal></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>n</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>n</name> <operator>&lt;</operator> <name><name>list</name><operator>-&gt;</operator><name>length</name></name></expr>;</condition> <incr><expr><name>n</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>a</name> <init>= <expr><name>target</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>b</name> <init>= <expr><name><name>list</name><operator>-&gt;</operator><name>data</name><index>[<expr><name>n</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>len_2</name></decl>, <decl><type ref="prev"/><name>cmp_2</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>len_2</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<while>while <condition>(<expr><operator>(</operator><operator>*</operator><name>a</name> <operator>!=</operator> <literal type="number">0</literal><operator>)</operator> <operator>&amp;&amp;</operator> <operator>(</operator><operator>*</operator><name>b</name> <operator>!=</operator> <literal type="number">0</literal><operator>)</operator> <operator>&amp;&amp;</operator> <operator>(</operator><operator>*</operator><name>a</name> <operator>==</operator> <operator>*</operator><name>b</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>a</name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name>b</name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name>len_2</name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></while>
+<expr_stmt><expr><name>cmp_2</name> <operator>=</operator> <call><name>Value</name><argument_list>(<argument><expr><operator>*</operator><name>a</name></expr></argument>)</argument_list></call> <operator>-</operator> <call><name>Value</name><argument_list>(<argument><expr><operator>*</operator><name>b</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>cmp_2</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>cmp_2</name> <operator>=</operator> <operator>-</operator><name>cmp_2</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>len_2</name> <operator>&gt;</operator> <name>len_1</name><operator>)</operator>
+<operator>||</operator> <operator>(</operator><name>len_1</name> <operator>==</operator> <name>len_2</name> <operator>&amp;&amp;</operator> <name>cmp_2</name> <operator>&lt;</operator> <name>cmp_1</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>len_1</name> <operator>=</operator> <name>len_2</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>cmp_1</name> <operator>=</operator> <name>cmp_2</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>list</name><operator>-&gt;</operator><name>choice</name></name> <operator>=</operator> <name>n</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>choice</name> <operator>!=</operator> <name><name>list</name><operator>-&gt;</operator><name>choice</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>keep_visible</name><argument_list>(<argument><expr><name>list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>choice</name> <operator>!=</operator> <name><name>list</name><operator>-&gt;</operator><name>choice</name></name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>display_list</name><parameter_list>(<parameter><decl><type><name>LIST</name> <modifier>*</modifier></type> <name>list</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>list</name><operator>-&gt;</operator><name>win</name></name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>n</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>x</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>y</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>top</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>bottom</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>dlg_attr_clear</name><argument_list>(<argument><expr><name><name>list</name><operator>-&gt;</operator><name>win</name></name></expr></argument>, <argument><expr><call><name>getmaxy</name><argument_list>(<argument><expr><name><name>list</name><operator>-&gt;</operator><name>win</name></name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><call><name>getmaxx</name><argument_list>(<argument><expr><name><name>list</name><operator>-&gt;</operator><name>win</name></name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>item_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>n</name> <operator>=</operator> <name><name>list</name><operator>-&gt;</operator><name>offset</name></name></expr>;</init> <condition><expr><name>n</name> <operator>&lt;</operator> <name><name>list</name><operator>-&gt;</operator><name>length</name></name> <operator>&amp;&amp;</operator> <name><name>list</name><operator>-&gt;</operator><name>data</name><index>[<expr><name>n</name></expr>]</index></name></expr>;</condition> <incr><expr><name>n</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>y</name> <operator>=</operator> <name>n</name> <operator>-</operator> <name><name>list</name><operator>-&gt;</operator><name>offset</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>y</name> <operator>&gt;=</operator> <call><name>getmaxy</name><argument_list>(<argument><expr><name><name>list</name><operator>-&gt;</operator><name>win</name></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>wmove</name><argument_list>(<argument><expr><name><name>list</name><operator>-&gt;</operator><name>win</name></name></expr></argument>, <argument><expr><name>y</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>n</name> <operator>==</operator> <name><name>list</name><operator>-&gt;</operator><name>choice</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>dlg_attrset</name><argument_list>(<argument><expr><name><name>list</name><operator>-&gt;</operator><name>win</name></name></expr></argument>, <argument><expr><name>item_selected_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>waddstr</name><argument_list>(<argument><expr><name><name>list</name><operator>-&gt;</operator><name>win</name></name></expr></argument>, <argument><expr><name><name>list</name><operator>-&gt;</operator><name>data</name><index>[<expr><name>n</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_attrset</name><argument_list>(<argument><expr><name><name>list</name><operator>-&gt;</operator><name>win</name></name></expr></argument>, <argument><expr><name>item_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><call><name>dlg_attrset</name><argument_list>(<argument><expr><name><name>list</name><operator>-&gt;</operator><name>win</name></name></expr></argument>, <argument><expr><name>item_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>getparyx</name><argument_list>(<argument><expr><name><name>list</name><operator>-&gt;</operator><name>win</name></name></expr></argument>, <argument><expr><name>y</name></expr></argument>, <argument><expr><name>x</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>top</name> <operator>=</operator> <name>y</name> <operator>-</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>bottom</name> <operator>=</operator> <name>y</name> <operator>+</operator> <call><name>getmaxy</name><argument_list>(<argument><expr><name><name>list</name><operator>-&gt;</operator><name>win</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_draw_scrollbar</name><argument_list>(<argument><expr><name><name>list</name><operator>-&gt;</operator><name>par</name></name></expr></argument>,
+<argument><expr><operator>(</operator><name>long</name><operator>)</operator> <name><name>list</name><operator>-&gt;</operator><name>offset</name></name></expr></argument>,
+<argument><expr><operator>(</operator><name>long</name><operator>)</operator> <name><name>list</name><operator>-&gt;</operator><name>offset</name></name></expr></argument>,
+<argument><expr><operator>(</operator><name>long</name><operator>)</operator> <operator>(</operator><name><name>list</name><operator>-&gt;</operator><name>offset</name></name> <operator>+</operator> <call><name>getmaxy</name><argument_list>(<argument><expr><name><name>list</name><operator>-&gt;</operator><name>win</name></name></expr></argument>)</argument_list></call><operator>)</operator></expr></argument>,
+<argument><expr><operator>(</operator><name>long</name><operator>)</operator> <operator>(</operator><name><name>list</name><operator>-&gt;</operator><name>length</name></name><operator>)</operator></expr></argument>,
+<argument><expr><name>x</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>,
+<argument><expr><name>x</name> <operator>+</operator> <call><name>getmaxx</name><argument_list>(<argument><expr><name><name>list</name><operator>-&gt;</operator><name>win</name></name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name>top</name></expr></argument>,
+<argument><expr><name>bottom</name></expr></argument>,
+<argument><expr><name>menubox_border2_attr</name></expr></argument>,
+<argument><expr><name>menubox_border_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>wmove</name><argument_list>(<argument><expr><name><name>list</name><operator>-&gt;</operator><name>win</name></name></expr></argument>, <argument><expr><name><name>list</name><operator>-&gt;</operator><name>choice</name></name> <operator>-</operator> <name><name>list</name><operator>-&gt;</operator><name>offset</name></name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>wnoutrefresh</name><argument_list>(<argument><expr><name><name>list</name><operator>-&gt;</operator><name>win</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>USE_MOUSE</name></expr></cpp:if>
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>fix_arrows</name><parameter_list>(<parameter><decl><type><name>LIST</name> <modifier>*</modifier></type> <name>list</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>list</name><operator>-&gt;</operator><name>win</name></name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>x</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>y</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>top</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>right</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>bottom</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>getparyx</name><argument_list>(<argument><expr><name><name>list</name><operator>-&gt;</operator><name>win</name></name></expr></argument>, <argument><expr><name>y</name></expr></argument>, <argument><expr><name>x</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>top</name> <operator>=</operator> <name>y</name> <operator>-</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>right</name> <operator>=</operator> <call><name>getmaxx</name><argument_list>(<argument><expr><name><name>list</name><operator>-&gt;</operator><name>win</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>bottom</name> <operator>=</operator> <name>y</name> <operator>+</operator> <call><name>getmaxy</name><argument_list>(<argument><expr><name><name>list</name><operator>-&gt;</operator><name>win</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>mouse_mkbutton</name><argument_list>(<argument><expr><name>top</name></expr></argument>, <argument><expr><name>x</name></expr></argument>, <argument><expr><name>right</name></expr></argument>,
+<argument><expr><operator>(</operator><ternary><condition><expr><operator>(</operator><name><name>list</name><operator>-&gt;</operator><name>mousex</name></name> <operator>==</operator> <name>MOUSE_D</name><operator>)</operator></expr>
+?</condition><then> <expr><name>KEY_PREVIOUS</name></expr>
+</then><else>: <expr><name>KEY_PPAGE</name></expr></else></ternary><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>mouse_mkbutton</name><argument_list>(<argument><expr><name>bottom</name></expr></argument>, <argument><expr><name>x</name></expr></argument>, <argument><expr><name>right</name></expr></argument>,
+<argument><expr><operator>(</operator><ternary><condition><expr><operator>(</operator><name><name>list</name><operator>-&gt;</operator><name>mousex</name></name> <operator>==</operator> <name>MOUSE_D</name><operator>)</operator></expr>
+?</condition><then> <expr><name>KEY_NEXT</name></expr>
+</then><else>: <expr><name>KEY_NPAGE</name></expr></else></ternary><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></function>
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>fix_arrows</name><parameter_list>(<parameter><type><name>list</name></type></parameter>)</parameter_list></cpp:macro></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>show_list</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>target</name></decl></parameter>, <parameter><decl><type><name>LIST</name> <modifier>*</modifier></type> <name>list</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>keep</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>bool</name></type> <name>changed</name> <init>= <expr><name>keep</name> <operator>||</operator> <call><name>find_choice</name><argument_list>(<argument><expr><name>target</name></expr></argument>, <argument><expr><name>list</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>display_list</name><argument_list>(<argument><expr><name>list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>changed</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>show_both_lists</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>input</name></decl></parameter>, <parameter><decl><type><name>LIST</name> <modifier>*</modifier></type> <name>d_list</name></decl></parameter>, <parameter><decl><type><name>LIST</name> <modifier>*</modifier></type> <name>f_list</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>keep</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>leaf</name> <init>= <expr><call><name>leaf_of</name><argument_list>(<argument><expr><name>input</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<return>return <expr><call><name>show_list</name><argument_list>(<argument><expr><name>leaf</name></expr></argument>, <argument><expr><name>d_list</name></expr></argument>, <argument><expr><name>keep</name></expr></argument>)</argument_list></call> <operator>||</operator> <call><name>show_list</name><argument_list>(<argument><expr><name>leaf</name></expr></argument>, <argument><expr><name>f_list</name></expr></argument>, <argument><expr><name>keep</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>change_list</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>choice</name></decl></parameter>, <parameter><decl><type><name>LIST</name> <modifier>*</modifier></type> <name>list</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>data_of</name><argument_list>(<argument><expr><name>list</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>last</name> <init>= <expr><name><name>list</name><operator>-&gt;</operator><name>length</name></name> <operator>-</operator> <literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>choice</name> <operator>+=</operator> <name><name>list</name><operator>-&gt;</operator><name>choice</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>choice</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>choice</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>choice</name> <operator>&gt;</operator> <name>last</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>choice</name> <operator>=</operator> <name>last</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>list</name><operator>-&gt;</operator><name>choice</name></name> <operator>=</operator> <name>choice</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>keep_visible</name><argument_list>(<argument><expr><name>list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>display_list</name><argument_list>(<argument><expr><name>list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>TRUE</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name>FALSE</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>scroll_list</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>direction</name></decl></parameter>, <parameter><decl><type><name>LIST</name> <modifier>*</modifier></type> <name>list</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>data_of</name><argument_list>(<argument><expr><name>list</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>length</name> <init>= <expr><call><name>getmaxy</name><argument_list>(<argument><expr><name><name>list</name><operator>-&gt;</operator><name>win</name></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>change_list</name><argument_list>(<argument><expr><name>direction</name> <operator>*</operator> <name>length</name></expr></argument>, <argument><expr><name>list</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>beep</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>compar</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>a</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>b</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><call><name>strcmp</name><argument_list>(<argument><expr><operator>*</operator><operator>(</operator><specifier>const</specifier> <name>char</name> <operator>*</operator><specifier>const</specifier> <operator>*</operator><operator>)</operator> <name>a</name></expr></argument>, <argument><expr><operator>*</operator><operator>(</operator><specifier>const</specifier> <name>char</name> <operator>*</operator><specifier>const</specifier> <operator>*</operator><operator>)</operator> <name>b</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>match</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>name</name></decl></parameter>, <parameter><decl><type><name>LIST</name> <modifier>*</modifier></type> <name>d_list</name></decl></parameter>, <parameter><decl><type><name>LIST</name> <modifier>*</modifier></type> <name>f_list</name></decl></parameter>, <parameter><decl><type><name>MATCH</name> <modifier>*</modifier></type> <name>match_list</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>test</name> <init>= <expr><call><name>leaf_of</name><argument_list>(<argument><expr><name>name</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>test_len</name> <init>= <expr><call><name>strlen</name><argument_list>(<argument><expr><name>test</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>matches</name> <init>= <expr><call><name>dlg_malloc</name><argument_list>(<argument><expr><name>char</name> <operator>*</operator></expr></argument>, <argument><expr><operator>(</operator><name>size_t</name><operator>)</operator> <operator>(</operator><name><name>d_list</name><operator>-&gt;</operator><name>length</name></name> <operator>+</operator> <name><name>f_list</name><operator>-&gt;</operator><name>length</name></name><operator>)</operator></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>data_len</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>matches</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>new_ptr</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">2</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name><name>d_list</name><operator>-&gt;</operator><name>length</name></name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>strncmp</name><argument_list>(<argument><expr><name>test</name></expr></argument>, <argument><expr><name><name>d_list</name><operator>-&gt;</operator><name>data</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><name>test_len</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>matches</name><index>[<expr><name>data_len</name><operator>++</operator></expr>]</index></name> <operator>=</operator> <name><name>d_list</name><operator>-&gt;</operator><name>data</name><index>[<expr><name>i</name></expr>]</index></name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name><name>f_list</name><operator>-&gt;</operator><name>length</name></name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>strncmp</name><argument_list>(<argument><expr><name>test</name></expr></argument>, <argument><expr><name><name>f_list</name><operator>-&gt;</operator><name>data</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><name>test_len</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>matches</name><index>[<expr><name>data_len</name><operator>++</operator></expr>]</index></name> <operator>=</operator> <name><name>f_list</name><operator>-&gt;</operator><name>data</name><index>[<expr><name>i</name></expr>]</index></name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>new_ptr</name> <operator>=</operator> <call><name>dlg_realloc</name><argument_list>(<argument><expr><name>char</name> <operator>*</operator></expr></argument>, <argument><expr><name>data_len</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><name>matches</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>matches</name> <operator>=</operator> <name>new_ptr</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>matches</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>matches</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>data_len</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>match_list</name><operator>-&gt;</operator><name>data</name></name> <operator>=</operator> <name>matches</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>match_list</name><operator>-&gt;</operator><name>length</name></name> <operator>=</operator> <operator>(</operator><name>int</name><operator>)</operator> <name>data_len</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>free_match</name><parameter_list>(<parameter><decl><type><name>MATCH</name> <modifier>*</modifier></type> <name>match_list</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>match_list</name><operator>-&gt;</operator><name>data</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>match_list</name><operator>-&gt;</operator><name>length</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>complete</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>name</name></decl></parameter>, <parameter><decl><type><name>LIST</name> <modifier>*</modifier></type> <name>d_list</name></decl></parameter>, <parameter><decl><type><name>LIST</name> <modifier>*</modifier></type> <name>f_list</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>buff_ptr</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>MATCH</name></type> <name>match_list</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>test</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>test_len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>i</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>buff</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>match</name><argument_list>(<argument><expr><name>name</name></expr></argument>, <argument><expr><name>d_list</name></expr></argument>, <argument><expr><name>f_list</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>match_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>match_list</name><operator>.</operator><name>length</name></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>match_list</name><operator>.</operator><name>data</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>buff_ptr</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>test</name> <operator>=</operator> <name><name>match_list</name><operator>.</operator><name>data</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>test_len</name> <operator>=</operator> <call><name>strlen</name><argument_list>(<argument><expr><name>test</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>buff</name> <operator>=</operator> <call><name>dlg_malloc</name><argument_list>(<argument><expr><name>char</name></expr></argument>, <argument><expr><name>test_len</name> <operator>+</operator> <literal type="number">2</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>match_list</name><operator>.</operator><name>length</name></name> <operator>==</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>strcpy</name><argument_list>(<argument><expr><name>buff</name></expr></argument>, <argument><expr><name>test</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>i</name> <operator>=</operator> <name>test_len</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>test</name> <operator>==</operator> <call><name>data_of</name><argument_list>(<argument><expr><name>d_list</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>buff</name><index>[<expr><name>test_len</name></expr>]</index></name> <operator>=</operator> <literal type="char">'/'</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>i</name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>j</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>test_len</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>char</name></type> <name>test_char</name> <init>= <expr><name><name>test</name><index>[<expr><name>i</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>test_char</name> <operator>==</operator> <literal type="char">'\0'</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<for>for <control>(<init><expr><name>j</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>j</name> <operator>&lt;</operator> <name><name>match_list</name><operator>.</operator><name>length</name></name></expr>;</condition> <incr><expr><name>j</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>match_list</name><operator>.</operator><name>data</name><index>[<expr><name>j</name></expr>]</index><index>[<expr><name>i</name></expr>]</index></name> <operator>!=</operator> <name>test_char</name></expr>)</condition> <block>{<block_content>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+<if_stmt><if>if <condition>(<expr><name>j</name> <operator>==</operator> <name><name>match_list</name><operator>.</operator><name>length</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>buff</name><operator>)</operator><index>[<expr><name>i</name></expr>]</index> <operator>=</operator> <name>test_char</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<break>break;</break></block_content></block></else></if_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><name>buff</name> <operator>=</operator> <call><name>dlg_realloc</name><argument_list>(<argument><expr><name>char</name></expr></argument>, <argument><expr><name>i</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><name>buff</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><call><name>free_match</name><argument_list>(<argument><expr><operator>&amp;</operator><name>match_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>buff</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>buff_ptr</name> <operator>=</operator> <name>buff</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>i</name> <operator>!=</operator> <literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>fill_lists</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>current</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>input</name></decl></parameter>, <parameter><decl><type><name>LIST</name> <modifier>*</modifier></type> <name>d_list</name></decl></parameter>, <parameter><decl><type><name>LIST</name> <modifier>*</modifier></type> <name>f_list</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>keep</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>bool</name></type> <name>result</name> <init>= <expr><name>TRUE</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>rescan</name> <init>= <expr><name>FALSE</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>stat</name></name></type> <name>sb</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>n</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name><name>path</name><index>[<expr><name>MAX_LEN</name> <operator>+</operator> <literal type="number">1</literal></expr>]</index></name></decl>;</decl_stmt>
+
+
+<for>for <control>(<init><expr><name>n</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name><name>current</name><index>[<expr><name>n</name></expr>]</index></name> <operator>&amp;&amp;</operator> <name><name>input</name><index>[<expr><name>n</name></expr>]</index></name></expr>;</condition> <incr><expr><name>n</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>current</name><index>[<expr><name>n</name></expr>]</index></name> <operator>!=</operator> <name><name>input</name><index>[<expr><name>n</name></expr>]</index></name></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+</block_content>}</block></for>
+
+<if_stmt><if>if <condition>(<expr><name><name>current</name><index>[<expr><name>n</name></expr>]</index></name> <operator>==</operator> <name><name>input</name><index>[<expr><name>n</name></expr>]</index></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <name>FALSE</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>rescan</name> <operator>=</operator> <operator>(</operator><name>n</name> <operator>==</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name><name>d_list</name><operator>-&gt;</operator><name>length</name></name> <operator>==</operator> <literal type="number">0</literal><operator>)</operator></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><call><name>strchr</name><argument_list>(<argument><expr><name>current</name> <operator>+</operator> <name>n</name></expr></argument>, <argument><expr><literal type="char">'/'</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal>
+<operator>&amp;&amp;</operator> <call><name>strchr</name><argument_list>(<argument><expr><name>input</name> <operator>+</operator> <name>n</name></expr></argument>, <argument><expr><literal type="char">'/'</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <call><name>show_both_lists</name><argument_list>(<argument><expr><name>input</name></expr></argument>, <argument><expr><name>d_list</name></expr></argument>, <argument><expr><name>f_list</name></expr></argument>, <argument><expr><name>keep</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>rescan</name> <operator>=</operator> <name>TRUE</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>rescan</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>DIR</name> <modifier>*</modifier></type><name>dp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>have</name> <init>= <expr><call><name>strlen</name><argument_list>(<argument><expr><name>input</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>leaf</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>have</name> <operator>&gt;</operator> <name>MAX_LEN</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>have</name> <operator>=</operator> <name>MAX_LEN</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>current</name></expr></argument>, <argument><expr><name>input</name></expr></argument>, <argument><expr><name>have</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>current</name><index>[<expr><name>have</name></expr>]</index></name> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><call><name>free_list</name><argument_list>(<argument><expr><name>d_list</name></expr></argument>, <argument><expr><name>TRUE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free_list</name><argument_list>(<argument><expr><name>f_list</name></expr></argument>, <argument><expr><name>TRUE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>path</name></expr></argument>, <argument><expr><name>current</name></expr></argument>, <argument><expr><name>have</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>path</name><index>[<expr><name>have</name></expr>]</index></name> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>leaf</name> <operator>=</operator> <call><name>strrchr</name><argument_list>(<argument><expr><name>path</name></expr></argument>, <argument><expr><literal type="char">'/'</literal></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><operator>++</operator><name>leaf</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>strcpy</name><argument_list>(<argument><expr><name>path</name></expr></argument>, <argument><expr><literal type="string">"./"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>leaf</name> <operator>=</operator> <name>path</name> <operator>+</operator> <call><name>strlen</name><argument_list>(<argument><expr><name>path</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><call><name>DLG_TRACE</name><argument_list>(<argument><expr><operator>(</operator><literal type="string">"opendir '%s'\n"</literal><operator>,</operator> <name>path</name><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>dp</name> <operator>=</operator> <call><name>opendir</name><argument_list>(<argument><expr><name>path</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>DIRENT</name> <modifier>*</modifier></type><name>de</name></decl>;</decl_stmt>
+
+<while>while <condition>(<expr><operator>(</operator><name>de</name> <operator>=</operator> <call><name>readdir</name><argument_list>(<argument><expr><name>dp</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>size_t</name></type> <name>len</name> <init>= <expr><call><name>NAMLEN</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>len</name> <operator>==</operator> <literal type="number">0</literal> <operator>||</operator> <operator>(</operator><name>len</name> <operator>+</operator> <name>have</name> <operator>+</operator> <literal type="number">2</literal><operator>)</operator> <operator>&gt;=</operator> <name>MAX_LEN</name></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>leaf</name></expr></argument>, <argument><expr><name><name>de</name><operator>-&gt;</operator><name>d_name</name></name></expr></argument>, <argument><expr><name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>leaf</name><index>[<expr><name>len</name></expr>]</index></name> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>stat</name><argument_list>(<argument><expr><name>path</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>sb</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>sb</name><operator>.</operator><name>st_mode</name></name> <operator>&amp;</operator> <name>S_IFMT</name><operator>)</operator> <operator>==</operator> <name>S_IFDIR</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>add_to_list</name><argument_list>(<argument><expr><name>d_list</name></expr></argument>, <argument><expr><name>leaf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name><name>f_list</name><operator>-&gt;</operator><name>win</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>add_to_list</name><argument_list>(<argument><expr><name>f_list</name></expr></argument>, <argument><expr><name>leaf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></while>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>closedir</name><argument_list>(<argument><expr><name>dp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>d_list</name><operator>-&gt;</operator><name>data</name></name> <operator>!=</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name><name>d_list</name><operator>-&gt;</operator><name>length</name></name> <operator>&gt;</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>qsort</name><argument_list>(<argument><expr><name><name>d_list</name><operator>-&gt;</operator><name>data</name></name></expr></argument>,
+<argument><expr><operator>(</operator><name>size_t</name><operator>)</operator> <name><name>d_list</name><operator>-&gt;</operator><name>length</name></name></expr></argument>,
+<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name><name>d_list</name><operator>-&gt;</operator><name>data</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>)</argument_list></sizeof></expr></argument>,
+<argument><expr><name>compar</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>f_list</name><operator>-&gt;</operator><name>data</name></name> <operator>!=</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name><name>f_list</name><operator>-&gt;</operator><name>length</name></name> <operator>&gt;</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>qsort</name><argument_list>(<argument><expr><name><name>f_list</name><operator>-&gt;</operator><name>data</name></name></expr></argument>,
+<argument><expr><operator>(</operator><name>size_t</name><operator>)</operator> <name><name>f_list</name><operator>-&gt;</operator><name>length</name></name></expr></argument>,
+<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name><name>f_list</name><operator>-&gt;</operator><name>data</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>)</argument_list></sizeof></expr></argument>,
+<argument><expr><name>compar</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>show_both_lists</name><argument_list>(<argument><expr><name>input</name></expr></argument>, <argument><expr><name>d_list</name></expr></argument>, <argument><expr><name>f_list</name></expr></argument>, <argument><expr><name>FALSE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>d_list</name><operator>-&gt;</operator><name>offset</name></name> <operator>=</operator> <name><name>d_list</name><operator>-&gt;</operator><name>choice</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>f_list</name><operator>-&gt;</operator><name>offset</name></name> <operator>=</operator> <name><name>f_list</name><operator>-&gt;</operator><name>choice</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <name>TRUE</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>usable_state</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>state</name></decl></parameter>, <parameter><decl><type><name>LIST</name> <modifier>*</modifier></type> <name>dirs</name></decl></parameter>, <parameter><decl><type><name>LIST</name> <modifier>*</modifier></type> <name>files</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>bool</name></type> <name>result</name></decl>;</decl_stmt>
+
+<switch>switch <condition>(<expr><name>state</name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>sDIRS</name></expr>:</case>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <operator>(</operator><name><name>dirs</name><operator>-&gt;</operator><name>win</name></name> <operator>!=</operator> <literal type="number">0</literal><operator>)</operator> <operator>&amp;&amp;</operator> <operator>(</operator><call><name>data_of</name><argument_list>(<argument><expr><name>dirs</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal><operator>)</operator></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>sFILES</name></expr>:</case>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <operator>(</operator><name><name>files</name><operator>-&gt;</operator><name>win</name></name> <operator>!=</operator> <literal type="number">0</literal><operator>)</operator> <operator>&amp;&amp;</operator> <operator>(</operator><call><name>data_of</name><argument_list>(<argument><expr><name>files</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal><operator>)</operator></expr>;</expr_stmt>
+<break>break;</break>
+<default>default:</default>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <name>TRUE</name></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></switch>
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>which_list</name><parameter_list>()</parameter_list></cpp:macro> <cpp:value>((state == sFILES) ? &amp;f_list : ((state == sDIRS) ? &amp;d_list : 0))</cpp:value></cpp:define>
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>NAVIGATE_BINDINGS</name></cpp:macro> <cpp:value>DLG_KEYS_DATA( DLGK_FIELD_NEXT, KEY_RIGHT ), DLG_KEYS_DATA( DLGK_FIELD_NEXT, TAB ), DLG_KEYS_DATA( DLGK_FIELD_PREV, KEY_BTAB ), DLG_KEYS_DATA( DLGK_ITEM_NEXT, KEY_DOWN ), DLG_KEYS_DATA( DLGK_ITEM_NEXT, CHR_NEXT ), DLG_KEYS_DATA( DLGK_ITEM_NEXT, KEY_NEXT ), DLG_KEYS_DATA( DLGK_ITEM_PREV, CHR_PREVIOUS ), DLG_KEYS_DATA( DLGK_ITEM_PREV, KEY_UP ), DLG_KEYS_DATA( DLGK_PAGE_NEXT, KEY_NPAGE ), DLG_KEYS_DATA( DLGK_PAGE_PREV, KEY_PPAGE )</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>dlg_fselect</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>title</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>path</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>height</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>width</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>dselect</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>DLG_KEYS_BINDING</name></type> <name><name>binding</name><index>[]</index></name> <init>= <expr><block>{
+<expr><name>HELPKEY_BINDINGS</name></expr>,
+<expr><name>ENTERKEY_BINDINGS</name></expr>,
+<expr><name>NAVIGATE_BINDINGS</name></expr>,
+<expr><name>TOGGLEKEY_BINDINGS</name></expr>,
+<expr><name>END_KEYS_BINDING</name></expr>
+}</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>DLG_KEYS_BINDING</name></type> <name><name>binding2</name><index>[]</index></name> <init>= <expr><block>{
+<expr><name>INPUTSTR_BINDINGS</name></expr>,
+<expr><name>HELPKEY_BINDINGS</name></expr>,
+<expr><name>ENTERKEY_BINDINGS</name></expr>,
+<expr><name>NAVIGATE_BINDINGS</name></expr>,
+<expr><name>TOGGLEKEY_BINDINGS</name></expr>,
+<expr><name>END_KEYS_BINDING</name></expr>
+}</block></expr></init></decl>;</decl_stmt>
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>KEY_RESIZE</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<decl_stmt><decl><type><name>int</name></type> <name>old_height</name> <init>= <expr><name>height</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>old_width</name> <init>= <expr><name>width</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>resized</name> <init>= <expr><name>FALSE</name></expr></init></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<decl_stmt><decl><type><name>int</name></type> <name>tbox_y</name></decl>, <decl><type ref="prev"/><name>tbox_x</name></decl>, <decl><type ref="prev"/><name>tbox_width</name></decl>, <decl><type ref="prev"/><name>tbox_height</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>dbox_y</name></decl>, <decl><type ref="prev"/><name>dbox_x</name></decl>, <decl><type ref="prev"/><name>dbox_width</name></decl>, <decl><type ref="prev"/><name>dbox_height</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>fbox_y</name></decl>, <decl><type ref="prev"/><name>fbox_x</name></decl>, <decl><type ref="prev"/><name>fbox_width</name></decl>, <decl><type ref="prev"/><name>fbox_height</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>show_buttons</name> <init>= <expr><name>TRUE</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>offset</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>key</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>fkey</name> <init>= <expr><name>FALSE</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>code</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>result</name> <init>= <expr><name>DLG_EXIT_UNKNOWN</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>state</name> <init>= <expr><ternary><condition><expr><name><name>dialog_vars</name><operator>.</operator><name>default_button</name></name> <operator>&gt;=</operator> <literal type="number">0</literal></expr> ?</condition><then> <expr><call><name>dlg_default_button</name><argument_list>()</argument_list></call></expr> </then><else>: <expr><name>sTEXT</name></expr></else></ternary></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>button</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>first</name> <init>= <expr><operator>(</operator><name>state</name> <operator>==</operator> <name>sTEXT</name><operator>)</operator></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>first_trace</name> <init>= <expr><name>TRUE</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>input</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>completed</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name><name>current</name><index>[<expr><name>MAX_LEN</name> <operator>+</operator> <literal type="number">1</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>WINDOW</name> <modifier>*</modifier></type><name>dialog</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>WINDOW</name> <modifier>*</modifier></type><name>w_text</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>WINDOW</name> <modifier>*</modifier></type><name>w_work</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>buttons</name> <init>= <expr><call><name>dlg_ok_labels</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>d_label</name> <init>= <expr><call><name>_</name><argument_list>(<argument><expr><literal type="string">"Directories"</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>f_label</name> <init>= <expr><call><name>_</name><argument_list>(<argument><expr><literal type="string">"Files"</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>partial</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>min_wide</name> <init>= <expr><name>MIN_WIDE</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>min_items</name> <init>= <expr><ternary><condition><expr><name>height</name></expr> ?</condition><then> <expr><literal type="number">0</literal></expr> </then><else>: <expr><literal type="number">4</literal></expr></else></ternary></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>LIST</name></type> <name>d_list</name></decl>, <decl><type ref="prev"/><name>f_list</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>DLG_TRACE</name><argument_list>(<argument><expr><operator>(</operator><literal type="string">"#%s args:\n"</literal><operator>,</operator> <ternary><condition><expr><name>dselect</name></expr> ?</condition><then> <expr><literal type="string">"dselect"</literal></expr> </then><else>: <expr><literal type="string">"fselect"</literal></expr></else></ternary><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DLG_TRACE2S</name><argument_list>(<argument><expr><literal type="string">"title"</literal></expr></argument>, <argument><expr><name>title</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DLG_TRACE2S</name><argument_list>(<argument><expr><literal type="string">"path"</literal></expr></argument>, <argument><expr><name>path</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DLG_TRACE2N</name><argument_list>(<argument><expr><literal type="string">"height"</literal></expr></argument>, <argument><expr><name>height</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DLG_TRACE2N</name><argument_list>(<argument><expr><literal type="string">"width"</literal></expr></argument>, <argument><expr><name>width</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>dlg_does_output</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><name>input</name> <operator>=</operator> <call><name>dlg_set_result</name><argument_list>(<argument><expr><name>path</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>offset</name> <operator>=</operator> <operator>(</operator><name>int</name><operator>)</operator> <call><name>strlen</name><argument_list>(<argument><expr><name>input</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>current</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>dlg_button_layout</name><argument_list>(<argument><expr><name>buttons</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>min_wide</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>KEY_RESIZE</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<label><name>retry</name>:</label>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<expr_stmt><expr><call><name>dlg_auto_size</name><argument_list>(<argument><expr><name>title</name></expr></argument>, <argument><expr><literal type="string">""</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>height</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>width</name></expr></argument>, <argument><expr><name>MIN_HIGH</name> <operator>+</operator> <name>min_items</name></expr></argument>, <argument><expr><name>min_wide</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>dlg_print_size</name><argument_list>(<argument><expr><name>height</name></expr></argument>, <argument><expr><name>width</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_ctl_size</name><argument_list>(<argument><expr><name>height</name></expr></argument>, <argument><expr><name>width</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>dialog</name> <operator>=</operator> <call><name>dlg_new_window</name><argument_list>(<argument><expr><name>height</name></expr></argument>, <argument><expr><name>width</name></expr></argument>,
+<argument><expr><call><name>dlg_box_y_ordinate</name><argument_list>(<argument><expr><name>height</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>dlg_box_x_ordinate</name><argument_list>(<argument><expr><name>width</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_register_window</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><literal type="string">"fselect"</literal></expr></argument>, <argument><expr><name>binding</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_register_buttons</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><literal type="string">"fselect"</literal></expr></argument>, <argument><expr><name>buttons</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>dlg_mouse_setbase</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>dlg_draw_box2</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>height</name></expr></argument>, <argument><expr><name>width</name></expr></argument>, <argument><expr><name>dialog_attr</name></expr></argument>, <argument><expr><name>border_attr</name></expr></argument>, <argument><expr><name>border2_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_draw_bottom_box2</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>border_attr</name></expr></argument>, <argument><expr><name>border2_attr</name></expr></argument>, <argument><expr><name>dialog_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_draw_title</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>title</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>dlg_attrset</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>dialog_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><name>tbox_height</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>tbox_width</name> <operator>=</operator> <name>width</name> <operator>-</operator> <operator>(</operator><literal type="number">4</literal> <operator>*</operator> <name>MARGIN</name> <operator>+</operator> <literal type="number">2</literal><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name>tbox_y</name> <operator>=</operator> <name>height</name> <operator>-</operator> <operator>(</operator><name>BTN_HIGH</name> <operator>*</operator> <literal type="number">2</literal><operator>)</operator> <operator>+</operator> <name>MARGIN</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>tbox_x</name> <operator>=</operator> <operator>(</operator><name>width</name> <operator>-</operator> <name>tbox_width</name><operator>)</operator> <operator>/</operator> <literal type="number">2</literal></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>w_text</name> <operator>=</operator> <call><name>dlg_der_window</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>tbox_height</name></expr></argument>, <argument><expr><name>tbox_width</name></expr></argument>, <argument><expr><name>tbox_y</name></expr></argument>, <argument><expr><name>tbox_x</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>w_text</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <name>DLG_EXIT_ERROR</name></expr>;</expr_stmt>
+<goto>goto <name>finish</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>dlg_draw_box</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>tbox_y</name> <operator>-</operator> <name>MARGIN</name></expr></argument>, <argument><expr><name>tbox_x</name> <operator>-</operator> <name>MARGIN</name></expr></argument>,
+<argument><expr><operator>(</operator><literal type="number">2</literal> <operator>*</operator> <name>MARGIN</name> <operator>+</operator> <literal type="number">1</literal><operator>)</operator></expr></argument>, <argument><expr><name>tbox_width</name> <operator>+</operator> <operator>(</operator><name>MARGIN</name> <operator>+</operator> <name>EXT_WIDE</name><operator>)</operator></expr></argument>,
+<argument><expr><name>menubox_border_attr</name></expr></argument>, <argument><expr><name>menubox_border2_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_mouse_mkbigregion</name><argument_list>(<argument><expr><call><name>getbegy</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>)</argument_list></call> <operator>+</operator> <name>tbox_y</name> <operator>-</operator> <name>MARGIN</name></expr></argument>,
+<argument><expr><call><name>getbegx</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>)</argument_list></call> <operator>+</operator> <name>tbox_x</name> <operator>-</operator> <name>MARGIN</name></expr></argument>,
+<argument><expr><literal type="number">1</literal> <operator>+</operator> <operator>(</operator><literal type="number">2</literal> <operator>*</operator> <name>MARGIN</name><operator>)</operator></expr></argument>,
+<argument><expr><name>tbox_width</name> <operator>+</operator> <operator>(</operator><name>MARGIN</name> <operator>+</operator> <name>EXT_WIDE</name><operator>)</operator></expr></argument>,
+<argument><expr><name>MOUSE_T</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">3</literal></expr></argument> )</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>dlg_register_window</name><argument_list>(<argument><expr><name>w_text</name></expr></argument>, <argument><expr><literal type="string">"fselect2"</literal></expr></argument>, <argument><expr><name>binding2</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>dselect</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>dbox_width</name> <operator>=</operator> <operator>(</operator><name>width</name> <operator>-</operator> <operator>(</operator><literal type="number">6</literal> <operator>*</operator> <name>MARGIN</name><operator>)</operator><operator>)</operator></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>dbox_width</name> <operator>=</operator> <operator>(</operator><name>width</name> <operator>-</operator> <operator>(</operator><literal type="number">6</literal> <operator>*</operator> <name>MARGIN</name> <operator>+</operator> <literal type="number">2</literal> <operator>*</operator> <name>EXT_WIDE</name><operator>)</operator><operator>)</operator> <operator>/</operator> <literal type="number">2</literal></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<expr_stmt><expr><name>dbox_height</name> <operator>=</operator> <name>height</name> <operator>-</operator> <name>MIN_HIGH</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>dbox_y</name> <operator>=</operator> <operator>(</operator><literal type="number">2</literal> <operator>*</operator> <name>MARGIN</name> <operator>+</operator> <literal type="number">1</literal><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name>dbox_x</name> <operator>=</operator> <name>tbox_x</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>w_work</name> <operator>=</operator> <call><name>dlg_der_window</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>dbox_height</name></expr></argument>, <argument><expr><name>dbox_width</name></expr></argument>, <argument><expr><name>dbox_y</name></expr></argument>, <argument><expr><name>dbox_x</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>w_work</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <name>DLG_EXIT_ERROR</name></expr>;</expr_stmt>
+<goto>goto <name>finish</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>mvwaddstr</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>dbox_y</name> <operator>-</operator> <operator>(</operator><name>MARGIN</name> <operator>+</operator> <literal type="number">1</literal><operator>)</operator></expr></argument>, <argument><expr><name>dbox_x</name> <operator>-</operator> <name>MARGIN</name></expr></argument>, <argument><expr><name>d_label</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_draw_box</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>,
+<argument><expr><name>dbox_y</name> <operator>-</operator> <name>MARGIN</name></expr></argument>, <argument><expr><name>dbox_x</name> <operator>-</operator> <name>MARGIN</name></expr></argument>,
+<argument><expr><name>dbox_height</name> <operator>+</operator> <operator>(</operator><name>MARGIN</name> <operator>+</operator> <literal type="number">1</literal><operator>)</operator></expr></argument>, <argument><expr><name>dbox_width</name> <operator>+</operator> <operator>(</operator><name>MARGIN</name> <operator>+</operator> <literal type="number">1</literal><operator>)</operator></expr></argument>,
+<argument><expr><name>menubox_border_attr</name></expr></argument>, <argument><expr><name>menubox_border2_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>init_list</name><argument_list>(<argument><expr><operator>&amp;</operator><name>d_list</name></expr></argument>, <argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>w_work</name></expr></argument>, <argument><expr><name>MOUSE_D</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>dselect</name></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><name>fbox_height</name> <operator>=</operator> <name>dbox_height</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>fbox_width</name> <operator>=</operator> <name>dbox_width</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>fbox_y</name> <operator>=</operator> <name>dbox_y</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>fbox_x</name> <operator>=</operator> <name>tbox_x</name> <operator>+</operator> <name>dbox_width</name> <operator>+</operator> <operator>(</operator><literal type="number">2</literal> <operator>*</operator> <name>MARGIN</name><operator>)</operator></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>w_work</name> <operator>=</operator> <call><name>dlg_der_window</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>fbox_height</name></expr></argument>, <argument><expr><name>fbox_width</name></expr></argument>, <argument><expr><name>fbox_y</name></expr></argument>, <argument><expr><name>fbox_x</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>w_work</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <name>DLG_EXIT_ERROR</name></expr>;</expr_stmt>
+<goto>goto <name>finish</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>mvwaddstr</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>fbox_y</name> <operator>-</operator> <operator>(</operator><name>MARGIN</name> <operator>+</operator> <literal type="number">1</literal><operator>)</operator></expr></argument>, <argument><expr><name>fbox_x</name> <operator>-</operator> <name>MARGIN</name></expr></argument>, <argument><expr><name>f_label</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_draw_box</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>,
+<argument><expr><name>fbox_y</name> <operator>-</operator> <name>MARGIN</name></expr></argument>, <argument><expr><name>fbox_x</name> <operator>-</operator> <name>MARGIN</name></expr></argument>,
+<argument><expr><name>fbox_height</name> <operator>+</operator> <operator>(</operator><name>MARGIN</name> <operator>+</operator> <literal type="number">1</literal><operator>)</operator></expr></argument>, <argument><expr><name>fbox_width</name> <operator>+</operator> <operator>(</operator><name>MARGIN</name> <operator>+</operator> <literal type="number">1</literal><operator>)</operator></expr></argument>,
+<argument><expr><name>menubox_border_attr</name></expr></argument>, <argument><expr><name>menubox_border2_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>init_list</name><argument_list>(<argument><expr><operator>&amp;</operator><name>f_list</name></expr></argument>, <argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>w_work</name></expr></argument>, <argument><expr><name>MOUSE_F</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>f_list</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>f_list</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<while>while <condition>(<expr><name>result</name> <operator>==</operator> <name>DLG_EXIT_UNKNOWN</name></expr>)</condition> <block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><call><name>fill_lists</name><argument_list>(<argument><expr><name>current</name></expr></argument>, <argument><expr><name>input</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>d_list</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>f_list</name></expr></argument>, <argument><expr><name>state</name> <operator>&lt;</operator> <name>sTEXT</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>show_buttons</name> <operator>=</operator> <name>TRUE</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>KEY_RESIZE</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name>resized</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>resized</name> <operator>=</operator> <name>FALSE</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_show_string</name><argument_list>(<argument><expr><name>w_text</name></expr></argument>, <argument><expr><name>input</name></expr></argument>, <argument><expr><name>offset</name></expr></argument>, <argument><expr><name>inputbox_attr</name></expr></argument>,
+<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>tbox_width</name></expr></argument>, <argument><expr><name>FALSE</name></expr></argument>, <argument><expr><name>first</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>show_buttons</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>show_buttons</name> <operator>=</operator> <name>FALSE</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>button</name> <operator>=</operator> <ternary><condition><expr><operator>(</operator><name>state</name> <operator>&lt;</operator> <literal type="number">0</literal><operator>)</operator></expr> ?</condition><then> <expr><literal type="number">0</literal></expr> </then><else>: <expr><name>state</name></expr></else></ternary></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_draw_buttons</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>height</name> <operator>-</operator> <literal type="number">2</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>buttons</name></expr></argument>, <argument><expr><name>button</name></expr></argument>, <argument><expr><name>FALSE</name></expr></argument>, <argument><expr><name>width</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>first_trace</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>first_trace</name> <operator>=</operator> <name>FALSE</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_trace_win</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>state</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<switch>switch <condition>(<expr><name>state</name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>sTEXT</name></expr>:</case>
+<expr_stmt><expr><call><name>dlg_set_focus</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>w_text</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>sFILES</name></expr>:</case>
+<expr_stmt><expr><call><name>dlg_set_focus</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name><name>f_list</name><operator>.</operator><name>win</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>sDIRS</name></expr>:</case>
+<expr_stmt><expr><call><name>dlg_set_focus</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name><name>d_list</name><operator>.</operator><name>win</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></switch>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>first</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>wrefresh</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>fix_arrows</name><argument_list>(<argument><expr><operator>&amp;</operator><name>d_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fix_arrows</name><argument_list>(<argument><expr><operator>&amp;</operator><name>f_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>key</name> <operator>=</operator> <call><name>dlg_mouse_wgetch</name><argument_list>(<argument><expr><ternary><condition><expr><operator>(</operator><name>state</name> <operator>==</operator> <name>sTEXT</name><operator>)</operator></expr> ?</condition><then> <expr><name>w_text</name></expr> </then><else>: <expr><name>dialog</name></expr></else></ternary></expr></argument>, <argument><expr><operator>&amp;</operator><name>fkey</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>dlg_result_key</name><argument_list>(<argument><expr><name>key</name></expr></argument>, <argument><expr><name>fkey</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>result</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>dlg_button_key</name><argument_list>(<argument><expr><name>result</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>button</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>key</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>fkey</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>key</name> <operator>==</operator> <name>DLGK_TOGGLE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>key</name> <operator>=</operator> <name>DLGK_SELECT</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>fkey</name> <operator>=</operator> <name>TRUE</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>fkey</name></expr>)</condition> <block>{<block_content>
+<switch>switch <condition>(<expr><name>key</name></expr>)</condition> <block>{<block_content>
+<case>case <expr><call><name>DLGK_MOUSE</name><argument_list>(<argument><expr><name>KEY_PREVIOUS</name></expr></argument>)</argument_list></call></expr>:</case>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <name>sDIRS</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>scroll_list</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>, <argument><expr><call><name>which_list</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+<case>case <expr><call><name>DLGK_MOUSE</name><argument_list>(<argument><expr><name>KEY_NEXT</name></expr></argument>)</argument_list></call></expr>:</case>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <name>sDIRS</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>scroll_list</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><call><name>which_list</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+<case>case <expr><call><name>DLGK_MOUSE</name><argument_list>(<argument><expr><name>KEY_PPAGE</name></expr></argument>)</argument_list></call></expr>:</case>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <name>sFILES</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>scroll_list</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>, <argument><expr><call><name>which_list</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+<case>case <expr><call><name>DLGK_MOUSE</name><argument_list>(<argument><expr><name>KEY_NPAGE</name></expr></argument>)</argument_list></call></expr>:</case>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <name>sFILES</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>scroll_list</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><call><name>which_list</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+<case>case <expr><name>DLGK_PAGE_PREV</name></expr>:</case>
+<expr_stmt><expr><call><name>scroll_list</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>, <argument><expr><call><name>which_list</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+<case>case <expr><name>DLGK_PAGE_NEXT</name></expr>:</case>
+<expr_stmt><expr><call><name>scroll_list</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><call><name>which_list</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+<case>case <expr><name>DLGK_ITEM_PREV</name></expr>:</case>
+<if_stmt><if>if <condition>(<expr><call><name>change_list</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>, <argument><expr><call><name>which_list</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+
+<case>case <expr><name>DLGK_FIELD_PREV</name></expr>:</case>
+<expr_stmt><expr><name>show_buttons</name> <operator>=</operator> <name>TRUE</name></expr>;</expr_stmt>
+<do>do <block>{<block_content>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <call><name>dlg_prev_ok_buttonindex</name><argument_list>(<argument><expr><name>state</name></expr></argument>, <argument><expr><name>sDIRS</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block> while <condition>(<expr><operator>!</operator><call><name>usable_state</name><argument_list>(<argument><expr><name>state</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>d_list</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>f_list</name></expr></argument>)</argument_list></call></expr>)</condition>;</do>
+<continue>continue;</continue>
+<case>case <expr><name>DLGK_ITEM_NEXT</name></expr>:</case>
+<if_stmt><if>if <condition>(<expr><call><name>change_list</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><call><name>which_list</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+
+<case>case <expr><name>DLGK_FIELD_NEXT</name></expr>:</case>
+<expr_stmt><expr><name>show_buttons</name> <operator>=</operator> <name>TRUE</name></expr>;</expr_stmt>
+<do>do <block>{<block_content>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <call><name>dlg_next_ok_buttonindex</name><argument_list>(<argument><expr><name>state</name></expr></argument>, <argument><expr><name>sDIRS</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block> while <condition>(<expr><operator>!</operator><call><name>usable_state</name><argument_list>(<argument><expr><name>state</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>d_list</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>f_list</name></expr></argument>)</argument_list></call></expr>)</condition>;</do>
+<continue>continue;</continue>
+<case>case <expr><name>DLGK_SELECT</name></expr>:</case>
+<expr_stmt><expr><name>completed</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>partial</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>partial</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>partial</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>state</name> <operator>==</operator> <name>sFILES</name> <operator>&amp;&amp;</operator> <operator>!</operator><name>dselect</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>completed</name> <operator>=</operator> <call><name>data_of</name><argument_list>(<argument><expr><operator>&amp;</operator><name>f_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>state</name> <operator>==</operator> <name>sDIRS</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>completed</name> <operator>=</operator> <call><name>data_of</name><argument_list>(<argument><expr><operator>&amp;</operator><name>d_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>complete</name><argument_list>(<argument><expr><name>input</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>d_list</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>f_list</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>partial</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>completed</name> <operator>=</operator> <name>partial</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>completed</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <name>sTEXT</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>show_buttons</name> <operator>=</operator> <name>TRUE</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>strcpy</name><argument_list>(<argument><expr><call><name>leaf_of</name><argument_list>(<argument><expr><name>input</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>completed</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>offset</name> <operator>=</operator> <operator>(</operator><name>int</name><operator>)</operator> <call><name>strlen</name><argument_list>(<argument><expr><name>input</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_show_string</name><argument_list>(<argument><expr><name>w_text</name></expr></argument>, <argument><expr><name>input</name></expr></argument>, <argument><expr><name>offset</name></expr></argument>, <argument><expr><name>inputbox_attr</name></expr></argument>,
+<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>tbox_width</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>first</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>partial</name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>partial</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>partial</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>beep</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></else></if_stmt>
+
+<case>case <expr><name>DLGK_ENTER</name></expr>:</case>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <ternary><condition><expr><operator>(</operator><name>state</name> <operator>&gt;</operator> <literal type="number">0</literal><operator>)</operator></expr> ?</condition><then> <expr><call><name>dlg_enter_buttoncode</name><argument_list>(<argument><expr><name>state</name></expr></argument>)</argument_list></call></expr> </then><else>: <expr><name>DLG_EXIT_OK</name></expr></else></ternary></expr>;</expr_stmt>
+<continue>continue;</continue>
+<case>case <expr><name>DLGK_LEAVE</name></expr>:</case>
+<if_stmt><if>if <condition>(<expr><name>state</name> <operator>&gt;=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <call><name>dlg_ok_buttoncode</name><argument_list>(<argument><expr><name>state</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<break>break;</break>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>KEY_RESIZE</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<case>case <expr><name>KEY_RESIZE</name></expr>:</case>
+<expr_stmt><expr><call><name>dlg_will_resize</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>height</name> <operator>=</operator> <name>old_height</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>width</name> <operator>=</operator> <name>old_width</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>show_buttons</name> <operator>=</operator> <name>TRUE</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>current</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>resized</name> <operator>=</operator> <name>TRUE</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>free_list</name><argument_list>(<argument><expr><operator>&amp;</operator><name>d_list</name></expr></argument>, <argument><expr><name>FALSE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free_list</name><argument_list>(<argument><expr><operator>&amp;</operator><name>f_list</name></expr></argument>, <argument><expr><name>FALSE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>_dlg_resize_cleanup</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>retry</name>;</goto>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<default>default:</default>
+<if_stmt><if>if <condition>(<expr><name>key</name> <operator>&gt;=</operator> <call><name>DLGK_MOUSE</name><argument_list>(<argument><expr><name>MOUSE_T</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <name>sTEXT</name></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>key</name> <operator>&gt;=</operator> <call><name>DLGK_MOUSE</name><argument_list>(<argument><expr><name>MOUSE_F</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>f_list</name><operator>.</operator><name>win</name></name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <name>sFILES</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>f_list</name><operator>.</operator><name>choice</name></name> <operator>=</operator> <operator>(</operator><name>key</name> <operator>-</operator> <call><name>DLGK_MOUSE</name><argument_list>(<argument><expr><name>MOUSE_F</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>+</operator> <name><name>f_list</name><operator>.</operator><name>offset</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>display_list</name><argument_list>(<argument><expr><operator>&amp;</operator><name>f_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>key</name> <operator>&gt;=</operator> <call><name>DLGK_MOUSE</name><argument_list>(<argument><expr><name>MOUSE_D</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>d_list</name><operator>.</operator><name>win</name></name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <name>sDIRS</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>d_list</name><operator>.</operator><name>choice</name></name> <operator>=</operator> <operator>(</operator><name>key</name> <operator>-</operator> <call><name>DLGK_MOUSE</name><argument_list>(<argument><expr><name>MOUSE_D</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>+</operator> <name><name>d_list</name><operator>.</operator><name>offset</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>display_list</name><argument_list>(<argument><expr><operator>&amp;</operator><name>d_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><call><name>is_DLGK_MOUSE</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call>
+<operator>&amp;&amp;</operator> <operator>(</operator><name>code</name> <operator>=</operator> <call><name>dlg_ok_buttoncode</name><argument_list>(<argument><expr><name>key</name> <operator>-</operator> <name>M_EVENT</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&gt;=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <name>code</name></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+<break>break;</break>
+</block_content>}</block></switch>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>state</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>edit</name> <init>= <expr><call><name>dlg_edit_string</name><argument_list>(<argument><expr><name>input</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>offset</name></expr></argument>, <argument><expr><name>key</name></expr></argument>, <argument><expr><name>fkey</name></expr></argument>, <argument><expr><name>first</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>edit</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>dlg_show_string</name><argument_list>(<argument><expr><name>w_text</name></expr></argument>, <argument><expr><name>input</name></expr></argument>, <argument><expr><name>offset</name></expr></argument>, <argument><expr><name>inputbox_attr</name></expr></argument>,
+<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>tbox_width</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>first</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>first</name> <operator>=</operator> <name>FALSE</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <name>sTEXT</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>(</operator><name>code</name> <operator>=</operator> <call><name>dlg_char_to_button</name><argument_list>(<argument><expr><name>key</name></expr></argument>, <argument><expr><name>buttons</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&gt;=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <call><name>dlg_ok_buttoncode</name><argument_list>(<argument><expr><name>code</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></while>
+<expr_stmt><expr><call><name>AddLastKey</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>dlg_unregister_window</name><argument_list>(<argument><expr><name>w_text</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_del_window</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_mouse_free_regions</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free_list</name><argument_list>(<argument><expr><operator>&amp;</operator><name>d_list</name></expr></argument>, <argument><expr><name>FALSE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free_list</name><argument_list>(<argument><expr><operator>&amp;</operator><name>f_list</name></expr></argument>, <argument><expr><name>FALSE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<label><name>finish</name>:</label>
+<if_stmt><if>if <condition>(<expr><name>partial</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>partial</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>int</name></type>
+<name>dialog_fselect</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>title</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>path</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>height</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>width</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><call><name>dlg_fselect</name><argument_list>(<argument><expr><name>title</name></expr></argument>, <argument><expr><name>path</name></expr></argument>, <argument><expr><name>height</name></expr></argument>, <argument><expr><name>width</name></expr></argument>, <argument><expr><name>FALSE</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>int</name></type>
+<name>dialog_dselect</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>title</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>path</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>height</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>width</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><call><name>dlg_fselect</name><argument_list>(<argument><expr><name>title</name></expr></argument>, <argument><expr><name>path</name></expr></argument>, <argument><expr><name>height</name></expr></argument>, <argument><expr><name>width</name></expr></argument>, <argument><expr><name>TRUE</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+</unit>

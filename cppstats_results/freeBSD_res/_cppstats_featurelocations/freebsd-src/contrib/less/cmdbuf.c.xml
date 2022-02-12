@@ -1,0 +1,1747 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/less/cmdbuf.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"less.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"cmd.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"charset.h"</cpp:file></cpp:include>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HAVE_STAT</name></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/stat.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<decl_stmt><decl><type><specifier>extern</specifier> <name>int</name></type> <name>sc_width</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>int</name></type> <name>utf_mode</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>int</name></type> <name>no_hist_dups</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>int</name></type> <name>marks_modified</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>char</name></type> <name><name>cmdbuf</name><index>[<expr><name>CMDBUF_SIZE</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>cmd_col</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>prompt_col</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type><name>cp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>cmd_offset</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>literal</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>updown_match</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>TAB_COMPLETE_FILENAME</name></expr></cpp:if>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name> <name>cmd_complete</name></type> <name>LESSPARAMS</name><argument_list>(<argument><expr><operator>(</operator><name>int</name> <name>action</name><operator>)</operator></expr></argument>)</argument_list></decl>;</decl_stmt>
+
+
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>in_completion</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type><name>tk_text</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type><name>tk_original</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type><name>tk_ipoint</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type><name>tk_trial</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name><name>struct</name> <name>textlist</name></name></type> <name>tk_tlist</name></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>cmd_left</name><parameter_list>()</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>cmd_right</name><parameter_list>()</parameter_list>;</function_decl>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SPACES_IN_FILENAMES</name></expr></cpp:if>
+<decl_stmt><decl><type><name>public</name> <name>char</name></type> <name>openquote</name> <init>= <expr><literal type="char">'"'</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>public</name> <name>char</name></type> <name>closequote</name> <init>= <expr><literal type="char">'"'</literal></expr></init></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>CMD_HISTORY</name></expr></cpp:if>
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>HISTFILE_FIRST_LINE</name></cpp:macro> <cpp:value>".less-history-file:"</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>HISTFILE_SEARCH_SECTION</name></cpp:macro> <cpp:value>".search"</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>HISTFILE_SHELL_SECTION</name></cpp:macro> <cpp:value>".shell"</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>HISTFILE_MARK_SECTION</name></cpp:macro> <cpp:value>".mark"</cpp:value></cpp:define>
+
+
+
+
+<struct>struct <name>mlist</name>
+<block>{
+<decl_stmt><decl><type><name><name>struct</name> <name>mlist</name></name> <modifier>*</modifier></type><name>next</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>mlist</name></name> <modifier>*</modifier></type><name>prev</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>mlist</name></name> <modifier>*</modifier></type><name>curr_mp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>string</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>modified</name></decl>;</decl_stmt>
+}</block>;</struct>
+
+
+
+
+<decl_stmt><decl><type><name><name>struct</name> <name>mlist</name></name></type> <name>mlist_search</name> <init>=
+<expr><block>{ <expr><operator>&amp;</operator><name>mlist_search</name></expr>, <expr><operator>&amp;</operator><name>mlist_search</name></expr>, <expr><operator>&amp;</operator><name>mlist_search</name></expr>, <expr><name>NULL</name></expr>, <expr><literal type="number">0</literal></expr> }</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>public</name> <name>void</name> <modifier>*</modifier></type><name>ml_search</name> <init>= <expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator> <operator>&amp;</operator><name>mlist_search</name></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name><name>struct</name> <name>mlist</name></name></type> <name>mlist_examine</name> <init>=
+<expr><block>{ <expr><operator>&amp;</operator><name>mlist_examine</name></expr>, <expr><operator>&amp;</operator><name>mlist_examine</name></expr>, <expr><operator>&amp;</operator><name>mlist_examine</name></expr>, <expr><name>NULL</name></expr>, <expr><literal type="number">0</literal></expr> }</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>public</name> <name>void</name> <modifier>*</modifier></type><name>ml_examine</name> <init>= <expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator> <operator>&amp;</operator><name>mlist_examine</name></expr></init></decl>;</decl_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SHELL_ESCAPE</name> <operator>||</operator> <name>PIPEC</name></expr></cpp:if>
+<decl_stmt><decl><type><name><name>struct</name> <name>mlist</name></name></type> <name>mlist_shell</name> <init>=
+<expr><block>{ <expr><operator>&amp;</operator><name>mlist_shell</name></expr>, <expr><operator>&amp;</operator><name>mlist_shell</name></expr>, <expr><operator>&amp;</operator><name>mlist_shell</name></expr>, <expr><name>NULL</name></expr>, <expr><literal type="number">0</literal></expr> }</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>public</name> <name>void</name> <modifier>*</modifier></type><name>ml_shell</name> <init>= <expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator> <operator>&amp;</operator><name>mlist_shell</name></expr></init></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+
+
+<decl_stmt><decl><type><name>public</name> <name>void</name> <modifier>*</modifier></type><name>ml_search</name> <init>= <expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>public</name> <name>void</name> <modifier>*</modifier></type><name>ml_examine</name> <init>= <expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><literal type="number">2</literal></expr></init></decl>;</decl_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SHELL_ESCAPE</name> <operator>||</operator> <name>PIPEC</name></expr></cpp:if>
+<decl_stmt><decl><type><name>public</name> <name>void</name> <modifier>*</modifier></type><name>ml_shell</name> <init>= <expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><literal type="number">3</literal></expr></init></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+
+<decl_stmt><decl><type><specifier>static</specifier> <name><name>struct</name> <name>mlist</name></name> <modifier>*</modifier></type><name>curr_mlist</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>curr_cmdflags</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>char</name></type> <name><name>cmd_mbc_buf</name><index>[<expr><name>MAX_UTF_CHAR_LEN</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>cmd_mbc_buf_len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>cmd_mbc_buf_index</name></decl>;</decl_stmt>
+
+
+
+
+
+<function><type><name>public</name> <name>void</name></type>
+<name>cmd_reset</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <name>cmdbuf</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>cp</name> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>cmd_col</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>cmd_offset</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>literal</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>cmd_mbc_buf_len</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>updown_match</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>public</name> <name>void</name></type>
+<name>clear_cmd</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><name>cmd_col</name> <operator>=</operator> <name>prompt_col</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>cmd_mbc_buf_len</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>updown_match</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>public</name> <name>void</name></type>
+<name>cmd_putstr</name><parameter_list>(<parameter><decl><type><name>s</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>constant</name> <name>char</name> <modifier>*</modifier></type><name>s</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name>LWCHAR</name></type> <name>prev_ch</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>LWCHAR</name></type> <name>ch</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>constant</name> <name>char</name> <modifier>*</modifier></type><name>endline</name> <init>= <expr><name>s</name> <operator>+</operator> <call><name>strlen</name><argument_list>(<argument><expr><name>s</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<while>while <condition>(<expr><operator>*</operator><name>s</name> <operator>!=</operator> <literal type="char">'\0'</literal></expr>)</condition>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>ns</name> <init>= <expr><operator>(</operator><name>char</name> <operator>*</operator><operator>)</operator> <name>s</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>width</name></decl>;</decl_stmt>
+<expr_stmt><expr><name>ch</name> <operator>=</operator> <call><name>step_char</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ns</name></expr></argument>, <argument><expr><operator>+</operator><literal type="number">1</literal></expr></argument>, <argument><expr><name>endline</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<while>while <condition>(<expr><name>s</name> <operator>&lt;</operator> <name>ns</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>putchr</name><argument_list>(<argument><expr><operator>*</operator><name>s</name><operator>++</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></while>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>utf_mode</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>width</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><call><name>is_composing_char</name><argument_list>(<argument><expr><name>ch</name></expr></argument>)</argument_list></call> <operator>||</operator> <call><name>is_combining_char</name><argument_list>(<argument><expr><name>prev_ch</name></expr></argument>, <argument><expr><name>ch</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>width</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>width</name> <operator>=</operator> <ternary><condition><expr><call><name>is_wide_char</name><argument_list>(<argument><expr><name>ch</name></expr></argument>)</argument_list></call></expr> ?</condition><then> <expr><literal type="number">2</literal></expr> </then><else>: <expr><literal type="number">1</literal></expr></else></ternary></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<expr_stmt><expr><name>cmd_col</name> <operator>+=</operator> <name>width</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>prompt_col</name> <operator>+=</operator> <name>width</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>prev_ch</name> <operator>=</operator> <name>ch</name></expr>;</expr_stmt>
+</block_content>}</block></while>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>public</name> <name>int</name></type>
+<name>len_cmdbuf</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>s</name> <init>= <expr><name>cmdbuf</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>endline</name> <init>= <expr><name>s</name> <operator>+</operator> <call><name>strlen</name><argument_list>(<argument><expr><name>s</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>len</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<while>while <condition>(<expr><operator>*</operator><name>s</name> <operator>!=</operator> <literal type="char">'\0'</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>step_char</name><argument_list>(<argument><expr><operator>&amp;</operator><name>s</name></expr></argument>, <argument><expr><operator>+</operator><literal type="number">1</literal></expr></argument>, <argument><expr><name>endline</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>len</name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></while>
+<return>return <expr><operator>(</operator><name>len</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>cmd_step_common</name><parameter_list>(<parameter><decl><type><name>p</name></type></decl></parameter>, <parameter><decl><type><name>ch</name></type></decl></parameter>, <parameter><decl><type><name>len</name></type></decl></parameter>, <parameter><decl><type><name>pwidth</name></type></decl></parameter>, <parameter><decl><type><name>bswidth</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>p</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>LWCHAR</name></type> <name>ch</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name> <modifier>*</modifier></type><name>pwidth</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name> <modifier>*</modifier></type><name>bswidth</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>pr</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>width</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>len</name> <operator>==</operator> <literal type="number">1</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>pr</name> <operator>=</operator> <call><name>prchar</name><argument_list>(<argument><expr><operator>(</operator><name>int</name><operator>)</operator> <name>ch</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>width</name> <operator>=</operator> <operator>(</operator><name>int</name><operator>)</operator> <call><name>strlen</name><argument_list>(<argument><expr><name>pr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+<expr_stmt><expr><name>pr</name> <operator>=</operator> <call><name>prutfchar</name><argument_list>(<argument><expr><name>ch</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>is_composing_char</name><argument_list>(<argument><expr><name>ch</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>width</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><call><name>is_ubin_char</name><argument_list>(<argument><expr><name>ch</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>width</name> <operator>=</operator> <operator>(</operator><name>int</name><operator>)</operator> <call><name>strlen</name><argument_list>(<argument><expr><name>pr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else
+<block>{<block_content>
+<decl_stmt><decl><type><name>LWCHAR</name></type> <name>prev_ch</name> <init>= <expr><call><name>step_char</name><argument_list>(<argument><expr><operator>&amp;</operator><name>p</name></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>, <argument><expr><name>cmdbuf</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>is_combining_char</name><argument_list>(<argument><expr><name>prev_ch</name></expr></argument>, <argument><expr><name>ch</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>width</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>width</name> <operator>=</operator> <ternary><condition><expr><call><name>is_wide_char</name><argument_list>(<argument><expr><name>ch</name></expr></argument>)</argument_list></call></expr> ?</condition><then> <expr><literal type="number">2</literal></expr> </then><else>: <expr><literal type="number">1</literal></expr></else></ternary></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>pwidth</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>*</operator><name>pwidth</name> <operator>=</operator> <name>width</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>bswidth</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>*</operator><name>bswidth</name> <operator>=</operator> <name>width</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>pr</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>cmd_step_right</name><parameter_list>(<parameter><decl><type><name>pp</name></type></decl></parameter>, <parameter><decl><type><name>pwidth</name></type></decl></parameter>, <parameter><decl><type><name>bswidth</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>pp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name> <modifier>*</modifier></type><name>pwidth</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name> <modifier>*</modifier></type><name>bswidth</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>p</name> <init>= <expr><operator>*</operator><name>pp</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>LWCHAR</name></type> <name>ch</name> <init>= <expr><call><name>step_char</name><argument_list>(<argument><expr><name>pp</name></expr></argument>, <argument><expr><operator>+</operator><literal type="number">1</literal></expr></argument>, <argument><expr><name>p</name> <operator>+</operator> <call><name>strlen</name><argument_list>(<argument><expr><name>p</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<return>return <expr><call><name>cmd_step_common</name><argument_list>(<argument><expr><name>p</name></expr></argument>, <argument><expr><name>ch</name></expr></argument>, <argument><expr><operator>*</operator><name>pp</name> <operator>-</operator> <name>p</name></expr></argument>, <argument><expr><name>pwidth</name></expr></argument>, <argument><expr><name>bswidth</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>cmd_step_left</name><parameter_list>(<parameter><decl><type><name>pp</name></type></decl></parameter>, <parameter><decl><type><name>pwidth</name></type></decl></parameter>, <parameter><decl><type><name>bswidth</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>pp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name> <modifier>*</modifier></type><name>pwidth</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name> <modifier>*</modifier></type><name>bswidth</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>p</name> <init>= <expr><operator>*</operator><name>pp</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>LWCHAR</name></type> <name>ch</name> <init>= <expr><call><name>step_char</name><argument_list>(<argument><expr><name>pp</name></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>, <argument><expr><name>cmdbuf</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<return>return <expr><call><name>cmd_step_common</name><argument_list>(<argument><expr><operator>*</operator><name>pp</name></expr></argument>, <argument><expr><name>ch</name></expr></argument>, <argument><expr><name>p</name> <operator>-</operator> <operator>*</operator><name>pp</name></expr></argument>, <argument><expr><name>pwidth</name></expr></argument>, <argument><expr><name>bswidth</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>cmd_home</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<while>while <condition>(<expr><name>cmd_col</name> <operator>&gt;</operator> <name>prompt_col</name></expr>)</condition>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>width</name></decl>, <decl><type ref="prev"/><name>bswidth</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>cmd_step_left</name><argument_list>(<argument><expr><operator>&amp;</operator><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>width</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>bswidth</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<while>while <condition>(<expr><name>bswidth</name><operator>--</operator> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>putbs</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></while>
+<expr_stmt><expr><name>cmd_col</name> <operator>-=</operator> <name>width</name></expr>;</expr_stmt>
+</block_content>}</block></while>
+
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <operator>&amp;</operator><name><name>cmdbuf</name><index>[<expr><name>cmd_offset</name></expr>]</index></name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><name>public</name> <name>void</name></type>
+<name>cmd_repaint</name><parameter_list>(<parameter><decl><type><name>old_cp</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>constant</name> <name>char</name> <modifier>*</modifier></type><name>old_cp</name></decl>;</decl_stmt>
+<block>{<block_content>
+
+
+
+<if_stmt><if>if <condition>(<expr><name>old_cp</name> <operator>==</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>old_cp</name> <operator>=</operator> <name>cp</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>cmd_home</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>clear_eol</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<while>while <condition>(<expr><operator>*</operator><name>cp</name> <operator>!=</operator> <literal type="char">'\0'</literal></expr>)</condition>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>np</name> <init>= <expr><name>cp</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>width</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>pr</name> <init>= <expr><call><name>cmd_step_right</name><argument_list>(<argument><expr><operator>&amp;</operator><name>np</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>width</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>cmd_col</name> <operator>+</operator> <name>width</name> <operator>&gt;=</operator> <name>sc_width</name></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <name>np</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>putstr</name><argument_list>(<argument><expr><name>pr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>cmd_col</name> <operator>+=</operator> <name>width</name></expr>;</expr_stmt>
+</block_content>}</block></while>
+<while>while <condition>(<expr><operator>*</operator><name>cp</name> <operator>!=</operator> <literal type="char">'\0'</literal></expr>)</condition>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>np</name> <init>= <expr><name>cp</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>width</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>pr</name> <init>= <expr><call><name>cmd_step_right</name><argument_list>(<argument><expr><operator>&amp;</operator><name>np</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>width</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>width</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <name>np</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>putstr</name><argument_list>(<argument><expr><name>pr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></while>
+
+
+
+
+<while>while <condition>(<expr><name>cp</name> <operator>&gt;</operator> <name>old_cp</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>cmd_left</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></while>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>cmd_lshift</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>s</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>save_cp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>cols</name></decl>;</decl_stmt>
+
+
+
+
+
+<expr_stmt><expr><name>s</name> <operator>=</operator> <name>cmdbuf</name> <operator>+</operator> <name>cmd_offset</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>cols</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<while>while <condition>(<expr><name>cols</name> <operator>&lt;</operator> <operator>(</operator><name>sc_width</name> <operator>-</operator> <name>prompt_col</name><operator>)</operator> <operator>/</operator> <literal type="number">2</literal> <operator>&amp;&amp;</operator> <operator>*</operator><name>s</name> <operator>!=</operator> <literal type="char">'\0'</literal></expr>)</condition>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>width</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>cmd_step_right</name><argument_list>(<argument><expr><operator>&amp;</operator><name>s</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>width</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>cols</name> <operator>+=</operator> <name>width</name></expr>;</expr_stmt>
+</block_content>}</block></while>
+<while>while <condition>(<expr><operator>*</operator><name>s</name> <operator>!=</operator> <literal type="char">'\0'</literal></expr>)</condition>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>width</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>ns</name> <init>= <expr><name>s</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>cmd_step_right</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ns</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>width</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>width</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>s</name> <operator>=</operator> <name>ns</name></expr>;</expr_stmt>
+</block_content>}</block></while>
+
+<expr_stmt><expr><name>cmd_offset</name> <operator>=</operator> <operator>(</operator><name>int</name><operator>)</operator> <operator>(</operator><name>s</name> <operator>-</operator> <name>cmdbuf</name><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name>save_cp</name> <operator>=</operator> <name>cp</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>cmd_home</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>cmd_repaint</name><argument_list>(<argument><expr><name>save_cp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>cmd_rshift</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>s</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>save_cp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>cols</name></decl>;</decl_stmt>
+
+
+
+
+
+
+<expr_stmt><expr><name>s</name> <operator>=</operator> <name>cmdbuf</name> <operator>+</operator> <name>cmd_offset</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>cols</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<while>while <condition>(<expr><name><name>cols</name> <argument_list type="generic">&lt; <argument><expr><operator>(</operator><name>sc_width</name> <operator>-</operator> <name>prompt_col</name><operator>)</operator> <operator>/</operator> <literal type="number">2</literal> <operator>&amp;&amp;</operator> <name>s</name></expr></argument> &gt;</argument_list></name> <name>cmdbuf</name></expr>)</condition>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>width</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>cmd_step_left</name><argument_list>(<argument><expr><operator>&amp;</operator><name>s</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>width</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>cols</name> <operator>+=</operator> <name>width</name></expr>;</expr_stmt>
+</block_content>}</block></while>
+
+<expr_stmt><expr><name>cmd_offset</name> <operator>=</operator> <operator>(</operator><name>int</name><operator>)</operator> <operator>(</operator><name>s</name> <operator>-</operator> <name>cmdbuf</name><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name>save_cp</name> <operator>=</operator> <name>cp</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>cmd_home</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>cmd_repaint</name><argument_list>(<argument><expr><name>save_cp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>cmd_right</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>pr</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>ncp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>width</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name> <operator>==</operator> <literal type="char">'\0'</literal></expr>)</condition>
+<block>{<block_content>
+
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>ncp</name> <operator>=</operator> <name>cp</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>pr</name> <operator>=</operator> <call><name>cmd_step_right</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ncp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>width</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>cmd_col</name> <operator>+</operator> <name>width</name> <operator>&gt;=</operator> <name>sc_width</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>cmd_lshift</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name>cmd_col</name> <operator>+</operator> <name>width</name> <operator>==</operator> <name>sc_width</name> <operator>-</operator> <literal type="number">1</literal> <operator>&amp;&amp;</operator> <name><name>cp</name><index>[<expr><literal type="number">1</literal></expr>]</index></name> <operator>!=</operator> <literal type="char">'\0'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>cmd_lshift</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <name>ncp</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>cmd_col</name> <operator>+=</operator> <name>width</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>putstr</name><argument_list>(<argument><expr><name>pr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<while>while <condition>(<expr><operator>*</operator><name>cp</name> <operator>!=</operator> <literal type="char">'\0'</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>pr</name> <operator>=</operator> <call><name>cmd_step_right</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ncp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>width</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>width</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>putstr</name><argument_list>(<argument><expr><name>pr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <name>ncp</name></expr>;</expr_stmt>
+</block_content>}</block></while>
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>cmd_left</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>ncp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>width</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>bswidth</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>cp</name> <operator>&lt;=</operator> <name>cmdbuf</name></expr>)</condition>
+<block>{<block_content>
+
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>ncp</name> <operator>=</operator> <name>cp</name></expr>;</expr_stmt>
+<while>while <condition>(<expr><name>ncp</name> <operator>&gt;</operator> <name>cmdbuf</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>cmd_step_left</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ncp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>width</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>bswidth</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>width</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+</block_content>}</block></while>
+<if_stmt><if>if <condition>(<expr><name>cmd_col</name> <operator>&lt;</operator> <name>prompt_col</name> <operator>+</operator> <name>width</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>cmd_rshift</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <name>ncp</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>cmd_col</name> <operator>-=</operator> <name>width</name></expr>;</expr_stmt>
+<while>while <condition>(<expr><name>bswidth</name><operator>--</operator> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>putbs</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></while>
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>cmd_ichar</name><parameter_list>(<parameter><decl><type><name>cs</name></type></decl></parameter>, <parameter><decl><type><name>clen</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>cs</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>clen</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>s</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>strlen</name><argument_list>(<argument><expr><name>cmdbuf</name></expr></argument>)</argument_list></call> <operator>+</operator> <name>clen</name> <operator>&gt;=</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>cmdbuf</name></expr></argument>)</argument_list></sizeof><operator>-</operator><literal type="number">1</literal></expr>)</condition>
+<block>{<block_content>
+
+<expr_stmt><expr><call><name>bell</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>CC_ERROR</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+<for>for <control>(<init><expr><name>s</name> <operator>=</operator> <operator>&amp;</operator><name><name>cmdbuf</name><index>[<expr><call><name>strlen</name><argument_list>(<argument><expr><name>cmdbuf</name></expr></argument>)</argument_list></call></expr>]</index></name></expr>;</init> <condition><expr><name>s</name> <operator>&gt;=</operator> <name>cp</name></expr>;</condition> <incr><expr><name>s</name><operator>--</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>s</name><index>[<expr><name>clen</name></expr>]</index></name> <operator>=</operator> <name><name>s</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr>;</expr_stmt></block_content></block></for>
+
+
+
+<for>for <control>(<init><expr><name>s</name> <operator>=</operator> <name>cp</name></expr>;</init> <condition><expr><name>s</name> <operator>&lt;</operator> <name>cp</name> <operator>+</operator> <name>clen</name></expr>;</condition> <incr><expr><name>s</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>*</operator><name>s</name> <operator>=</operator> <operator>*</operator><name>cs</name><operator>++</operator></expr>;</expr_stmt></block_content></block></for>
+
+
+
+<expr_stmt><expr><name>updown_match</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>cmd_repaint</name><argument_list>(<argument><expr><name>cp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>cmd_right</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>cmd_erase</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>s</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>clen</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>cp</name> <operator>==</operator> <name>cmdbuf</name></expr>)</condition>
+<block>{<block_content>
+
+
+
+
+<return>return <expr><operator>(</operator><name>CC_QUIT</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+<expr_stmt><expr><name>s</name> <operator>=</operator> <name>cp</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>cmd_left</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>clen</name> <operator>=</operator> <operator>(</operator><name>int</name><operator>)</operator> <operator>(</operator><name>s</name> <operator>-</operator> <name>cp</name><operator>)</operator></expr>;</expr_stmt>
+
+
+
+
+<for>for <control>(<init><expr><name>s</name> <operator>=</operator> <name>cp</name></expr>;</init> <condition>;</condition> <incr><expr><name>s</name><operator>++</operator></expr></incr>)</control>
+<block>{<block_content>
+<expr_stmt><expr><name><name>s</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>=</operator> <name><name>s</name><index>[<expr><name>clen</name></expr>]</index></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>s</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'\0'</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+</block_content>}</block></for>
+
+
+
+
+<expr_stmt><expr><name>updown_match</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>cmd_repaint</name><argument_list>(<argument><expr><name>cp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>curr_cmdflags</name> <operator>&amp;</operator> <name>CF_QUIT_ON_ERASE</name><operator>)</operator> <operator>&amp;&amp;</operator> <name>cp</name> <operator>==</operator> <name>cmdbuf</name> <operator>&amp;&amp;</operator> <operator>*</operator><name>cp</name> <operator>==</operator> <literal type="char">'\0'</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>CC_QUIT</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>cmd_delete</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name> <operator>==</operator> <literal type="char">'\0'</literal></expr>)</condition>
+<block>{<block_content>
+
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+<expr_stmt><expr><call><name>cmd_right</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>cmd_erase</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>cmd_werase</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>cp</name> <operator>&gt;</operator> <name>cmdbuf</name> <operator>&amp;&amp;</operator> <name><name>cp</name><index>[<expr><operator>-</operator><literal type="number">1</literal></expr>]</index></name> <operator>==</operator> <literal type="char">' '</literal></expr>)</condition>
+<block>{<block_content>
+
+
+
+
+<while>while <condition>(<expr><name>cp</name> <operator>&gt;</operator> <name>cmdbuf</name> <operator>&amp;&amp;</operator> <name><name>cp</name><index>[<expr><operator>-</operator><literal type="number">1</literal></expr>]</index></name> <operator>==</operator> <literal type="char">' '</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>cmd_erase</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></while>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+
+
+
+
+<while>while <condition>(<expr><name>cp</name> <operator>&gt;</operator> <name>cmdbuf</name> <operator>&amp;&amp;</operator> <name><name>cp</name><index>[<expr><operator>-</operator><literal type="number">1</literal></expr>]</index></name> <operator>!=</operator> <literal type="char">' '</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>cmd_erase</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></while>
+</block_content>}</block></else></if_stmt>
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>cmd_wdelete</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name> <operator>==</operator> <literal type="char">' '</literal></expr>)</condition>
+<block>{<block_content>
+
+
+
+
+<while>while <condition>(<expr><operator>*</operator><name>cp</name> <operator>==</operator> <literal type="char">' '</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>cmd_delete</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></while>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+
+
+
+
+<while>while <condition>(<expr><operator>*</operator><name>cp</name> <operator>!=</operator> <literal type="char">' '</literal> <operator>&amp;&amp;</operator> <operator>*</operator><name>cp</name> <operator>!=</operator> <literal type="char">'\0'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>cmd_delete</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></while>
+</block_content>}</block></else></if_stmt>
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>cmd_kill</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>cmdbuf</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'\0'</literal></expr>)</condition>
+<block>{<block_content>
+
+<return>return <expr><operator>(</operator><name>CC_QUIT</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>cmd_offset</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>cmd_home</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>cp</name> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>updown_match</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>cmd_repaint</name><argument_list>(<argument><expr><name>cp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>curr_cmdflags</name> <operator>&amp;</operator> <name>CF_QUIT_ON_ERASE</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>CC_QUIT</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>public</name> <name>void</name></type>
+<name>set_mlist</name><parameter_list>(<parameter><decl><type><name>mlist</name></type></decl></parameter>, <parameter><decl><type><name>cmdflags</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>mlist</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>cmdflags</name></decl>;</decl_stmt>
+<block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>CMD_HISTORY</name></expr></cpp:if>
+<expr_stmt><expr><name>curr_mlist</name> <operator>=</operator> <operator>(</operator>struct <name>mlist</name> <operator>*</operator><operator>)</operator> <name>mlist</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>curr_cmdflags</name> <operator>=</operator> <name>cmdflags</name></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>curr_mlist</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>curr_mlist</name><operator>-&gt;</operator><name>curr_mp</name></name> <operator>=</operator> <name>curr_mlist</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>CMD_HISTORY</name></expr></cpp:if>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>cmd_updown</name><parameter_list>(<parameter><decl><type><name>action</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>int</name></type> <name>action</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name>constant</name> <name>char</name> <modifier>*</modifier></type><name>s</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>mlist</name></name> <modifier>*</modifier></type><name>ml</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>curr_mlist</name> <operator>==</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+
+
+
+<expr_stmt><expr><call><name>bell</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>updown_match</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>updown_match</name> <operator>=</operator> <operator>(</operator><name>int</name><operator>)</operator> <operator>(</operator><name>cp</name> <operator>-</operator> <name>cmdbuf</name><operator>)</operator></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+<for>for <control>(<init><expr><name>ml</name> <operator>=</operator> <name><name>curr_mlist</name><operator>-&gt;</operator><name>curr_mp</name></name></expr>;</init><condition>;</condition><incr/>)</control>
+<block>{<block_content>
+<expr_stmt><expr><name>ml</name> <operator>=</operator> <ternary><condition><expr><operator>(</operator><name>action</name> <operator>==</operator> <name>EC_UP</name><operator>)</operator></expr> ?</condition><then> <expr><name><name>ml</name><operator>-&gt;</operator><name>prev</name></name></expr> </then><else>: <expr><name><name>ml</name><operator>-&gt;</operator><name>next</name></name></expr></else></ternary></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ml</name> <operator>==</operator> <name>curr_mlist</name></expr>)</condition>
+<block>{<block_content>
+
+
+
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>strncmp</name><argument_list>(<argument><expr><name>cmdbuf</name></expr></argument>, <argument><expr><name><name>ml</name><operator>-&gt;</operator><name>string</name></name></expr></argument>, <argument><expr><name>updown_match</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition>
+<block>{<block_content>
+
+
+
+
+<expr_stmt><expr><name><name>curr_mlist</name><operator>-&gt;</operator><name>curr_mp</name></name> <operator>=</operator> <name>ml</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>s</name> <operator>=</operator> <name><name>ml</name><operator>-&gt;</operator><name>string</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>s</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>s</name> <operator>=</operator> <literal type="string">""</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>cmd_offset</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>cmd_home</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>clear_eol</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>strcpy</name><argument_list>(<argument><expr><name>cmdbuf</name></expr></argument>, <argument><expr><name>s</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>cp</name> <operator>=</operator> <name>cmdbuf</name></expr>;</init> <condition><expr><operator>*</operator><name>cp</name> <operator>!=</operator> <literal type="char">'\0'</literal></expr>;</condition> <incr/>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>cmd_right</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+
+
+
+<expr_stmt><expr><call><name>bell</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>ml_link</name><parameter_list>(<parameter><decl><type><name>mlist</name></type></decl></parameter>, <parameter><decl><type><name>ml</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name><name>struct</name> <name>mlist</name></name> <modifier>*</modifier></type><name>mlist</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>mlist</name></name> <modifier>*</modifier></type><name>ml</name></decl>;</decl_stmt>
+<block>{<block_content>
+<expr_stmt><expr><name><name>ml</name><operator>-&gt;</operator><name>next</name></name> <operator>=</operator> <name>mlist</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ml</name><operator>-&gt;</operator><name>prev</name></name> <operator>=</operator> <name><name>mlist</name><operator>-&gt;</operator><name>prev</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>mlist</name><operator>-&gt;</operator><name>prev</name><operator>-&gt;</operator><name>next</name></name> <operator>=</operator> <name>ml</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>mlist</name><operator>-&gt;</operator><name>prev</name></name> <operator>=</operator> <name>ml</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>ml_unlink</name><parameter_list>(<parameter><decl><type><name>ml</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name><name>struct</name> <name>mlist</name></name> <modifier>*</modifier></type><name>ml</name></decl>;</decl_stmt>
+<block>{<block_content>
+<expr_stmt><expr><name><name>ml</name><operator>-&gt;</operator><name>prev</name><operator>-&gt;</operator><name>next</name></name> <operator>=</operator> <name><name>ml</name><operator>-&gt;</operator><name>next</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ml</name><operator>-&gt;</operator><name>next</name><operator>-&gt;</operator><name>prev</name></name> <operator>=</operator> <name><name>ml</name><operator>-&gt;</operator><name>prev</name></name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>public</name> <name>void</name></type>
+<name>cmd_addhist</name><parameter_list>(<parameter><decl><type><name>mlist</name></type></decl></parameter>, <parameter><decl><type><name>cmd</name></type></decl></parameter>, <parameter><decl><type><name>modified</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name><name>struct</name> <name>mlist</name></name> <modifier>*</modifier></type><name>mlist</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>constant</name> <name>char</name> <modifier>*</modifier></type><name>cmd</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>modified</name></decl>;</decl_stmt>
+<block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>CMD_HISTORY</name></expr></cpp:if>
+<decl_stmt><decl><type><name><name>struct</name> <name>mlist</name></name> <modifier>*</modifier></type><name>ml</name></decl>;</decl_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>strlen</name><argument_list>(<argument><expr><name>cmd</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>no_hist_dups</name></expr>)</condition>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>mlist</name></name> <modifier>*</modifier></type><name>next</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<for>for <control>(<init><expr><name>ml</name> <operator>=</operator> <name><name>mlist</name><operator>-&gt;</operator><name>next</name></name></expr>;</init> <condition><expr><name><name>ml</name><operator>-&gt;</operator><name>string</name></name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>ml</name> <operator>=</operator> <name>next</name></expr></incr>)</control>
+<block>{<block_content>
+<expr_stmt><expr><name>next</name> <operator>=</operator> <name><name>ml</name><operator>-&gt;</operator><name>next</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>strcmp</name><argument_list>(<argument><expr><name><name>ml</name><operator>-&gt;</operator><name>string</name></name></expr></argument>, <argument><expr><name>cmd</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>ml_unlink</name><argument_list>(<argument><expr><name>ml</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>ml</name><operator>-&gt;</operator><name>string</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>ml</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<expr_stmt><expr><name>ml</name> <operator>=</operator> <name><name>mlist</name><operator>-&gt;</operator><name>prev</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ml</name> <operator>==</operator> <name>mlist</name> <operator>||</operator> <call><name>strcmp</name><argument_list>(<argument><expr><name><name>ml</name><operator>-&gt;</operator><name>string</name></name></expr></argument>, <argument><expr><name>cmd</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition>
+<block>{<block_content>
+
+
+
+
+<expr_stmt><expr><name>ml</name> <operator>=</operator> <operator>(</operator>struct <name>mlist</name> <operator>*</operator><operator>)</operator> <call><name>ecalloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr>struct <name>mlist</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ml</name><operator>-&gt;</operator><name>string</name></name> <operator>=</operator> <call><name>save</name><argument_list>(<argument><expr><name>cmd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ml</name><operator>-&gt;</operator><name>modified</name></name> <operator>=</operator> <name>modified</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ml_link</name><argument_list>(<argument><expr><name>mlist</name></expr></argument>, <argument><expr><name>ml</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+<expr_stmt><expr><name><name>mlist</name><operator>-&gt;</operator><name>curr_mp</name></name> <operator>=</operator> <name><name>ml</name><operator>-&gt;</operator><name>next</name></name></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><name>public</name> <name>void</name></type>
+<name>cmd_accept</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>CMD_HISTORY</name></expr></cpp:if>
+
+
+
+<if_stmt><if>if <condition>(<expr><name>curr_mlist</name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <name>curr_mlist</name> <operator>==</operator> <name>ml_examine</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>cmd_addhist</name><argument_list>(<argument><expr><name>curr_mlist</name></expr></argument>, <argument><expr><name>cmdbuf</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>curr_mlist</name><operator>-&gt;</operator><name>modified</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>cmd_edit</name><parameter_list>(<parameter><decl><type><name>c</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>int</name></type> <name>c</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>action</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>flags</name></decl>;</decl_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>TAB_COMPLETE_FILENAME</name></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>not_in_completion</name><parameter_list>()</parameter_list></cpp:macro> <cpp:value>in_completion = 0</cpp:value></cpp:define>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>not_in_completion</name><parameter_list>(<parameter><type><name>VOID_PARAM</name></type></parameter>)</parameter_list></cpp:macro></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+
+<expr_stmt><expr><name>flags</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>CMD_HISTORY</name></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name>curr_mlist</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+
+
+
+<expr_stmt><expr><name>flags</name> <operator>|=</operator> <name>ECF_NOHISTORY</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>TAB_COMPLETE_FILENAME</name></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name>curr_mlist</name> <operator>==</operator> <name>ml_search</name></expr>)</condition><block type="pseudo"><block_content>
+
+
+
+<expr_stmt><expr><name>flags</name> <operator>|=</operator> <name>ECF_NOCOMPLETE</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<expr_stmt><expr><name>action</name> <operator>=</operator> <call><name>editchar</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name>flags</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<switch>switch <condition>(<expr><name>action</name></expr>)</condition>
+<block>{<block_content>
+<case>case <expr><name>A_NOACTION</name></expr>:</case>
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return>
+<case>case <expr><name>EC_RIGHT</name></expr>:</case>
+<expr_stmt><expr><call><name>not_in_completion</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><call><name>cmd_right</name><argument_list>()</argument_list></call><operator>)</operator></expr>;</return>
+<case>case <expr><name>EC_LEFT</name></expr>:</case>
+<expr_stmt><expr><call><name>not_in_completion</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><call><name>cmd_left</name><argument_list>()</argument_list></call><operator>)</operator></expr>;</return>
+<case>case <expr><name>EC_W_RIGHT</name></expr>:</case>
+<expr_stmt><expr><call><name>not_in_completion</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<while>while <condition>(<expr><operator>*</operator><name>cp</name> <operator>!=</operator> <literal type="char">'\0'</literal> <operator>&amp;&amp;</operator> <operator>*</operator><name>cp</name> <operator>!=</operator> <literal type="char">' '</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>cmd_right</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></while>
+<while>while <condition>(<expr><operator>*</operator><name>cp</name> <operator>==</operator> <literal type="char">' '</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>cmd_right</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></while>
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return>
+<case>case <expr><name>EC_W_LEFT</name></expr>:</case>
+<expr_stmt><expr><call><name>not_in_completion</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<while>while <condition>(<expr><name>cp</name> <operator>&gt;</operator> <name>cmdbuf</name> <operator>&amp;&amp;</operator> <name><name>cp</name><index>[<expr><operator>-</operator><literal type="number">1</literal></expr>]</index></name> <operator>==</operator> <literal type="char">' '</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>cmd_left</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></while>
+<while>while <condition>(<expr><name>cp</name> <operator>&gt;</operator> <name>cmdbuf</name> <operator>&amp;&amp;</operator> <name><name>cp</name><index>[<expr><operator>-</operator><literal type="number">1</literal></expr>]</index></name> <operator>!=</operator> <literal type="char">' '</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>cmd_left</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></while>
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return>
+<case>case <expr><name>EC_HOME</name></expr>:</case>
+<expr_stmt><expr><call><name>not_in_completion</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>cmd_offset</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>cmd_home</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>cmd_repaint</name><argument_list>(<argument><expr><name>cp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return>
+<case>case <expr><name>EC_END</name></expr>:</case>
+<expr_stmt><expr><call><name>not_in_completion</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<while>while <condition>(<expr><operator>*</operator><name>cp</name> <operator>!=</operator> <literal type="char">'\0'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>cmd_right</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></while>
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return>
+<case>case <expr><name>EC_INSERT</name></expr>:</case>
+<expr_stmt><expr><call><name>not_in_completion</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return>
+<case>case <expr><name>EC_BACKSPACE</name></expr>:</case>
+<expr_stmt><expr><call><name>not_in_completion</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><call><name>cmd_erase</name><argument_list>()</argument_list></call><operator>)</operator></expr>;</return>
+<case>case <expr><name>EC_LINEKILL</name></expr>:</case>
+<expr_stmt><expr><call><name>not_in_completion</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><call><name>cmd_kill</name><argument_list>()</argument_list></call><operator>)</operator></expr>;</return>
+<case>case <expr><name>EC_ABORT</name></expr>:</case>
+<expr_stmt><expr><call><name>not_in_completion</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>cmd_kill</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>CC_QUIT</name><operator>)</operator></expr>;</return>
+<case>case <expr><name>EC_W_BACKSPACE</name></expr>:</case>
+<expr_stmt><expr><call><name>not_in_completion</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><call><name>cmd_werase</name><argument_list>()</argument_list></call><operator>)</operator></expr>;</return>
+<case>case <expr><name>EC_DELETE</name></expr>:</case>
+<expr_stmt><expr><call><name>not_in_completion</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><call><name>cmd_delete</name><argument_list>()</argument_list></call><operator>)</operator></expr>;</return>
+<case>case <expr><name>EC_W_DELETE</name></expr>:</case>
+<expr_stmt><expr><call><name>not_in_completion</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><call><name>cmd_wdelete</name><argument_list>()</argument_list></call><operator>)</operator></expr>;</return>
+<case>case <expr><name>EC_LITERAL</name></expr>:</case>
+<expr_stmt><expr><name>literal</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>CMD_HISTORY</name></expr></cpp:if>
+<case>case <expr><name>EC_UP</name></expr>:</case>
+<case>case <expr><name>EC_DOWN</name></expr>:</case>
+<expr_stmt><expr><call><name>not_in_completion</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><call><name>cmd_updown</name><argument_list>(<argument><expr><name>action</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>TAB_COMPLETE_FILENAME</name></expr></cpp:if>
+<case>case <expr><name>EC_F_COMPLETE</name></expr>:</case>
+<case>case <expr><name>EC_B_COMPLETE</name></expr>:</case>
+<case>case <expr><name>EC_EXPAND</name></expr>:</case>
+<return>return <expr><operator>(</operator><call><name>cmd_complete</name><argument_list>(<argument><expr><name>action</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<default>default:</default>
+<expr_stmt><expr><call><name>not_in_completion</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>CC_PASS</name><operator>)</operator></expr>;</return>
+</block_content>}</block></switch>
+</block_content>}</block></function>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>TAB_COMPLETE_FILENAME</name></expr></cpp:if>
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>cmd_istr</name><parameter_list>(<parameter><decl><type><name>str</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>str</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>s</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>action</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>endline</name> <init>= <expr><name>str</name> <operator>+</operator> <call><name>strlen</name><argument_list>(<argument><expr><name>str</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>s</name> <operator>=</operator> <name>str</name></expr>;</init> <condition><expr><operator>*</operator><name>s</name> <operator>!=</operator> <literal type="char">'\0'</literal></expr>;</condition> <incr/>)</control>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>os</name> <init>= <expr><name>s</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>step_char</name><argument_list>(<argument><expr><operator>&amp;</operator><name>s</name></expr></argument>, <argument><expr><operator>+</operator><literal type="number">1</literal></expr></argument>, <argument><expr><name>endline</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>action</name> <operator>=</operator> <call><name>cmd_ichar</name><argument_list>(<argument><expr><name>os</name></expr></argument>, <argument><expr><name>s</name> <operator>-</operator> <name>os</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>action</name> <operator>!=</operator> <name>CC_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>action</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></for>
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>delimit_word</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>word</name></decl>;</decl_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SPACES_IN_FILENAMES</name></expr></cpp:if>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>p</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>delim_quoted</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>meta_quoted</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>constant</name> <name>char</name> <modifier>*</modifier></type><name>esc</name> <init>= <expr><call><name>get_meta_escape</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>esclen</name> <init>= <expr><operator>(</operator><name>int</name><operator>)</operator> <call><name>strlen</name><argument_list>(<argument><expr><name>esc</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name> <operator>!=</operator> <literal type="char">' '</literal> <operator>&amp;&amp;</operator> <operator>*</operator><name>cp</name> <operator>!=</operator> <literal type="char">'\0'</literal></expr>)</condition>
+<block>{<block_content>
+
+
+
+
+<while>while <condition>(<expr><operator>*</operator><name>cp</name> <operator>!=</operator> <literal type="char">' '</literal> <operator>&amp;&amp;</operator> <operator>*</operator><name>cp</name> <operator>!=</operator> <literal type="char">'\0'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>cmd_right</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></while>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>cp</name> <operator>&gt;</operator> <name>cmdbuf</name> <operator>&amp;&amp;</operator> <name><name>cp</name><index>[<expr><operator>-</operator><literal type="number">1</literal></expr>]</index></name> <operator>!=</operator> <literal type="char">' '</literal></expr>)</condition>
+<block>{<block_content>
+
+
+
+
+<empty_stmt>;</empty_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><literal type="number">0</literal></expr></cpp:if>
+} else
+{
+
+
+
+
+return (NULL);
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></if></if_stmt>
+
+
+
+<if_stmt><if>if <condition>(<expr><name>cp</name> <operator>==</operator> <name>cmdbuf</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SPACES_IN_FILENAMES</name></expr></cpp:if>
+
+
+
+
+
+<for>for <control>(<init><expr><name>word</name> <operator>=</operator> <name>cmdbuf</name></expr>;</init> <condition><expr><name>word</name> <operator>&lt;</operator> <name>cp</name></expr>;</condition> <incr><expr><name>word</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>word</name> <operator>!=</operator> <literal type="char">' '</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt></block_content></block></for>
+<if_stmt><if>if <condition>(<expr><name>word</name> <operator>&gt;=</operator> <name>cp</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>cp</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<for>for <control>(<init><expr><name>p</name> <operator>=</operator> <name>cmdbuf</name></expr>;</init> <condition><expr><name>p</name> <operator>&lt;</operator> <name>cp</name></expr>;</condition> <incr><expr><name>p</name><operator>++</operator></expr></incr>)</control>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>meta_quoted</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>meta_quoted</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>esclen</name> <operator>&gt;</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name>p</name> <operator>+</operator> <name>esclen</name> <operator>&lt;</operator> <name>cp</name> <operator>&amp;&amp;</operator>
+<call><name>strncmp</name><argument_list>(<argument><expr><name>p</name></expr></argument>, <argument><expr><name>esc</name></expr></argument>, <argument><expr><name>esclen</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>meta_quoted</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>p</name> <operator>+=</operator> <name>esclen</name> <operator>-</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>delim_quoted</name></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>p</name> <operator>==</operator> <name>closequote</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>delim_quoted</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>p</name> <operator>==</operator> <name>openquote</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>delim_quoted</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><operator>*</operator><name>p</name> <operator>==</operator> <literal type="char">' '</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>word</name> <operator>=</operator> <name>p</name><operator>+</operator><literal type="number">1</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></for>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<return>return <expr><operator>(</operator><name>word</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>init_compl</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>word</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name>c</name></decl>;</decl_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>tk_text</name> <operator>!=</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>tk_text</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>tk_text</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+<expr_stmt><expr><name>word</name> <operator>=</operator> <call><name>delimit_word</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>word</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+
+
+
+<expr_stmt><expr><name>tk_ipoint</name> <operator>=</operator> <name>word</name></expr>;</expr_stmt>
+
+
+
+<if_stmt><if>if <condition>(<expr><name>tk_original</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>tk_original</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>tk_original</name> <operator>=</operator> <operator>(</operator><name>char</name> <operator>*</operator><operator>)</operator> <call><name>ecalloc</name><argument_list>(<argument><expr><name>cp</name><operator>-</operator><name>word</name><operator>+</operator><literal type="number">1</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>char</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>strncpy</name><argument_list>(<argument><expr><name>tk_original</name></expr></argument>, <argument><expr><name>word</name></expr></argument>, <argument><expr><name>cp</name><operator>-</operator><name>word</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+<expr_stmt><expr><name>c</name> <operator>=</operator> <operator>*</operator><name>cp</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>cp</name> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>word</name> <operator>!=</operator> <name>openquote</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>tk_text</name> <operator>=</operator> <call><name>fcomplete</name><argument_list>(<argument><expr><name>word</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>MSDOS_COMPILER</name></expr></cpp:if>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>qword</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>qword</name> <init>= <expr><call><name>shell_quote</name><argument_list>(<argument><expr><name>word</name><operator>+</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<if_stmt><if>if <condition>(<expr><name>qword</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>tk_text</name> <operator>=</operator> <call><name>fcomplete</name><argument_list>(<argument><expr><name>word</name><operator>+</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else
+<block>{<block_content>
+<expr_stmt><expr><name>tk_text</name> <operator>=</operator> <call><name>fcomplete</name><argument_list>(<argument><expr><name>qword</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>qword</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><operator>*</operator><name>cp</name> <operator>=</operator> <name>c</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>next_compl</name><parameter_list>(<parameter><decl><type><name>action</name></type></decl></parameter>, <parameter><decl><type><name>prev</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>int</name></type> <name>action</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>prev</name></decl>;</decl_stmt>
+<block>{<block_content>
+<switch>switch <condition>(<expr><name>action</name></expr>)</condition>
+<block>{<block_content>
+<case>case <expr><name>EC_F_COMPLETE</name></expr>:</case>
+<return>return <expr><operator>(</operator><call><name>forw_textlist</name><argument_list>(<argument><expr><operator>&amp;</operator><name>tk_tlist</name></expr></argument>, <argument><expr><name>prev</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+<case>case <expr><name>EC_B_COMPLETE</name></expr>:</case>
+<return>return <expr><operator>(</operator><call><name>back_textlist</name><argument_list>(<argument><expr><operator>&amp;</operator><name>tk_tlist</name></expr></argument>, <argument><expr><name>prev</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></switch>
+
+<return>return <expr><operator>(</operator><literal type="string">"?"</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>cmd_complete</name><parameter_list>(<parameter><decl><type><name>action</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>int</name></type> <name>action</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>s</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>in_completion</name> <operator>||</operator> <name>action</name> <operator>==</operator> <name>EC_EXPAND</name></expr>)</condition>
+<block>{<block_content>
+
+
+
+
+
+<expr_stmt><expr><call><name>init_compl</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>tk_text</name> <operator>==</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>bell</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>action</name> <operator>==</operator> <name>EC_EXPAND</name></expr>)</condition>
+<block>{<block_content>
+
+
+
+<expr_stmt><expr><name>tk_trial</name> <operator>=</operator> <name>tk_text</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+
+
+
+<expr_stmt><expr><name>in_completion</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>init_textlist</name><argument_list>(<argument><expr><operator>&amp;</operator><name>tk_tlist</name></expr></argument>, <argument><expr><name>tk_text</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>tk_trial</name> <operator>=</operator> <call><name>next_compl</name><argument_list>(<argument><expr><name>action</name></expr></argument>, <argument><expr><operator>(</operator><name>char</name><operator>*</operator><operator>)</operator><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+
+
+
+
+<expr_stmt><expr><name>tk_trial</name> <operator>=</operator> <call><name>next_compl</name><argument_list>(<argument><expr><name>action</name></expr></argument>, <argument><expr><name>tk_trial</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+
+
+
+<while>while <condition>(<expr><name>cp</name> <operator>&gt;</operator> <name>tk_ipoint</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>cmd_erase</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></while>
+
+<if_stmt><if>if <condition>(<expr><name>tk_trial</name> <operator>==</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+
+
+
+
+<expr_stmt><expr><name>in_completion</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>cmd_istr</name><argument_list>(<argument><expr><name>tk_original</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>CC_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>fail</name>;</goto></block_content></block></if></if_stmt>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>cmd_istr</name><argument_list>(<argument><expr><name>tk_trial</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>CC_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>fail</name>;</goto></block_content></block></if></if_stmt>
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>is_dir</name><argument_list>(<argument><expr><name>tk_trial</name></expr></argument>)</argument_list></call></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>cp</name> <operator>&gt;</operator> <name>cmdbuf</name> <operator>&amp;&amp;</operator> <name><name>cp</name><index>[<expr><operator>-</operator><literal type="number">1</literal></expr>]</index></name> <operator>==</operator> <name>closequote</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>cmd_erase</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>s</name> <operator>=</operator> <call><name>lgetenv</name><argument_list>(<argument><expr><literal type="string">"LESSSEPARATOR"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>s</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>s</name> <operator>=</operator> <name>PATHNAME_SEP</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>cmd_istr</name><argument_list>(<argument><expr><name>s</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>CC_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>fail</name>;</goto></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return>
+
+<label><name>fail</name>:</label>
+<expr_stmt><expr><name>in_completion</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>bell</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+
+
+
+
+
+
+<function><type><name>public</name> <name>int</name></type>
+<name>cmd_char</name><parameter_list>(<parameter><decl><type><name>c</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>int</name></type> <name>c</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>action</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>len</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>utf_mode</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name><name>cmd_mbc_buf</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>=</operator> <name>c</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>len</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><name>cmd_mbc_buf_len</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition>
+<block>{<block_content>
+<label><name>retry</name>:</label>
+<expr_stmt><expr><name>cmd_mbc_buf_index</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>cmd_mbc_buf</name> <operator>=</operator> <name>c</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>IS_ASCII_OCTET</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>cmd_mbc_buf_len</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt></block_content></block></if>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>MSDOS_COMPILER</name> <operator>||</operator> <name>OS2</name></expr></cpp:if>
+<if type="elseif">else if <condition>(<expr><name>c</name> <operator>==</operator> <operator>(</operator><name>unsigned</name> <name>char</name><operator>)</operator> <literal type="char">'\340'</literal> <operator>&amp;&amp;</operator> <call><name>IS_ASCII_OCTET</name><argument_list>(<argument><expr><call><name>peekcc</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition>
+<block>{<block_content>
+
+<expr_stmt><expr><name>cmd_mbc_buf_len</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<if type="elseif">else if <condition>(<expr><call><name>IS_UTF8_LEAD</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>cmd_mbc_buf_len</name> <operator>=</operator> <call><name>utf_len</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+
+<expr_stmt><expr><call><name>bell</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>CC_ERROR</name><operator>)</operator></expr>;</return>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><call><name>IS_UTF8_TRAIL</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name><name>cmd_mbc_buf</name><index>[<expr><name>cmd_mbc_buf_index</name><operator>++</operator></expr>]</index></name> <operator>=</operator> <name>c</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>cmd_mbc_buf_index</name> <operator>&lt;</operator> <name>cmd_mbc_buf_len</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>CC_OK</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>is_utf8_well_formed</name><argument_list>(<argument><expr><name>cmd_mbc_buf</name></expr></argument>, <argument><expr><name>cmd_mbc_buf_index</name></expr></argument>)</argument_list></call></expr>)</condition>
+<block>{<block_content>
+
+<expr_stmt><expr><name>cmd_mbc_buf_len</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>bell</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>CC_ERROR</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+
+<expr_stmt><expr><name>cmd_mbc_buf_len</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>bell</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+<goto>goto <name>retry</name>;</goto>
+</block_content>}</block></else></if_stmt>
+
+<expr_stmt><expr><name>len</name> <operator>=</operator> <name>cmd_mbc_buf_len</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>cmd_mbc_buf_len</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>literal</name></expr>)</condition>
+<block>{<block_content>
+
+
+
+<expr_stmt><expr><name>literal</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><call><name>cmd_ichar</name><argument_list>(<argument><expr><name>cmd_mbc_buf</name></expr></argument>, <argument><expr><name>len</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>in_mca</name><argument_list>()</argument_list></call> <operator>&amp;&amp;</operator> <name>len</name> <operator>==</operator> <literal type="number">1</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>action</name> <operator>=</operator> <call><name>cmd_edit</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<switch>switch <condition>(<expr><name>action</name></expr>)</condition>
+<block>{<block_content>
+<case>case <expr><name>CC_OK</name></expr>:</case>
+<case>case <expr><name>CC_QUIT</name></expr>:</case>
+<return>return <expr><operator>(</operator><name>action</name><operator>)</operator></expr>;</return>
+<case>case <expr><name>CC_PASS</name></expr>:</case>
+<break>break;</break>
+</block_content>}</block></switch>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+<return>return <expr><operator>(</operator><call><name>cmd_ichar</name><argument_list>(<argument><expr><name>cmd_mbc_buf</name></expr></argument>, <argument><expr><name>len</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>public</name> <name>LINENUM</name></type>
+<name>cmd_int</name><parameter_list>(<parameter><decl><type><name>frac</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>long</name> <modifier>*</modifier></type><name>frac</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>p</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>LINENUM</name></type> <name>n</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>err</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>p</name> <operator>=</operator> <name>cmdbuf</name></expr>;</init> <condition><expr><operator>*</operator><name>p</name> <operator>&gt;=</operator> <literal type="char">'0'</literal> <operator>&amp;&amp;</operator> <operator>*</operator><name>p</name> <operator>&lt;=</operator> <literal type="char">'9'</literal></expr>;</condition> <incr><expr><name>p</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><name>n</name> <operator>=</operator> <operator>(</operator><name>n</name> <operator>*</operator> <literal type="number">10</literal><operator>)</operator> <operator>+</operator> <operator>(</operator><operator>*</operator><name>p</name> <operator>-</operator> <literal type="char">'0'</literal><operator>)</operator></expr>;</expr_stmt></block_content></block></for>
+<expr_stmt><expr><operator>*</operator><name>frac</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>p</name><operator>++</operator> <operator>==</operator> <literal type="char">'.'</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>frac</name> <operator>=</operator> <call><name>getfraction</name><argument_list>(<argument><expr><operator>&amp;</operator><name>p</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>err</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+</block_content>}</block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>n</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>public</name> <name>char</name> <modifier>*</modifier></type>
+<name>get_cmdbuf</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><name>cmdbuf</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>CMD_HISTORY</name></expr></cpp:if>
+
+
+
+<function><type><name>public</name> <name>char</name> <modifier>*</modifier></type>
+<name>cmd_lastpattern</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>curr_mlist</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><name><name>curr_mlist</name><operator>-&gt;</operator><name>curr_mp</name><operator>-&gt;</operator><name>prev</name><operator>-&gt;</operator><name>string</name></name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>CMD_HISTORY</name></expr></cpp:if>
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>mlist_size</name><parameter_list>(<parameter><decl><type><name>ml</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name><name>struct</name> <name>mlist</name></name> <modifier>*</modifier></type><name>ml</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>size</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<for>for <control>(<init><expr><name>ml</name> <operator>=</operator> <name><name>ml</name><operator>-&gt;</operator><name>next</name></name></expr>;</init> <condition><expr><name><name>ml</name><operator>-&gt;</operator><name>string</name></name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>ml</name> <operator>=</operator> <name><name>ml</name><operator>-&gt;</operator><name>next</name></name></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>++</operator><name>size</name></expr>;</expr_stmt></block_content></block></for>
+<return>return <expr><name>size</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>histfile_name</name><parameter_list>(<parameter><decl><type><name>must_exist</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>int</name></type> <name>must_exist</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>home</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>xdg</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>name</name></decl>;</decl_stmt>
+
+
+<expr_stmt><expr><name>name</name> <operator>=</operator> <call><name>lgetenv</name><argument_list>(<argument><expr><literal type="string">"LESSHISTFILE"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>isnullenv</name><argument_list>(<argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>strcmp</name><argument_list>(<argument><expr><name>name</name></expr></argument>, <argument><expr><literal type="string">"-"</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal> <operator>||</operator> <call><name>strcmp</name><argument_list>(<argument><expr><name>name</name></expr></argument>, <argument><expr><literal type="string">"/dev/null"</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><call><name>save</name><argument_list>(<argument><expr><name>name</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>strcmp</name><argument_list>(<argument><expr><name>LESSHISTFILE</name></expr></argument>, <argument><expr><literal type="string">""</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal> <operator>||</operator> <call><name>strcmp</name><argument_list>(<argument><expr><name>LESSHISTFILE</name></expr></argument>, <argument><expr><literal type="string">"-"</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+
+<expr_stmt><expr><name>xdg</name> <operator>=</operator> <call><name>lgetenv</name><argument_list>(<argument><expr><literal type="string">"XDG_DATA_HOME"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>home</name> <operator>=</operator> <call><name>lgetenv</name><argument_list>(<argument><expr><literal type="string">"HOME"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OS2</name></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><call><name>isnullenv</name><argument_list>(<argument><expr><name>home</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>home</name> <operator>=</operator> <call><name>lgetenv</name><argument_list>(<argument><expr><literal type="string">"INIT"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<expr_stmt><expr><name>name</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>must_exist</name></expr>)</condition>
+<block>{<block_content>
+
+<expr_stmt><expr><name>name</name> <operator>=</operator> <call><name>dirfile</name><argument_list>(<argument><expr><name>xdg</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>LESSHISTFILE</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>name</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>name</name> <operator>=</operator> <call><name>dirfile</name><argument_list>(<argument><expr><name>home</name></expr></argument>, <argument><expr><name>LESSHISTFILE</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>name</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>name</name> <operator>=</operator> <call><name>dirfile</name><argument_list>(<argument><expr><name>xdg</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>LESSHISTFILE</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>, <argument><expr><name>must_exist</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>name</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>name</name> <operator>=</operator> <call><name>dirfile</name><argument_list>(<argument><expr><name>home</name></expr></argument>, <argument><expr><name>LESSHISTFILE</name></expr></argument>, <argument><expr><name>must_exist</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>name</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>void</name></type>
+<name>read_cmdhist2</name><argument_list>(<argument><expr><name>action</name></expr></argument>, <argument><expr><name>uparam</name></expr></argument>, <argument><expr><name>skip_search</name></expr></argument>, <argument><expr><name>skip_shell</name></expr></argument>)</argument_list>
+<name>void</name> <argument_list>(<argument><expr><operator>*</operator><name>action</name></expr></argument>)</argument_list><argument_list>(<argument><expr><name>void</name><operator>*</operator></expr></argument>,<argument><expr>struct <name>mlist</name><operator>*</operator></expr></argument>,<argument><expr><name>char</name><operator>*</operator></expr></argument>)</argument_list></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>uparam</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>skip_search</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>skip_shell</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>mlist</name></name> <modifier>*</modifier></type><name>ml</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name><name>line</name><index>[<expr><name>CMDBUF_SIZE</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>filename</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>FILE</name> <modifier>*</modifier></type><name>f</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>p</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name> <modifier>*</modifier></type><name>skip</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>filename</name> <operator>=</operator> <call><name>histfile_name</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>filename</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>f</name> <operator>=</operator> <call><name>fopen</name><argument_list>(<argument><expr><name>filename</name></expr></argument>, <argument><expr><literal type="string">"r"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>filename</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>f</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>fgets</name><argument_list>(<argument><expr><name>line</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>line</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><name>f</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<call><name>strncmp</name><argument_list>(<argument><expr><name>line</name></expr></argument>, <argument><expr><name>HISTFILE_FIRST_LINE</name></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name>HISTFILE_FIRST_LINE</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>fclose</name><argument_list>(<argument><expr><name>f</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+<while>while <condition>(<expr><call><name>fgets</name><argument_list>(<argument><expr><name>line</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>line</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><name>f</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+<for>for <control>(<init><expr><name>p</name> <operator>=</operator> <name>line</name></expr>;</init> <condition><expr><operator>*</operator><name>p</name> <operator>!=</operator> <literal type="char">'\0'</literal></expr>;</condition> <incr><expr><name>p</name><operator>++</operator></expr></incr>)</control>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>p</name> <operator>==</operator> <literal type="char">'\n'</literal> <operator>||</operator> <operator>*</operator><name>p</name> <operator>==</operator> <literal type="char">'\r'</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>p</name> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+<if_stmt><if>if <condition>(<expr><call><name>strcmp</name><argument_list>(<argument><expr><name>line</name></expr></argument>, <argument><expr><name>HISTFILE_SEARCH_SECTION</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>ml</name> <operator>=</operator> <operator>&amp;</operator><name>mlist_search</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>skip</name> <operator>=</operator> <operator>&amp;</operator><name>skip_search</name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><call><name>strcmp</name><argument_list>(<argument><expr><name>line</name></expr></argument>, <argument><expr><name>HISTFILE_SHELL_SECTION</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition>
+<block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SHELL_ESCAPE</name> <operator>||</operator> <name>PIPEC</name></expr></cpp:if>
+<expr_stmt><expr><name>ml</name> <operator>=</operator> <operator>&amp;</operator><name>mlist_shell</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>skip</name> <operator>=</operator> <operator>&amp;</operator><name>skip_shell</name></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><name>ml</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>skip</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><call><name>strcmp</name><argument_list>(<argument><expr><name>line</name></expr></argument>, <argument><expr><name>HISTFILE_MARK_SECTION</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>ml</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>*</operator><name>line</name> <operator>==</operator> <literal type="char">'"'</literal></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>ml</name> <operator>!=</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>skip</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <operator>*</operator><name>skip</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>--</operator><operator>(</operator><operator>*</operator><name>skip</name><operator>)</operator></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call>(<modifier>*</modifier><name>action</name>)<argument_list>(<argument><expr><name>uparam</name></expr></argument>, <argument><expr><name>ml</name></expr></argument>, <argument><expr><name>line</name><operator>+</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>*</operator><name>line</name> <operator>==</operator> <literal type="char">'m'</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call>(<modifier>*</modifier><name>action</name>)<argument_list>(<argument><expr><name>uparam</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>line</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></while>
+<expr_stmt><expr><call><name>fclose</name><argument_list>(<argument><expr><name>f</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>void</name></type>
+<name>read_cmdhist</name><argument_list>(<argument><expr><name>action</name></expr></argument>, <argument><expr><name>uparam</name></expr></argument>, <argument><expr><name>skip_search</name></expr></argument>, <argument><expr><name>skip_shell</name></expr></argument>)</argument_list>
+<name>void</name> <argument_list>(<argument><expr><operator>*</operator><name>action</name></expr></argument>)</argument_list><argument_list>(<argument><expr><name>void</name><operator>*</operator></expr></argument>,<argument><expr>struct <name>mlist</name><operator>*</operator></expr></argument>,<argument><expr><name>char</name><operator>*</operator></expr></argument>)</argument_list></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>uparam</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>skip_search</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>skip_shell</name></decl>;</decl_stmt>
+<block>{<block_content>
+<expr_stmt><expr><call><name>read_cmdhist2</name><argument_list>(<argument><expr><name>action</name></expr></argument>, <argument><expr><name>uparam</name></expr></argument>, <argument><expr><name>skip_search</name></expr></argument>, <argument><expr><name>skip_shell</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call>(<modifier>*</modifier><name>action</name>)<argument_list>(<argument><expr><name>uparam</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>addhist_init</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>uparam</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>mlist</name></name> <modifier>*</modifier></type><name>ml</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>string</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>ml</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>cmd_addhist</name><argument_list>(<argument><expr><name>ml</name></expr></argument>, <argument><expr><name>string</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name>string</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>restore_mark</name><argument_list>(<argument><expr><name>string</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+
+<function><type><name>public</name> <name>void</name></type>
+<name>init_cmdhist</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>CMD_HISTORY</name></expr></cpp:if>
+<expr_stmt><expr><call><name>read_cmdhist</name><argument_list>(<argument><expr><operator>&amp;</operator><name>addhist_init</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>CMD_HISTORY</name></expr></cpp:if>
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>write_mlist_header</name><parameter_list>(<parameter><decl><type><name>ml</name></type></decl></parameter>, <parameter><decl><type><name>f</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name><name>struct</name> <name>mlist</name></name> <modifier>*</modifier></type><name>ml</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>FILE</name> <modifier>*</modifier></type><name>f</name></decl>;</decl_stmt>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>ml</name> <operator>==</operator> <operator>&amp;</operator><name>mlist_search</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>f</name></expr></argument>, <argument><expr><literal type="string">"%s\n"</literal></expr></argument>, <argument><expr><name>HISTFILE_SEARCH_SECTION</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SHELL_ESCAPE</name> <operator>||</operator> <name>PIPEC</name></expr></cpp:if>
+<if type="elseif">else if <condition>(<expr><name>ml</name> <operator>==</operator> <operator>&amp;</operator><name>mlist_shell</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>f</name></expr></argument>, <argument><expr><literal type="string">"%s\n"</literal></expr></argument>, <argument><expr><name>HISTFILE_SHELL_SECTION</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>write_mlist</name><parameter_list>(<parameter><decl><type><name>ml</name></type></decl></parameter>, <parameter><decl><type><name>f</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name><name>struct</name> <name>mlist</name></name> <modifier>*</modifier></type><name>ml</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>FILE</name> <modifier>*</modifier></type><name>f</name></decl>;</decl_stmt>
+<block>{<block_content>
+<for>for <control>(<init><expr><name>ml</name> <operator>=</operator> <name><name>ml</name><operator>-&gt;</operator><name>next</name></name></expr>;</init> <condition><expr><name><name>ml</name><operator>-&gt;</operator><name>string</name></name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>ml</name> <operator>=</operator> <name><name>ml</name><operator>-&gt;</operator><name>next</name></name></expr></incr>)</control>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>ml</name><operator>-&gt;</operator><name>modified</name></name></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>f</name></expr></argument>, <argument><expr><literal type="string">"\"%s\n"</literal></expr></argument>, <argument><expr><name><name>ml</name><operator>-&gt;</operator><name>string</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ml</name><operator>-&gt;</operator><name>modified</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><name><name>ml</name><operator>-&gt;</operator><name>modified</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>make_tempname</name><parameter_list>(<parameter><decl><type><name>filename</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>filename</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name></type> <name>lastch</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>tempname</name> <init>= <expr><call><name>ecalloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name>filename</name></expr></argument>)</argument_list></call><operator>+</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>strcpy</name><argument_list>(<argument><expr><name>tempname</name></expr></argument>, <argument><expr><name>filename</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>lastch</name> <operator>=</operator> <name><name>tempname</name><index>[<expr><call><name>strlen</name><argument_list>(<argument><expr><name>tempname</name></expr></argument>)</argument_list></call><operator>-</operator><literal type="number">1</literal></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tempname</name><index>[<expr><call><name>strlen</name><argument_list>(<argument><expr><name>tempname</name></expr></argument>)</argument_list></call><operator>-</operator><literal type="number">1</literal></expr>]</index></name> <operator>=</operator> <ternary><condition><expr><operator>(</operator><name>lastch</name> <operator>==</operator> <literal type="char">'Q'</literal><operator>)</operator></expr> ?</condition><then> <expr><literal type="char">'Z'</literal></expr> </then><else>: <expr><literal type="char">'Q'</literal></expr></else></ternary></expr>;</expr_stmt>
+<return>return <expr><name>tempname</name></expr>;</return>
+</block_content>}</block></function>
+
+<struct>struct <name>save_ctx</name>
+<block>{
+<decl_stmt><decl><type><name><name>struct</name> <name>mlist</name></name> <modifier>*</modifier></type><name>mlist</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>FILE</name> <modifier>*</modifier></type><name>fout</name></decl>;</decl_stmt>
+}</block>;</struct>
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>copy_hist</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>uparam</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>mlist</name></name> <modifier>*</modifier></type><name>ml</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>string</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>save_ctx</name></name> <modifier>*</modifier></type><name>ctx</name> <init>= <expr><operator>(</operator>struct <name>save_ctx</name> <operator>*</operator><operator>)</operator> <name>uparam</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ml</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <name>ml</name> <operator>!=</operator> <name><name>ctx</name><operator>-&gt;</operator><name>mlist</name></name></expr>)</condition> <block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><name><name>ctx</name><operator>-&gt;</operator><name>mlist</name></name></expr>)</condition><block type="pseudo"><block_content>
+
+<expr_stmt><expr><call><name>write_mlist</name><argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>mlist</name></name></expr></argument>, <argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>fout</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name><name>ctx</name><operator>-&gt;</operator><name>mlist</name></name> <operator>=</operator> <name>ml</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>write_mlist_header</name><argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>mlist</name></name></expr></argument>, <argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>fout</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>string</name> <operator>==</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><name><name>mlist_search</name><operator>.</operator><name>modified</name></name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>write_mlist_header</name><argument_list>(<argument><expr><operator>&amp;</operator><name>mlist_search</name></expr></argument>, <argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>fout</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>write_mlist</name><argument_list>(<argument><expr><operator>&amp;</operator><name>mlist_search</name></expr></argument>, <argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>fout</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SHELL_ESCAPE</name> <operator>||</operator> <name>PIPEC</name></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name><name>mlist_shell</name><operator>.</operator><name>modified</name></name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>write_mlist_header</name><argument_list>(<argument><expr><operator>&amp;</operator><name>mlist_shell</name></expr></argument>, <argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>fout</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>write_mlist</name><argument_list>(<argument><expr><operator>&amp;</operator><name>mlist_shell</name></expr></argument>, <argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>fout</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>ml</name> <operator>!=</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>fout</name></name></expr></argument>, <argument><expr><literal type="string">"\"%s\n"</literal></expr></argument>, <argument><expr><name>string</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>make_file_private</name><parameter_list>(<parameter><decl><type><name>f</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>FILE</name> <modifier>*</modifier></type><name>f</name></decl>;</decl_stmt>
+<block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HAVE_FCHMOD</name></expr></cpp:if>
+<decl_stmt><decl><type><name>int</name></type> <name>do_chmod</name> <init>= <expr><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HAVE_STAT</name></expr></cpp:if>
+<decl_stmt><decl><type><name><name>struct</name> <name>stat</name></name></type> <name>statbuf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name> <init>= <expr><call><name>fstat</name><argument_list>(<argument><expr><call><name>fileno</name><argument_list>(<argument><expr><name>f</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><operator>&amp;</operator><name>statbuf</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>r</name> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator> <operator>!</operator><call><name>S_ISREG</name><argument_list>(<argument><expr><name><name>statbuf</name><operator>.</operator><name>st_mode</name></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+
+<expr_stmt><expr><name>do_chmod</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<if_stmt><if>if <condition>(<expr><name>do_chmod</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>fchmod</name><argument_list>(<argument><expr><call><name>fileno</name><argument_list>(<argument><expr><name>f</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><literal type="number">0600</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>histfile_modified</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>mlist_search</name><operator>.</operator><name>modified</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SHELL_ESCAPE</name> <operator>||</operator> <name>PIPEC</name></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name><name>mlist_shell</name><operator>.</operator><name>modified</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>CMD_HISTORY</name></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name>marks_modified</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>public</name> <name>void</name></type>
+<name>save_cmdhist</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>CMD_HISTORY</name></expr></cpp:if>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>histname</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>tempname</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>skip_search</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>skip_shell</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>save_ctx</name></name></type> <name>ctx</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>s</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>FILE</name> <modifier>*</modifier></type><name>fout</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>histsize</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>histfile_modified</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>histname</name> <operator>=</operator> <call><name>histfile_name</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>histname</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>tempname</name> <operator>=</operator> <call><name>make_tempname</name><argument_list>(<argument><expr><name>histname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>fout</name> <operator>=</operator> <call><name>fopen</name><argument_list>(<argument><expr><name>tempname</name></expr></argument>, <argument><expr><literal type="string">"w"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>fout</name> <operator>!=</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>make_file_private</name><argument_list>(<argument><expr><name>fout</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>s</name> <operator>=</operator> <call><name>lgetenv</name><argument_list>(<argument><expr><literal type="string">"LESSHISTSIZE"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>s</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>histsize</name> <operator>=</operator> <call><name>atoi</name><argument_list>(<argument><expr><name>s</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>histsize</name> <operator>&lt;=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>histsize</name> <operator>=</operator> <literal type="number">100</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>skip_search</name> <operator>=</operator> <call><name>mlist_size</name><argument_list>(<argument><expr><operator>&amp;</operator><name>mlist_search</name></expr></argument>)</argument_list></call> <operator>-</operator> <name>histsize</name></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SHELL_ESCAPE</name> <operator>||</operator> <name>PIPEC</name></expr></cpp:if>
+<expr_stmt><expr><name>skip_shell</name> <operator>=</operator> <call><name>mlist_size</name><argument_list>(<argument><expr><operator>&amp;</operator><name>mlist_shell</name></expr></argument>)</argument_list></call> <operator>-</operator> <name>histsize</name></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>fout</name></expr></argument>, <argument><expr><literal type="string">"%s\n"</literal></expr></argument>, <argument><expr><name>HISTFILE_FIRST_LINE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ctx</name><operator>.</operator><name>fout</name></name> <operator>=</operator> <name>fout</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ctx</name><operator>.</operator><name>mlist</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>read_cmdhist</name><argument_list>(<argument><expr><operator>&amp;</operator><name>copy_hist</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ctx</name></expr></argument>, <argument><expr><name>skip_search</name></expr></argument>, <argument><expr><name>skip_shell</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>save_marks</name><argument_list>(<argument><expr><name>fout</name></expr></argument>, <argument><expr><name>HISTFILE_MARK_SECTION</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fclose</name><argument_list>(<argument><expr><name>fout</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>MSDOS_COMPILER</name><operator>==</operator><name>WIN32C</name></expr></cpp:if>
+
+
+
+
+<expr_stmt><expr><call><name>remove</name><argument_list>(<argument><expr><name>histname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<expr_stmt><expr><call><name>rename</name><argument_list>(<argument><expr><name>tempname</name></expr></argument>, <argument><expr><name>histname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>tempname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>histname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+</unit>

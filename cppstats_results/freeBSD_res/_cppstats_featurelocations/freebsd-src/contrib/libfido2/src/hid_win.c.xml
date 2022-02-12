@@ -1,0 +1,542 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/libfido2/src/hid_win.c">
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/types.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;fcntl.h&gt;</cpp:file></cpp:include>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_UNISTD_H</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;unistd.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;windows.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;setupapi.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;initguid.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;devpkey.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;devpropdef.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;hidclass.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;hidsdi.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;wchar.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"fido.h"</cpp:file></cpp:include>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__MINGW32__</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <name>__MINGW64_VERSION_MAJOR</name> <operator>&lt;</operator> <literal type="number">6</literal></expr></cpp:if>
+<function_decl><type><name>WINSETUPAPI</name> <name>WINBOOL</name> <name>WINAPI</name></type> <name>SetupDiGetDevicePropertyW</name><parameter_list>(<parameter><decl><type><name>HDEVINFO</name></type></decl></parameter>,
+<parameter><decl><type><name>PSP_DEVINFO_DATA</name></type></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>DEVPROPKEY</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>DEVPROPTYPE</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>PBYTE</name></type></decl></parameter>,
+<parameter><decl><type><name>DWORD</name></type></decl></parameter>, <parameter><decl><type><name>PDWORD</name></type></decl></parameter>, <parameter><decl><type><name>DWORD</name></type></decl></parameter>)</parameter_list>;</function_decl>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__MINGW32__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr_stmt><expr><call><name>DEFINE_DEVPROPKEY</name><argument_list>(<argument><expr><name>DEVPKEY_Device_Parent</name></expr></argument>, <argument><expr><literal type="number">0x4340a6c5</literal></expr></argument>, <argument><expr><literal type="number">0x93fa</literal></expr></argument>, <argument><expr><literal type="number">0x4706</literal></expr></argument>, <argument><expr><literal type="number">0x97</literal></expr></argument>,
+<argument><expr><literal type="number">0x2c</literal></expr></argument>, <argument><expr><literal type="number">0x7b</literal></expr></argument>, <argument><expr><literal type="number">0x64</literal></expr></argument>, <argument><expr><literal type="number">0x80</literal></expr></argument>, <argument><expr><literal type="number">0x08</literal></expr></argument>, <argument><expr><literal type="number">0xa5</literal></expr></argument>, <argument><expr><literal type="number">0xa7</literal></expr></argument>, <argument><expr><literal type="number">8</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<struct>struct <name>hid_win</name> <block>{
+<decl_stmt><decl><type><name>HANDLE</name></type> <name>dev</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>OVERLAPPED</name></type> <name>overlap</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>report_pending</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>report_in_len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>report_out_len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>report</name><index>[<expr><literal type="number">1</literal> <operator>+</operator> <name>CTAP_MAX_REPORT_LEN</name></expr>]</index></name></decl>;</decl_stmt>
+}</block>;</struct>
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>is_fido</name><parameter_list>(<parameter><decl><type><name>HANDLE</name></type> <name>dev</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>PHIDP_PREPARSED_DATA</name></type> <name>data</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>HIDP_CAPS</name></type> <name>caps</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>fido</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>HidD_GetPreparsedData</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>data</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: HidD_GetPreparsedData"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>HidP_GetCaps</name><argument_list>(<argument><expr><name>data</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>caps</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>HIDP_STATUS_SUCCESS</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: HidP_GetCaps"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>fido</name> <operator>=</operator> <operator>(</operator><name>uint16_t</name><operator>)</operator><name><name>caps</name><operator>.</operator><name>UsagePage</name></name> <operator>==</operator> <literal type="number">0xf1d0</literal></expr>;</expr_stmt>
+<label><name>fail</name>:</label>
+<if_stmt><if>if <condition>(<expr><name>data</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>HidD_FreePreparsedData</name><argument_list>(<argument><expr><name>data</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>fido</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>get_report_len</name><parameter_list>(<parameter><decl><type><name>HANDLE</name></type> <name>dev</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>dir</name></decl></parameter>, <parameter><decl><type><name>size_t</name> <modifier>*</modifier></type><name>report_len</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>PHIDP_PREPARSED_DATA</name></type> <name>data</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>HIDP_CAPS</name></type> <name>caps</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>USHORT</name></type> <name>v</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ok</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>HidD_GetPreparsedData</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>data</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: HidD_GetPreparsedData/%d"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>, <argument><expr><name>dir</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>HidP_GetCaps</name><argument_list>(<argument><expr><name>data</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>caps</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>HIDP_STATUS_SUCCESS</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: HidP_GetCaps/%d"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>, <argument><expr><name>dir</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>dir</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>v</name> <operator>=</operator> <name><name>caps</name><operator>.</operator><name>InputReportByteLength</name></name></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>v</name> <operator>=</operator> <name><name>caps</name><operator>.</operator><name>OutputReportByteLength</name></name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><operator>*</operator><name>report_len</name> <operator>=</operator> <operator>(</operator><name>size_t</name><operator>)</operator><name>v</name><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: report_len == 0"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>ok</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<label><name>fail</name>:</label>
+<if_stmt><if>if <condition>(<expr><name>data</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>HidD_FreePreparsedData</name><argument_list>(<argument><expr><name>data</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>ok</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>get_int</name><parameter_list>(<parameter><decl><type><name>HANDLE</name></type> <name>dev</name></decl></parameter>, <parameter><decl><type><name>int16_t</name> <modifier>*</modifier></type><name>vendor_id</name></decl></parameter>, <parameter><decl><type><name>int16_t</name> <modifier>*</modifier></type><name>product_id</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>HIDD_ATTRIBUTES</name></type> <name>attr</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>attr</name><operator>.</operator><name>Size</name></name> <operator>=</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>attr</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>HidD_GetAttributes</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>attr</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: HidD_GetAttributes"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>vendor_id</name> <operator>=</operator> <operator>(</operator><name>int16_t</name><operator>)</operator><name><name>attr</name><operator>.</operator><name>VendorID</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>product_id</name> <operator>=</operator> <operator>(</operator><name>int16_t</name><operator>)</operator><name><name>attr</name><operator>.</operator><name>ProductID</name></name></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>get_str</name><parameter_list>(<parameter><decl><type><name>HANDLE</name></type> <name>dev</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>manufacturer</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>product</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>wchar_t</name></type> <name><name>buf</name><index>[<expr><literal type="number">512</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>utf8_len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ok</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>manufacturer</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>product</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>HidD_GetManufacturerString</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>buf</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: HidD_GetManufacturerString"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>utf8_len</name> <operator>=</operator> <call><name>WideCharToMultiByte</name><argument_list>(<argument><expr><name>CP_UTF8</name></expr></argument>, <argument><expr><name>WC_ERR_INVALID_CHARS</name></expr></argument>, <argument><expr><name>buf</name></expr></argument>,
+<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;=</operator> <literal type="number">0</literal> <operator>||</operator> <name>utf8_len</name> <operator>&gt;</operator> <literal type="number">128</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: WideCharToMultiByte"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><operator>*</operator><name>manufacturer</name> <operator>=</operator> <call><name>malloc</name><argument_list>(<argument><expr><operator>(</operator><name>size_t</name><operator>)</operator><name>utf8_len</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: malloc"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>WideCharToMultiByte</name><argument_list>(<argument><expr><name>CP_UTF8</name></expr></argument>, <argument><expr><name>WC_ERR_INVALID_CHARS</name></expr></argument>, <argument><expr><name>buf</name></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>,
+<argument><expr><operator>*</operator><name>manufacturer</name></expr></argument>, <argument><expr><name>utf8_len</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>utf8_len</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: WideCharToMultiByte"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>HidD_GetProductString</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>buf</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: HidD_GetProductString"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>utf8_len</name> <operator>=</operator> <call><name>WideCharToMultiByte</name><argument_list>(<argument><expr><name>CP_UTF8</name></expr></argument>, <argument><expr><name>WC_ERR_INVALID_CHARS</name></expr></argument>, <argument><expr><name>buf</name></expr></argument>,
+<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;=</operator> <literal type="number">0</literal> <operator>||</operator> <name>utf8_len</name> <operator>&gt;</operator> <literal type="number">128</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: WideCharToMultiByte"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><operator>*</operator><name>product</name> <operator>=</operator> <call><name>malloc</name><argument_list>(<argument><expr><operator>(</operator><name>size_t</name><operator>)</operator><name>utf8_len</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: malloc"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>WideCharToMultiByte</name><argument_list>(<argument><expr><name>CP_UTF8</name></expr></argument>, <argument><expr><name>WC_ERR_INVALID_CHARS</name></expr></argument>, <argument><expr><name>buf</name></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>,
+<argument><expr><operator>*</operator><name>product</name></expr></argument>, <argument><expr><name>utf8_len</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>utf8_len</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: WideCharToMultiByte"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>ok</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<label><name>fail</name>:</label>
+<if_stmt><if>if <condition>(<expr><name>ok</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><operator>*</operator><name>manufacturer</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><operator>*</operator><name>product</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>manufacturer</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>product</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>ok</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>get_path</name><parameter_list>(<parameter><decl><type><name>HDEVINFO</name></type> <name>devinfo</name></decl></parameter>, <parameter><decl><type><name>SP_DEVICE_INTERFACE_DATA</name> <modifier>*</modifier></type><name>ifdata</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>SP_DEVICE_INTERFACE_DETAIL_DATA_A</name> <modifier>*</modifier></type><name>ifdetail</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>path</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DWORD</name></type> <name>len</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>SetupDiGetDeviceInterfaceDetailA</name><argument_list>(<argument><expr><name>devinfo</name></expr></argument>, <argument><expr><name>ifdata</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>len</name></expr></argument>,
+<argument><expr><name>NULL</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>false</name> <operator>||</operator> <call><name>GetLastError</name><argument_list>()</argument_list></call> <operator>!=</operator> <name>ERROR_INSUFFICIENT_BUFFER</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: SetupDiGetDeviceInterfaceDetailA 1"</literal></expr></argument>,
+<argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>ifdetail</name> <operator>=</operator> <call><name>malloc</name><argument_list>(<argument><expr><name>len</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: malloc"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>ifdetail</name><operator>-&gt;</operator><name>cbSize</name></name> <operator>=</operator> <sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>ifdetail</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>SetupDiGetDeviceInterfaceDetailA</name><argument_list>(<argument><expr><name>devinfo</name></expr></argument>, <argument><expr><name>ifdata</name></expr></argument>, <argument><expr><name>ifdetail</name></expr></argument>, <argument><expr><name>len</name></expr></argument>,
+<argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: SetupDiGetDeviceInterfaceDetailA 2"</literal></expr></argument>,
+<argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>path</name> <operator>=</operator> <call><name>strdup</name><argument_list>(<argument><expr><name><name>ifdetail</name><operator>-&gt;</operator><name>DevicePath</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: strdup"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<label><name>fail</name>:</label>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>ifdetail</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>path</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>FIDO_HID_ANY</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>hid_ok</name><parameter_list>(<parameter><decl><type><name>HDEVINFO</name></type> <name>devinfo</name></decl></parameter>, <parameter><decl><type><name>DWORD</name></type> <name>idx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>SP_DEVINFO_DATA</name></type> <name>devinfo_data</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>wchar_t</name> <modifier>*</modifier></type><name>parent</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DWORD</name></type> <name>parent_type</name> <init>= <expr><name>DEVPROP_TYPE_STRING</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DWORD</name></type> <name>len</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>ok</name> <init>= <expr><name>false</name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>devinfo_data</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>devinfo_data</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>devinfo_data</name><operator>.</operator><name>cbSize</name></name> <operator>=</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>devinfo_data</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>SetupDiEnumDeviceInfo</name><argument_list>(<argument><expr><name>devinfo</name></expr></argument>, <argument><expr><name>idx</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>devinfo_data</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: SetupDiEnumDeviceInfo"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>SetupDiGetDevicePropertyW</name><argument_list>(<argument><expr><name>devinfo</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>devinfo_data</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>DEVPKEY_Device_Parent</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>parent_type</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>len</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call> <operator>!=</operator> <name>false</name> <operator>||</operator>
+<call><name>GetLastError</name><argument_list>()</argument_list></call> <operator>!=</operator> <name>ERROR_INSUFFICIENT_BUFFER</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: SetupDiGetDevicePropertyW 1"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>parent</name> <operator>=</operator> <call><name>malloc</name><argument_list>(<argument><expr><name>len</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: malloc"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>SetupDiGetDevicePropertyW</name><argument_list>(<argument><expr><name>devinfo</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>devinfo_data</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>DEVPKEY_Device_Parent</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>parent_type</name></expr></argument>, <argument><expr><operator>(</operator><name>PBYTE</name><operator>)</operator><name>parent</name></expr></argument>, <argument><expr><name>len</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>,
+<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: SetupDiGetDevicePropertyW 2"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>ok</name> <operator>=</operator> <call><name>wcsncmp</name><argument_list>(<argument><expr><name>parent</name></expr></argument>, <argument><expr><literal type="string">L"USB\\"</literal></expr></argument>, <argument><expr><literal type="number">4</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<label><name>fail</name>:</label>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>parent</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>ok</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>copy_info</name><parameter_list>(<parameter><decl><type><name>fido_dev_info_t</name> <modifier>*</modifier></type><name>di</name></decl></parameter>, <parameter><decl><type><name>HDEVINFO</name></type> <name>devinfo</name></decl></parameter>, <parameter><decl><type><name>DWORD</name></type> <name>idx</name></decl></parameter>,
+<parameter><decl><type><name>SP_DEVICE_INTERFACE_DATA</name> <modifier>*</modifier></type><name>ifdata</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>HANDLE</name></type> <name>dev</name> <init>= <expr><name>INVALID_HANDLE_VALUE</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ok</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><name>di</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>di</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>di</name><operator>-&gt;</operator><name>path</name></name> <operator>=</operator> <call><name>get_path</name><argument_list>(<argument><expr><name>devinfo</name></expr></argument>, <argument><expr><name>ifdata</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: get_path"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: path=%s"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>, <argument><expr><name><name>di</name><operator>-&gt;</operator><name>path</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>FIDO_HID_ANY</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><call><name>hid_ok</name><argument_list>(<argument><expr><name>devinfo</name></expr></argument>, <argument><expr><name>idx</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: hid_ok"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<expr_stmt><expr><name>dev</name> <operator>=</operator> <call><name>CreateFileA</name><argument_list>(<argument><expr><name><name>di</name><operator>-&gt;</operator><name>path</name></name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>FILE_SHARE_READ</name> <operator>|</operator> <name>FILE_SHARE_WRITE</name></expr></argument>,
+<argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>OPEN_EXISTING</name></expr></argument>, <argument><expr><name>FILE_ATTRIBUTE_NORMAL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>dev</name> <operator>==</operator> <name>INVALID_HANDLE_VALUE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: CreateFileA"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>is_fido</name><argument_list>(<argument><expr><name>dev</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: is_fido"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>get_int</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>di</name><operator>-&gt;</operator><name>vendor_id</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>di</name><operator>-&gt;</operator><name>product_id</name></name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>get_str</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>di</name><operator>-&gt;</operator><name>manufacturer</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>di</name><operator>-&gt;</operator><name>product</name></name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: get_int/get_str"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>ok</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<label><name>fail</name>:</label>
+<if_stmt><if>if <condition>(<expr><name>dev</name> <operator>!=</operator> <name>INVALID_HANDLE_VALUE</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>CloseHandle</name><argument_list>(<argument><expr><name>dev</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ok</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>di</name><operator>-&gt;</operator><name>path</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>di</name><operator>-&gt;</operator><name>manufacturer</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>di</name><operator>-&gt;</operator><name>product</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>explicit_bzero</name><argument_list>(<argument><expr><name>di</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>di</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>ok</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>fido_hid_manifest</name><parameter_list>(<parameter><decl><type><name>fido_dev_info_t</name> <modifier>*</modifier></type><name>devlist</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>ilen</name></decl></parameter>, <parameter><decl><type><name>size_t</name> <modifier>*</modifier></type><name>olen</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>GUID</name></type> <name>hid_guid</name> <init>= <expr><name>GUID_DEVINTERFACE_HID</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>HDEVINFO</name></type> <name>devinfo</name> <init>= <expr><name>INVALID_HANDLE_VALUE</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>SP_DEVICE_INTERFACE_DATA</name></type> <name>ifdata</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DWORD</name></type> <name>idx</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name> <init>= <expr><name>FIDO_ERR_INTERNAL</name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>olen</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ilen</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>FIDO_OK</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>devlist</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>FIDO_ERR_INVALID_ARGUMENT</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>devinfo</name> <operator>=</operator> <call><name>SetupDiGetClassDevsA</name><argument_list>(<argument><expr><operator>&amp;</operator><name>hid_guid</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>,
+<argument><expr><name>DIGCF_DEVICEINTERFACE</name> <operator>|</operator> <name>DIGCF_PRESENT</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>INVALID_HANDLE_VALUE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: SetupDiGetClassDevsA"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>ifdata</name><operator>.</operator><name>cbSize</name></name> <operator>=</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>SP_DEVICE_INTERFACE_DATA</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+
+<for>for <control>(<init><expr><name>idx</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><call><name>SetupDiEnumDeviceInterfaces</name><argument_list>(<argument><expr><name>devinfo</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>hid_guid</name></expr></argument>,
+<argument><expr><name>idx</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ifdata</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>true</name></expr>;</condition> <incr><expr><name>idx</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>copy_info</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>devlist</name><index>[<expr><operator>*</operator><name>olen</name></expr>]</index></name></expr></argument>, <argument><expr><name>devinfo</name></expr></argument>, <argument><expr><name>idx</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ifdata</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>devlist</name><index>[<expr><operator>*</operator><name>olen</name></expr>]</index></name><operator>.</operator><name>io</name> <operator>=</operator> <operator>(</operator><name>fido_dev_io_t</name><operator>)</operator> <block>{
+<expr><name>fido_hid_open</name></expr>,
+<expr><name>fido_hid_close</name></expr>,
+<expr><name>fido_hid_read</name></expr>,
+<expr><name>fido_hid_write</name></expr>,
+}</block></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>++</operator><operator>(</operator><operator>*</operator><name>olen</name><operator>)</operator> <operator>==</operator> <name>ilen</name></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_OK</name></expr>;</expr_stmt>
+<label><name>fail</name>:</label>
+<if_stmt><if>if <condition>(<expr><name>devinfo</name> <operator>!=</operator> <name>INVALID_HANDLE_VALUE</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>SetupDiDestroyDeviceInfoList</name><argument_list>(<argument><expr><name>devinfo</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>void</name> <modifier>*</modifier></type>
+<name>fido_hid_open</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>path</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>hid_win</name></name> <modifier>*</modifier></type><name>ctx</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>ctx</name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name><name>ctx</name><operator>-&gt;</operator><name>dev</name></name> <operator>=</operator> <call><name>CreateFileA</name><argument_list>(<argument><expr><name>path</name></expr></argument>, <argument><expr><name>GENERIC_READ</name> <operator>|</operator> <name>GENERIC_WRITE</name></expr></argument>,
+<argument><expr><name>FILE_SHARE_READ</name> <operator>|</operator> <name>FILE_SHARE_WRITE</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>OPEN_EXISTING</name></expr></argument>,
+<argument><expr><name>FILE_FLAG_OVERLAPPED</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>ctx</name><operator>-&gt;</operator><name>dev</name></name> <operator>==</operator> <name>INVALID_HANDLE_VALUE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>ctx</name><operator>-&gt;</operator><name>overlap</name><operator>.</operator><name>hEvent</name></name> <operator>=</operator> <call><name>CreateEventA</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>FALSE</name></expr></argument>, <argument><expr><name>FALSE</name></expr></argument>,
+<argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: CreateEventA"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fido_hid_close</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>get_report_len</name><argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>dev</name></name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>ctx</name><operator>-&gt;</operator><name>report_in_len</name></name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>get_report_len</name><argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>dev</name></name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>ctx</name><operator>-&gt;</operator><name>report_out_len</name></name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: get_report_len"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fido_hid_close</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>ctx</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type>
+<name>fido_hid_close</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>handle</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>hid_win</name></name> <modifier>*</modifier></type><name>ctx</name> <init>= <expr><name>handle</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>ctx</name><operator>-&gt;</operator><name>overlap</name><operator>.</operator><name>hEvent</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>ctx</name><operator>-&gt;</operator><name>report_pending</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: report_pending"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>CancelIoEx</name><argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>dev</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>ctx</name><operator>-&gt;</operator><name>overlap</name></name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s CancelIoEx: 0x%lx"</literal></expr></argument>,
+<argument><expr><name>__func__</name></expr></argument>, <argument><expr><call><name>GetLastError</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>CloseHandle</name><argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>overlap</name><operator>.</operator><name>hEvent</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>explicit_bzero</name><argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>report</name></name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>report</name></name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>CloseHandle</name><argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>dev</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>fido_hid_set_sigmask</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>handle</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>fido_sigset_t</name> <modifier>*</modifier></type><name>sigmask</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>handle</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>sigmask</name></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>FIDO_ERR_INTERNAL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>fido_hid_read</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>handle</name></decl></parameter>, <parameter><decl><type><name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>len</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ms</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>hid_win</name></name> <modifier>*</modifier></type><name>ctx</name> <init>= <expr><name>handle</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DWORD</name></type> <name>n</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>len</name> <operator>!=</operator> <name><name>ctx</name><operator>-&gt;</operator><name>report_in_len</name></name> <operator>-</operator> <literal type="number">1</literal> <operator>||</operator> <name>len</name> <operator>&gt;</operator> <sizeof>sizeof<argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>report</name></name></expr></argument>)</argument_list></sizeof> <operator>-</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: len %zu"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>, <argument><expr><name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>ctx</name><operator>-&gt;</operator><name>report_pending</name></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>ctx</name><operator>-&gt;</operator><name>report</name></name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>report</name></name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ResetEvent</name><argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>overlap</name><operator>.</operator><name>hEvent</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>ReadFile</name><argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>dev</name></name></expr></argument>, <argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>report</name></name></expr></argument>, <argument><expr><operator>(</operator><name>DWORD</name><operator>)</operator><operator>(</operator><name>len</name> <operator>+</operator> <literal type="number">1</literal><operator>)</operator></expr></argument>, <argument><expr><operator>&amp;</operator><name>n</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name><name>ctx</name><operator>-&gt;</operator><name>overlap</name></name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <call><name>GetLastError</name><argument_list>()</argument_list></call> <operator>!=</operator> <name>ERROR_IO_PENDING</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>CancelIo</name><argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>dev</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: ReadFile"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>ctx</name><operator>-&gt;</operator><name>report_pending</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ms</name> <operator>&gt;</operator> <operator>-</operator><literal type="number">1</literal> <operator>&amp;&amp;</operator> <call><name>WaitForSingleObject</name><argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>overlap</name><operator>.</operator><name>hEvent</name></name></expr></argument>,
+<argument><expr><operator>(</operator><name>DWORD</name><operator>)</operator><name>ms</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>WAIT_OBJECT_0</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name><name>ctx</name><operator>-&gt;</operator><name>report_pending</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>GetOverlappedResult</name><argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>dev</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>ctx</name><operator>-&gt;</operator><name>overlap</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>n</name></expr></argument>, <argument><expr><name>TRUE</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: GetOverlappedResult"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>n</name> <operator>!=</operator> <name>len</name> <operator>+</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: expected %zu, got %zu"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>,
+<argument><expr><name>len</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><operator>(</operator><name>size_t</name><operator>)</operator><name>n</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>report</name></name> <operator>+</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>explicit_bzero</name><argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>report</name></name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>report</name></name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><operator>(</operator><name>int</name><operator>)</operator><name>len</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>fido_hid_write</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>handle</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>len</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>hid_win</name></name> <modifier>*</modifier></type><name>ctx</name> <init>= <expr><name>handle</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>OVERLAPPED</name></type> <name>overlap</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DWORD</name></type> <name>n</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>overlap</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>overlap</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>len</name> <operator>!=</operator> <name><name>ctx</name><operator>-&gt;</operator><name>report_out_len</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: len %zu"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>, <argument><expr><name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>WriteFile</name><argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>dev</name></name></expr></argument>, <argument><expr><name>buf</name></expr></argument>, <argument><expr><operator>(</operator><name>DWORD</name><operator>)</operator><name>len</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>overlap</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator>
+<call><name>GetLastError</name><argument_list>()</argument_list></call> <operator>!=</operator> <name>ERROR_IO_PENDING</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: WriteFile"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>GetOverlappedResult</name><argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>dev</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>overlap</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>n</name></expr></argument>, <argument><expr><name>TRUE</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: GetOverlappedResult"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>n</name> <operator>!=</operator> <name>len</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: expected %zu, got %zu"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>, <argument><expr><name>len</name></expr></argument>,
+<argument><expr><operator>(</operator><name>size_t</name><operator>)</operator><name>n</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><operator>(</operator><name>int</name><operator>)</operator><name>len</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>size_t</name></type>
+<name>fido_hid_report_in_len</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>handle</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>hid_win</name></name> <modifier>*</modifier></type><name>ctx</name> <init>= <expr><name>handle</name></expr></init></decl>;</decl_stmt>
+
+<return>return <expr><operator>(</operator><name><name>ctx</name><operator>-&gt;</operator><name>report_in_len</name></name> <operator>-</operator> <literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>size_t</name></type>
+<name>fido_hid_report_out_len</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>handle</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>hid_win</name></name> <modifier>*</modifier></type><name>ctx</name> <init>= <expr><name>handle</name></expr></init></decl>;</decl_stmt>
+
+<return>return <expr><operator>(</operator><name><name>ctx</name><operator>-&gt;</operator><name>report_out_len</name></name> <operator>-</operator> <literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+</unit>

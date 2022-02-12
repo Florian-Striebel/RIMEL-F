@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/llvm-project/compiler-rt/lib/scudo/standalone/tsd.h">
+
+
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>SCUDO_TSD_H_</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>SCUDO_TSD_H_</name></cpp:macro></cpp:define>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"atomic_helpers.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"common.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"mutex.h"</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;limits.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;pthread.h&gt;</cpp:file></cpp:include>
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>PTHREAD_DESTRUCTOR_ITERATIONS</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>PTHREAD_DESTRUCTOR_ITERATIONS</name></cpp:macro> <cpp:value>4</cpp:value></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<decl_stmt><decl><type><name>namespace</name></type> <name>scudo</name> <block>{<block_content>
+
+<macro><name>template</name></macro> <expr_stmt><expr><operator>&lt;</operator><name>class</name> <name>Allocator</name><operator>&gt;</operator> struct <macro><name>alignas</name><argument_list>(<argument>SCUDO_CACHE_LINE_SIZE</argument>)</argument_list></macro> <name>TSD</name> <block>{
+<expr><name>typename</name> <name>Allocator</name><operator>::</operator><name>CacheT</name> <name>Cache</name></expr>;
+<expr><name>typename</name> <name>Allocator</name><operator>::</operator><name>QuarantineCacheT</name> <name>QuarantineCache</name></expr>;
+<expr><name>using</name> <name>ThisT</name> <operator>=</operator> <name><name>TSD</name><argument_list type="generic">&lt;<argument><expr><name>Allocator</name></expr></argument>&gt;</argument_list></name></expr>;
+<expr><name>u8</name> <name>DestructorIterations</name> <operator>=</operator> <literal type="number">0</literal></expr>;
+
+<expr><name>void</name> <macro><name>init</name><argument_list>(<argument>Allocator *Instance</argument>)</argument_list></macro> <block>{
+<expr><call><name>DCHECK_EQ</name><argument_list>(<argument><expr><name>DestructorIterations</name></expr></argument>, <argument><expr><literal type="number">0U</literal></expr></argument>)</argument_list></call></expr>;
+<expr><call><name>DCHECK</name><argument_list>(<argument><expr><call><name>isAligned</name><argument_list>(<argument><expr><call><name><name>reinterpret_cast</name><argument_list type="generic">&lt;<argument><expr><name>uptr</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>this</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><call><name>alignof</name><argument_list>(<argument><expr><name>ThisT</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;
+<expr><call><name><name>Instance</name><operator>-&gt;</operator><name>initCache</name></name><argument_list>(<argument><expr><operator>&amp;</operator><name>Cache</name></expr></argument>)</argument_list></call></expr>;
+<expr><name>DestructorIterations</name> <operator>=</operator> <name>PTHREAD_DESTRUCTOR_ITERATIONS</name></expr>;
+}</block>
+
+<name>void</name> <macro><name>commitBack</name><argument_list>(<argument>Allocator *Instance</argument>)</argument_list></macro> <block>{ <expr><call><name><name>Instance</name><operator>-&gt;</operator><name>commitBack</name></name><argument_list>(<argument><expr><name>this</name></expr></argument>)</argument_list></call></expr>; }</block>
+
+<specifier>inline</specifier> <name>bool</name> <macro><name>tryLock</name><argument_list>()</argument_list></macro> <block>{
+<if_stmt><if>if <condition>(<expr><call><name><name>Mutex</name><operator>.</operator><name>tryLock</name></name><argument_list>()</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>atomic_store_relaxed</name><argument_list>(<argument><expr><operator>&amp;</operator><name>Precedence</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>true</name></expr>;</return>
+<expr_stmt/>}</block_content>
+if (atomic_load_relaxed(&amp;Precedence</block></if></if_stmt>) <operator>==</operator> <literal type="number">0</literal>)</block>
+<call><name>atomic_store_relaxed</name><argument_list>(
+<argument><expr><operator>&amp;</operator><name>Precedence</name></expr></argument>,
+<argument><expr><call><name><name>static_cast</name><argument_list type="generic">&lt;<argument><expr><name>uptr</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><call><name>getMonotonicTime</name><argument_list>()</argument_list></call> <operator>&gt;&gt;</operator> <call><name>FIRST_32_SECOND_64</name><argument_list>(<argument><expr><literal type="number">16</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;
+<return>return <expr><name>false</name></expr>;</return>
+}</block></expr></expr_stmt>
+<function><type><specifier>inline</specifier> <name>void</name></type> <name>lock</name><parameter_list>()</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>atomic_store_relaxed</name><argument_list>(<argument><expr><operator>&amp;</operator><name>Precedence</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name><name>Mutex</name><operator>.</operator><name>lock</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><specifier>inline</specifier> <name>void</name></type> <name>unlock</name><parameter_list>()</parameter_list> <block>{<block_content> <expr_stmt><expr><call><name><name>Mutex</name><operator>.</operator><name>unlock</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt> </block_content>}</block></function>
+<function><type><specifier>inline</specifier> <name>uptr</name></type> <name>getPrecedence</name><parameter_list>()</parameter_list> <block>{<block_content> <return>return <expr><call><name>atomic_load_relaxed</name><argument_list>(<argument><expr><operator>&amp;</operator><name>Precedence</name></expr></argument>)</argument_list></call></expr>;</return> </block_content>}</block></function>
+
+<label><name>private</name>:</label>
+<decl_stmt><decl><type><name>HybridMutex</name></type> <name>Mutex</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>atomic_uptr</name></type> <name>Precedence</name> <init>= <expr><block>{}</block></expr></init></decl>;</decl_stmt>
+</block_content>}</block></decl></decl_stmt><empty_stmt>;</empty_stmt>
+
+}
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

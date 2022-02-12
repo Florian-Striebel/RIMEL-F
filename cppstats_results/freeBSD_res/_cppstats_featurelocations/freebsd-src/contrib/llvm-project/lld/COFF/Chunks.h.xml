@@ -1,0 +1,714 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/llvm-project/lld/COFF/Chunks.h">
+
+
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>LLD_COFF_CHUNKS_H</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>LLD_COFF_CHUNKS_H</name></cpp:macro></cpp:define>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"Config.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"InputFiles.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"lld/Common/LLVM.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"llvm/ADT/ArrayRef.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"llvm/ADT/PointerIntPair.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"llvm/ADT/iterator.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"llvm/ADT/iterator_range.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"llvm/MC/StringTableBuilder.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"llvm/Object/COFF.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;utility&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;vector&gt;</cpp:file></cpp:include>
+
+<decl_stmt><decl><type><name>namespace</name></type> <name>lld</name> <block>{<block_content>
+<decl_stmt><decl><type><name>namespace</name></type> <name>coff</name> <block>{<block_content>
+
+<expr_stmt><expr><name>using</name> <name>llvm</name><operator>::</operator><name>COFF</name><operator>::</operator><name>ImportDirectoryTableEntry</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>using</name> <name>llvm</name><operator>::</operator><name>object</name><operator>::</operator><name>COFFSymbolRef</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>using</name> <name>llvm</name><operator>::</operator><name>object</name><operator>::</operator><name>SectionRef</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>using</name> <name>llvm</name><operator>::</operator><name>object</name><operator>::</operator><name>coff_relocation</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>using</name> <name>llvm</name><operator>::</operator><name>object</name><operator>::</operator><name>coff_section</name></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>class</name></type> <name>Baserel</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>class</name></type> <name>Defined</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>class</name></type> <name>DefinedImportData</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>class</name></type> <name>DefinedRegular</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>class</name></type> <name>ObjFile</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>class</name></type> <name>OutputSection</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>class</name></type> <name>RuntimePseudoReloc</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>class</name></type> <name>Symbol</name></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><specifier>const</specifier> <name>uint32_t</name></type> <name>permMask</name> <init>= <expr><literal type="number">0xFE000000</literal></expr></init></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><specifier>const</specifier> <name>uint32_t</name></type> <name>typeMask</name> <init>= <expr><literal type="number">0x000000E0</literal></expr></init></decl>;</decl_stmt>
+
+
+<enum_decl>enum : <macro><name>unsigned</name></macro> <block>{ <decl><name>Log2MaxSectionAlignment</name> <init>= <expr><literal type="number">13</literal></expr></init></decl> }</block>;</enum_decl>
+
+
+
+
+
+<decl_stmt><decl><type><name>class</name></type> <name>Chunk</name> <block>{<block_content>
+<label><name>public</name>:</label>
+<enum>enum <name>Kind</name> : <type><name>uint8_t</name></type> <block>{ <decl><name>SectionKind</name></decl>, <decl><name>OtherKind</name></decl>, <decl><name>ImportThunkKind</name></decl> }</block>;</enum>
+<expr_stmt><expr><name>Kind</name> <macro><name>kind</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{ <return>return <expr><name>chunkKind</name></expr>;</return> }</block></expr></expr_stmt>
+
+
+<expr_stmt><expr><name>size_t</name> <macro><name>getSize</name><argument_list>()</argument_list></macro> <specifier>const</specifier></expr>;</expr_stmt>
+
+
+
+<expr_stmt><expr><name>uint32_t</name> <macro><name>getAlignment</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{ <return>return <expr><literal type="number">1U</literal> <operator>&lt;&lt;</operator> <name>p2Align</name></expr>;</return> }</block></expr></expr_stmt>
+
+
+
+<function><type><name>void</name></type> <name>setAlignment</name><parameter_list>(<parameter><decl><type><name>uint32_t</name></type> <name>align</name></decl></parameter>)</parameter_list> <block>{<block_content>
+
+<expr_stmt><expr><name>align</name> <operator>=</operator> <ternary><condition><expr><name>align</name></expr> ?</condition><then> <expr><name>align</name></expr> </then><else>: <expr><literal type="number">1</literal></expr></else></ternary></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>llvm</name><operator>::</operator><call><name>isPowerOf2_32</name><argument_list>(<argument><expr><name>align</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <literal type="string">"alignment is not a power of 2"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>p2Align</name> <operator>=</operator> <name>llvm</name><operator>::</operator><call><name>Log2_32</name><argument_list>(<argument><expr><name>align</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>p2Align</name> <operator>&lt;=</operator> <name>Log2MaxSectionAlignment</name> <operator>&amp;&amp;</operator>
+<literal type="string">"impossible requested alignment"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+<decl_stmt><decl><type><name>void</name></type> <name>writeTo</name><argument_list>(<argument><expr><name>uint8_t</name> <operator>*</operator><name>buf</name></expr></argument>)</argument_list> const</decl>;</decl_stmt>
+
+
+
+
+<expr_stmt><expr><name>uint32_t</name> <macro><name>getRVA</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{ <return>return <expr><name>rva</name></expr>;</return> }</block></expr></expr_stmt>
+<function><type><name>void</name></type> <name>setRVA</name><parameter_list>(<parameter><decl><type><name>uint64_t</name></type> <name>v</name></decl></parameter>)</parameter_list> <block>{<block_content>
+
+<expr_stmt><expr><name>rva</name> <operator>=</operator> <operator>(</operator><name>uint32_t</name><operator>)</operator><name>v</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+<expr_stmt><expr><name>uint32_t</name> <macro><name>getOutputCharacteristics</name><argument_list>()</argument_list></macro> <specifier>const</specifier></expr>;</expr_stmt>
+
+
+
+<expr_stmt><expr><name>StringRef</name> <macro><name>getSectionName</name><argument_list>()</argument_list></macro> <specifier>const</specifier></expr>;</expr_stmt>
+
+
+
+<function><type><name>void</name></type> <name>setOutputSectionIdx</name><parameter_list>(<parameter><decl><type><name>uint16_t</name></type> <name>o</name></decl></parameter>)</parameter_list> <block>{<block_content> <expr_stmt><expr><name>osidx</name> <operator>=</operator> <name>o</name></expr>;</expr_stmt> </block_content>}</block></function>
+<expr_stmt><expr><name>uint16_t</name> <macro><name>getOutputSectionIdx</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{ <return>return <expr><name>osidx</name></expr>;</return> }</block></expr></expr_stmt>
+<expr_stmt><expr><name>OutputSection</name> <operator>*</operator><macro><name>getOutputSection</name><argument_list>()</argument_list></macro> <specifier>const</specifier></expr>;</expr_stmt>
+
+
+
+<decl_stmt><decl><type><name>void</name></type> <name>getBaserels</name><argument_list>(<argument><expr><name>std</name><operator>::</operator><name><name>vector</name><argument_list type="generic">&lt;<argument><expr><name>Baserel</name></expr></argument>&gt;</argument_list></name> <operator>*</operator><name>res</name></expr></argument>)</argument_list></decl>;</decl_stmt>
+
+
+
+<expr_stmt><expr><name>StringRef</name> <macro><name>getDebugName</name><argument_list>()</argument_list></macro> <specifier>const</specifier></expr>;</expr_stmt>
+
+
+
+
+<expr_stmt><expr><name>bool</name> <macro><name>isHotPatchable</name><argument_list>()</argument_list></macro> <specifier>const</specifier></expr>;</expr_stmt>
+
+<label><name>protected</name>:</label>
+<macro><name>Chunk</name><argument_list>(<argument>Kind k = OtherKind</argument>)</argument_list></macro> : <expr_stmt><expr><call><name>chunkKind</name><argument_list>(<argument><expr><name>k</name></expr></argument>)</argument_list></call></expr><operator>,</operator> <expr><call><name>hasData</name><argument_list>(<argument><expr><name>true</name></expr></argument>)</argument_list></call></expr><operator>,</operator> <macro><name>p2Align</name><argument_list>(<argument><literal type="number">0</literal></argument>)</argument_list></macro> <expr><block>{}</block>
+
+<specifier>const</specifier> <name>Kind</name> <name>chunkKind</name></expr>;</expr_stmt>
+
+<label><name>public</name>:</label>
+
+
+
+
+<decl_stmt><decl><type><name>uint8_t</name></type> <name>hasData</name> <range>: <expr><literal type="number">1</literal></expr></range></decl>;</decl_stmt>
+
+<label><name>public</name>:</label>
+
+
+<decl_stmt><decl><type><name>uint8_t</name></type> <name>p2Align</name> <range>: <expr><literal type="number">7</literal></expr></range></decl>;</decl_stmt>
+
+
+
+<decl_stmt><decl><type><name>uint16_t</name></type> <name>osidx</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>rva</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+</block_content>}</block></decl></decl_stmt><empty_stmt>;</empty_stmt>
+
+<decl_stmt><decl><type><name>class</name></type> <name>NonSectionChunk</name> <range>: <expr><name>public</name> <name>Chunk</name> <block>{
+<expr><name>public</name><operator>:</operator>
+<name>virtual</name> <operator>~</operator><call><name>NonSectionChunk</name><argument_list>()</argument_list></call> <operator>=</operator> default</expr>;
+
+
+<expr><name>virtual</name> <name>size_t</name> <macro><name>getSize</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <operator>=</operator> <literal type="number">0</literal></expr>;
+
+<expr><name>virtual</name> <name>uint32_t</name> <macro><name>getOutputCharacteristics</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{ <return>return <expr><literal type="number">0</literal></expr>;</return> }</block>
+
+
+
+
+
+<name>virtual</name> <name>void</name> <macro><name>writeTo</name><argument_list>(<argument>uint8_t *buf</argument>)</argument_list></macro> <specifier>const</specifier> <block>{}</block>
+
+
+
+<name>virtual</name> <name>StringRef</name> <macro><name>getSectionName</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{
+<expr><call><name>llvm_unreachable</name><argument_list>(<argument><expr><literal type="string">"unimplemented getSectionName"</literal></expr></argument>)</argument_list></call></expr>;
+}</block>
+
+
+
+<name>virtual</name> <name>void</name> <macro><name>getBaserels</name><argument_list>(<argument>std::vector&lt;Baserel&gt; *res</argument>)</argument_list></macro> <block>{}</block>
+
+
+
+<name>virtual</name> <name>StringRef</name> <macro><name>getDebugName</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{ <return>return <expr><literal type="string">""</literal></expr>;</return> }</block>
+
+<specifier>static</specifier> <name>bool</name> <macro><name>classof</name><argument_list>(<argument>const Chunk *c</argument>)</argument_list></macro> <block>{ <return>return <expr><call><name><name>c</name><operator>-&gt;</operator><name>kind</name></name><argument_list>()</argument_list></call> <operator>!=</operator> <name>SectionKind</name></expr>;</return> }</block>
+
+<name>protected</name><operator>:</operator>
+<macro><name>NonSectionChunk</name><argument_list>(<argument>Kind k = OtherKind</argument>)</argument_list></macro> <operator>:</operator> <macro><name>Chunk</name><argument_list>(<argument>k</argument>)</argument_list></macro> <block>{}</block>
+}</expr>;
+
+
+<expr><name>class</name> <name>SectionChunk</name> <name>final</name> <operator>:</operator> <name>public</name> <name>Chunk</name> <block>{
+
+<expr><name>friend</name> <name>class</name> <name>ICF</name></expr>;
+
+<expr><name>public</name><operator>:</operator>
+<name>class</name> <name>symbol_iterator</name> <operator>:</operator> <name>public</name> <name>llvm</name><operator>::</operator><name><name>iterator_adaptor_base</name><argument_list type="generic">&lt;
+<argument><expr><name>symbol_iterator</name></expr></argument>, <argument><expr><specifier>const</specifier> <name>coff_relocation</name> <operator>*</operator></expr></argument>,
+<argument><expr><name>std</name><operator>::</operator><name>random_access_iterator_tag</name></expr></argument>, <argument><expr><name>Symbol</name> <operator>*</operator></expr></argument>&gt;</argument_list></name> <block>{
+<expr><name>friend</name> <name>SectionChunk</name></expr>;
+
+<expr><name>ObjFile</name> <operator>*</operator><name>file</name></expr>;
+
+<expr><call><name>symbol_iterator</name><argument_list>(<argument><expr><name>ObjFile</name> <operator>*</operator><name>file</name></expr></argument>, <argument><expr><specifier>const</specifier> <name>coff_relocation</name> <operator>*</operator><name>i</name></expr></argument>)</argument_list></call>
+<operator>:</operator> <name>symbol_iterator</name><operator>::</operator><call><name>iterator_adaptor_base</name><argument_list>(<argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>, <macro><name>file</name><argument_list>(<argument>file</argument>)</argument_list></macro> <expr><block>{}</block>
+
+<name>public</name><operator>:</operator>
+<call><name>symbol_iterator</name><argument_list>()</argument_list></call> <operator>=</operator> default</expr>;
+
+<expr><name>Symbol</name> <operator>*</operator><name>operator</name><operator>*</operator><operator>(</operator><operator>)</operator> <specifier>const</specifier> <block>{ <return>return <expr><call><name><name>file</name><operator>-&gt;</operator><name>getSymbol</name></name><argument_list>(<argument><expr><name><name>I</name><operator>-&gt;</operator><name>SymbolTableIndex</name></name></expr></argument>)</argument_list></call></expr>;</return> }</block>
+}</expr>;
+
+<expr><call><name>SectionChunk</name><argument_list>(<argument><expr><name>ObjFile</name> <operator>*</operator><name>file</name></expr></argument>, <argument><expr><specifier>const</specifier> <name>coff_section</name> <operator>*</operator><name>header</name></expr></argument>)</argument_list></call></expr>;
+<expr><specifier>static</specifier> <name>bool</name> <macro><name>classof</name><argument_list>(<argument>const Chunk *c</argument>)</argument_list></macro> <block>{ <return>return <expr><call><name><name>c</name><operator>-&gt;</operator><name>kind</name></name><argument_list>()</argument_list></call> <operator>==</operator> <name>SectionKind</name></expr>;</return> }</block>
+<name>size_t</name> <macro><name>getSize</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{ <return>return <expr><name><name>header</name><operator>-&gt;</operator><name>SizeOfRawData</name></name></expr>;</return> }</block>
+<name><name>ArrayRef</name><argument_list type="generic">&lt;<argument><expr><name>uint8_t</name></expr></argument>&gt;</argument_list></name> <macro><name>getContents</name><argument_list>()</argument_list></macro> <specifier>const</specifier></expr>;
+<expr><name>void</name> <macro><name>writeTo</name><argument_list>(<argument>uint8_t *buf</argument>)</argument_list></macro> <specifier>const</specifier></expr>;
+
+
+<expr><name>void</name> <call><name>sortRelocations</name><argument_list>()</argument_list></call></expr>;
+
+
+
+<expr><name>void</name> <macro><name>writeAndRelocateSubsection</name><argument_list>(<argument>ArrayRef&lt;uint8_t&gt; sec</argument>,
+<argument>ArrayRef&lt;uint8_t&gt; subsec</argument>,
+<argument>uint32_t &amp;nextRelocIndex</argument>, <argument>uint8_t *buf</argument>)</argument_list></macro> <specifier>const</specifier></expr>;
+
+<expr><name>uint32_t</name> <macro><name>getOutputCharacteristics</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{
+<return>return <expr><name><name>header</name><operator>-&gt;</operator><name>Characteristics</name></name> <operator>&amp;</operator> <operator>(</operator><name>permMask</name> <operator>|</operator> <name>typeMask</name><operator>)</operator></expr>;</return>
+}</block>
+<name>StringRef</name> <macro><name>getSectionName</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{
+<return>return <expr><call><name>StringRef</name><argument_list>(<argument><expr><name>sectionNameData</name></expr></argument>, <argument><expr><name>sectionNameSize</name></expr></argument>)</argument_list></call></expr>;</return>
+}</block>
+<name>void</name> <call><name>getBaserels</name><argument_list>(<argument><expr><name>std</name><operator>::</operator><name><name>vector</name><argument_list type="generic">&lt;<argument><expr><name>Baserel</name></expr></argument>&gt;</argument_list></name> <operator>*</operator><name>res</name></expr></argument>)</argument_list></call></expr>;
+<expr><name>bool</name> <macro><name>isCOMDAT</name><argument_list>()</argument_list></macro> <specifier>const</specifier></expr>;
+<expr><name>void</name> <macro><name>applyRelocation</name><argument_list>(<argument>uint8_t *off</argument>, <argument>const coff_relocation &amp;rel</argument>)</argument_list></macro> <specifier>const</specifier></expr>;
+<expr><name>void</name> <macro><name>applyRelX64</name><argument_list>(<argument>uint8_t *off</argument>, <argument>uint16_t type</argument>, <argument>OutputSection *os</argument>, <argument>uint64_t s</argument>,
+<argument>uint64_t p</argument>)</argument_list></macro> <specifier>const</specifier></expr>;
+<expr><name>void</name> <macro><name>applyRelX86</name><argument_list>(<argument>uint8_t *off</argument>, <argument>uint16_t type</argument>, <argument>OutputSection *os</argument>, <argument>uint64_t s</argument>,
+<argument>uint64_t p</argument>)</argument_list></macro> <specifier>const</specifier></expr>;
+<expr><name>void</name> <macro><name>applyRelARM</name><argument_list>(<argument>uint8_t *off</argument>, <argument>uint16_t type</argument>, <argument>OutputSection *os</argument>, <argument>uint64_t s</argument>,
+<argument>uint64_t p</argument>)</argument_list></macro> <specifier>const</specifier></expr>;
+<expr><name>void</name> <macro><name>applyRelARM64</name><argument_list>(<argument>uint8_t *off</argument>, <argument>uint16_t type</argument>, <argument>OutputSection *os</argument>, <argument>uint64_t s</argument>,
+<argument>uint64_t p</argument>)</argument_list></macro> <specifier>const</specifier></expr>;
+
+<expr><name>void</name> <call><name>getRuntimePseudoRelocs</name><argument_list>(<argument><expr><name>std</name><operator>::</operator><name><name>vector</name><argument_list type="generic">&lt;<argument><expr><name>RuntimePseudoReloc</name></expr></argument>&gt;</argument_list></name> <operator>&amp;</operator><name>res</name></expr></argument>)</argument_list></call></expr>;
+
+
+
+<expr><name>void</name> <macro><name>printDiscardedMessage</name><argument_list>()</argument_list></macro> <specifier>const</specifier></expr>;
+
+
+
+<expr><name>void</name> <call><name>addAssociative</name><argument_list>(<argument><expr><name>SectionChunk</name> <operator>*</operator><name>child</name></expr></argument>)</argument_list></call></expr>;
+
+<expr><name>StringRef</name> <macro><name>getDebugName</name><argument_list>()</argument_list></macro> <specifier>const</specifier></expr>;
+
+
+
+<expr><name>bool</name> <macro><name>isCodeView</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{
+<return>return <expr><call><name>getSectionName</name><argument_list>()</argument_list></call> <operator>==</operator> <literal type="string">".debug"</literal> <operator>||</operator> <call><name>getSectionName</name><argument_list>()</argument_list></call><operator>.</operator><call><name>startswith</name><argument_list>(<argument><expr><literal type="string">".debug$"</literal></expr></argument>)</argument_list></call></expr>;</return>
+}</block>
+
+
+<name>bool</name> <macro><name>isDWARF</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{
+<return>return <expr><call><name>getSectionName</name><argument_list>()</argument_list></call><operator>.</operator><call><name>startswith</name><argument_list>(<argument><expr><literal type="string">".debug_"</literal></expr></argument>)</argument_list></call> <operator>||</operator> <call><name>getSectionName</name><argument_list>()</argument_list></call> <operator>==</operator> <literal type="string">".eh_frame"</literal></expr>;</return>
+}</block>
+
+
+<name>llvm</name><operator>::</operator><name><name>iterator_range</name><argument_list type="generic">&lt;<argument><expr><name>symbol_iterator</name></expr></argument>&gt;</argument_list></name> <macro><name>symbols</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{
+<return>return <expr><name>llvm</name><operator>::</operator><call><name>make_range</name><argument_list>(<argument><expr><call><name>symbol_iterator</name><argument_list>(<argument><expr><name>file</name></expr></argument>, <argument><expr><name>relocsData</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>symbol_iterator</name><argument_list>(<argument><expr><name>file</name></expr></argument>, <argument><expr><name>relocsData</name> <operator>+</operator> <name>relocsSize</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</return>
+}</block>
+
+<name><name>ArrayRef</name><argument_list type="generic">&lt;<argument><expr><name>coff_relocation</name></expr></argument>&gt;</argument_list></name> <macro><name>getRelocs</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{
+<return>return <expr><name>llvm</name><operator>::</operator><call><name>makeArrayRef</name><argument_list>(<argument><expr><name>relocsData</name></expr></argument>, <argument><expr><name>relocsSize</name></expr></argument>)</argument_list></call></expr>;</return>
+}</block>
+
+
+<name>void</name> <macro><name>setRelocs</name><argument_list>(<argument>ArrayRef&lt;coff_relocation&gt; newRelocs</argument>)</argument_list></macro> <block>{
+<expr><name>relocsData</name> <operator>=</operator> <call><name><name>newRelocs</name><operator>.</operator><name>data</name></name><argument_list>()</argument_list></call></expr>;
+<expr><name>relocsSize</name> <operator>=</operator> <call><name><name>newRelocs</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call></expr>;
+<expr><call><name>assert</name><argument_list>(<argument><expr><name>relocsSize</name> <operator>==</operator> <call><name><name>newRelocs</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call> <operator>&amp;&amp;</operator> <literal type="string">"reloc size truncation"</literal></expr></argument>)</argument_list></call></expr>;
+}</block>
+
+
+<name>class</name> <name>AssociatedIterator</name>
+<operator>:</operator> <name>public</name> <name>llvm</name><operator>::</operator><name><name>iterator_facade_base</name><argument_list type="generic">&lt;
+<argument><expr><name>AssociatedIterator</name></expr></argument>, <argument><expr><name>std</name><operator>::</operator><name>forward_iterator_tag</name></expr></argument>, <argument><expr><name>SectionChunk</name></expr></argument>&gt;</argument_list></name> <block>{
+<expr><name>public</name><operator>:</operator>
+<call><name>AssociatedIterator</name><argument_list>()</argument_list></call> <operator>=</operator> default</expr>;
+<expr><call><name>AssociatedIterator</name><argument_list>(<argument><expr><name>SectionChunk</name> <operator>*</operator><name>head</name></expr></argument>)</argument_list></call> <operator>:</operator> <macro><name>cur</name><argument_list>(<argument>head</argument>)</argument_list></macro> <block>{}</block>
+<name>bool</name> <name>operator</name><operator>==</operator><operator>(</operator><specifier>const</specifier> <name>AssociatedIterator</name> <operator>&amp;</operator><name>r</name><operator>)</operator> <specifier>const</specifier> <block>{ <return>return <expr><name>cur</name> <operator>==</operator> <name><name>r</name><operator>.</operator><name>cur</name></name></expr>;</return> }</block>
+
+<name>SectionChunk</name> <operator>&amp;</operator><name>operator</name><operator>*</operator><operator>(</operator><operator>)</operator> <specifier>const</specifier> <block>{ <return>return <expr><operator>*</operator><name>cur</name></expr>;</return> }</block>
+<name>SectionChunk</name> <operator>&amp;</operator><name>operator</name><operator>*</operator><operator>(</operator><operator>)</operator> <block>{ <return>return <expr><operator>*</operator><name>cur</name></expr>;</return> }</block>
+<name>AssociatedIterator</name> <operator>&amp;</operator><name>operator</name><operator>++</operator><operator>(</operator><operator>)</operator> <block>{
+<expr><name>cur</name> <operator>=</operator> <name><name>cur</name><operator>-&gt;</operator><name>assocChildren</name></name></expr>;
+<return>return <expr><operator>*</operator><name>this</name></expr>;</return>
+}</block>
+
+<name>private</name><operator>:</operator>
+<name>SectionChunk</name> <operator>*</operator><name>cur</name> <operator>=</operator> <name>nullptr</name></expr>;
+}</block></expr>;
+
+
+<expr><name>llvm</name><operator>::</operator><name><name>iterator_range</name><argument_list type="generic">&lt;<argument><expr><name>AssociatedIterator</name></expr></argument>&gt;</argument_list></name> <macro><name>children</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{
+
+
+<expr><name>bool</name> <name>isAssoc</name> <operator>=</operator> <name>selection</name> <operator>==</operator> <name>llvm</name><operator>::</operator><name>COFF</name><operator>::</operator><name>IMAGE_COMDAT_SELECT_ASSOCIATIVE</name></expr>;
+<return>return <expr><name>llvm</name><operator>::</operator><call><name>make_range</name><argument_list>(
+<argument><expr><call><name>AssociatedIterator</name><argument_list>(<argument><expr><ternary><condition><expr><name>isAssoc</name></expr> ?</condition><then> <expr><name>nullptr</name></expr> </then><else>: <expr><name>assocChildren</name></expr></else></ternary></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>AssociatedIterator</name><argument_list>(<argument><expr><name>nullptr</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</return>
+}</block>
+
+
+<name>uint32_t</name> <macro><name>getSectionNumber</name><argument_list>()</argument_list></macro> <specifier>const</specifier></expr>;
+
+<expr><name><name>ArrayRef</name><argument_list type="generic">&lt;<argument><expr><name>uint8_t</name></expr></argument>&gt;</argument_list></name> <call><name>consumeDebugMagic</name><argument_list>()</argument_list></call></expr>;
+
+<expr><specifier>static</specifier> <name><name>ArrayRef</name><argument_list type="generic">&lt;<argument><expr><name>uint8_t</name></expr></argument>&gt;</argument_list></name> <macro><name>consumeDebugMagic</name><argument_list>(<argument>ArrayRef&lt;uint8_t&gt; data</argument>,
+<argument>StringRef sectionName</argument>)</argument_list></macro></expr>;
+
+<expr><specifier>static</specifier> <name>SectionChunk</name> <operator>*</operator><macro><name>findByName</name><argument_list>(<argument>ArrayRef&lt;SectionChunk *&gt; sections</argument>,
+<argument>StringRef name</argument>)</argument_list></macro></expr>;
+
+
+<expr><name>ObjFile</name> <operator>*</operator><name>file</name></expr>;
+
+
+<expr><specifier>const</specifier> <name>coff_section</name> <operator>*</operator><name>header</name></expr>;
+
+
+<expr><name>DefinedRegular</name> <operator>*</operator><name>sym</name> <operator>=</operator> <name>nullptr</name></expr>;
+
+
+
+<expr><name>uint32_t</name> <name>checksum</name> <operator>=</operator> <literal type="number">0</literal></expr>;
+
+
+<expr><name>bool</name> <name>live</name></expr>;
+
+
+
+<expr><name>bool</name> <name>keepUnique</name> <operator>=</operator> <name>false</name></expr>;
+
+
+<expr><name>llvm</name><operator>::</operator><name>COFF</name><operator>::</operator><name>COMDATType</name> <name>selection</name> <operator>=</operator> <operator>(</operator><name>llvm</name><operator>::</operator><name>COFF</name><operator>::</operator><name>COMDATType</name><operator>)</operator><literal type="number">0</literal></expr>;
+
+
+
+
+
+<expr><name>SectionChunk</name> <operator>*</operator><name>repl</name></expr>;
+
+<expr><name>private</name><operator>:</operator>
+<name>SectionChunk</name> <operator>*</operator><name>assocChildren</name> <operator>=</operator> <name>nullptr</name></expr>;
+
+
+<expr><name>void</name> <call><name>replace</name><argument_list>(<argument><expr><name>SectionChunk</name> <operator>*</operator><name>other</name></expr></argument>)</argument_list></call></expr>;
+<expr><name>uint32_t</name> <name><name>eqClass</name><index>[<expr><literal type="number">2</literal></expr>]</index></name> <operator>=</operator> <block>{<expr><literal type="number">0</literal></expr>, <expr><literal type="number">0</literal></expr>}</block></expr>;
+
+
+<expr><specifier>const</specifier> <name>coff_relocation</name> <operator>*</operator><name>relocsData</name></expr>;
+
+
+<expr><specifier>const</specifier> <name>char</name> <operator>*</operator><name>sectionNameData</name></expr>;
+
+<expr><name>uint32_t</name> <name>relocsSize</name> <operator>=</operator> <literal type="number">0</literal></expr>;
+<expr><name>uint32_t</name> <name>sectionNameSize</name> <operator>=</operator> <literal type="number">0</literal></expr>;
+}</block></expr>;
+
+
+
+<expr><specifier>inline</specifier> <name>size_t</name> <name>Chunk</name><operator>::</operator><macro><name>getSize</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{
+<if_stmt><if>if <condition>(<expr><call><name><name>isa</name><argument_list type="generic">&lt;<argument><expr><name>SectionChunk</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>this</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><call><name><name>static_cast</name><argument_list type="generic">&lt;<argument><expr><specifier>const</specifier> <name>SectionChunk</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>this</name></expr></argument>)</argument_list></call><operator>-&gt;</operator><call><name>getSize</name><argument_list>()</argument_list></call></expr>;</return></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<return>return <expr><call><name><name>static_cast</name><argument_list type="generic">&lt;<argument><expr><specifier>const</specifier> <name>NonSectionChunk</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>this</name></expr></argument>)</argument_list></call><operator>-&gt;</operator><call><name>getSize</name><argument_list>()</argument_list></call></expr>;</return></block_content></block></else></if_stmt>
+}</block>
+
+<specifier>inline</specifier> <name>uint32_t</name> <name>Chunk</name><operator>::</operator><macro><name>getOutputCharacteristics</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{
+<if_stmt><if>if <condition>(<expr><call><name><name>isa</name><argument_list type="generic">&lt;<argument><expr><name>SectionChunk</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>this</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><call><name><name>static_cast</name><argument_list type="generic">&lt;<argument><expr><specifier>const</specifier> <name>SectionChunk</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>this</name></expr></argument>)</argument_list></call><operator>-&gt;</operator><call><name>getOutputCharacteristics</name><argument_list>()</argument_list></call></expr>;</return></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<return>return <expr><call><name><name>static_cast</name><argument_list type="generic">&lt;<argument><expr><specifier>const</specifier> <name>NonSectionChunk</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>this</name></expr></argument>)</argument_list></call>
+<operator>-&gt;</operator><call><name>getOutputCharacteristics</name><argument_list>()</argument_list></call></expr>;</return></block_content></block></else></if_stmt>
+}</block>
+
+<specifier>inline</specifier> <name>void</name> <name>Chunk</name><operator>::</operator><macro><name>writeTo</name><argument_list>(<argument>uint8_t *buf</argument>)</argument_list></macro> <specifier>const</specifier> <block>{
+<if_stmt><if>if <condition>(<expr><call><name><name>isa</name><argument_list type="generic">&lt;<argument><expr><name>SectionChunk</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>this</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name><name>static_cast</name><argument_list type="generic">&lt;<argument><expr><specifier>const</specifier> <name>SectionChunk</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>this</name></expr></argument>)</argument_list></call><operator>-&gt;</operator><call><name>writeTo</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name><name>static_cast</name><argument_list type="generic">&lt;<argument><expr><specifier>const</specifier> <name>NonSectionChunk</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>this</name></expr></argument>)</argument_list></call><operator>-&gt;</operator><call><name>writeTo</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+}</block>
+
+<specifier>inline</specifier> <name>StringRef</name> <name>Chunk</name><operator>::</operator><macro><name>getSectionName</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{
+<if_stmt><if>if <condition>(<expr><call><name><name>isa</name><argument_list type="generic">&lt;<argument><expr><name>SectionChunk</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>this</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><call><name><name>static_cast</name><argument_list type="generic">&lt;<argument><expr><specifier>const</specifier> <name>SectionChunk</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>this</name></expr></argument>)</argument_list></call><operator>-&gt;</operator><call><name>getSectionName</name><argument_list>()</argument_list></call></expr>;</return></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<return>return <expr><call><name><name>static_cast</name><argument_list type="generic">&lt;<argument><expr><specifier>const</specifier> <name>NonSectionChunk</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>this</name></expr></argument>)</argument_list></call><operator>-&gt;</operator><call><name>getSectionName</name><argument_list>()</argument_list></call></expr>;</return></block_content></block></else></if_stmt>
+}</block>
+
+<specifier>inline</specifier> <name>void</name> <name>Chunk</name><operator>::</operator><macro><name>getBaserels</name><argument_list>(<argument>std::vector&lt;Baserel&gt; *res</argument>)</argument_list></macro> <block>{
+<if_stmt><if>if <condition>(<expr><call><name><name>isa</name><argument_list type="generic">&lt;<argument><expr><name>SectionChunk</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>this</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name><name>static_cast</name><argument_list type="generic">&lt;<argument><expr><name>SectionChunk</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>this</name></expr></argument>)</argument_list></call><operator>-&gt;</operator><call><name>getBaserels</name><argument_list>(<argument><expr><name>res</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name><name>static_cast</name><argument_list type="generic">&lt;<argument><expr><name>NonSectionChunk</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>this</name></expr></argument>)</argument_list></call><operator>-&gt;</operator><call><name>getBaserels</name><argument_list>(<argument><expr><name>res</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+}</block>
+
+<specifier>inline</specifier> <name>StringRef</name> <name>Chunk</name><operator>::</operator><macro><name>getDebugName</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{
+<if_stmt><if>if <condition>(<expr><call><name><name>isa</name><argument_list type="generic">&lt;<argument><expr><name>SectionChunk</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>this</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><call><name><name>static_cast</name><argument_list type="generic">&lt;<argument><expr><specifier>const</specifier> <name>SectionChunk</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>this</name></expr></argument>)</argument_list></call><operator>-&gt;</operator><call><name>getDebugName</name><argument_list>()</argument_list></call></expr>;</return></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<return>return <expr><call><name><name>static_cast</name><argument_list type="generic">&lt;<argument><expr><specifier>const</specifier> <name>NonSectionChunk</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>this</name></expr></argument>)</argument_list></call><operator>-&gt;</operator><call><name>getDebugName</name><argument_list>()</argument_list></call></expr>;</return></block_content></block></else></if_stmt>
+}</block>
+
+
+
+
+
+
+
+
+
+
+<name>class</name> <name>MergeChunk</name> <operator>:</operator> <name>public</name> <name>NonSectionChunk</name> <block>{
+<expr><name>public</name><operator>:</operator>
+<macro><name>MergeChunk</name><argument_list>(<argument>uint32_t alignment</argument>)</argument_list></macro></expr>;
+<expr><specifier>static</specifier> <name>void</name> <call><name>addSection</name><argument_list>(<argument><expr><name>SectionChunk</name> <operator>*</operator><name>c</name></expr></argument>)</argument_list></call></expr>;
+<expr><name>void</name> <call><name>finalizeContents</name><argument_list>()</argument_list></call></expr>;
+<expr><name>void</name> <call><name>assignSubsectionRVAs</name><argument_list>()</argument_list></call></expr>;
+
+<expr><name>uint32_t</name> <macro><name>getOutputCharacteristics</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>override</name></expr>;
+<expr><name>StringRef</name> <macro><name>getSectionName</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>override</name> <block>{ <return>return <expr><literal type="string">".rdata"</literal></expr>;</return> }</block>
+<name>size_t</name> <macro><name>getSize</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>override</name></expr>;
+<expr><name>void</name> <macro><name>writeTo</name><argument_list>(<argument>uint8_t *buf</argument>)</argument_list></macro> <specifier>const</specifier> <name>override</name></expr>;
+
+<expr><specifier>static</specifier> <name>MergeChunk</name> <operator>*</operator><name><name>instances</name><index>[<expr><name>Log2MaxSectionAlignment</name> <operator>+</operator> <literal type="number">1</literal></expr>]</index></name></expr>;
+<expr><name>std</name><operator>::</operator><name><name>vector</name><argument_list type="generic">&lt;<argument><expr><name>SectionChunk</name> <operator>*</operator></expr></argument>&gt;</argument_list></name> <name>sections</name></expr>;
+
+<expr><name>private</name><operator>:</operator>
+<name>llvm</name><operator>::</operator><name>StringTableBuilder</name> <name>builder</name></expr>;
+<expr><name>bool</name> <name>finalized</name> <operator>=</operator> <name>false</name></expr>;
+}</block></expr>;
+
+
+<expr><name>class</name> <name>CommonChunk</name> <operator>:</operator> <name>public</name> <name>NonSectionChunk</name> <block>{
+<expr><name>public</name><operator>:</operator>
+<macro><name>CommonChunk</name><argument_list>(<argument>const COFFSymbolRef sym</argument>)</argument_list></macro></expr>;
+<expr><name>size_t</name> <macro><name>getSize</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>override</name> <block>{ <return>return <expr><call><name><name>sym</name><operator>.</operator><name>getValue</name></name><argument_list>()</argument_list></call></expr>;</return> }</block>
+<name>uint32_t</name> <macro><name>getOutputCharacteristics</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>override</name></expr>;
+<expr><name>StringRef</name> <macro><name>getSectionName</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>override</name> <block>{ <return>return <expr><literal type="string">".bss"</literal></expr>;</return> }</block>
+
+<name>private</name><operator>:</operator>
+<specifier>const</specifier> <name>COFFSymbolRef</name> <name>sym</name></expr>;
+}</block></expr>;
+
+
+<expr><name>class</name> <name>StringChunk</name> <operator>:</operator> <name>public</name> <name>NonSectionChunk</name> <block>{
+<expr><name>public</name><operator>:</operator>
+<name>explicit</name> <macro><name>StringChunk</name><argument_list>(<argument>StringRef s</argument>)</argument_list></macro> <operator>:</operator> <macro><name>str</name><argument_list>(<argument>s</argument>)</argument_list></macro> <block>{}</block>
+<name>size_t</name> <macro><name>getSize</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>override</name> <block>{ <return>return <expr><call><name><name>str</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call> <operator>+</operator> <literal type="number">1</literal></expr>;</return> }</block>
+<name>void</name> <macro><name>writeTo</name><argument_list>(<argument>uint8_t *buf</argument>)</argument_list></macro> <specifier>const</specifier> <name>override</name></expr>;
+
+<expr><name>private</name><operator>:</operator>
+<name>StringRef</name> <name>str</name></expr>;
+}</block></expr>;
+
+<expr><specifier>static</specifier> <specifier>const</specifier> <name>uint8_t</name> <name><name>importThunkX86</name><index>[]</index></name> <operator>=</operator> <block>{
+<expr><literal type="number">0xff</literal></expr>, <expr><literal type="number">0x25</literal></expr>, <expr><literal type="number">0x00</literal></expr>, <expr><literal type="number">0x00</literal></expr>, <expr><literal type="number">0x00</literal></expr>, <expr><literal type="number">0x00</literal></expr>,
+}</block></expr>;
+
+<expr><specifier>static</specifier> <specifier>const</specifier> <name>uint8_t</name> <name><name>importThunkARM</name><index>[]</index></name> <operator>=</operator> <block>{
+<expr><literal type="number">0x40</literal></expr>, <expr><literal type="number">0xf2</literal></expr>, <expr><literal type="number">0x00</literal></expr>, <expr><literal type="number">0x0c</literal></expr>,
+<expr><literal type="number">0xc0</literal></expr>, <expr><literal type="number">0xf2</literal></expr>, <expr><literal type="number">0x00</literal></expr>, <expr><literal type="number">0x0c</literal></expr>,
+<expr><literal type="number">0xdc</literal></expr>, <expr><literal type="number">0xf8</literal></expr>, <expr><literal type="number">0x00</literal></expr>, <expr><literal type="number">0xf0</literal></expr>,
+}</block></expr>;
+
+<expr><specifier>static</specifier> <specifier>const</specifier> <name>uint8_t</name> <name><name>importThunkARM64</name><index>[]</index></name> <operator>=</operator> <block>{
+<expr><literal type="number">0x10</literal></expr>, <expr><literal type="number">0x00</literal></expr>, <expr><literal type="number">0x00</literal></expr>, <expr><literal type="number">0x90</literal></expr>,
+<expr><literal type="number">0x10</literal></expr>, <expr><literal type="number">0x02</literal></expr>, <expr><literal type="number">0x40</literal></expr>, <expr><literal type="number">0xf9</literal></expr>,
+<expr><literal type="number">0x00</literal></expr>, <expr><literal type="number">0x02</literal></expr>, <expr><literal type="number">0x1f</literal></expr>, <expr><literal type="number">0xd6</literal></expr>,
+}</block></expr>;
+
+
+
+
+<expr><name>class</name> <name>ImportThunkChunk</name> <operator>:</operator> <name>public</name> <name>NonSectionChunk</name> <block>{
+<expr><name>public</name><operator>:</operator>
+<call><name>ImportThunkChunk</name><argument_list>(<argument><expr><name>Defined</name> <operator>*</operator><name>s</name></expr></argument>)</argument_list></call>
+<operator>:</operator> <call><name>NonSectionChunk</name><argument_list>(<argument><expr><name>ImportThunkKind</name></expr></argument>)</argument_list></call></expr>, <macro><name>impSymbol</name><argument_list>(<argument>s</argument>)</argument_list></macro> <expr><block>{}</block>
+<specifier>static</specifier> <name>bool</name> <macro><name>classof</name><argument_list>(<argument>const Chunk *c</argument>)</argument_list></macro> <block>{ <return>return <expr><call><name><name>c</name><operator>-&gt;</operator><name>kind</name></name><argument_list>()</argument_list></call> <operator>==</operator> <name>ImportThunkKind</name></expr>;</return> }</block>
+
+<name>protected</name><operator>:</operator>
+<name>Defined</name> <operator>*</operator><name>impSymbol</name></expr>;
+}</block></expr>;
+
+<expr><name>class</name> <name>ImportThunkChunkX64</name> <operator>:</operator> <name>public</name> <name>ImportThunkChunk</name> <block>{
+<expr><name>public</name><operator>:</operator>
+<name>explicit</name> <call><name>ImportThunkChunkX64</name><argument_list>(<argument><expr><name>Defined</name> <operator>*</operator><name>s</name></expr></argument>)</argument_list></call></expr>;
+<expr><name>size_t</name> <macro><name>getSize</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>override</name> <block>{ <return>return <expr><sizeof>sizeof<argument_list>(<argument><expr><name>importThunkX86</name></expr></argument>)</argument_list></sizeof></expr>;</return> }</block>
+<name>void</name> <macro><name>writeTo</name><argument_list>(<argument>uint8_t *buf</argument>)</argument_list></macro> <specifier>const</specifier> <name>override</name></expr>;
+}</block></expr>;
+
+<expr><name>class</name> <name>ImportThunkChunkX86</name> <operator>:</operator> <name>public</name> <name>ImportThunkChunk</name> <block>{
+<expr><name>public</name><operator>:</operator>
+<name>explicit</name> <call><name>ImportThunkChunkX86</name><argument_list>(<argument><expr><name>Defined</name> <operator>*</operator><name>s</name></expr></argument>)</argument_list></call> <operator>:</operator> <macro><name>ImportThunkChunk</name><argument_list>(<argument>s</argument>)</argument_list></macro> <block>{}</block>
+<name>size_t</name> <macro><name>getSize</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>override</name> <block>{ <return>return <expr><sizeof>sizeof<argument_list>(<argument><expr><name>importThunkX86</name></expr></argument>)</argument_list></sizeof></expr>;</return> }</block>
+<name>void</name> <macro><name>getBaserels</name><argument_list>(<argument>std::vector&lt;Baserel&gt; *res</argument>)</argument_list></macro> <name>override</name></expr>;
+<expr><name>void</name> <macro><name>writeTo</name><argument_list>(<argument>uint8_t *buf</argument>)</argument_list></macro> <specifier>const</specifier> <name>override</name></expr>;
+}</block></expr>;
+
+<expr><name>class</name> <name>ImportThunkChunkARM</name> <operator>:</operator> <name>public</name> <name>ImportThunkChunk</name> <block>{
+<expr><name>public</name><operator>:</operator>
+<name>explicit</name> <call><name>ImportThunkChunkARM</name><argument_list>(<argument><expr><name>Defined</name> <operator>*</operator><name>s</name></expr></argument>)</argument_list></call> <operator>:</operator> <macro><name>ImportThunkChunk</name><argument_list>(<argument>s</argument>)</argument_list></macro> <block>{
+<expr><call><name>setAlignment</name><argument_list>(<argument><expr><literal type="number">2</literal></expr></argument>)</argument_list></call></expr>;
+}</block>
+<name>size_t</name> <macro><name>getSize</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>override</name> <block>{ <return>return <expr><sizeof>sizeof<argument_list>(<argument><expr><name>importThunkARM</name></expr></argument>)</argument_list></sizeof></expr>;</return> }</block>
+<name>void</name> <macro><name>getBaserels</name><argument_list>(<argument>std::vector&lt;Baserel&gt; *res</argument>)</argument_list></macro> <name>override</name></expr>;
+<expr><name>void</name> <macro><name>writeTo</name><argument_list>(<argument>uint8_t *buf</argument>)</argument_list></macro> <specifier>const</specifier> <name>override</name></expr>;
+}</block></expr>;
+
+<expr><name>class</name> <name>ImportThunkChunkARM64</name> <operator>:</operator> <name>public</name> <name>ImportThunkChunk</name> <block>{
+<expr><name>public</name><operator>:</operator>
+<name>explicit</name> <call><name>ImportThunkChunkARM64</name><argument_list>(<argument><expr><name>Defined</name> <operator>*</operator><name>s</name></expr></argument>)</argument_list></call> <operator>:</operator> <macro><name>ImportThunkChunk</name><argument_list>(<argument>s</argument>)</argument_list></macro> <block>{
+<expr><call><name>setAlignment</name><argument_list>(<argument><expr><literal type="number">4</literal></expr></argument>)</argument_list></call></expr>;
+}</block>
+<name>size_t</name> <macro><name>getSize</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>override</name> <block>{ <return>return <expr><sizeof>sizeof<argument_list>(<argument><expr><name>importThunkARM64</name></expr></argument>)</argument_list></sizeof></expr>;</return> }</block>
+<name>void</name> <macro><name>writeTo</name><argument_list>(<argument>uint8_t *buf</argument>)</argument_list></macro> <specifier>const</specifier> <name>override</name></expr>;
+}</block></expr>;
+
+<expr><name>class</name> <name>RangeExtensionThunkARM</name> <operator>:</operator> <name>public</name> <name>NonSectionChunk</name> <block>{
+<expr><name>public</name><operator>:</operator>
+<name>explicit</name> <call><name>RangeExtensionThunkARM</name><argument_list>(<argument><expr><name>Defined</name> <operator>*</operator><name>t</name></expr></argument>)</argument_list></call> <operator>:</operator> <macro><name>target</name><argument_list>(<argument>t</argument>)</argument_list></macro> <block>{ <expr><call><name>setAlignment</name><argument_list>(<argument><expr><literal type="number">2</literal></expr></argument>)</argument_list></call></expr>; }</block>
+<name>size_t</name> <macro><name>getSize</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>override</name></expr>;
+<expr><name>void</name> <macro><name>writeTo</name><argument_list>(<argument>uint8_t *buf</argument>)</argument_list></macro> <specifier>const</specifier> <name>override</name></expr>;
+
+<expr><name>Defined</name> <operator>*</operator><name>target</name></expr>;
+}</block></expr>;
+
+<expr><name>class</name> <name>RangeExtensionThunkARM64</name> <operator>:</operator> <name>public</name> <name>NonSectionChunk</name> <block>{
+<expr><name>public</name><operator>:</operator>
+<name>explicit</name> <call><name>RangeExtensionThunkARM64</name><argument_list>(<argument><expr><name>Defined</name> <operator>*</operator><name>t</name></expr></argument>)</argument_list></call> <operator>:</operator> <macro><name>target</name><argument_list>(<argument>t</argument>)</argument_list></macro> <block>{ <expr><call><name>setAlignment</name><argument_list>(<argument><expr><literal type="number">4</literal></expr></argument>)</argument_list></call></expr>; }</block>
+<name>size_t</name> <macro><name>getSize</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>override</name></expr>;
+<expr><name>void</name> <macro><name>writeTo</name><argument_list>(<argument>uint8_t *buf</argument>)</argument_list></macro> <specifier>const</specifier> <name>override</name></expr>;
+
+<expr><name>Defined</name> <operator>*</operator><name>target</name></expr>;
+}</block></expr>;
+
+
+
+<expr><name>class</name> <name>LocalImportChunk</name> <operator>:</operator> <name>public</name> <name>NonSectionChunk</name> <block>{
+<expr><name>public</name><operator>:</operator>
+<name>explicit</name> <call><name>LocalImportChunk</name><argument_list>(<argument><expr><name>Defined</name> <operator>*</operator><name>s</name></expr></argument>)</argument_list></call> <operator>:</operator> <macro><name>sym</name><argument_list>(<argument>s</argument>)</argument_list></macro> <block>{
+<expr><call><name>setAlignment</name><argument_list>(<argument><expr><name><name>config</name><operator>-&gt;</operator><name>wordsize</name></name></expr></argument>)</argument_list></call></expr>;
+}</block>
+<name>size_t</name> <macro><name>getSize</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>override</name></expr>;
+<expr><name>void</name> <macro><name>getBaserels</name><argument_list>(<argument>std::vector&lt;Baserel&gt; *res</argument>)</argument_list></macro> <name>override</name></expr>;
+<expr><name>void</name> <macro><name>writeTo</name><argument_list>(<argument>uint8_t *buf</argument>)</argument_list></macro> <specifier>const</specifier> <name>override</name></expr>;
+
+<expr><name>private</name><operator>:</operator>
+<name>Defined</name> <operator>*</operator><name>sym</name></expr>;
+}</block></expr>;
+
+
+
+
+struct <expr><name>ChunkAndOffset</name> <block>{
+<expr><name>Chunk</name> <operator>*</operator><name>inputChunk</name></expr>;
+<expr><name>uint32_t</name> <name>offset</name></expr>;
+
+struct <expr><name>DenseMapInfo</name> <block>{
+<expr><specifier>static</specifier> <name>ChunkAndOffset</name> <macro><name>getEmptyKey</name><argument_list>()</argument_list></macro> <block>{
+<return>return <expr><block>{<expr><name>llvm</name><operator>::</operator><name><name>DenseMapInfo</name><argument_list type="generic">&lt;<argument><expr><name>Chunk</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><operator>::</operator><call><name>getEmptyKey</name><argument_list>()</argument_list></call></expr>, <expr><literal type="number">0</literal></expr>}</block></expr>;</return>
+}</block>
+<specifier>static</specifier> <name>ChunkAndOffset</name> <macro><name>getTombstoneKey</name><argument_list>()</argument_list></macro> <block>{
+<return>return <expr><block>{<expr><name>llvm</name><operator>::</operator><name><name>DenseMapInfo</name><argument_list type="generic">&lt;<argument><expr><name>Chunk</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><operator>::</operator><call><name>getTombstoneKey</name><argument_list>()</argument_list></call></expr>, <expr><literal type="number">0</literal></expr>}</block></expr>;</return>
+}</block>
+<specifier>static</specifier> <name>unsigned</name> <macro><name>getHashValue</name><argument_list>(<argument>const ChunkAndOffset &amp;co</argument>)</argument_list></macro> <block>{
+<return>return <expr><name>llvm</name><operator>::</operator><name><name>DenseMapInfo</name><argument_list type="generic">&lt;<argument><expr><name>std</name><operator>::</operator><name><name>pair</name><argument_list type="generic">&lt;<argument><expr><name>Chunk</name> <operator>*</operator></expr></argument>, <argument><expr><name>uint32_t</name></expr></argument>&gt;</argument_list></name></expr></argument>&gt;</argument_list></name><operator>::</operator><macro><name>getHashValue</name><argument_list>(
+<argument>{co.inputChunk</argument>, <argument>co.offset}</argument>)</argument_list></macro></expr>;</return>
+}</block>
+<specifier>static</specifier> <name>bool</name> <macro><name>isEqual</name><argument_list>(<argument>const ChunkAndOffset &amp;lhs</argument>, <argument>const ChunkAndOffset &amp;rhs</argument>)</argument_list></macro> <block>{
+<return>return <expr><name><name>lhs</name><operator>.</operator><name>inputChunk</name></name> <operator>==</operator> <name><name>rhs</name><operator>.</operator><name>inputChunk</name></name> <operator>&amp;&amp;</operator> <name><name>lhs</name><operator>.</operator><name>offset</name></name> <operator>==</operator> <name><name>rhs</name><operator>.</operator><name>offset</name></name></expr>;</return>
+}</block>
+}</expr>;
+}</block></expr>;
+
+<expr><name>using</name> <name>SymbolRVASet</name> <operator>=</operator> <name>llvm</name><operator>::</operator><name><name>DenseSet</name><argument_list type="generic">&lt;<argument><expr><name>ChunkAndOffset</name></expr></argument>&gt;</argument_list></name></expr>;
+
+
+<expr><name>class</name> <name>RVATableChunk</name> <operator>:</operator> <name>public</name> <name>NonSectionChunk</name> <block>{
+<expr><name>public</name><operator>:</operator>
+<name>explicit</name> <macro><name>RVATableChunk</name><argument_list>(<argument>SymbolRVASet s</argument>)</argument_list></macro> <operator>:</operator> <macro><name>syms</name><argument_list>(<argument>std::move(s)</argument>)</argument_list></macro> <block>{}</block>
+<name>size_t</name> <macro><name>getSize</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>override</name> <block>{ <return>return <expr><call><name><name>syms</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call> <operator>*</operator> <literal type="number">4</literal></expr>;</return> }</block>
+<name>void</name> <macro><name>writeTo</name><argument_list>(<argument>uint8_t *buf</argument>)</argument_list></macro> <specifier>const</specifier> <name>override</name></expr>;
+
+<expr><name>private</name><operator>:</operator>
+<name>SymbolRVASet</name> <name>syms</name></expr>;
+}</block></expr>;
+
+
+<expr><name>class</name> <name>RVAFlagTableChunk</name> <operator>:</operator> <name>public</name> <name>NonSectionChunk</name> <block>{
+<expr><name>public</name><operator>:</operator>
+<name>explicit</name> <macro><name>RVAFlagTableChunk</name><argument_list>(<argument>SymbolRVASet s</argument>)</argument_list></macro> <operator>:</operator> <macro><name>syms</name><argument_list>(<argument>std::move(s)</argument>)</argument_list></macro> <block>{}</block>
+<name>size_t</name> <macro><name>getSize</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>override</name> <block>{ <return>return <expr><call><name><name>syms</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call> <operator>*</operator> <literal type="number">5</literal></expr>;</return> }</block>
+<name>void</name> <macro><name>writeTo</name><argument_list>(<argument>uint8_t *buf</argument>)</argument_list></macro> <specifier>const</specifier> <name>override</name></expr>;
+
+<expr><name>private</name><operator>:</operator>
+<name>SymbolRVASet</name> <name>syms</name></expr>;
+}</block></expr>;
+
+
+
+
+<expr><name>class</name> <name>BaserelChunk</name> <operator>:</operator> <name>public</name> <name>NonSectionChunk</name> <block>{
+<expr><name>public</name><operator>:</operator>
+<macro><name>BaserelChunk</name><argument_list>(<argument>uint32_t page</argument>, <argument>Baserel *begin</argument>, <argument>Baserel *end</argument>)</argument_list></macro></expr>;
+<expr><name>size_t</name> <macro><name>getSize</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>override</name> <block>{ <return>return <expr><call><name><name>data</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call></expr>;</return> }</block>
+<name>void</name> <macro><name>writeTo</name><argument_list>(<argument>uint8_t *buf</argument>)</argument_list></macro> <specifier>const</specifier> <name>override</name></expr>;
+
+<expr><name>private</name><operator>:</operator>
+<name>std</name><operator>::</operator><name><name>vector</name><argument_list type="generic">&lt;<argument><expr><name>uint8_t</name></expr></argument>&gt;</argument_list></name> <name>data</name></expr>;
+}</block></expr>;
+
+<expr><name>class</name> <name>Baserel</name> <block>{
+<expr><name>public</name><operator>:</operator>
+<macro><name>Baserel</name><argument_list>(<argument>uint32_t v</argument>, <argument>uint8_t ty</argument>)</argument_list></macro> <operator>:</operator> <call><name>rva</name><argument_list>(<argument><expr><name>v</name></expr></argument>)</argument_list></call></expr>, <macro><name>type</name><argument_list>(<argument>ty</argument>)</argument_list></macro> <expr><block>{}</block>
+<name>explicit</name> <macro><name>Baserel</name><argument_list>(<argument>uint32_t v</argument>)</argument_list></macro> <operator>:</operator> <macro><name>Baserel</name><argument_list>(<argument>v</argument>, <argument>getDefaultType()</argument>)</argument_list></macro> <block>{}</block>
+<name>uint8_t</name> <call><name>getDefaultType</name><argument_list>()</argument_list></call></expr>;
+
+<expr><name>uint32_t</name> <name>rva</name></expr>;
+<expr><name>uint8_t</name> <name>type</name></expr>;
+}</block></expr>;
+
+
+
+
+
+<expr><name>class</name> <name>EmptyChunk</name> <operator>:</operator> <name>public</name> <name>NonSectionChunk</name> <block>{
+<expr><name>public</name><operator>:</operator>
+<macro><name>EmptyChunk</name><argument_list>()</argument_list></macro> <block>{}</block>
+<name>size_t</name> <macro><name>getSize</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>override</name> <block>{ <return>return <expr><literal type="number">0</literal></expr>;</return> }</block>
+<name>void</name> <macro><name>writeTo</name><argument_list>(<argument>uint8_t *buf</argument>)</argument_list></macro> <specifier>const</specifier> <name>override</name> <block>{}</block>
+}</expr>;
+
+
+
+
+
+
+
+<expr><name>class</name> <name>PseudoRelocTableChunk</name> <operator>:</operator> <name>public</name> <name>NonSectionChunk</name> <block>{
+<expr><name>public</name><operator>:</operator>
+<call><name>PseudoRelocTableChunk</name><argument_list>(<argument><expr><name>std</name><operator>::</operator><name><name>vector</name><argument_list type="generic">&lt;<argument><expr><name>RuntimePseudoReloc</name></expr></argument>&gt;</argument_list></name> <operator>&amp;</operator><name>relocs</name></expr></argument>)</argument_list></call>
+<operator>:</operator> <macro><name>relocs</name><argument_list>(<argument>std::move(relocs)</argument>)</argument_list></macro> <block>{
+<expr><call><name>setAlignment</name><argument_list>(<argument><expr><literal type="number">4</literal></expr></argument>)</argument_list></call></expr>;
+}</block>
+<name>size_t</name> <macro><name>getSize</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>override</name></expr>;
+<expr><name>void</name> <macro><name>writeTo</name><argument_list>(<argument>uint8_t *buf</argument>)</argument_list></macro> <specifier>const</specifier> <name>override</name></expr>;
+
+<expr><name>private</name><operator>:</operator>
+<name>std</name><operator>::</operator><name><name>vector</name><argument_list type="generic">&lt;<argument><expr><name>RuntimePseudoReloc</name></expr></argument>&gt;</argument_list></name> <name>relocs</name></expr>;
+}</block></expr>;
+
+
+
+
+<expr><name>class</name> <name>RuntimePseudoReloc</name> <block>{
+<expr><name>public</name><operator>:</operator>
+<macro><name>RuntimePseudoReloc</name><argument_list>(<argument>Defined *sym</argument>, <argument>SectionChunk *target</argument>, <argument>uint32_t targetOffset</argument>,
+<argument>int flags</argument>)</argument_list></macro>
+<operator>:</operator> <call><name>sym</name><argument_list>(<argument><expr><name>sym</name></expr></argument>)</argument_list></call></expr>, <expr><call><name>target</name><argument_list>(<argument><expr><name>target</name></expr></argument>)</argument_list></call></expr>, <expr><call><name>targetOffset</name><argument_list>(<argument><expr><name>targetOffset</name></expr></argument>)</argument_list></call></expr>, <macro><name>flags</name><argument_list>(<argument>flags</argument>)</argument_list></macro> <expr><block>{}</block>
+
+<name>Defined</name> <operator>*</operator><name>sym</name></expr>;
+<expr><name>SectionChunk</name> <operator>*</operator><name>target</name></expr>;
+<expr><name>uint32_t</name> <name>targetOffset</name></expr>;
+
+
+<expr><name>int</name> <name>flags</name></expr>;
+}</block></expr>;
+
+
+<expr><name>class</name> <name>AbsolutePointerChunk</name> <operator>:</operator> <name>public</name> <name>NonSectionChunk</name> <block>{
+<expr><name>public</name><operator>:</operator>
+<macro><name>AbsolutePointerChunk</name><argument_list>(<argument>uint64_t value</argument>)</argument_list></macro> <operator>:</operator> <macro><name>value</name><argument_list>(<argument>value</argument>)</argument_list></macro> <block>{
+<expr><call><name>setAlignment</name><argument_list>(<argument><expr><call><name>getSize</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;
+}</block>
+<name>size_t</name> <macro><name>getSize</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>override</name></expr>;
+<expr><name>void</name> <macro><name>writeTo</name><argument_list>(<argument>uint8_t *buf</argument>)</argument_list></macro> <specifier>const</specifier> <name>override</name></expr>;
+
+<expr><name>private</name><operator>:</operator>
+<name>uint64_t</name> <name>value</name></expr>;
+}</block></expr>;
+
+
+
+
+<expr><specifier>inline</specifier> <name>bool</name> <name>Chunk</name><operator>::</operator><macro><name>isHotPatchable</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{
+<if_stmt><if>if <condition>(<expr><name>auto</name> <operator>*</operator><name>sc</name> <operator>=</operator> <call><name><name>dyn_cast</name><argument_list type="generic">&lt;<argument><expr><name>SectionChunk</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>this</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name><name>sc</name><operator>-&gt;</operator><name>file</name><operator>-&gt;</operator><name>hotPatchable</name></name></expr>;</return></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><call><name><name>isa</name><argument_list type="generic">&lt;<argument><expr><name>ImportThunkChunk</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>this</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>true</name></expr>;</return></block_content></block></if></if_stmt></block></expr>
+<return>return <expr><name>false</name></expr>;</return>
+}</block>
+
+<name>void</name> <macro><name>applyMOV32T</name><argument_list>(<argument>uint8_t *off</argument>, <argument>uint32_t v</argument>)</argument_list></macro></expr>;
+<expr><name>void</name> <macro><name>applyBranch24T</name><argument_list>(<argument>uint8_t *off</argument>, <argument>int32_t v</argument>)</argument_list></macro></expr>;
+
+<expr><name>void</name> <macro><name>applyArm64Addr</name><argument_list>(<argument>uint8_t *off</argument>, <argument>uint64_t s</argument>, <argument>uint64_t p</argument>, <argument>int shift</argument>)</argument_list></macro></expr>;
+<expr><name>void</name> <macro><name>applyArm64Imm</name><argument_list>(<argument>uint8_t *off</argument>, <argument>uint64_t imm</argument>, <argument>uint32_t rangeLimit</argument>)</argument_list></macro></expr>;
+<expr><name>void</name> <macro><name>applyArm64Branch26</name><argument_list>(<argument>uint8_t *off</argument>, <argument>int64_t v</argument>)</argument_list></macro></expr>;
+
+}</block></expr>
+}</block>
+
+<name>namespace</name> <name>llvm</name> <block>{
+<expr><name><name>template</name> <argument_list type="generic">&lt;&gt;</argument_list></name>
+struct <name><name>DenseMapInfo</name><argument_list type="generic">&lt;<argument><expr><name>lld</name><operator>::</operator><name>coff</name><operator>::</operator><name>ChunkAndOffset</name></expr></argument>&gt;</argument_list></name>
+<operator>:</operator> <name>lld</name><operator>::</operator><name>coff</name><operator>::</operator><name>ChunkAndOffset</name><operator>::</operator><name>DenseMapInfo</name> <block>{}</block></expr>;
+}</block></expr></block></expr></range></decl></decl_stmt></block_content></block></decl></decl_stmt></block_content></block></decl></decl_stmt>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

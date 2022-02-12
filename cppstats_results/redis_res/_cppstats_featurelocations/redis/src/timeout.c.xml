@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/results/redis_res/_cppstats_featurelocations/redis/src/timeout.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"server.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"cluster.h"</cpp:file></cpp:include>
+
+
+
+
+
+
+<function><type><name>int</name></type> <name>checkBlockedClientTimeout</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>, <parameter><decl><type><name>mstime_t</name></type> <name>now</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>c</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>CLIENT_BLOCKED</name> <operator>&amp;&amp;</operator>
+<name><name>c</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>timeout</name></name> <operator>!=</operator> <literal type="number">0</literal>
+<operator>&amp;&amp;</operator> <name><name>c</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>timeout</name></name> <operator>&lt;</operator> <name>now</name></expr>)</condition>
+<block>{<block_content>
+
+<expr_stmt><expr><call><name>replyToBlockedClientTimedOut</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>unblockClient</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><name>int</name></type> <name>clientsCronHandleTimeout</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>, <parameter><decl><type><name>mstime_t</name></type> <name>now_ms</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>time_t</name></type> <name>now</name> <init>= <expr><name>now_ms</name><operator>/</operator><literal type="number">1000</literal></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>server</name><operator>.</operator><name>maxidletime</name></name> <operator>&amp;&amp;</operator>
+
+<operator>!</operator><operator>(</operator><name><name>c</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>CLIENT_SLAVE</name><operator>)</operator> <operator>&amp;&amp;</operator>
+<operator>!</operator><operator>(</operator><name><name>c</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>CLIENT_MASTER</name><operator>)</operator> <operator>&amp;&amp;</operator>
+<operator>!</operator><operator>(</operator><name><name>c</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>CLIENT_BLOCKED</name><operator>)</operator> <operator>&amp;&amp;</operator>
+<operator>!</operator><operator>(</operator><name><name>c</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>CLIENT_PUBSUB</name><operator>)</operator> <operator>&amp;&amp;</operator>
+<operator>(</operator><name>now</name> <operator>-</operator> <name><name>c</name><operator>-&gt;</operator><name>lastinteraction</name></name> <operator>&gt;</operator> <name><name>server</name><operator>.</operator><name>maxidletime</name></name><operator>)</operator></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>serverLog</name><argument_list>(<argument><expr><name>LL_VERBOSE</name></expr></argument>,<argument><expr><literal type="string">"Closing idle client"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>freeClient</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>c</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>CLIENT_BLOCKED</name></expr>)</condition> <block>{<block_content>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>server</name><operator>.</operator><name>cluster_enabled</name></name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>clusterRedirectBlockedClientIfNeeded</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>unblockClient</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>CLIENT_ST_KEYLEN</name></cpp:macro> <cpp:value>16</cpp:value></cpp:define>
+
+
+<function><type><name>void</name></type> <name>encodeTimeoutKey</name><parameter_list>(<parameter><decl><type><name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>uint64_t</name></type> <name>timeout</name></decl></parameter>, <parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><name>timeout</name> <operator>=</operator> <call><name>htonu64</name><argument_list>(<argument><expr><name>timeout</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>buf</name></expr></argument>,<argument><expr><operator>&amp;</operator><name>timeout</name></expr></argument>,<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>timeout</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>buf</name><operator>+</operator><literal type="number">8</literal></expr></argument>,<argument><expr><operator>&amp;</operator><name>c</name></expr></argument>,<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><sizeof>sizeof<argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></sizeof> <operator>==</operator> <literal type="number">4</literal></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><name>buf</name><operator>+</operator><literal type="number">12</literal></expr></argument>,<argument><expr><literal type="number">0</literal></expr></argument>,<argument><expr><literal type="number">4</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+
+
+<function><type><name>void</name></type> <name>decodeTimeoutKey</name><parameter_list>(<parameter><decl><type><name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>uint64_t</name> <modifier>*</modifier></type><name>toptr</name></decl></parameter>, <parameter><decl><type><name>client</name> <modifier>*</modifier><modifier>*</modifier></type><name>cptr</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>toptr</name></expr></argument>,<argument><expr><name>buf</name></expr></argument>,<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>toptr</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>toptr</name> <operator>=</operator> <call><name>ntohu64</name><argument_list>(<argument><expr><operator>*</operator><name>toptr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>cptr</name></expr></argument>,<argument><expr><name>buf</name><operator>+</operator><literal type="number">8</literal></expr></argument>,<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>cptr</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>void</name></type> <name>addClientToTimeoutTable</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>c</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>timeout</name></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content> <return>return;</return></block_content></block></if></if_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>timeout</name> <init>= <expr><name><name>c</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>timeout</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>buf</name><index>[<expr><name>CLIENT_ST_KEYLEN</name></expr>]</index></name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>encodeTimeoutKey</name><argument_list>(<argument><expr><name>buf</name></expr></argument>,<argument><expr><name>timeout</name></expr></argument>,<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>raxTryInsert</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>clients_timeout_table</name></name></expr></argument>,<argument><expr><name>buf</name></expr></argument>,<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></sizeof></expr></argument>,<argument><expr><name>NULL</name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>flags</name></name> <operator>|=</operator> <name>CLIENT_IN_TO_TABLE</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+
+
+<function><type><name>void</name></type> <name>removeClientFromTimeoutTable</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name><name>c</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>CLIENT_IN_TO_TABLE</name><operator>)</operator></expr>)</condition><block type="pseudo"><block_content> <return>return;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;=</operator> <operator>~</operator><name>CLIENT_IN_TO_TABLE</name></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>timeout</name> <init>= <expr><name><name>c</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>timeout</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>buf</name><index>[<expr><name>CLIENT_ST_KEYLEN</name></expr>]</index></name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>encodeTimeoutKey</name><argument_list>(<argument><expr><name>buf</name></expr></argument>,<argument><expr><name>timeout</name></expr></argument>,<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>raxRemove</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>clients_timeout_table</name></name></expr></argument>,<argument><expr><name>buf</name></expr></argument>,<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></sizeof></expr></argument>,<argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+<function><type><name>void</name></type> <name>handleBlockedClientsTimeout</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>raxSize</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>clients_timeout_table</name></name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content> <return>return;</return></block_content></block></if></if_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>now</name> <init>= <expr><call><name>mstime</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>raxIterator</name></type> <name>ri</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>raxStart</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ri</name></expr></argument>,<argument><expr><name><name>server</name><operator>.</operator><name>clients_timeout_table</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>raxSeek</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ri</name></expr></argument>,<argument><expr><literal type="string">"^"</literal></expr></argument>,<argument><expr><name>NULL</name></expr></argument>,<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<while>while<condition>(<expr><call><name>raxNext</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ri</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>timeout</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>decodeTimeoutKey</name><argument_list>(<argument><expr><name><name>ri</name><operator>.</operator><name>key</name></name></expr></argument>,<argument><expr><operator>&amp;</operator><name>timeout</name></expr></argument>,<argument><expr><operator>&amp;</operator><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>timeout</name> <operator>&gt;=</operator> <name>now</name></expr>)</condition><block type="pseudo"><block_content> <break>break;</break></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;=</operator> <operator>~</operator><name>CLIENT_IN_TO_TABLE</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>checkBlockedClientTimeout</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><name>now</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>raxRemove</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>clients_timeout_table</name></name></expr></argument>,<argument><expr><name><name>ri</name><operator>.</operator><name>key</name></name></expr></argument>,<argument><expr><name><name>ri</name><operator>.</operator><name>key_len</name></name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>raxSeek</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ri</name></expr></argument>,<argument><expr><literal type="string">"^"</literal></expr></argument>,<argument><expr><name>NULL</name></expr></argument>,<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></while>
+<expr_stmt><expr><call><name>raxStop</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ri</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+<function><type><name>int</name></type> <name>getTimeoutFromObjectOrReply</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>, <parameter><decl><type><name>robj</name> <modifier>*</modifier></type><name>object</name></decl></parameter>, <parameter><decl><type><name>mstime_t</name> <modifier>*</modifier></type><name>timeout</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>unit</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>long</name> <name>long</name></type> <name>tval</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>long</name> <name>double</name></type> <name>ftval</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>unit</name> <operator>==</operator> <name>UNIT_SECONDS</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>getLongDoubleFromObjectOrReply</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><name>object</name></expr></argument>,<argument><expr><operator>&amp;</operator><name>ftval</name></expr></argument>,
+<argument><expr><literal type="string">"timeout is not a float or out of range"</literal></expr></argument>)</argument_list></call> <operator>!=</operator> <name>C_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>C_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>tval</name> <operator>=</operator> <operator>(</operator><name>long</name> <name>long</name><operator>)</operator> <operator>(</operator><name>ftval</name> <operator>*</operator> <literal type="number">1000.0</literal><operator>)</operator></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>getLongLongFromObjectOrReply</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><name>object</name></expr></argument>,<argument><expr><operator>&amp;</operator><name>tval</name></expr></argument>,
+<argument><expr><literal type="string">"timeout is not an integer or out of range"</literal></expr></argument>)</argument_list></call> <operator>!=</operator> <name>C_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>C_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>tval</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyError</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><literal type="string">"timeout is negative"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>tval</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>tval</name> <operator>+=</operator> <call><name>mstime</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><operator>*</operator><name>timeout</name> <operator>=</operator> <name>tval</name></expr>;</expr_stmt>
+
+<return>return <expr><name>C_OK</name></expr>;</return>
+</block_content>}</block></function>
+</unit>

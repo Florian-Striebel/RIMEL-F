@@ -1,0 +1,1217 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/llvm-project/compiler-rt/lib/profile/InstrProfilingFile.c">
+
+
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>__Fuchsia__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;assert.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;errno.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdio.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;string.h&gt;</cpp:file></cpp:include>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>_MSC_VER</name></expr></argument>)</argument_list></call></expr></cpp:if>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;malloc.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>_WIN32</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"WindowsMMap.h"</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;io.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;process.h&gt;</cpp:file></cpp:include>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/file.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/mman.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;unistd.h&gt;</cpp:file></cpp:include>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__linux__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/types.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"InstrProfiling.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"InstrProfilingInternal.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"InstrProfilingPort.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"InstrProfilingUtil.h"</cpp:file></cpp:include>
+
+
+
+
+
+<typedef>typedef <type><enum>enum <name>ProfileNameSpecifier</name> <block>{
+<decl><name>PNS_unknown</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>,
+<decl><name>PNS_default</name></decl>,
+<decl><name>PNS_command_line</name></decl>,
+<decl><name>PNS_environment</name></decl>,
+<decl><name>PNS_runtime_api</name></decl>
+}</block></enum></type> <name>ProfileNameSpecifier</name>;</typedef>
+
+<function><type><specifier>static</specifier> <specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>getPNSStr</name><parameter_list>(<parameter><decl><type><name>ProfileNameSpecifier</name></type> <name>PNS</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<switch>switch <condition>(<expr><name>PNS</name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>PNS_default</name></expr>:</case>
+<return>return <expr><literal type="string">"default setting"</literal></expr>;</return>
+<case>case <expr><name>PNS_command_line</name></expr>:</case>
+<return>return <expr><literal type="string">"command line"</literal></expr>;</return>
+<case>case <expr><name>PNS_environment</name></expr>:</case>
+<return>return <expr><literal type="string">"environment variable"</literal></expr>;</return>
+<case>case <expr><name>PNS_runtime_api</name></expr>:</case>
+<return>return <expr><literal type="string">"runtime API"</literal></expr>;</return>
+<default>default:</default>
+<return>return <expr><literal type="string">"Unknown"</literal></expr>;</return>
+</block_content>}</block></switch>
+</block_content>}</block></function>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MAX_PID_SIZE</name></cpp:macro> <cpp:value>16</cpp:value></cpp:define>
+
+<typedef>typedef <type><struct>struct <name>lprofFilename</name> <block>{
+
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>FilenamePat</name></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><name>unsigned</name></type> <name>OwnsFilenamePat</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>ProfilePathPrefix</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name><name>PidChars</name><index>[<expr><name>MAX_PID_SIZE</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>TmpDir</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name><name>Hostname</name><index>[<expr><name>COMPILER_RT_MAX_HOSTLEN</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name></type> <name>NumPids</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name></type> <name>NumHosts</name></decl>;</decl_stmt>
+
+
+
+
+
+
+
+<decl_stmt><decl><type><name>unsigned</name></type> <name>MergePoolSize</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ProfileNameSpecifier</name></type> <name>PNS</name></decl>;</decl_stmt>
+}</block></struct></type> <name>lprofFilename</name>;</typedef>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>lprofFilename</name></type> <name>lprofCurFilename</name> <init>= <expr><block>{<expr><literal type="number">0</literal></expr>, <expr><literal type="number">0</literal></expr>, <expr><literal type="number">0</literal></expr>, <expr><block>{<expr><literal type="number">0</literal></expr>}</block></expr>, <expr><name>NULL</name></expr>,
+<expr><block>{<expr><literal type="number">0</literal></expr>}</block></expr>, <expr><literal type="number">0</literal></expr>, <expr><literal type="number">0</literal></expr>, <expr><literal type="number">0</literal></expr>, <expr><name>PNS_unknown</name></expr>}</block></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>ProfileMergeRequested</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<function><type><specifier>static</specifier> <name>int</name></type> <name>isProfileMergeRequested</name><parameter_list>()</parameter_list> <block>{<block_content> <return>return <expr><name>ProfileMergeRequested</name></expr>;</return> </block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>void</name></type> <name>setProfileMergeRequested</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>EnableMerge</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><name>ProfileMergeRequested</name> <operator>=</operator> <name>EnableMerge</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>FILE</name> <modifier>*</modifier></type><name>ProfileFile</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<function><type><specifier>static</specifier> <name>FILE</name> <modifier>*</modifier></type><name>getProfileFile</name><parameter_list>()</parameter_list> <block>{<block_content> <return>return <expr><name>ProfileFile</name></expr>;</return> </block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>void</name></type> <name>setProfileFile</name><parameter_list>(<parameter><decl><type><name>FILE</name> <modifier>*</modifier></type><name>File</name></decl></parameter>)</parameter_list> <block>{<block_content> <expr_stmt><expr><name>ProfileFile</name> <operator>=</operator> <name>File</name></expr>;</expr_stmt> </block_content>}</block></function>
+
+<function><type><name>COMPILER_RT_VISIBILITY</name> <name>void</name></type> <name>__llvm_profile_set_file_object</name><parameter_list>(<parameter><decl><type><name>FILE</name> <modifier>*</modifier></type><name>File</name></decl></parameter>,
+<parameter><decl><type><name>int</name></type> <name>EnableMerge</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>__llvm_profile_is_continuous_mode_enabled</name><argument_list>()</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_WARN</name><argument_list>(<argument><expr><literal type="string">"__llvm_profile_set_file_object(fd=%d) not supported, because "</literal>
+<literal type="string">"continuous sync mode (%%c) is enabled"</literal></expr></argument>,
+<argument><expr><call><name>fileno</name><argument_list>(<argument><expr><name>File</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>setProfileFile</name><argument_list>(<argument><expr><name>File</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>setProfileMergeRequested</name><argument_list>(<argument><expr><name>EnableMerge</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>getCurFilenameLength</name><parameter_list>()</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>getCurFilename</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>FilenameBuf</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ForceUseBuf</name></decl></parameter>)</parameter_list>;</function_decl>
+<function><type><specifier>static</specifier> <name>unsigned</name></type> <name>doMerging</name><parameter_list>()</parameter_list> <block>{<block_content>
+<return>return <expr><name><name>lprofCurFilename</name><operator>.</operator><name>MergePoolSize</name></name> <operator>||</operator> <call><name>isProfileMergeRequested</name><argument_list>()</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>uint32_t</name></type> <name>fileWriter</name><parameter_list>(<parameter><decl><type><name>ProfDataWriter</name> <modifier>*</modifier></type><name>This</name></decl></parameter>, <parameter><decl><type><name>ProfDataIOVec</name> <modifier>*</modifier></type><name>IOVecs</name></decl></parameter>,
+<parameter><decl><type><name>uint32_t</name></type> <name>NumIOVecs</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>I</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>FILE</name> <modifier>*</modifier></type><name>File</name> <init>= <expr><operator>(</operator><name>FILE</name> <operator>*</operator><operator>)</operator><name><name>This</name><operator>-&gt;</operator><name>WriterCtx</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name><name>Zeroes</name><index>[<expr><sizeof>sizeof<argument_list>(<argument><expr><name>uint64_t</name></expr></argument>)</argument_list></sizeof></expr>]</index></name> <init>= <expr><block>{<expr><literal type="number">0</literal></expr>}</block></expr></init></decl>;</decl_stmt>
+<for>for <control>(<init><expr><name>I</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>I</name> <operator>&lt;</operator> <name>NumIOVecs</name></expr>;</condition> <incr><expr><name>I</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>IOVecs</name><index>[<expr><name>I</name></expr>]</index></name><operator>.</operator><name>Data</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>fwrite</name><argument_list>(<argument><expr><name><name>IOVecs</name><index>[<expr><name>I</name></expr>]</index></name><operator>.</operator><name>Data</name></expr></argument>, <argument><expr><name><name>IOVecs</name><index>[<expr><name>I</name></expr>]</index></name><operator>.</operator><name>ElmSize</name></expr></argument>, <argument><expr><name><name>IOVecs</name><index>[<expr><name>I</name></expr>]</index></name><operator>.</operator><name>NumElm</name></expr></argument>, <argument><expr><name>File</name></expr></argument>)</argument_list></call> <operator>!=</operator>
+<name><name>IOVecs</name><index>[<expr><name>I</name></expr>]</index></name><operator>.</operator><name>NumElm</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>IOVecs</name><index>[<expr><name>I</name></expr>]</index></name><operator>.</operator><name>UseZeroPadding</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>size_t</name></type> <name>BytesToWrite</name> <init>= <expr><name><name>IOVecs</name><index>[<expr><name>I</name></expr>]</index></name><operator>.</operator><name>ElmSize</name> <operator>*</operator> <name><name>IOVecs</name><index>[<expr><name>I</name></expr>]</index></name><operator>.</operator><name>NumElm</name></expr></init></decl>;</decl_stmt>
+<while>while <condition>(<expr><name>BytesToWrite</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>size_t</name></type> <name>PartialWriteLen</name> <init>=
+<expr><ternary><condition><expr><operator>(</operator><sizeof>sizeof<argument_list>(<argument><expr><name>uint64_t</name></expr></argument>)</argument_list></sizeof> <operator>&gt;</operator> <name>BytesToWrite</name><operator>)</operator></expr> ?</condition><then> <expr><name>BytesToWrite</name></expr> </then><else>: <expr><sizeof>sizeof<argument_list>(<argument><expr><name>uint64_t</name></expr></argument>)</argument_list></sizeof></expr></else></ternary></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>fwrite</name><argument_list>(<argument><expr><name>Zeroes</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>uint8_t</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><name>PartialWriteLen</name></expr></argument>, <argument><expr><name>File</name></expr></argument>)</argument_list></call> <operator>!=</operator>
+<name>PartialWriteLen</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>BytesToWrite</name> <operator>-=</operator> <name>PartialWriteLen</name></expr>;</expr_stmt>
+</block_content>}</block></while>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>fseek</name><argument_list>(<argument><expr><name>File</name></expr></argument>, <argument><expr><name><name>IOVecs</name><index>[<expr><name>I</name></expr>]</index></name><operator>.</operator><name>ElmSize</name> <operator>*</operator> <name><name>IOVecs</name><index>[<expr><name>I</name></expr>]</index></name><operator>.</operator><name>NumElm</name></expr></argument>, <argument><expr><name>SEEK_CUR</name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></for>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<function><type><specifier>static</specifier> <name>uint32_t</name></type> <name>orderFileWriter</name><parameter_list>(<parameter><decl><type><name>FILE</name> <modifier>*</modifier></type><name>File</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>uint32_t</name> <modifier>*</modifier></type><name>DataStart</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>fwrite</name><argument_list>(<argument><expr><name>DataStart</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>uint32_t</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><name>INSTR_ORDER_FILE_BUFFER_SIZE</name></expr></argument>, <argument><expr><name>File</name></expr></argument>)</argument_list></call> <operator>!=</operator>
+<name>INSTR_ORDER_FILE_BUFFER_SIZE</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type> <name>initFileWriter</name><parameter_list>(<parameter><decl><type><name>ProfDataWriter</name> <modifier>*</modifier></type><name>This</name></decl></parameter>, <parameter><decl><type><name>FILE</name> <modifier>*</modifier></type><name>File</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><name><name>This</name><operator>-&gt;</operator><name>Write</name></name> <operator>=</operator> <name>fileWriter</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>This</name><operator>-&gt;</operator><name>WriterCtx</name></name> <operator>=</operator> <name>File</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>COMPILER_RT_VISIBILITY</name> <name>ProfBufferIO</name> <modifier>*</modifier></type>
+<name>lprofCreateBufferIOInternal</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>File</name></decl></parameter>, <parameter><decl><type><name>uint32_t</name></type> <name>BufferSz</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><name>FreeHook</name> <operator>=</operator> <operator>&amp;</operator><name>free</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>DynamicBufferIOBuffer</name> <operator>=</operator> <operator>(</operator><name>uint8_t</name> <operator>*</operator><operator>)</operator><call><name>calloc</name><argument_list>(<argument><expr><name>BufferSz</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>VPBufferSize</name> <operator>=</operator> <name>BufferSz</name></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>ProfDataWriter</name> <modifier>*</modifier></type><name>fileWriter</name> <init>=
+<expr><operator>(</operator><name>ProfDataWriter</name> <operator>*</operator><operator>)</operator><call><name>calloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>ProfDataWriter</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>initFileWriter</name><argument_list>(<argument><expr><name>fileWriter</name></expr></argument>, <argument><expr><name>File</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>ProfBufferIO</name> <modifier>*</modifier></type><name>IO</name> <init>= <expr><call><name>lprofCreateBufferIO</name><argument_list>(<argument><expr><name>fileWriter</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>IO</name><operator>-&gt;</operator><name>OwnFileWriter</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<return>return <expr><name>IO</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type> <name>setupIOBuffer</name><parameter_list>()</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>BufferSzStr</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>BufferSzStr</name> <operator>=</operator> <call><name>getenv</name><argument_list>(<argument><expr><literal type="string">"LLVM_VP_BUFFER_SIZE"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>BufferSzStr</name> <operator>&amp;&amp;</operator> <name><name>BufferSzStr</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>VPBufferSize</name> <operator>=</operator> <call><name>atoi</name><argument_list>(<argument><expr><name>BufferSzStr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>DynamicBufferIOBuffer</name> <operator>=</operator> <operator>(</operator><name>uint8_t</name> <operator>*</operator><operator>)</operator><call><name>calloc</name><argument_list>(<argument><expr><name>VPBufferSize</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type> <name>getProfileFileSizeForMerging</name><parameter_list>(<parameter><decl><type><name>FILE</name> <modifier>*</modifier></type><name>ProfileFile</name></decl></parameter>,
+<parameter><decl><type><name>uint64_t</name> <modifier>*</modifier></type><name>ProfileFileSize</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>fseek</name><argument_list>(<argument><expr><name>ProfileFile</name></expr></argument>, <argument><expr><literal type="number">0L</literal></expr></argument>, <argument><expr><name>SEEK_END</name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_ERR</name><argument_list>(<argument><expr><literal type="string">"Unable to merge profile data, unable to get size: %s\n"</literal></expr></argument>,
+<argument><expr><call><name>strerror</name><argument_list>(<argument><expr><name>errno</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><operator>*</operator><name>ProfileFileSize</name> <operator>=</operator> <call><name>ftell</name><argument_list>(<argument><expr><name>ProfileFile</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>fseek</name><argument_list>(<argument><expr><name>ProfileFile</name></expr></argument>, <argument><expr><literal type="number">0L</literal></expr></argument>, <argument><expr><name>SEEK_SET</name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_ERR</name><argument_list>(<argument><expr><literal type="string">"Unable to merge profile data, unable to rewind: %s\n"</literal></expr></argument>,
+<argument><expr><call><name>strerror</name><argument_list>(<argument><expr><name>errno</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>ProfileFileSize</name> <operator>&gt;</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator>
+<operator>*</operator><name>ProfileFileSize</name> <operator>&lt;</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>__llvm_profile_header</name></expr></argument>)</argument_list></sizeof></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_WARN</name><argument_list>(<argument><expr><literal type="string">"Unable to merge profile data: %s\n"</literal></expr></argument>,
+<argument><expr><literal type="string">"source profile file is too small."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type> <name>mmapProfileForMerging</name><parameter_list>(<parameter><decl><type><name>FILE</name> <modifier>*</modifier></type><name>ProfileFile</name></decl></parameter>, <parameter><decl><type><name>uint64_t</name></type> <name>ProfileFileSize</name></decl></parameter>,
+<parameter><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>ProfileBuffer</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>ProfileBuffer</name> <operator>=</operator> <call><name>mmap</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>ProfileFileSize</name></expr></argument>, <argument><expr><name>PROT_READ</name></expr></argument>, <argument><expr><name>MAP_SHARED</name> <operator>|</operator> <name>MAP_FILE</name></expr></argument>,
+<argument><expr><call><name>fileno</name><argument_list>(<argument><expr><name>ProfileFile</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>ProfileBuffer</name> <operator>==</operator> <name>MAP_FAILED</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_ERR</name><argument_list>(<argument><expr><literal type="string">"Unable to merge profile data, mmap failed: %s\n"</literal></expr></argument>,
+<argument><expr><call><name>strerror</name><argument_list>(<argument><expr><name>errno</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>__llvm_profile_check_compatibility</name><argument_list>(<argument><expr><operator>*</operator><name>ProfileBuffer</name></expr></argument>, <argument><expr><name>ProfileFileSize</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>munmap</name><argument_list>(<argument><expr><operator>*</operator><name>ProfileBuffer</name></expr></argument>, <argument><expr><name>ProfileFileSize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>PROF_WARN</name><argument_list>(<argument><expr><literal type="string">"Unable to merge profile data: %s\n"</literal></expr></argument>,
+<argument><expr><literal type="string">"source profile file is not compatible."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type> <name>doProfileMerging</name><parameter_list>(<parameter><decl><type><name>FILE</name> <modifier>*</modifier></type><name>ProfileFile</name></decl></parameter>, <parameter><decl><type><name>int</name> <modifier>*</modifier></type><name>MergeDone</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>ProfileFileSize</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>ProfileBuffer</name></decl>;</decl_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>getProfileFileSizeForMerging</name><argument_list>(<argument><expr><name>ProfileFile</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ProfileFileSize</name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>ProfileFileSize</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><literal type="number">0</literal></expr>;</return></block_content></block></if></if_stmt>
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>mmapProfileForMerging</name><argument_list>(<argument><expr><name>ProfileFile</name></expr></argument>, <argument><expr><name>ProfileFileSize</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ProfileBuffer</name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>__llvm_profile_merge_from_buffer</name><argument_list>(<argument><expr><name>ProfileBuffer</name></expr></argument>, <argument><expr><name>ProfileFileSize</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_ERR</name><argument_list>(<argument><expr><literal type="string">"%s\n"</literal></expr></argument>, <argument><expr><literal type="string">"Invalid profile data to merge"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>munmap</name><argument_list>(<argument><expr><name>ProfileBuffer</name></expr></argument>, <argument><expr><name>ProfileFileSize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>COMPILER_RT_FTRUNCATE</name><argument_list>(<argument><expr><name>ProfileFile</name></expr></argument>,
+<argument><expr><call><name>__llvm_profile_get_size_for_buffer</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>munmap</name><argument_list>(<argument><expr><name>ProfileBuffer</name></expr></argument>, <argument><expr><name>ProfileFileSize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>MergeDone</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>void</name></type> <name>createProfileDir</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>Filename</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>size_t</name></type> <name>Length</name> <init>= <expr><call><name>strlen</name><argument_list>(<argument><expr><name>Filename</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>lprofFindFirstDirSeparator</name><argument_list>(<argument><expr><name>Filename</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>Copy</name> <init>= <expr><operator>(</operator><name>char</name> <operator>*</operator><operator>)</operator><call><name>COMPILER_RT_ALLOCA</name><argument_list>(<argument><expr><name>Length</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>strncpy</name><argument_list>(<argument><expr><name>Copy</name></expr></argument>, <argument><expr><name>Filename</name></expr></argument>, <argument><expr><name>Length</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>__llvm_profile_recursive_mkdir</name><argument_list>(<argument><expr><name>Copy</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>FILE</name> <modifier>*</modifier></type><name>openFileForMerging</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>ProfileFileName</name></decl></parameter>, <parameter><decl><type><name>int</name> <modifier>*</modifier></type><name>MergeDone</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>FILE</name> <modifier>*</modifier></type><name>ProfileFile</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>rc</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>ProfileFile</name> <operator>=</operator> <call><name>getProfileFile</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ProfileFile</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>lprofLockFileHandle</name><argument_list>(<argument><expr><name>ProfileFile</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>createProfileDir</name><argument_list>(<argument><expr><name>ProfileFileName</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>ProfileFile</name> <operator>=</operator> <call><name>lprofOpenFileEx</name><argument_list>(<argument><expr><name>ProfileFileName</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>ProfileFile</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>NULL</name></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>rc</name> <operator>=</operator> <call><name>doProfileMerging</name><argument_list>(<argument><expr><name>ProfileFile</name></expr></argument>, <argument><expr><name>MergeDone</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>rc</name> <operator>||</operator> <operator>(</operator><operator>!</operator><operator>*</operator><name>MergeDone</name> <operator>&amp;&amp;</operator> <call><name>COMPILER_RT_FTRUNCATE</name><argument_list>(<argument><expr><name>ProfileFile</name></expr></argument>, <argument><expr><literal type="number">0L</literal></expr></argument>)</argument_list></call><operator>)</operator> <operator>||</operator>
+<call><name>fseek</name><argument_list>(<argument><expr><name>ProfileFile</name></expr></argument>, <argument><expr><literal type="number">0L</literal></expr></argument>, <argument><expr><name>SEEK_SET</name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_ERR</name><argument_list>(<argument><expr><literal type="string">"Profile Merging of file %s failed: %s\n"</literal></expr></argument>, <argument><expr><name>ProfileFileName</name></expr></argument>,
+<argument><expr><call><name>strerror</name><argument_list>(<argument><expr><name>errno</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fclose</name><argument_list>(<argument><expr><name>ProfileFile</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name>ProfileFile</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>FILE</name> <modifier>*</modifier></type><name>getFileObject</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>OutputName</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>FILE</name> <modifier>*</modifier></type><name>File</name></decl>;</decl_stmt>
+<expr_stmt><expr><name>File</name> <operator>=</operator> <call><name>getProfileFile</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>File</name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>File</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><call><name>fopen</name><argument_list>(<argument><expr><name>OutputName</name></expr></argument>, <argument><expr><literal type="string">"ab"</literal></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>int</name></type> <name>writeFile</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>OutputName</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>RetVal</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>FILE</name> <modifier>*</modifier></type><name>OutputFile</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>int</name></type> <name>MergeDone</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>VPMergeHook</name> <operator>=</operator> <operator>&amp;</operator><name>lprofMergeValueProfData</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>doMerging</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>OutputFile</name> <operator>=</operator> <call><name>openFileForMerging</name><argument_list>(<argument><expr><name>OutputName</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>MergeDone</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>OutputFile</name> <operator>=</operator> <call><name>getFileObject</name><argument_list>(<argument><expr><name>OutputName</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>OutputFile</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>FreeHook</name> <operator>=</operator> <operator>&amp;</operator><name>free</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>setupIOBuffer</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>ProfDataWriter</name></type> <name>fileWriter</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>initFileWriter</name><argument_list>(<argument><expr><operator>&amp;</operator><name>fileWriter</name></expr></argument>, <argument><expr><name>OutputFile</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>RetVal</name> <operator>=</operator> <call><name>lprofWriteData</name><argument_list>(<argument><expr><operator>&amp;</operator><name>fileWriter</name></expr></argument>, <argument><expr><call><name>lprofGetVPDataReader</name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><name>MergeDone</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>OutputFile</name> <operator>==</operator> <call><name>getProfileFile</name><argument_list>()</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fflush</name><argument_list>(<argument><expr><name>OutputFile</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>doMerging</name><argument_list>()</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>lprofUnlockFileHandle</name><argument_list>(<argument><expr><name>OutputFile</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>fclose</name><argument_list>(<argument><expr><name>OutputFile</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<return>return <expr><name>RetVal</name></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>int</name></type> <name>writeOrderFile</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>OutputName</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>RetVal</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>FILE</name> <modifier>*</modifier></type><name>OutputFile</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>OutputFile</name> <operator>=</operator> <call><name>fopen</name><argument_list>(<argument><expr><name>OutputName</name></expr></argument>, <argument><expr><literal type="string">"w"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>OutputFile</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_WARN</name><argument_list>(<argument><expr><literal type="string">"can't open file with mode ab: %s\n"</literal></expr></argument>, <argument><expr><name>OutputName</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>FreeHook</name> <operator>=</operator> <operator>&amp;</operator><name>free</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>setupIOBuffer</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uint32_t</name> <modifier>*</modifier></type><name>DataBegin</name> <init>= <expr><call><name>__llvm_profile_begin_orderfile</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>RetVal</name> <operator>=</operator> <call><name>orderFileWriter</name><argument_list>(<argument><expr><name>OutputFile</name></expr></argument>, <argument><expr><name>DataBegin</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>fclose</name><argument_list>(<argument><expr><name>OutputFile</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>RetVal</name></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>LPROF_INIT_ONCE_ENV</name></cpp:macro> <cpp:value>"__LLVM_PROFILE_RT_INIT_ONCE"</cpp:value></cpp:define>
+
+<function><type><specifier>static</specifier> <name>void</name></type> <name>truncateCurrentFile</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>Filename</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>FilenameBuf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>FILE</name> <modifier>*</modifier></type><name>File</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>Length</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>Length</name> <operator>=</operator> <call><name>getCurFilenameLength</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>FilenameBuf</name> <operator>=</operator> <operator>(</operator><name>char</name> <operator>*</operator><operator>)</operator><call><name>COMPILER_RT_ALLOCA</name><argument_list>(<argument><expr><name>Length</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>Filename</name> <operator>=</operator> <call><name>getCurFilename</name><argument_list>(<argument><expr><name>FilenameBuf</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>Filename</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+
+
+
+<decl_stmt><decl><type><name>int</name></type> <name>initialized</name> <init>= <expr><call><name>getenv</name><argument_list>(<argument><expr><name>LPROF_INIT_ONCE_ENV</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>NULL</name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>initialized</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>_WIN32</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr_stmt><expr><call><name>_putenv</name><argument_list>(<argument><expr><name>LPROF_INIT_ONCE_ENV</name> <literal type="string">"="</literal> <name>LPROF_INIT_ONCE_ENV</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><call><name>setenv</name><argument_list>(<argument><expr><name>LPROF_INIT_ONCE_ENV</name></expr></argument>, <argument><expr><name>LPROF_INIT_ONCE_ENV</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+<expr_stmt><expr><call><name>createProfileDir</name><argument_list>(<argument><expr><name>Filename</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>lprofCurFilename</name><operator>.</operator><name>MergePoolSize</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+
+<expr_stmt><expr><name>File</name> <operator>=</operator> <call><name>fopen</name><argument_list>(<argument><expr><name>Filename</name></expr></argument>, <argument><expr><literal type="string">"w"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>File</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>fclose</name><argument_list>(<argument><expr><name>File</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__APPLE__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<function><type><specifier>static</specifier> <name>void</name></type> <name>assertIsZero</name><parameter_list>(<parameter><decl><type><name>int</name> <modifier>*</modifier></type><name>i</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>i</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>PROF_WARN</name><argument_list>(<argument><expr><literal type="string">"Expected flag to be 0, but got: %d\n"</literal></expr></argument>, <argument><expr><operator>*</operator><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type> <name>writeProfileWithFileObject</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>Filename</name></decl></parameter>, <parameter><decl><type><name>FILE</name> <modifier>*</modifier></type><name>File</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>setProfileFile</name><argument_list>(<argument><expr><name>File</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>rc</name> <init>= <expr><call><name>writeFile</name><argument_list>(<argument><expr><name>Filename</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>rc</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>PROF_ERR</name><argument_list>(<argument><expr><literal type="string">"Failed to write file \"%s\": %s\n"</literal></expr></argument>, <argument><expr><name>Filename</name></expr></argument>, <argument><expr><call><name>strerror</name><argument_list>(<argument><expr><name>errno</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>setProfileFile</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>rc</name></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>void</name></type> <name>unlockProfile</name><parameter_list>(<parameter><decl><type><name>int</name> <modifier>*</modifier></type><name>ProfileRequiresUnlock</name></decl></parameter>, <parameter><decl><type><name>FILE</name> <modifier>*</modifier></type><name>File</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>*</operator><name>ProfileRequiresUnlock</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_WARN</name><argument_list>(<argument><expr><literal type="string">"%s"</literal></expr></argument>, <argument><expr><literal type="string">"Expected to require profile unlock\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>lprofUnlockFileHandle</name><argument_list>(<argument><expr><name>File</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>ProfileRequiresUnlock</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type> <name>initializeProfileForContinuousMode</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>__llvm_profile_is_continuous_mode_enabled</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+
+
+<decl_stmt><decl><type><specifier>const</specifier> <name>__llvm_profile_data</name> <modifier>*</modifier></type><name>DataBegin</name> <init>= <expr><call><name>__llvm_profile_begin_data</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>__llvm_profile_data</name> <modifier>*</modifier></type><name>DataEnd</name> <init>= <expr><call><name>__llvm_profile_end_data</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uint64_t</name> <modifier>*</modifier></type><name>CountersBegin</name> <init>= <expr><call><name>__llvm_profile_begin_counters</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uint64_t</name> <modifier>*</modifier></type><name>CountersEnd</name> <init>= <expr><call><name>__llvm_profile_end_counters</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>NamesBegin</name> <init>= <expr><call><name>__llvm_profile_begin_names</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>NamesEnd</name> <init>= <expr><call><name>__llvm_profile_end_names</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uint64_t</name></type> <name>NamesSize</name> <init>= <expr><operator>(</operator><name>NamesEnd</name> <operator>-</operator> <name>NamesBegin</name><operator>)</operator> <operator>*</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>char</name></expr></argument>)</argument_list></sizeof></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>DataSize</name> <init>= <expr><call><name>__llvm_profile_get_data_size</name><argument_list>(<argument><expr><name>DataBegin</name></expr></argument>, <argument><expr><name>DataEnd</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>CountersSize</name> <init>= <expr><name>CountersEnd</name> <operator>-</operator> <name>CountersBegin</name></expr></init></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><name>unsigned</name></type> <name>PageSize</name> <init>= <expr><call><name>getpagesize</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>intptr_t</name><operator>)</operator><name>CountersBegin</name> <operator>%</operator> <name>PageSize</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_ERR</name><argument_list>(<argument><expr><literal type="string">"Counters section not page-aligned (start = %p, pagesz = %u).\n"</literal></expr></argument>,
+<argument><expr><name>CountersBegin</name></expr></argument>, <argument><expr><name>PageSize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>intptr_t</name><operator>)</operator><name>DataBegin</name> <operator>%</operator> <name>PageSize</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_ERR</name><argument_list>(<argument><expr><literal type="string">"Data section not page-aligned (start = %p, pagesz = %u).\n"</literal></expr></argument>,
+<argument><expr><name>DataBegin</name></expr></argument>, <argument><expr><name>PageSize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+<decl_stmt><decl><type><name>int</name></type> <name>Length</name> <init>= <expr><call><name>getCurFilenameLength</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>FilenameBuf</name> <init>= <expr><operator>(</operator><name>char</name> <operator>*</operator><operator>)</operator><call><name>COMPILER_RT_ALLOCA</name><argument_list>(<argument><expr><name>Length</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>Filename</name> <init>= <expr><call><name>getCurFilename</name><argument_list>(<argument><expr><name>FilenameBuf</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>Filename</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+<decl_stmt><decl><type><name>FILE</name> <modifier>*</modifier></type><name>File</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>off_t</name></type> <name>CurrentFileOffset</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>off_t</name></type> <name>OffsetModPage</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+
+
+<macro><name>COMPILER_RT_CLEANUP</name><argument_list>(<argument>assertIsZero</argument>)</argument_list></macro> <decl_stmt><decl><type><name>int</name></type> <name>ProfileRequiresUnlock</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>doMerging</name><argument_list>()</argument_list></call></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><name>File</name> <operator>=</operator> <call><name>fopen</name><argument_list>(<argument><expr><name>Filename</name></expr></argument>, <argument><expr><literal type="string">"a+b"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>File</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+
+<expr_stmt><expr><name>CurrentFileOffset</name> <operator>=</operator> <call><name>ftello</name><argument_list>(<argument><expr><name>File</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>OffsetModPage</name> <operator>=</operator> <name>CurrentFileOffset</name> <operator>%</operator> <name>PageSize</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>OffsetModPage</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_ERR</name><argument_list>(<argument><expr><literal type="string">"Continuous counter sync mode is enabled, but raw profile is not"</literal>
+<literal type="string">"page-aligned. CurrentFileOffset = %"</literal> <name>PRIu64</name> <literal type="string">", pagesz = %u.\n"</literal></expr></argument>,
+<argument><expr><operator>(</operator><name>uint64_t</name><operator>)</operator><name>CurrentFileOffset</name></expr></argument>, <argument><expr><name>PageSize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>writeProfileWithFileObject</name><argument_list>(<argument><expr><name>Filename</name></expr></argument>, <argument><expr><name>File</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+
+
+
+<expr_stmt><expr><name>File</name> <operator>=</operator> <call><name>lprofOpenFileEx</name><argument_list>(<argument><expr><name>Filename</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>File</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>ProfileRequiresUnlock</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>ProfileFileSize</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>getProfileFileSizeForMerging</name><argument_list>(<argument><expr><name>File</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ProfileFileSize</name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><call><name>unlockProfile</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ProfileRequiresUnlock</name></expr></argument>, <argument><expr><name>File</name></expr></argument>)</argument_list></call></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ProfileFileSize</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>writeProfileWithFileObject</name><argument_list>(<argument><expr><name>Filename</name></expr></argument>, <argument><expr><name>File</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><call><name>unlockProfile</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ProfileRequiresUnlock</name></expr></argument>, <argument><expr><name>File</name></expr></argument>)</argument_list></call></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>ProfileBuffer</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>mmapProfileForMerging</name><argument_list>(<argument><expr><name>File</name></expr></argument>, <argument><expr><name>ProfileFileSize</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ProfileBuffer</name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal> <operator>||</operator>
+<call><name>munmap</name><argument_list>(<argument><expr><name>ProfileBuffer</name></expr></argument>, <argument><expr><name>ProfileFileSize</name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><call><name>unlockProfile</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ProfileRequiresUnlock</name></expr></argument>, <argument><expr><name>File</name></expr></argument>)</argument_list></call></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></else></if_stmt>
+
+
+
+<if_stmt><if>if <condition>(<expr><name>CountersSize</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>Fileno</name> <init>= <expr><call><name>fileno</name><argument_list>(<argument><expr><name>File</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+
+
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>PaddingBytesBeforeCounters</name></decl>, <decl><type ref="prev"/><name>PaddingBytesAfterCounters</name></decl>,
+<decl><type ref="prev"/><name>PaddingBytesAfterNames</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>__llvm_profile_get_padding_sizes_for_counters</name><argument_list>(
+<argument><expr><name>DataSize</name></expr></argument>, <argument><expr><name>CountersSize</name></expr></argument>, <argument><expr><name>NamesSize</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>PaddingBytesBeforeCounters</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>PaddingBytesAfterCounters</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>PaddingBytesAfterNames</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>PageAlignedCountersLength</name> <init>=
+<expr><operator>(</operator><name>CountersSize</name> <operator>*</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>uint64_t</name></expr></argument>)</argument_list></sizeof><operator>)</operator> <operator>+</operator> <name>PaddingBytesAfterCounters</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>FileOffsetToCounters</name> <init>=
+<expr><name>CurrentFileOffset</name> <operator>+</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>__llvm_profile_header</name></expr></argument>)</argument_list></sizeof> <operator>+</operator>
+<operator>(</operator><name>DataSize</name> <operator>*</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>__llvm_profile_data</name></expr></argument>)</argument_list></sizeof><operator>)</operator> <operator>+</operator> <name>PaddingBytesBeforeCounters</name></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>uint64_t</name> <modifier>*</modifier></type><name>CounterMmap</name> <init>= <expr><operator>(</operator><name>uint64_t</name> <operator>*</operator><operator>)</operator><call><name>mmap</name><argument_list>(
+<argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name>CountersBegin</name></expr></argument>, <argument><expr><name>PageAlignedCountersLength</name></expr></argument>, <argument><expr><name>PROT_READ</name> <operator>|</operator> <name>PROT_WRITE</name></expr></argument>,
+<argument><expr><name>MAP_FIXED</name> <operator>|</operator> <name>MAP_SHARED</name></expr></argument>, <argument><expr><name>Fileno</name></expr></argument>, <argument><expr><name>FileOffsetToCounters</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>CounterMmap</name> <operator>!=</operator> <name>CountersBegin</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_ERR</name><argument_list>(
+<argument><expr><literal type="string">"Continuous counter sync mode is enabled, but mmap() failed (%s).\n"</literal>
+<literal type="string">" - CountersBegin: %p\n"</literal>
+<literal type="string">" - PageAlignedCountersLength: %"</literal> <name>PRIu64</name> <literal type="string">"\n"</literal>
+<literal type="string">" - Fileno: %d\n"</literal>
+<literal type="string">" - FileOffsetToCounters: %"</literal> <name>PRIu64</name> <literal type="string">"\n"</literal></expr></argument>,
+<argument><expr><call><name>strerror</name><argument_list>(<argument><expr><name>errno</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>CountersBegin</name></expr></argument>, <argument><expr><name>PageAlignedCountersLength</name></expr></argument>, <argument><expr><name>Fileno</name></expr></argument>,
+<argument><expr><name>FileOffsetToCounters</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ProfileRequiresUnlock</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>unlockProfile</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ProfileRequiresUnlock</name></expr></argument>, <argument><expr><name>File</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__ELF__</name></expr></argument>)</argument_list></call> <operator>||</operator> <call><name>defined</name><argument_list>(<argument><expr><name>_WIN32</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>INSTR_PROF_PROFILE_COUNTER_BIAS_DEFAULT_VAR</name></cpp:macro> <cpp:value>INSTR_PROF_CONCAT(INSTR_PROF_PROFILE_COUNTER_BIAS_VAR, _default)</cpp:value></cpp:define>
+
+<decl_stmt><decl><type><name>intptr_t</name></type> <name>INSTR_PROF_PROFILE_COUNTER_BIAS_DEFAULT_VAR</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>_MSC_VER</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<decl_stmt><decl><type><name>COMPILER_RT_VISIBILITY</name> <specifier>extern</specifier> <name>intptr_t</name></type> <name>INSTR_PROF_PROFILE_COUNTER_BIAS_VAR</name></decl>;</decl_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>_M_IX86</name></expr></argument>)</argument_list></call> <operator>||</operator> <call><name>defined</name><argument_list>(<argument><expr><name>__i386__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>WIN_SYM_PREFIX</name></cpp:macro> <cpp:value>"_"</cpp:value></cpp:define>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>WIN_SYM_PREFIX</name></cpp:macro></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:pragma>#<cpp:directive>pragma</cpp:directive> <name>comment</name><name>(</name> <name>linker</name><name>,</name> <cpp:literal>"/alternatename:"</cpp:literal> <name>WIN_SYM_PREFIX</name> <name>INSTR_PROF_QUOTE</name><name>(</name> <name>INSTR_PROF_PROFILE_COUNTER_BIAS_VAR</name><name>)</name> <cpp:literal>"="</cpp:literal> <name>WIN_SYM_PREFIX</name> <name>INSTR_PROF_QUOTE</name><name>(</name><name>INSTR_PROF_PROFILE_COUNTER_BIAS_DEFAULT_VAR</name><name>)</name><name>)</name></cpp:pragma>
+
+
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<decl_stmt><decl><type><name>COMPILER_RT_VISIBILITY</name> <specifier>extern</specifier> <name>intptr_t</name> <name>INSTR_PROF_PROFILE_COUNTER_BIAS_VAR</name></type>
+<name>__attribute__</name><argument_list>(<argument><expr><operator>(</operator><name>weak</name><operator>,</operator> <call><name>alias</name><argument_list>(<argument><expr><call><name>INSTR_PROF_QUOTE</name><argument_list>(
+<argument><expr><name>INSTR_PROF_PROFILE_COUNTER_BIAS_DEFAULT_VAR</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call><operator>)</operator></expr></argument>)</argument_list></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<function><type><specifier>static</specifier> <name>int</name></type> <name>writeMMappedFile</name><parameter_list>(<parameter><decl><type><name>FILE</name> <modifier>*</modifier></type><name>OutputFile</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>Profile</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>OutputFile</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+
+
+<expr_stmt><expr><call><name>setupIOBuffer</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>ProfDataWriter</name></type> <name>fileWriter</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>initFileWriter</name><argument_list>(<argument><expr><operator>&amp;</operator><name>fileWriter</name></expr></argument>, <argument><expr><name>OutputFile</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>lprofWriteData</name><argument_list>(<argument><expr><operator>&amp;</operator><name>fileWriter</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_ERR</name><argument_list>(<argument><expr><literal type="string">"Failed to write profile: %s\n"</literal></expr></argument>, <argument><expr><call><name>strerror</name><argument_list>(<argument><expr><name>errno</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>fflush</name><argument_list>(<argument><expr><name>OutputFile</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>FileSize</name> <init>= <expr><call><name>ftell</name><argument_list>(<argument><expr><name>OutputFile</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+
+<expr_stmt><expr><operator>*</operator><name>Profile</name> <operator>=</operator> <operator>(</operator><name>char</name> <operator>*</operator><operator>)</operator><call><name>mmap</name><argument_list>(
+<argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>FileSize</name></expr></argument>, <argument><expr><name>PROT_READ</name> <operator>|</operator> <name>PROT_WRITE</name></expr></argument>, <argument><expr><name>MAP_SHARED</name></expr></argument>, <argument><expr><call><name>fileno</name><argument_list>(<argument><expr><name>OutputFile</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>Profile</name> <operator>==</operator> <name>MAP_FAILED</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_ERR</name><argument_list>(<argument><expr><literal type="string">"Unable to mmap profile: %s\n"</literal></expr></argument>, <argument><expr><call><name>strerror</name><argument_list>(<argument><expr><name>errno</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type> <name>initializeProfileForContinuousMode</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>__llvm_profile_is_continuous_mode_enabled</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+
+
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>BiasAddr</name> <init>= <expr><operator>&amp;</operator><name>INSTR_PROF_PROFILE_COUNTER_BIAS_VAR</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>BiasDefaultAddr</name> <init>= <expr><operator>&amp;</operator><name>INSTR_PROF_PROFILE_COUNTER_BIAS_DEFAULT_VAR</name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>BiasAddr</name> <operator>==</operator> <name>BiasDefaultAddr</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_ERR</name><argument_list>(<argument><expr><literal type="string">"%s\n"</literal></expr></argument>, <argument><expr><literal type="string">"__llvm_profile_counter_bias is undefined"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+<decl_stmt><decl><type><specifier>const</specifier> <name>__llvm_profile_data</name> <modifier>*</modifier></type><name>DataBegin</name> <init>= <expr><call><name>__llvm_profile_begin_data</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>__llvm_profile_data</name> <modifier>*</modifier></type><name>DataEnd</name> <init>= <expr><call><name>__llvm_profile_end_data</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uint64_t</name> <modifier>*</modifier></type><name>CountersBegin</name> <init>= <expr><call><name>__llvm_profile_begin_counters</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uint64_t</name> <modifier>*</modifier></type><name>CountersEnd</name> <init>= <expr><call><name>__llvm_profile_end_counters</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>DataSize</name> <init>= <expr><call><name>__llvm_profile_get_data_size</name><argument_list>(<argument><expr><name>DataBegin</name></expr></argument>, <argument><expr><name>DataEnd</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uint64_t</name></type> <name>CountersOffset</name> <init>= <expr><sizeof>sizeof<argument_list>(<argument><expr><name>__llvm_profile_header</name></expr></argument>)</argument_list></sizeof> <operator>+</operator>
+<call><name>__llvm_write_binary_ids</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>)</argument_list></call> <operator>+</operator>
+<operator>(</operator><name>DataSize</name> <operator>*</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>__llvm_profile_data</name></expr></argument>)</argument_list></sizeof><operator>)</operator></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>int</name></type> <name>Length</name> <init>= <expr><call><name>getCurFilenameLength</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>FilenameBuf</name> <init>= <expr><operator>(</operator><name>char</name> <operator>*</operator><operator>)</operator><call><name>COMPILER_RT_ALLOCA</name><argument_list>(<argument><expr><name>Length</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>Filename</name> <init>= <expr><call><name>getCurFilename</name><argument_list>(<argument><expr><name>FilenameBuf</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>Filename</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+<decl_stmt><decl><type><name>FILE</name> <modifier>*</modifier></type><name>File</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>Profile</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>doMerging</name><argument_list>()</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>File</name> <operator>=</operator> <call><name>fopen</name><argument_list>(<argument><expr><name>Filename</name></expr></argument>, <argument><expr><literal type="string">"w+b"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>File</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>writeMMappedFile</name><argument_list>(<argument><expr><name>File</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>Profile</name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fclose</name><argument_list>(<argument><expr><name>File</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>File</name> <operator>=</operator> <call><name>lprofOpenFileEx</name><argument_list>(<argument><expr><name>Filename</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>File</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>ProfileFileSize</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>getProfileFileSizeForMerging</name><argument_list>(<argument><expr><name>File</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ProfileFileSize</name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>lprofUnlockFileHandle</name><argument_list>(<argument><expr><name>File</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fclose</name><argument_list>(<argument><expr><name>File</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>ProfileFileSize</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>writeMMappedFile</name><argument_list>(<argument><expr><name>File</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>Profile</name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fclose</name><argument_list>(<argument><expr><name>File</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>mmapProfileForMerging</name><argument_list>(<argument><expr><name>File</name></expr></argument>, <argument><expr><name>ProfileFileSize</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>Profile</name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fclose</name><argument_list>(<argument><expr><name>File</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+
+<expr_stmt><expr><call><name>lprofUnlockFileHandle</name><argument_list>(<argument><expr><name>File</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+
+<expr_stmt><expr><name>INSTR_PROF_PROFILE_COUNTER_BIAS_VAR</name> <operator>=</operator>
+<operator>(</operator><name>intptr_t</name><operator>)</operator><name>Profile</name> <operator>-</operator> <operator>(</operator><name>uintptr_t</name><operator>)</operator><name>CountersBegin</name> <operator>+</operator>
+<name>CountersOffset</name></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><call><name>lprofReleaseMemoryPagesToOS</name><argument_list>(<argument><expr><operator>(</operator><name>uintptr_t</name><operator>)</operator><name>CountersBegin</name></expr></argument>, <argument><expr><operator>(</operator><name>uintptr_t</name><operator>)</operator><name>CountersEnd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<function><type><specifier>static</specifier> <name>void</name></type> <name>initializeProfileForContinuousMode</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_ERR</name><argument_list>(<argument><expr><literal type="string">"%s\n"</literal></expr></argument>, <argument><expr><literal type="string">"continuous mode is unsupported on this platform"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>DefaultProfileName</name> <init>= <expr><literal type="string">"default.profraw"</literal></expr></init></decl>;</decl_stmt>
+<function><type><specifier>static</specifier> <name>void</name></type> <name>resetFilenameToDefault</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>lprofCurFilename</name><operator>.</operator><name>FilenamePat</name></name> <operator>&amp;&amp;</operator> <name><name>lprofCurFilename</name><operator>.</operator><name>OwnsFilenamePat</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name><name>lprofCurFilename</name><operator>.</operator><name>FilenamePat</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>lprofCurFilename</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>lprofCurFilename</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>lprofCurFilename</name><operator>.</operator><name>FilenamePat</name></name> <operator>=</operator> <name>DefaultProfileName</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>lprofCurFilename</name><operator>.</operator><name>PNS</name></name> <operator>=</operator> <name>PNS_default</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>unsigned</name></type> <name>getMergePoolSize</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>FilenamePat</name></decl></parameter>, <parameter><decl><type><name>int</name> <modifier>*</modifier></type><name>I</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name></type> <name>J</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>, <decl><type ref="prev"/><name>Num</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<for>for <control>(<init>;</init><condition>;</condition> <incr><expr><operator>++</operator><name>J</name></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>char</name></type> <name>C</name> <init>= <expr><name><name>FilenamePat</name><index>[<expr><operator>*</operator><name>I</name> <operator>+</operator> <name>J</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>C</name> <operator>==</operator> <literal type="char">'m'</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>I</name> <operator>+=</operator> <name>J</name></expr>;</expr_stmt>
+<return>return <expr><ternary><condition><expr><name>Num</name></expr> ?</condition><then> <expr><name>Num</name></expr> </then><else>: <expr><literal type="number">1</literal></expr></else></ternary></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>C</name> <argument_list type="generic">&lt; <argument><expr><literal type="char">'0'</literal> <operator>||</operator> <name>C</name></expr></argument> &gt;</argument_list></name> <literal type="char">'9'</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>Num</name> <operator>=</operator> <name>Num</name> <operator>*</operator> <literal type="number">10</literal> <operator>+</operator> <name>C</name> <operator>-</operator> <literal type="char">'0'</literal></expr>;</expr_stmt>
+
+
+
+</block_content>}</block></for>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type> <name>checkBounds</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>Idx</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>Strlen</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>Idx</name> <operator>&lt;=</operator> <name>Strlen</name> <operator>&amp;&amp;</operator> <literal type="string">"Indexing past string null terminator"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>Idx</name> <operator>&lt;=</operator> <name>Strlen</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type> <name>parseFilenamePattern</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>FilenamePat</name></decl></parameter>,
+<parameter><decl><type><name>unsigned</name></type> <name>CopyFilenamePat</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>NumPids</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>, <decl><type ref="prev"/><name>NumHosts</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>, <decl><type ref="prev"/><name>I</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>PidChars</name> <init>= <expr><operator>&amp;</operator><name><name>lprofCurFilename</name><operator>.</operator><name>PidChars</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>Hostname</name> <init>= <expr><operator>&amp;</operator><name><name>lprofCurFilename</name><operator>.</operator><name>Hostname</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>MergingEnabled</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>FilenamePatLen</name> <init>= <expr><call><name>strlen</name><argument_list>(<argument><expr><name>FilenamePat</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>lprofCurFilename</name><operator>.</operator><name>ProfilePathPrefix</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name><name>lprofCurFilename</name><operator>.</operator><name>ProfilePathPrefix</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>lprofCurFilename</name><operator>.</operator><name>FilenamePat</name></name> <operator>&amp;&amp;</operator> <name><name>lprofCurFilename</name><operator>.</operator><name>OwnsFilenamePat</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name><name>lprofCurFilename</name><operator>.</operator><name>FilenamePat</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>lprofCurFilename</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>lprofCurFilename</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>CopyFilenamePat</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>lprofCurFilename</name><operator>.</operator><name>FilenamePat</name></name> <operator>=</operator> <name>FilenamePat</name></expr>;</expr_stmt></block_content></block></if>
+<else>else <block>{<block_content>
+<expr_stmt><expr><name><name>lprofCurFilename</name><operator>.</operator><name>FilenamePat</name></name> <operator>=</operator> <call><name>strdup</name><argument_list>(<argument><expr><name>FilenamePat</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>lprofCurFilename</name><operator>.</operator><name>OwnsFilenamePat</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<for>for <control>(<init><expr><name>I</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><call><name>checkBounds</name><argument_list>(<argument><expr><name>I</name></expr></argument>, <argument><expr><name>FilenamePatLen</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <name><name>FilenamePat</name><index>[<expr><name>I</name></expr>]</index></name></expr>;</condition> <incr><expr><operator>++</operator><name>I</name></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>FilenamePat</name><index>[<expr><name>I</name></expr>]</index></name> <operator>==</operator> <literal type="char">'%'</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>++</operator><name>I</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>checkBounds</name><argument_list>(<argument><expr><name>I</name></expr></argument>, <argument><expr><name>FilenamePatLen</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>FilenamePat</name><index>[<expr><name>I</name></expr>]</index></name> <operator>==</operator> <literal type="char">'p'</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>NumPids</name><operator>++</operator></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>snprintf</name><argument_list>(<argument><expr><name>PidChars</name></expr></argument>, <argument><expr><name>MAX_PID_SIZE</name></expr></argument>, <argument><expr><literal type="string">"%ld"</literal></expr></argument>, <argument><expr><operator>(</operator><name>long</name><operator>)</operator><call><name>getpid</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call> <operator>&lt;=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_WARN</name><argument_list>(<argument><expr><literal type="string">"Unable to get pid for filename pattern %s. Using the "</literal>
+<literal type="string">"default name."</literal></expr></argument>,
+<argument><expr><name>FilenamePat</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>FilenamePat</name><index>[<expr><name>I</name></expr>]</index></name> <operator>==</operator> <literal type="char">'h'</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>NumHosts</name><operator>++</operator></expr>)</condition><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<expr><call><name>COMPILER_RT_GETHOSTNAME</name><argument_list>(<argument><expr><name>Hostname</name></expr></argument>, <argument><expr><name>COMPILER_RT_MAX_HOSTLEN</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_WARN</name><argument_list>(<argument><expr><literal type="string">"Unable to get hostname for filename pattern %s. Using "</literal>
+<literal type="string">"the default name."</literal></expr></argument>,
+<argument><expr><name>FilenamePat</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>FilenamePat</name><index>[<expr><name>I</name></expr>]</index></name> <operator>==</operator> <literal type="char">'t'</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>lprofCurFilename</name><operator>.</operator><name>TmpDir</name></name> <operator>=</operator> <call><name>getenv</name><argument_list>(<argument><expr><literal type="string">"TMPDIR"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>lprofCurFilename</name><operator>.</operator><name>TmpDir</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_WARN</name><argument_list>(<argument><expr><literal type="string">"Unable to get the TMPDIR environment variable, referenced "</literal>
+<literal type="string">"in %s. Using the default path."</literal></expr></argument>,
+<argument><expr><name>FilenamePat</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>FilenamePat</name><index>[<expr><name>I</name></expr>]</index></name> <operator>==</operator> <literal type="char">'c'</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>__llvm_profile_is_continuous_mode_enabled</name><argument_list>()</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_WARN</name><argument_list>(<argument><expr><literal type="string">"%%c specifier can only be specified once in %s.\n"</literal></expr></argument>,
+<argument><expr><name>FilenamePat</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__APPLE__</name></expr></argument>)</argument_list></call> <operator>||</operator> <call><name>defined</name><argument_list>(<argument><expr><name>__ELF__</name></expr></argument>)</argument_list></call> <operator>||</operator> <call><name>defined</name><argument_list>(<argument><expr><name>_WIN32</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr_stmt><expr><call><name>__llvm_profile_set_page_size</name><argument_list>(<argument><expr><call><name>getpagesize</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>__llvm_profile_enable_continuous_mode</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><call><name>PROF_WARN</name><argument_list>(<argument><expr><literal type="string">"%s"</literal></expr></argument>, <argument><expr><literal type="string">"Continous mode is currently only supported for Mach-O,"</literal>
+<literal type="string">" ELF and COFF formats."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name></type> <name>MergePoolSize</name> <init>= <expr><call><name>getMergePoolSize</name><argument_list>(<argument><expr><name>FilenamePat</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>I</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>MergePoolSize</name></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>MergingEnabled</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_WARN</name><argument_list>(<argument><expr><literal type="string">"%%m specifier can only be specified once in %s.\n"</literal></expr></argument>,
+<argument><expr><name>FilenamePat</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>MergingEnabled</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>lprofCurFilename</name><operator>.</operator><name>MergePoolSize</name></name> <operator>=</operator> <name>MergePoolSize</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><name><name>lprofCurFilename</name><operator>.</operator><name>NumPids</name></name> <operator>=</operator> <name>NumPids</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>lprofCurFilename</name><operator>.</operator><name>NumHosts</name></name> <operator>=</operator> <name>NumHosts</name></expr>;</expr_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type> <name>parseAndSetFilename</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>FilenamePat</name></decl></parameter>,
+<parameter><decl><type><name>ProfileNameSpecifier</name></type> <name>PNS</name></decl></parameter>,
+<parameter><decl><type><name>unsigned</name></type> <name>CopyFilenamePat</name></decl></parameter>)</parameter_list> <block>{<block_content>
+
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>OldFilenamePat</name> <init>= <expr><name><name>lprofCurFilename</name><operator>.</operator><name>FilenamePat</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ProfileNameSpecifier</name></type> <name>OldPNS</name> <init>= <expr><name><name>lprofCurFilename</name><operator>.</operator><name>PNS</name></name></expr></init></decl>;</decl_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>PNS</name> <operator>&lt;</operator> <name>OldPNS</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>FilenamePat</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>FilenamePat</name> <operator>=</operator> <name>DefaultProfileName</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>OldFilenamePat</name> <operator>&amp;&amp;</operator> <operator>!</operator><call><name>strcmp</name><argument_list>(<argument><expr><name>OldFilenamePat</name></expr></argument>, <argument><expr><name>FilenamePat</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>lprofCurFilename</name><operator>.</operator><name>PNS</name></name> <operator>=</operator> <name>PNS</name></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>FilenamePat</name> <operator>||</operator> <call><name>parseFilenamePattern</name><argument_list>(<argument><expr><name>FilenamePat</name></expr></argument>, <argument><expr><name>CopyFilenamePat</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>resetFilenameToDefault</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>lprofCurFilename</name><operator>.</operator><name>PNS</name></name> <operator>=</operator> <name>PNS</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>OldFilenamePat</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>getenv</name><argument_list>(<argument><expr><literal type="string">"LLVM_PROFILE_VERBOSE"</literal></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>PROF_NOTE</name><argument_list>(<argument><expr><literal type="string">"Set profile file path to \"%s\" via %s.\n"</literal></expr></argument>,
+<argument><expr><name><name>lprofCurFilename</name><operator>.</operator><name>FilenamePat</name></name></expr></argument>, <argument><expr><call><name>getPNSStr</name><argument_list>(<argument><expr><name>PNS</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>getenv</name><argument_list>(<argument><expr><literal type="string">"LLVM_PROFILE_VERBOSE"</literal></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>PROF_NOTE</name><argument_list>(<argument><expr><literal type="string">"Override old profile path \"%s\" via %s to \"%s\" via %s.\n"</literal></expr></argument>,
+<argument><expr><name>OldFilenamePat</name></expr></argument>, <argument><expr><call><name>getPNSStr</name><argument_list>(<argument><expr><name>OldPNS</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name><name>lprofCurFilename</name><operator>.</operator><name>FilenamePat</name></name></expr></argument>,
+<argument><expr><call><name>getPNSStr</name><argument_list>(<argument><expr><name>PNS</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+
+<expr_stmt><expr><call><name>truncateCurrentFile</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>__llvm_profile_is_continuous_mode_enabled</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>initializeProfileForContinuousMode</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>SIGLEN</name></cpp:macro> <cpp:value>24</cpp:value></cpp:define>
+<function><type><specifier>static</specifier> <name>int</name></type> <name>getCurFilenameLength</name><parameter_list>()</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>Len</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>lprofCurFilename</name><operator>.</operator><name>FilenamePat</name></name> <operator>||</operator> <operator>!</operator><name><name>lprofCurFilename</name><operator>.</operator><name>FilenamePat</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><literal type="number">0</literal></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name><name>lprofCurFilename</name><operator>.</operator><name>NumPids</name></name> <operator>||</operator> <name><name>lprofCurFilename</name><operator>.</operator><name>NumHosts</name></name> <operator>||</operator>
+<name><name>lprofCurFilename</name><operator>.</operator><name>TmpDir</name></name> <operator>||</operator> <name><name>lprofCurFilename</name><operator>.</operator><name>MergePoolSize</name></name><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><call><name>strlen</name><argument_list>(<argument><expr><name><name>lprofCurFilename</name><operator>.</operator><name>FilenamePat</name></name></expr></argument>)</argument_list></call></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>Len</name> <operator>=</operator> <call><name>strlen</name><argument_list>(<argument><expr><name><name>lprofCurFilename</name><operator>.</operator><name>FilenamePat</name></name></expr></argument>)</argument_list></call> <operator>+</operator>
+<name><name>lprofCurFilename</name><operator>.</operator><name>NumPids</name></name> <operator>*</operator> <operator>(</operator><call><name>strlen</name><argument_list>(<argument><expr><name><name>lprofCurFilename</name><operator>.</operator><name>PidChars</name></name></expr></argument>)</argument_list></call> <operator>-</operator> <literal type="number">2</literal><operator>)</operator> <operator>+</operator>
+<name><name>lprofCurFilename</name><operator>.</operator><name>NumHosts</name></name> <operator>*</operator> <operator>(</operator><call><name>strlen</name><argument_list>(<argument><expr><name><name>lprofCurFilename</name><operator>.</operator><name>Hostname</name></name></expr></argument>)</argument_list></call> <operator>-</operator> <literal type="number">2</literal><operator>)</operator> <operator>+</operator>
+<operator>(</operator><ternary><condition><expr><name><name>lprofCurFilename</name><operator>.</operator><name>TmpDir</name></name></expr> ?</condition><then> <expr><operator>(</operator><call><name>strlen</name><argument_list>(<argument><expr><name><name>lprofCurFilename</name><operator>.</operator><name>TmpDir</name></name></expr></argument>)</argument_list></call> <operator>-</operator> <literal type="number">1</literal><operator>)</operator></expr> </then><else>: <expr><literal type="number">0</literal></expr></else></ternary><operator>)</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>lprofCurFilename</name><operator>.</operator><name>MergePoolSize</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>Len</name> <operator>+=</operator> <name>SIGLEN</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><name>Len</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>getCurFilename</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>FilenameBuf</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ForceUseBuf</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>I</name></decl>, <decl><type ref="prev"/><name>J</name></decl>, <decl><type ref="prev"/><name>PidLength</name></decl>, <decl><type ref="prev"/><name>HostNameLength</name></decl>, <decl><type ref="prev"/><name>TmpDirLength</name></decl>, <decl><type ref="prev"/><name>FilenamePatLength</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>FilenamePat</name> <init>= <expr><name><name>lprofCurFilename</name><operator>.</operator><name>FilenamePat</name></name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>lprofCurFilename</name><operator>.</operator><name>FilenamePat</name></name> <operator>||</operator> <operator>!</operator><name><name>lprofCurFilename</name><operator>.</operator><name>FilenamePat</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><literal type="number">0</literal></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name><name>lprofCurFilename</name><operator>.</operator><name>NumPids</name></name> <operator>||</operator> <name><name>lprofCurFilename</name><operator>.</operator><name>NumHosts</name></name> <operator>||</operator>
+<name><name>lprofCurFilename</name><operator>.</operator><name>TmpDir</name></name> <operator>||</operator> <name><name>lprofCurFilename</name><operator>.</operator><name>MergePoolSize</name></name> <operator>||</operator>
+<call><name>__llvm_profile_is_continuous_mode_enabled</name><argument_list>()</argument_list></call><operator>)</operator></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>ForceUseBuf</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name><name>lprofCurFilename</name><operator>.</operator><name>FilenamePat</name></name></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>FilenamePatLength</name> <operator>=</operator> <call><name>strlen</name><argument_list>(<argument><expr><name><name>lprofCurFilename</name><operator>.</operator><name>FilenamePat</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>FilenameBuf</name></expr></argument>, <argument><expr><name><name>lprofCurFilename</name><operator>.</operator><name>FilenamePat</name></name></expr></argument>, <argument><expr><name>FilenamePatLength</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>FilenameBuf</name><index>[<expr><name>FilenamePatLength</name></expr>]</index></name> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt>
+<return>return <expr><name>FilenameBuf</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>PidLength</name> <operator>=</operator> <call><name>strlen</name><argument_list>(<argument><expr><name><name>lprofCurFilename</name><operator>.</operator><name>PidChars</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>HostNameLength</name> <operator>=</operator> <call><name>strlen</name><argument_list>(<argument><expr><name><name>lprofCurFilename</name><operator>.</operator><name>Hostname</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>TmpDirLength</name> <operator>=</operator> <ternary><condition><expr><name><name>lprofCurFilename</name><operator>.</operator><name>TmpDir</name></name></expr> ?</condition><then> <expr><call><name>strlen</name><argument_list>(<argument><expr><name><name>lprofCurFilename</name><operator>.</operator><name>TmpDir</name></name></expr></argument>)</argument_list></call></expr> </then><else>: <expr><literal type="number">0</literal></expr></else></ternary></expr>;</expr_stmt>
+
+<for>for <control>(<init><expr><name>I</name> <operator>=</operator> <literal type="number">0</literal></expr><operator>,</operator> <expr><name>J</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name><name>FilenamePat</name><index>[<expr><name>I</name></expr>]</index></name></expr>;</condition> <incr><expr><operator>++</operator><name>I</name></expr></incr>)</control><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<expr><name><name>FilenamePat</name><index>[<expr><name>I</name></expr>]</index></name> <operator>==</operator> <literal type="char">'%'</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>FilenamePat</name><index>[<expr><operator>++</operator><name>I</name></expr>]</index></name> <operator>==</operator> <literal type="char">'p'</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>FilenameBuf</name> <operator>+</operator> <name>J</name></expr></argument>, <argument><expr><name><name>lprofCurFilename</name><operator>.</operator><name>PidChars</name></name></expr></argument>, <argument><expr><name>PidLength</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>J</name> <operator>+=</operator> <name>PidLength</name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>FilenamePat</name><index>[<expr><name>I</name></expr>]</index></name> <operator>==</operator> <literal type="char">'h'</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>FilenameBuf</name> <operator>+</operator> <name>J</name></expr></argument>, <argument><expr><name><name>lprofCurFilename</name><operator>.</operator><name>Hostname</name></name></expr></argument>, <argument><expr><name>HostNameLength</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>J</name> <operator>+=</operator> <name>HostNameLength</name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>FilenamePat</name><index>[<expr><name>I</name></expr>]</index></name> <operator>==</operator> <literal type="char">'t'</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>FilenameBuf</name> <operator>+</operator> <name>J</name></expr></argument>, <argument><expr><name><name>lprofCurFilename</name><operator>.</operator><name>TmpDir</name></name></expr></argument>, <argument><expr><name>TmpDirLength</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>FilenameBuf</name><index>[<expr><name>J</name> <operator>+</operator> <name>TmpDirLength</name></expr>]</index></name> <operator>=</operator> <name>DIR_SEPARATOR</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>J</name> <operator>+=</operator> <name>TmpDirLength</name> <operator>+</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>getMergePoolSize</name><argument_list>(<argument><expr><name>FilenamePat</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>I</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name><name>LoadModuleSignature</name><index>[<expr><name>SIGLEN</name> <operator>+</operator> <literal type="number">1</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>S</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ProfilePoolId</name> <init>= <expr><call><name>getpid</name><argument_list>()</argument_list></call> <operator>%</operator> <name><name>lprofCurFilename</name><operator>.</operator><name>MergePoolSize</name></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>S</name> <operator>=</operator> <call><name>snprintf</name><argument_list>(<argument><expr><name>LoadModuleSignature</name></expr></argument>, <argument><expr><name>SIGLEN</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><literal type="string">"%"</literal> <name>PRIu64</name> <literal type="string">"_%d"</literal></expr></argument>,
+<argument><expr><call><name>lprofGetLoadModuleSignature</name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><name>ProfilePoolId</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>S</name> <operator>==</operator> <operator>-</operator><literal type="number">1</literal> <operator>||</operator> <name>S</name> <operator>&gt;</operator> <name>SIGLEN</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>S</name> <operator>=</operator> <name>SIGLEN</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>FilenameBuf</name> <operator>+</operator> <name>J</name></expr></argument>, <argument><expr><name>LoadModuleSignature</name></expr></argument>, <argument><expr><name>S</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>J</name> <operator>+=</operator> <name>S</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>FilenameBuf</name><index>[<expr><name>J</name><operator>++</operator></expr>]</index></name> <operator>=</operator> <name><name>FilenamePat</name><index>[<expr><name>I</name></expr>]</index></name></expr>;</expr_stmt></block_content></block></else></if_stmt></block_content></block></for>
+<expr_stmt><expr><name><name>FilenameBuf</name><index>[<expr><name>J</name></expr>]</index></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<return>return <expr><name>FilenameBuf</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<function><type><specifier>static</specifier> <specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>getFilenamePatFromEnv</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>Filename</name> <init>= <expr><call><name>getenv</name><argument_list>(<argument><expr><literal type="string">"LLVM_PROFILE_FILE"</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>Filename</name> <operator>||</operator> <operator>!</operator><name><name>Filename</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><literal type="number">0</literal></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><name>Filename</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>COMPILER_RT_VISIBILITY</name>
+<specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>__llvm_profile_get_path_prefix</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>Length</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>FilenameBuf</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>Prefix</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>Filename</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>PrefixEnd</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>lprofCurFilename</name><operator>.</operator><name>ProfilePathPrefix</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name><name>lprofCurFilename</name><operator>.</operator><name>ProfilePathPrefix</name></name></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>Length</name> <operator>=</operator> <call><name>getCurFilenameLength</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>FilenameBuf</name> <operator>=</operator> <operator>(</operator><name>char</name> <operator>*</operator><operator>)</operator><call><name>COMPILER_RT_ALLOCA</name><argument_list>(<argument><expr><name>Length</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>Filename</name> <operator>=</operator> <call><name>getCurFilename</name><argument_list>(<argument><expr><name>FilenameBuf</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>Filename</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><literal type="string">"\0"</literal></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>PrefixEnd</name> <operator>=</operator> <call><name>lprofFindLastDirSeparator</name><argument_list>(<argument><expr><name>Filename</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>PrefixEnd</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><literal type="string">"\0"</literal></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>Length</name> <operator>=</operator> <name>PrefixEnd</name> <operator>-</operator> <name>Filename</name> <operator>+</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>Prefix</name> <operator>=</operator> <operator>(</operator><name>char</name> <operator>*</operator><operator>)</operator><call><name>malloc</name><argument_list>(<argument><expr><name>Length</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>Prefix</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_ERR</name><argument_list>(<argument><expr><literal type="string">"Failed to %s\n"</literal></expr></argument>, <argument><expr><literal type="string">"allocate memory."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><literal type="string">"\0"</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>Prefix</name></expr></argument>, <argument><expr><name>Filename</name></expr></argument>, <argument><expr><name>Length</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>Prefix</name><index>[<expr><name>Length</name></expr>]</index></name> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>lprofCurFilename</name><operator>.</operator><name>ProfilePathPrefix</name></name> <operator>=</operator> <name>Prefix</name></expr>;</expr_stmt>
+<return>return <expr><name>Prefix</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>COMPILER_RT_VISIBILITY</name>
+<specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>__llvm_profile_get_filename</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>Length</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>FilenameBuf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>Filename</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>Length</name> <operator>=</operator> <call><name>getCurFilenameLength</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>FilenameBuf</name> <operator>=</operator> <operator>(</operator><name>char</name> <operator>*</operator><operator>)</operator><call><name>malloc</name><argument_list>(<argument><expr><name>Length</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>FilenameBuf</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_ERR</name><argument_list>(<argument><expr><literal type="string">"Failed to %s\n"</literal></expr></argument>, <argument><expr><literal type="string">"allocate memory."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><literal type="string">"\0"</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>Filename</name> <operator>=</operator> <call><name>getCurFilename</name><argument_list>(<argument><expr><name>FilenameBuf</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>Filename</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><literal type="string">"\0"</literal></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><name>FilenameBuf</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><name>COMPILER_RT_VISIBILITY</name>
+<name>void</name></type> <name>__llvm_profile_initialize_file</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>EnvFilenamePat</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>SelectedPat</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ProfileNameSpecifier</name></type> <name>PNS</name> <init>= <expr><name>PNS_unknown</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>hasCommandLineOverrider</name> <init>= <expr><operator>(</operator><name><name>INSTR_PROF_PROFILE_NAME_VAR</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>!=</operator> <literal type="number">0</literal><operator>)</operator></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>EnvFilenamePat</name> <operator>=</operator> <call><name>getFilenamePatFromEnv</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>EnvFilenamePat</name></expr>)</condition> <block>{<block_content>
+
+
+<expr_stmt><expr><call><name>parseAndSetFilename</name><argument_list>(<argument><expr><name>EnvFilenamePat</name></expr></argument>, <argument><expr><name>PNS_environment</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>hasCommandLineOverrider</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>SelectedPat</name> <operator>=</operator> <name>INSTR_PROF_PROFILE_NAME_VAR</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>PNS</name> <operator>=</operator> <name>PNS_command_line</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>SelectedPat</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>PNS</name> <operator>=</operator> <name>PNS_default</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<expr_stmt><expr><call><name>parseAndSetFilename</name><argument_list>(<argument><expr><name>SelectedPat</name></expr></argument>, <argument><expr><name>PNS</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>COMPILER_RT_VISIBILITY</name>
+<name>void</name></type> <name>__llvm_profile_initialize</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>__llvm_profile_initialize_file</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>__llvm_profile_is_continuous_mode_enabled</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>__llvm_profile_register_write_file_atexit</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><name>COMPILER_RT_VISIBILITY</name>
+<name>void</name></type> <name>__llvm_profile_set_filename</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>FilenamePat</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>__llvm_profile_is_continuous_mode_enabled</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>parseAndSetFilename</name><argument_list>(<argument><expr><name>FilenamePat</name></expr></argument>, <argument><expr><name>PNS_runtime_api</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><name>COMPILER_RT_VISIBILITY</name>
+<name>int</name></type> <name>__llvm_profile_write_file</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>rc</name></decl>, <decl><type ref="prev"/><name>Length</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>Filename</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>FilenameBuf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>PDeathSig</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>lprofProfileDumped</name><argument_list>()</argument_list></call> <operator>||</operator> <call><name>__llvm_profile_is_continuous_mode_enabled</name><argument_list>()</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_NOTE</name><argument_list>(<argument><expr><literal type="string">"Profile data not written to file: %s.\n"</literal></expr></argument>, <argument><expr><literal type="string">"already written"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>Length</name> <operator>=</operator> <call><name>getCurFilenameLength</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>FilenameBuf</name> <operator>=</operator> <operator>(</operator><name>char</name> <operator>*</operator><operator>)</operator><call><name>COMPILER_RT_ALLOCA</name><argument_list>(<argument><expr><name>Length</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>Filename</name> <operator>=</operator> <call><name>getCurFilename</name><argument_list>(<argument><expr><name>FilenameBuf</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>Filename</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_ERR</name><argument_list>(<argument><expr><literal type="string">"Failed to write file : %s\n"</literal></expr></argument>, <argument><expr><literal type="string">"Filename not set"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>GET_VERSION</name><argument_list>(<argument><expr><call><name>__llvm_profile_get_version</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call> <operator>!=</operator> <name>INSTR_PROF_RAW_VERSION</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_ERR</name><argument_list>(<argument><expr><literal type="string">"Runtime and instrumentation version mismatch : "</literal>
+<literal type="string">"expected %d, but get %d\n"</literal></expr></argument>,
+<argument><expr><name>INSTR_PROF_RAW_VERSION</name></expr></argument>,
+<argument><expr><operator>(</operator><name>int</name><operator>)</operator><call><name>GET_VERSION</name><argument_list>(<argument><expr><call><name>__llvm_profile_get_version</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><name>PDeathSig</name> <operator>=</operator> <call><name>lprofSuspendSigKill</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><name>rc</name> <operator>=</operator> <call><name>writeFile</name><argument_list>(<argument><expr><name>Filename</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>rc</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>PROF_ERR</name><argument_list>(<argument><expr><literal type="string">"Failed to write file \"%s\": %s\n"</literal></expr></argument>, <argument><expr><name>Filename</name></expr></argument>, <argument><expr><call><name>strerror</name><argument_list>(<argument><expr><name>errno</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>PDeathSig</name> <operator>==</operator> <literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>lprofRestoreSigKill</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<return>return <expr><name>rc</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>COMPILER_RT_VISIBILITY</name>
+<name>int</name></type> <name>__llvm_profile_dump</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>doMerging</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>PROF_WARN</name><argument_list>(<argument><expr><literal type="string">"Later invocation of __llvm_profile_dump can lead to clobbering "</literal>
+<literal type="string">" of previously dumped profile data : %s. Either use %%m "</literal>
+<literal type="string">"in profile name or change profile name before dumping.\n"</literal></expr></argument>,
+<argument><expr><literal type="string">"online profile merging is not on"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>rc</name> <init>= <expr><call><name>__llvm_profile_write_file</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>lprofSetProfileDumped</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>rc</name></expr>;</return>
+</block_content>}</block></function>
+
+
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>OrderFileSuffix</name> <init>= <expr><literal type="string">".order"</literal></expr></init></decl>;</decl_stmt>
+
+<function><type><name>COMPILER_RT_VISIBILITY</name>
+<name>int</name></type> <name>__llvm_orderfile_write_file</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>rc</name></decl>, <decl><type ref="prev"/><name>Length</name></decl>, <decl><type ref="prev"/><name>LengthBeforeAppend</name></decl>, <decl><type ref="prev"/><name>SuffixLength</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>Filename</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>FilenameBuf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>PDeathSig</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>SuffixLength</name> <operator>=</operator> <call><name>strlen</name><argument_list>(<argument><expr><name>OrderFileSuffix</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>Length</name> <operator>=</operator> <call><name>getCurFilenameLength</name><argument_list>()</argument_list></call> <operator>+</operator> <name>SuffixLength</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>FilenameBuf</name> <operator>=</operator> <operator>(</operator><name>char</name> <operator>*</operator><operator>)</operator><call><name>COMPILER_RT_ALLOCA</name><argument_list>(<argument><expr><name>Length</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>Filename</name> <operator>=</operator> <call><name>getCurFilename</name><argument_list>(<argument><expr><name>FilenameBuf</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>Filename</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_ERR</name><argument_list>(<argument><expr><literal type="string">"Failed to write file : %s\n"</literal></expr></argument>, <argument><expr><literal type="string">"Filename not set"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><name>LengthBeforeAppend</name> <operator>=</operator> <call><name>strlen</name><argument_list>(<argument><expr><name>Filename</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>FilenameBuf</name> <operator>+</operator> <name>LengthBeforeAppend</name></expr></argument>, <argument><expr><name>OrderFileSuffix</name></expr></argument>, <argument><expr><name>SuffixLength</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>FilenameBuf</name><index>[<expr><name>LengthBeforeAppend</name> <operator>+</operator> <name>SuffixLength</name></expr>]</index></name> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>GET_VERSION</name><argument_list>(<argument><expr><call><name>__llvm_profile_get_version</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call> <operator>!=</operator> <name>INSTR_PROF_RAW_VERSION</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PROF_ERR</name><argument_list>(<argument><expr><literal type="string">"Runtime and instrumentation version mismatch : "</literal>
+<literal type="string">"expected %d, but get %d\n"</literal></expr></argument>,
+<argument><expr><name>INSTR_PROF_RAW_VERSION</name></expr></argument>,
+<argument><expr><operator>(</operator><name>int</name><operator>)</operator><call><name>GET_VERSION</name><argument_list>(<argument><expr><call><name>__llvm_profile_get_version</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><name>PDeathSig</name> <operator>=</operator> <call><name>lprofSuspendSigKill</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><name>rc</name> <operator>=</operator> <call><name>writeOrderFile</name><argument_list>(<argument><expr><name>Filename</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>rc</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>PROF_ERR</name><argument_list>(<argument><expr><literal type="string">"Failed to write file \"%s\": %s\n"</literal></expr></argument>, <argument><expr><name>Filename</name></expr></argument>, <argument><expr><call><name>strerror</name><argument_list>(<argument><expr><name>errno</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>PDeathSig</name> <operator>==</operator> <literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>lprofRestoreSigKill</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<return>return <expr><name>rc</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>COMPILER_RT_VISIBILITY</name>
+<name>int</name></type> <name>__llvm_orderfile_dump</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>rc</name> <init>= <expr><call><name>__llvm_orderfile_write_file</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<return>return <expr><name>rc</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type> <name>writeFileWithoutReturn</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content> <expr_stmt><expr><call><name>__llvm_profile_write_file</name><argument_list>()</argument_list></call></expr>;</expr_stmt> </block_content>}</block></function>
+
+<function><type><name>COMPILER_RT_VISIBILITY</name>
+<name>int</name></type> <name>__llvm_profile_register_write_file_atexit</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>HasBeenRegistered</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>HasBeenRegistered</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><literal type="number">0</literal></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>lprofSetupValueProfiler</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>HasBeenRegistered</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<return>return <expr><call><name>atexit</name><argument_list>(<argument><expr><name>writeFileWithoutReturn</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

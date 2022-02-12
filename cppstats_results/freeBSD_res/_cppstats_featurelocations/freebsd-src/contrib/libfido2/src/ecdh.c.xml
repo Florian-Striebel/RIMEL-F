@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/libfido2/src/ecdh.c">
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;openssl/evp.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;openssl/sha.h&gt;</cpp:file></cpp:include>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>LIBRESSL_VERSION_NUMBER</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;openssl/hkdf.h&gt;</cpp:file></cpp:include>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><name>OPENSSL_VERSION_NUMBER</name> <operator>&gt;=</operator> <literal type="number">0x10100000L</literal></expr></cpp:elif>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;openssl/kdf.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"fido.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"fido/es256.h"</cpp:file></cpp:include>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>LIBRESSL_VERSION_NUMBER</name></expr></argument>)</argument_list></call> <operator>||</operator> <name>OPENSSL_VERSION_NUMBER</name> <operator>&lt;</operator> <literal type="number">0x10100000L</literal></expr></cpp:if>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>hkdf_sha256</name><parameter_list>(<parameter><decl><type><name>uint8_t</name> <modifier>*</modifier></type><name>key</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>info</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>fido_blob_t</name> <modifier>*</modifier></type><name>secret</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>EVP_MD</name> <modifier>*</modifier></type><name>md</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint8_t</name></type> <name><name>salt</name><index>[<expr><literal type="number">32</literal></expr>]</index></name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><name>salt</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>salt</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>md</name> <operator>=</operator> <call><name>EVP_sha256</name><argument_list>()</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<call><name>HKDF</name><argument_list>(<argument><expr><name>key</name></expr></argument>, <argument><expr><name>SHA256_DIGEST_LENGTH</name></expr></argument>, <argument><expr><name>md</name></expr></argument>, <argument><expr><name><name>secret</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>secret</name><operator>-&gt;</operator><name>len</name></name></expr></argument>, <argument><expr><name>salt</name></expr></argument>,
+<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>salt</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><operator>(</operator><specifier>const</specifier> <name>uint8_t</name> <operator>*</operator><operator>)</operator><name>info</name></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name>info</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>hkdf_sha256</name><parameter_list>(<parameter><decl><type><name>uint8_t</name> <modifier>*</modifier></type><name>key</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>info</name></decl></parameter>, <parameter><decl><type><name>fido_blob_t</name> <modifier>*</modifier></type><name>secret</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>EVP_MD</name> <modifier>*</modifier></type><name>const_md</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>EVP_MD</name> <modifier>*</modifier></type><name>md</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>EVP_PKEY_CTX</name> <modifier>*</modifier></type><name>ctx</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>keylen</name> <init>= <expr><name>SHA256_DIGEST_LENGTH</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint8_t</name></type> <name><name>salt</name><index>[<expr><literal type="number">32</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ok</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><name>salt</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>salt</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>secret</name><operator>-&gt;</operator><name>len</name></name> <operator>&gt;</operator> <name>INT_MAX</name> <operator>||</operator> <call><name>strlen</name><argument_list>(<argument><expr><name>info</name></expr></argument>)</argument_list></call> <operator>&gt;</operator> <name>INT_MAX</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: invalid param"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>const_md</name> <operator>=</operator> <call><name>EVP_sha256</name><argument_list>()</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<operator>(</operator><name>md</name> <operator>=</operator> <call><name>EVP_MD_meth_dup</name><argument_list>(<argument><expr><name>const_md</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<operator>(</operator><name>ctx</name> <operator>=</operator> <call><name>EVP_PKEY_CTX_new_id</name><argument_list>(<argument><expr><name>EVP_PKEY_HKDF</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: init"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>EVP_PKEY_derive_init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">1</literal> <operator>||</operator>
+<call><name>EVP_PKEY_CTX_set_hkdf_md</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>md</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">1</literal> <operator>||</operator>
+<call><name>EVP_PKEY_CTX_set1_hkdf_salt</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>salt</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>salt</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">1</literal> <operator>||</operator>
+<call><name>EVP_PKEY_CTX_set1_hkdf_key</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name><name>secret</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>, <argument><expr><operator>(</operator><name>int</name><operator>)</operator><name><name>secret</name><operator>-&gt;</operator><name>len</name></name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">1</literal> <operator>||</operator>
+<call><name>EVP_PKEY_CTX_add1_hkdf_info</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>info</name></expr></argument>, <argument><expr><operator>(</operator><name>int</name><operator>)</operator><call><name>strlen</name><argument_list>(<argument><expr><name>info</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: EVP_PKEY_CTX"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>EVP_PKEY_derive</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>key</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>keylen</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: EVP_PKEY_derive"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>ok</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<label><name>fail</name>:</label>
+<if_stmt><if>if <condition>(<expr><name>md</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>EVP_MD_meth_free</name><argument_list>(<argument><expr><name>md</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>ctx</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>EVP_PKEY_CTX_free</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<return>return <expr><name>ok</name></expr>;</return>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>kdf</name><parameter_list>(<parameter><decl><type><name>uint8_t</name></type> <name>prot</name></decl></parameter>, <parameter><decl><type><name>fido_blob_t</name> <modifier>*</modifier></type><name>key</name></decl></parameter>, <parameter><decl><type><name>fido_blob_t</name> <modifier>*</modifier></type><name>secret</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name></type> <name><name>hmac_info</name><index>[]</index></name> <init>= <expr><literal type="string">"CTAP2 HMAC key"</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name><name>aes_info</name><index>[]</index></name> <init>= <expr><literal type="string">"CTAP2 AES key"</literal></expr></init></decl>;</decl_stmt>
+
+<switch>switch <condition>(<expr><name>prot</name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>CTAP_PIN_PROTOCOL1</name></expr>:</case>
+
+<expr_stmt><expr><name><name>key</name><operator>-&gt;</operator><name>len</name></name> <operator>=</operator> <name>SHA256_DIGEST_LENGTH</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>key</name><operator>-&gt;</operator><name>ptr</name></name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name><name>key</name><operator>-&gt;</operator><name>len</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<call><name>SHA256</name><argument_list>(<argument><expr><name><name>secret</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>secret</name><operator>-&gt;</operator><name>len</name></name></expr></argument>, <argument><expr><name><name>key</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>)</argument_list></call> <operator>!=</operator> <name><name>key</name><operator>-&gt;</operator><name>ptr</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: SHA256"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<break>break;</break>
+<case>case <expr><name>CTAP_PIN_PROTOCOL2</name></expr>:</case>
+
+<expr_stmt><expr><name><name>key</name><operator>-&gt;</operator><name>len</name></name> <operator>=</operator> <literal type="number">2</literal> <operator>*</operator> <name>SHA256_DIGEST_LENGTH</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>key</name><operator>-&gt;</operator><name>ptr</name></name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name><name>key</name><operator>-&gt;</operator><name>len</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<call><name>hkdf_sha256</name><argument_list>(<argument><expr><name><name>key</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>, <argument><expr><name>hmac_info</name></expr></argument>, <argument><expr><name>secret</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>hkdf_sha256</name><argument_list>(<argument><expr><name><name>key</name><operator>-&gt;</operator><name>ptr</name></name> <operator>+</operator> <name>SHA256_DIGEST_LENGTH</name></expr></argument>, <argument><expr><name>aes_info</name></expr></argument>,
+<argument><expr><name>secret</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: hkdf"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<break>break;</break>
+<default>default:</default>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: unknown pin protocol %u"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>, <argument><expr><name>prot</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></switch>
+
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>do_ecdh</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>es256_sk_t</name> <modifier>*</modifier></type><name>sk</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>es256_pk_t</name> <modifier>*</modifier></type><name>pk</name></decl></parameter>,
+<parameter><decl><type><name>fido_blob_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>ecdh</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>EVP_PKEY</name> <modifier>*</modifier></type><name>pk_evp</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>EVP_PKEY</name> <modifier>*</modifier></type><name>sk_evp</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>EVP_PKEY_CTX</name> <modifier>*</modifier></type><name>ctx</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>fido_blob_t</name> <modifier>*</modifier></type><name>secret</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ok</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>ecdh</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>secret</name> <operator>=</operator> <call><name>fido_blob_new</name><argument_list>()</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<operator>(</operator><operator>*</operator><name>ecdh</name> <operator>=</operator> <call><name>fido_blob_new</name><argument_list>()</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>fail</name>;</goto></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>pk_evp</name> <operator>=</operator> <call><name>es256_pk_to_EVP_PKEY</name><argument_list>(<argument><expr><name>pk</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<operator>(</operator><name>sk_evp</name> <operator>=</operator> <call><name>es256_sk_to_EVP_PKEY</name><argument_list>(<argument><expr><name>sk</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: es256_to_EVP_PKEY"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>ctx</name> <operator>=</operator> <call><name>EVP_PKEY_CTX_new</name><argument_list>(<argument><expr><name>sk_evp</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<call><name>EVP_PKEY_derive_init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call> <operator>&lt;=</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>EVP_PKEY_derive_set_peer</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>pk_evp</name></expr></argument>)</argument_list></call> <operator>&lt;=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: EVP_PKEY_derive_init"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>EVP_PKEY_derive</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>secret</name><operator>-&gt;</operator><name>len</name></name></expr></argument>)</argument_list></call> <operator>&lt;=</operator> <literal type="number">0</literal> <operator>||</operator>
+<operator>(</operator><name><name>secret</name><operator>-&gt;</operator><name>ptr</name></name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name><name>secret</name><operator>-&gt;</operator><name>len</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<call><name>EVP_PKEY_derive</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name><name>secret</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>secret</name><operator>-&gt;</operator><name>len</name></name></expr></argument>)</argument_list></call> <operator>&lt;=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: EVP_PKEY_derive"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>kdf</name><argument_list>(<argument><expr><call><name>fido_dev_get_pin_protocol</name><argument_list>(<argument><expr><name>dev</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><operator>*</operator><name>ecdh</name></expr></argument>, <argument><expr><name>secret</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: kdf"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>ok</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<label><name>fail</name>:</label>
+<if_stmt><if>if <condition>(<expr><name>pk_evp</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>EVP_PKEY_free</name><argument_list>(<argument><expr><name>pk_evp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>sk_evp</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>EVP_PKEY_free</name><argument_list>(<argument><expr><name>sk_evp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>ctx</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>EVP_PKEY_CTX_free</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>ok</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>fido_blob_free</name><argument_list>(<argument><expr><name>ecdh</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>fido_blob_free</name><argument_list>(<argument><expr><operator>&amp;</operator><name>secret</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><name>ok</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>fido_do_ecdh</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><name>es256_pk_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>pk</name></decl></parameter>, <parameter><decl><type><name>fido_blob_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>ecdh</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>es256_sk_t</name> <modifier>*</modifier></type><name>sk</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>es256_pk_t</name> <modifier>*</modifier></type><name>ak</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>pk</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>ecdh</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>sk</name> <operator>=</operator> <call><name>es256_sk_new</name><argument_list>()</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator> <operator>(</operator><operator>*</operator><name>pk</name> <operator>=</operator> <call><name>es256_pk_new</name><argument_list>()</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_INTERNAL</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>es256_sk_create</name><argument_list>(<argument><expr><name>sk</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator> <call><name>es256_derive_pk</name><argument_list>(<argument><expr><name>sk</name></expr></argument>, <argument><expr><operator>*</operator><name>pk</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: es256_derive_pk"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_INTERNAL</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>ak</name> <operator>=</operator> <call><name>es256_pk_new</name><argument_list>()</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<call><name>fido_dev_authkey</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>ak</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_dev_authkey"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_INTERNAL</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>do_ecdh</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>sk</name></expr></argument>, <argument><expr><name>ak</name></expr></argument>, <argument><expr><name>ecdh</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: do_ecdh"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_INTERNAL</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_OK</name></expr>;</expr_stmt>
+<label><name>fail</name>:</label>
+<expr_stmt><expr><call><name>es256_sk_free</name><argument_list>(<argument><expr><operator>&amp;</operator><name>sk</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>es256_pk_free</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ak</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>r</name> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>es256_pk_free</name><argument_list>(<argument><expr><name>pk</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fido_blob_free</name><argument_list>(<argument><expr><name>ecdh</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><name>r</name></expr>;</return>
+</block_content>}</block></function>
+</unit>

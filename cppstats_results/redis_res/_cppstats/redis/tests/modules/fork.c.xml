@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/results/redis_res/_cppstats/redis/tests/modules/fork.c"><cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>_BSD_SOURCE</name></cpp:macro></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>_DEFAULT_SOURCE</name></cpp:macro></cpp:define>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"redismodule.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;string.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;assert.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;unistd.h&gt;</cpp:file></cpp:include>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>UNUSED</name><parameter_list>(<parameter><type><name>V</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((void) V)</cpp:value></cpp:define>
+<decl_stmt><decl><type><name>int</name></type> <name>child_pid</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>exitted_with_code</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<function><type><name>void</name></type> <name>done_handler</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>exitcode</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>bysignal</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>user_data</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><name>child_pid</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>exitted_with_code</name> <operator>=</operator> <name>exitcode</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>user_data</name><operator>==</operator><operator>(</operator><name>void</name><operator>*</operator><operator>)</operator><literal type="number">0xdeadbeef</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>UNUSED</name><argument_list>(<argument><expr><name>bysignal</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><name>int</name></type> <name>fork_create</name><parameter_list>(<parameter><decl><type><name>RedisModuleCtx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>RedisModuleString</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>argc</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>long</name> <name>long</name></type> <name>code_to_exit_with</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>argc</name> <operator>!=</operator> <literal type="number">2</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>RedisModule_WrongArity</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if<condition>(<expr><operator>!</operator><call><name>RMAPI_FUNC_SUPPORTED</name><argument_list>(<argument><expr><name>RedisModule_Fork</name></expr></argument>)</argument_list></call></expr>)</condition><block>{<block_content>
+<expr_stmt><expr><call><name>RedisModule_ReplyWithError</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"Fork api is not supported in the current redis version"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>RedisModule_StringToLongLong</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>code_to_exit_with</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>exitted_with_code</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>child_pid</name> <operator>=</operator> <call><name>RedisModule_Fork</name><argument_list>(<argument><expr><name>done_handler</name></expr></argument>, <argument><expr><operator>(</operator><name>void</name><operator>*</operator><operator>)</operator><literal type="number">0xdeadbeef</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>child_pid</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>RedisModule_ReplyWithError</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"Fork failed"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>child_pid</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>RedisModule_ReplyWithLongLong</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>child_pid</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>RedisModule_Log</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"notice"</literal></expr></argument>, <argument><expr><literal type="string">"fork child started"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>usleep</name><argument_list>(<argument><expr><literal type="number">500000</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_Log</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"notice"</literal></expr></argument>, <argument><expr><literal type="string">"fork child exiting"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_ExitFromChild</name><argument_list>(<argument><expr><name>code_to_exit_with</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>int</name></type> <name>fork_exitcode</name><parameter_list>(<parameter><decl><type><name>RedisModuleCtx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>RedisModuleString</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>argc</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>UNUSED</name><argument_list>(<argument><expr><name>argv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>UNUSED</name><argument_list>(<argument><expr><name>argc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_ReplyWithLongLong</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>exitted_with_code</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>int</name></type> <name>fork_kill</name><parameter_list>(<parameter><decl><type><name>RedisModuleCtx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>RedisModuleString</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>argc</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>UNUSED</name><argument_list>(<argument><expr><name>argv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>UNUSED</name><argument_list>(<argument><expr><name>argc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_KillForkChild</name><argument_list>(<argument><expr><name>child_pid</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>REDISMODULE_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>RedisModule_ReplyWithError</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"KillForkChild failed"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>RedisModule_ReplyWithLongLong</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<expr_stmt><expr><name>child_pid</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>int</name></type> <name>RedisModule_OnLoad</name><parameter_list>(<parameter><decl><type><name>RedisModuleCtx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>RedisModuleString</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>argc</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>UNUSED</name><argument_list>(<argument><expr><name>argv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>UNUSED</name><argument_list>(<argument><expr><name>argc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_Init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>,<argument><expr><literal type="string">"fork"</literal></expr></argument>,<argument><expr><literal type="number">1</literal></expr></argument>,<argument><expr><name>REDISMODULE_APIVER_1</name></expr></argument>)</argument_list></call><operator>==</operator> <name>REDISMODULE_ERR</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>REDISMODULE_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_CreateCommand</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>,<argument><expr><literal type="string">"fork.create"</literal></expr></argument>, <argument><expr><name>fork_create</name></expr></argument>,<argument><expr><literal type="string">""</literal></expr></argument>,<argument><expr><literal type="number">0</literal></expr></argument>,<argument><expr><literal type="number">0</literal></expr></argument>,<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call> <operator>==</operator> <name>REDISMODULE_ERR</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>REDISMODULE_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_CreateCommand</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>,<argument><expr><literal type="string">"fork.exitcode"</literal></expr></argument>, <argument><expr><name>fork_exitcode</name></expr></argument>,<argument><expr><literal type="string">""</literal></expr></argument>,<argument><expr><literal type="number">0</literal></expr></argument>,<argument><expr><literal type="number">0</literal></expr></argument>,<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call> <operator>==</operator> <name>REDISMODULE_ERR</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>REDISMODULE_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_CreateCommand</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>,<argument><expr><literal type="string">"fork.kill"</literal></expr></argument>, <argument><expr><name>fork_kill</name></expr></argument>,<argument><expr><literal type="string">""</literal></expr></argument>,<argument><expr><literal type="number">0</literal></expr></argument>,<argument><expr><literal type="number">0</literal></expr></argument>,<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call> <operator>==</operator> <name>REDISMODULE_ERR</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>REDISMODULE_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></function>
+</unit>

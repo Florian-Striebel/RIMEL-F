@@ -1,0 +1,999 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/results/redis_res/_cppstats_featurelocations/redis/src/geo.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"geo.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"geohash_helper.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"debugmacro.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"pqsort.h"</cpp:file></cpp:include>
+
+
+
+<function_decl><type><name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>zzlFirstInRange</name><parameter_list>(<parameter><decl><type><name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>zl</name></decl></parameter>, <parameter><decl><type><name>zrangespec</name> <modifier>*</modifier></type><name>range</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><name>int</name></type> <name>zslValueLteMax</name><parameter_list>(<parameter><decl><type><name>double</name></type> <name>value</name></decl></parameter>, <parameter><decl><type><name>zrangespec</name> <modifier>*</modifier></type><name>spec</name></decl></parameter>)</parameter_list>;</function_decl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><name>geoArray</name> <modifier>*</modifier></type><name>geoArrayCreate</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>geoArray</name> <modifier>*</modifier></type><name>ga</name> <init>= <expr><call><name>zmalloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>ga</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>ga</name><operator>-&gt;</operator><name>array</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ga</name><operator>-&gt;</operator><name>buckets</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ga</name><operator>-&gt;</operator><name>used</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<return>return <expr><name>ga</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<function><type><name>geoPoint</name> <modifier>*</modifier></type><name>geoArrayAppend</name><parameter_list>(<parameter><decl><type><name>geoArray</name> <modifier>*</modifier></type><name>ga</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>ga</name><operator>-&gt;</operator><name>used</name></name> <operator>==</operator> <name><name>ga</name><operator>-&gt;</operator><name>buckets</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>ga</name><operator>-&gt;</operator><name>buckets</name></name> <operator>=</operator> <ternary><condition><expr><operator>(</operator><name><name>ga</name><operator>-&gt;</operator><name>buckets</name></name> <operator>==</operator> <literal type="number">0</literal><operator>)</operator></expr> ?</condition><then> <expr><literal type="number">8</literal></expr> </then><else>: <expr><name><name>ga</name><operator>-&gt;</operator><name>buckets</name></name><operator>*</operator><literal type="number">2</literal></expr></else></ternary></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ga</name><operator>-&gt;</operator><name>array</name></name> <operator>=</operator> <call><name>zrealloc</name><argument_list>(<argument><expr><name><name>ga</name><operator>-&gt;</operator><name>array</name></name></expr></argument>,<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>geoPoint</name></expr></argument>)</argument_list></sizeof><operator>*</operator><name><name>ga</name><operator>-&gt;</operator><name>buckets</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<decl_stmt><decl><type><name>geoPoint</name> <modifier>*</modifier></type><name>gp</name> <init>= <expr><name><name>ga</name><operator>-&gt;</operator><name>array</name></name><operator>+</operator><name><name>ga</name><operator>-&gt;</operator><name>used</name></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>ga</name><operator>-&gt;</operator><name>used</name></name><operator>++</operator></expr>;</expr_stmt>
+<return>return <expr><name>gp</name></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><name>void</name></type> <name>geoArrayFree</name><parameter_list>(<parameter><decl><type><name>geoArray</name> <modifier>*</modifier></type><name>ga</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>size_t</name></type> <name>i</name></decl>;</decl_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name><name>ga</name><operator>-&gt;</operator><name>used</name></name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content> <expr_stmt><expr><call><name>sdsfree</name><argument_list>(<argument><expr><name><name>ga</name><operator>-&gt;</operator><name>array</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>member</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+<expr_stmt><expr><call><name>zfree</name><argument_list>(<argument><expr><name><name>ga</name><operator>-&gt;</operator><name>array</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>zfree</name><argument_list>(<argument><expr><name>ga</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>int</name></type> <name>decodeGeohash</name><parameter_list>(<parameter><decl><type><name>double</name></type> <name>bits</name></decl></parameter>, <parameter><decl><type><name>double</name> <modifier>*</modifier></type><name>xy</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>GeoHashBits</name></type> <name>hash</name> <init>= <expr><block>{ <expr><operator>.</operator><name>bits</name> <operator>=</operator> <operator>(</operator><name>uint64_t</name><operator>)</operator><name>bits</name></expr>, <expr><operator>.</operator><name>step</name> <operator>=</operator> <name>GEO_STEP_MAX</name></expr> }</block></expr></init></decl>;</decl_stmt>
+<return>return <expr><call><name>geohashDecodeToLongLatWGS84</name><argument_list>(<argument><expr><name>hash</name></expr></argument>, <argument><expr><name>xy</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>int</name></type> <name>extractLongLatOrReply</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>, <parameter><decl><type><name>robj</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><name>double</name> <modifier>*</modifier></type><name>xy</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <literal type="number">2</literal></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>getDoubleFromObjectOrReply</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name><name>argv</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><name>xy</name> <operator>+</operator> <name>i</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call> <operator>!=</operator>
+<name>C_OK</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+<if_stmt><if>if <condition>(<expr><name><name>xy</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>&lt;</operator> <name>GEO_LONG_MIN</name> <operator>||</operator> <name><name>xy</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>&gt;</operator> <name>GEO_LONG_MAX</name> <operator>||</operator>
+<name><name>xy</name><index>[<expr><literal type="number">1</literal></expr>]</index></name> <operator>&lt;</operator> <name>GEO_LAT_MIN</name> <operator>||</operator> <name><name>xy</name><index>[<expr><literal type="number">1</literal></expr>]</index></name> <operator>&gt;</operator> <name>GEO_LAT_MAX</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyErrorFormat</name><argument_list>(<argument><expr><name>c</name></expr></argument>,
+<argument><expr><literal type="string">"-ERR invalid longitude,latitude pair %f,%f\r\n"</literal></expr></argument>,<argument><expr><name><name>xy</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>,<argument><expr><name><name>xy</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name>C_OK</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>int</name></type> <name>longLatFromMember</name><parameter_list>(<parameter><decl><type><name>robj</name> <modifier>*</modifier></type><name>zobj</name></decl></parameter>, <parameter><decl><type><name>robj</name> <modifier>*</modifier></type><name>member</name></decl></parameter>, <parameter><decl><type><name>double</name> <modifier>*</modifier></type><name>xy</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>double</name></type> <name>score</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>zsetScore</name><argument_list>(<argument><expr><name>zobj</name></expr></argument>, <argument><expr><name><name>member</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>score</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>C_ERR</name></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><name>C_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>decodeGeohash</name><argument_list>(<argument><expr><name>score</name></expr></argument>, <argument><expr><name>xy</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><name>C_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><name>C_OK</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+<function><type><name>double</name></type> <name>extractUnitOrReply</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>, <parameter><decl><type><name>robj</name> <modifier>*</modifier></type><name>unit</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>u</name> <init>= <expr><name><name>unit</name><operator>-&gt;</operator><name>ptr</name></name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>strcasecmp</name><argument_list>(<argument><expr><name>u</name></expr></argument>, <argument><expr><literal type="string">"m"</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<return>return <expr><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>!</operator><call><name>strcasecmp</name><argument_list>(<argument><expr><name>u</name></expr></argument>, <argument><expr><literal type="string">"km"</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<return>return <expr><literal type="number">1000</literal></expr>;</return>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>!</operator><call><name>strcasecmp</name><argument_list>(<argument><expr><name>u</name></expr></argument>, <argument><expr><literal type="string">"ft"</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<return>return <expr><literal type="number">0.3048</literal></expr>;</return>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>!</operator><call><name>strcasecmp</name><argument_list>(<argument><expr><name>u</name></expr></argument>, <argument><expr><literal type="string">"mi"</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<return>return <expr><literal type="number">1609.34</literal></expr>;</return>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyError</name><argument_list>(<argument><expr><name>c</name></expr></argument>,
+<argument><expr><literal type="string">"unsupported unit provided. please use M, KM, FT, MI"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><name>int</name></type> <name>extractDistanceOrReply</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>, <parameter><decl><type><name>robj</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl></parameter>,
+<parameter><decl><type><name>double</name> <modifier>*</modifier></type><name>conversion</name></decl></parameter>, <parameter><decl><type><name>double</name> <modifier>*</modifier></type><name>radius</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>double</name></type> <name>distance</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>getDoubleFromObjectOrReply</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name><name>argv</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>distance</name></expr></argument>,
+<argument><expr><literal type="string">"need numeric radius"</literal></expr></argument>)</argument_list></call> <operator>!=</operator> <name>C_OK</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>distance</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyError</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><literal type="string">"radius cannot be negative"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>radius</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><operator>*</operator><name>radius</name> <operator>=</operator> <name>distance</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<decl_stmt><decl><type><name>double</name></type> <name>to_meters</name> <init>= <expr><call><name>extractUnitOrReply</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><name><name>argv</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>to_meters</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>conversion</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><operator>*</operator><name>conversion</name> <operator>=</operator> <name>to_meters</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><name>C_OK</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><name>int</name></type> <name>extractBoxOrReply</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>, <parameter><decl><type><name>robj</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><name>double</name> <modifier>*</modifier></type><name>conversion</name></decl></parameter>,
+<parameter><decl><type><name>double</name> <modifier>*</modifier></type><name>width</name></decl></parameter>, <parameter><decl><type><name>double</name> <modifier>*</modifier></type><name>height</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>double</name></type> <name>h</name></decl>, <decl><type ref="prev"/><name>w</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><call><name>getDoubleFromObjectOrReply</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name><name>argv</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>w</name></expr></argument>, <argument><expr><literal type="string">"need numeric width"</literal></expr></argument>)</argument_list></call> <operator>!=</operator> <name>C_OK</name><operator>)</operator> <operator>||</operator>
+<operator>(</operator><call><name>getDoubleFromObjectOrReply</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name><name>argv</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>h</name></expr></argument>, <argument><expr><literal type="string">"need numeric height"</literal></expr></argument>)</argument_list></call> <operator>!=</operator> <name>C_OK</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>h</name> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator> <name>w</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyError</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><literal type="string">"height or width cannot be negative"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>height</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><operator>*</operator><name>height</name> <operator>=</operator> <name>h</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>width</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><operator>*</operator><name>width</name> <operator>=</operator> <name>w</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<decl_stmt><decl><type><name>double</name></type> <name>to_meters</name> <init>= <expr><call><name>extractUnitOrReply</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><name><name>argv</name><index>[<expr><literal type="number">2</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>to_meters</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>conversion</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><operator>*</operator><name>conversion</name> <operator>=</operator> <name>to_meters</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><name>C_OK</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+<function><type><name>void</name></type> <name>addReplyDoubleDistance</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>, <parameter><decl><type><name>double</name></type> <name>d</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>char</name></type> <name><name>dbuf</name><index>[<expr><literal type="number">128</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>dlen</name> <init>= <expr><call><name>snprintf</name><argument_list>(<argument><expr><name>dbuf</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>dbuf</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><literal type="string">"%.4f"</literal></expr></argument>, <argument><expr><name>d</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>addReplyBulkCBuffer</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name>dbuf</name></expr></argument>, <argument><expr><name>dlen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+
+<function><type><name>int</name></type> <name>geoAppendIfWithinShape</name><parameter_list>(<parameter><decl><type><name>geoArray</name> <modifier>*</modifier></type><name>ga</name></decl></parameter>, <parameter><decl><type><name>GeoShape</name> <modifier>*</modifier></type><name>shape</name></decl></parameter>, <parameter><decl><type><name>double</name></type> <name>score</name></decl></parameter>, <parameter><decl><type><name>sds</name></type> <name>member</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>double</name></type> <name>distance</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>, <decl><type ref="prev"/><name><name>xy</name><index>[<expr><literal type="number">2</literal></expr>]</index></name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>decodeGeohash</name><argument_list>(<argument><expr><name>score</name></expr></argument>,<argument><expr><name>xy</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><name>C_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>shape</name><operator>-&gt;</operator><name>type</name></name> <operator>==</operator> <name>CIRCULAR_TYPE</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>geohashGetDistanceIfInRadiusWGS84</name><argument_list>(<argument><expr><name><name>shape</name><operator>-&gt;</operator><name>xy</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>, <argument><expr><name><name>shape</name><operator>-&gt;</operator><name>xy</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>, <argument><expr><name><name>xy</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>, <argument><expr><name><name>xy</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>,
+<argument><expr><name><name>shape</name><operator>-&gt;</operator><name>t</name><operator>.</operator><name>radius</name></name><operator>*</operator><name><name>shape</name><operator>-&gt;</operator><name>conversion</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>distance</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><name>C_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>shape</name><operator>-&gt;</operator><name>type</name></name> <operator>==</operator> <name>RECTANGLE_TYPE</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>geohashGetDistanceIfInRectangle</name><argument_list>(<argument><expr><name><name>shape</name><operator>-&gt;</operator><name>t</name><operator>.</operator><name>r</name><operator>.</operator><name>width</name></name> <operator>*</operator> <name><name>shape</name><operator>-&gt;</operator><name>conversion</name></name></expr></argument>,
+<argument><expr><name><name>shape</name><operator>-&gt;</operator><name>t</name><operator>.</operator><name>r</name><operator>.</operator><name>height</name></name> <operator>*</operator> <name><name>shape</name><operator>-&gt;</operator><name>conversion</name></name></expr></argument>,
+<argument><expr><name><name>shape</name><operator>-&gt;</operator><name>xy</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>, <argument><expr><name><name>shape</name><operator>-&gt;</operator><name>xy</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>, <argument><expr><name><name>xy</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>, <argument><expr><name><name>xy</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>distance</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>C_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+<decl_stmt><decl><type><name>geoPoint</name> <modifier>*</modifier></type><name>gp</name> <init>= <expr><call><name>geoArrayAppend</name><argument_list>(<argument><expr><name>ga</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>gp</name><operator>-&gt;</operator><name>longitude</name></name> <operator>=</operator> <name><name>xy</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>gp</name><operator>-&gt;</operator><name>latitude</name></name> <operator>=</operator> <name><name>xy</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>gp</name><operator>-&gt;</operator><name>dist</name></name> <operator>=</operator> <name>distance</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>gp</name><operator>-&gt;</operator><name>member</name></name> <operator>=</operator> <name>member</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>gp</name><operator>-&gt;</operator><name>score</name></name> <operator>=</operator> <name>score</name></expr>;</expr_stmt>
+<return>return <expr><name>C_OK</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><name>int</name></type> <name>geoGetPointsInRange</name><parameter_list>(<parameter><decl><type><name>robj</name> <modifier>*</modifier></type><name>zobj</name></decl></parameter>, <parameter><decl><type><name>double</name></type> <name>min</name></decl></parameter>, <parameter><decl><type><name>double</name></type> <name>max</name></decl></parameter>, <parameter><decl><type><name>GeoShape</name> <modifier>*</modifier></type><name>shape</name></decl></parameter>, <parameter><decl><type><name>geoArray</name> <modifier>*</modifier></type><name>ga</name></decl></parameter>, <parameter><decl><type><name>unsigned</name> <name>long</name></type> <name>limit</name></decl></parameter>)</parameter_list> <block>{<block_content>
+
+
+<decl_stmt><decl><type><name>zrangespec</name></type> <name>range</name> <init>= <expr><block>{ <expr><operator>.</operator><name>min</name> <operator>=</operator> <name>min</name></expr>, <expr><operator>.</operator><name>max</name> <operator>=</operator> <name>max</name></expr>, <expr><operator>.</operator><name>minex</name> <operator>=</operator> <literal type="number">0</literal></expr>, <expr><operator>.</operator><name>maxex</name> <operator>=</operator> <literal type="number">1</literal></expr> }</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>origincount</name> <init>= <expr><name><name>ga</name><operator>-&gt;</operator><name>used</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>sds</name></type> <name>member</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>zobj</name><operator>-&gt;</operator><name>encoding</name></name> <operator>==</operator> <name>OBJ_ENCODING_LISTPACK</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>zl</name> <init>= <expr><name><name>zobj</name><operator>-&gt;</operator><name>ptr</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>eptr</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>sptr</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>vstr</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>int</name></type> <name>vlen</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>long</name> <name>long</name></type> <name>vlong</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>double</name></type> <name>score</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>eptr</name> <operator>=</operator> <call><name>zzlFirstInRange</name><argument_list>(<argument><expr><name>zl</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>range</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>sptr</name> <operator>=</operator> <call><name>lpNext</name><argument_list>(<argument><expr><name>zl</name></expr></argument>, <argument><expr><name>eptr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<while>while <condition>(<expr><name>eptr</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>score</name> <operator>=</operator> <call><name>zzlGetScore</name><argument_list>(<argument><expr><name>sptr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>zslValueLteMax</name><argument_list>(<argument><expr><name>score</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>range</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>vstr</name> <operator>=</operator> <call><name>lpGetValue</name><argument_list>(<argument><expr><name>eptr</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>vlen</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>vlong</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>member</name> <operator>=</operator> <ternary><condition><expr><operator>(</operator><name>vstr</name> <operator>==</operator> <name>NULL</name><operator>)</operator></expr> ?</condition><then> <expr><call><name>sdsfromlonglong</name><argument_list>(<argument><expr><name>vlong</name></expr></argument>)</argument_list></call></expr> </then><else>:
+<expr><call><name>sdsnewlen</name><argument_list>(<argument><expr><name>vstr</name></expr></argument>,<argument><expr><name>vlen</name></expr></argument>)</argument_list></call></expr></else></ternary></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>geoAppendIfWithinShape</name><argument_list>(<argument><expr><name>ga</name></expr></argument>,<argument><expr><name>shape</name></expr></argument>,<argument><expr><name>score</name></expr></argument>,<argument><expr><name>member</name></expr></argument>)</argument_list></call>
+<operator>==</operator> <name>C_ERR</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><call><name>sdsfree</name><argument_list>(<argument><expr><name>member</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>ga</name><operator>-&gt;</operator><name>used</name></name> <operator>&amp;&amp;</operator> <name>limit</name> <operator>&amp;&amp;</operator> <name><name>ga</name><operator>-&gt;</operator><name>used</name></name> <operator>&gt;=</operator> <name>limit</name></expr>)</condition><block type="pseudo"><block_content> <break>break;</break></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>zzlNext</name><argument_list>(<argument><expr><name>zl</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>eptr</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>sptr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></while>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>zobj</name><operator>-&gt;</operator><name>encoding</name></name> <operator>==</operator> <name>OBJ_ENCODING_SKIPLIST</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>zset</name> <modifier>*</modifier></type><name>zs</name> <init>= <expr><name><name>zobj</name><operator>-&gt;</operator><name>ptr</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>zskiplist</name> <modifier>*</modifier></type><name>zsl</name> <init>= <expr><name><name>zs</name><operator>-&gt;</operator><name>zsl</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>zskiplistNode</name> <modifier>*</modifier></type><name>ln</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>ln</name> <operator>=</operator> <call><name>zslFirstInRange</name><argument_list>(<argument><expr><name>zsl</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>range</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<while>while <condition>(<expr><name>ln</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>sds</name></type> <name>ele</name> <init>= <expr><name><name>ln</name><operator>-&gt;</operator><name>ele</name></name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>zslValueLteMax</name><argument_list>(<argument><expr><name><name>ln</name><operator>-&gt;</operator><name>score</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>range</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>ele</name> <operator>=</operator> <call><name>sdsdup</name><argument_list>(<argument><expr><name>ele</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>geoAppendIfWithinShape</name><argument_list>(<argument><expr><name>ga</name></expr></argument>,<argument><expr><name>shape</name></expr></argument>,<argument><expr><name><name>ln</name><operator>-&gt;</operator><name>score</name></name></expr></argument>,<argument><expr><name>ele</name></expr></argument>)</argument_list></call>
+<operator>==</operator> <name>C_ERR</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><call><name>sdsfree</name><argument_list>(<argument><expr><name>ele</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>ga</name><operator>-&gt;</operator><name>used</name></name> <operator>&amp;&amp;</operator> <name>limit</name> <operator>&amp;&amp;</operator> <name><name>ga</name><operator>-&gt;</operator><name>used</name></name> <operator>&gt;=</operator> <name>limit</name></expr>)</condition><block type="pseudo"><block_content> <break>break;</break></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>ln</name> <operator>=</operator> <name><name>ln</name><operator>-&gt;</operator><name>level</name><index>[<expr><literal type="number">0</literal></expr>]</index></name><operator>.</operator><name>forward</name></expr>;</expr_stmt>
+</block_content>}</block></while>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name><name>ga</name><operator>-&gt;</operator><name>used</name></name> <operator>-</operator> <name>origincount</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>void</name></type> <name>scoresOfGeoHashBox</name><parameter_list>(<parameter><decl><type><name>GeoHashBits</name></type> <name>hash</name></decl></parameter>, <parameter><decl><type><name>GeoHashFix52Bits</name> <modifier>*</modifier></type><name>min</name></decl></parameter>, <parameter><decl><type><name>GeoHashFix52Bits</name> <modifier>*</modifier></type><name>max</name></decl></parameter>)</parameter_list> <block>{<block_content>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<expr_stmt><expr><operator>*</operator><name>min</name> <operator>=</operator> <call><name>geohashAlign52Bits</name><argument_list>(<argument><expr><name>hash</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>hash</name><operator>.</operator><name>bits</name></name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>max</name> <operator>=</operator> <call><name>geohashAlign52Bits</name><argument_list>(<argument><expr><name>hash</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>int</name></type> <name>membersOfGeoHashBox</name><parameter_list>(<parameter><decl><type><name>robj</name> <modifier>*</modifier></type><name>zobj</name></decl></parameter>, <parameter><decl><type><name>GeoHashBits</name></type> <name>hash</name></decl></parameter>, <parameter><decl><type><name>geoArray</name> <modifier>*</modifier></type><name>ga</name></decl></parameter>, <parameter><decl><type><name>GeoShape</name> <modifier>*</modifier></type><name>shape</name></decl></parameter>, <parameter><decl><type><name>unsigned</name> <name>long</name></type> <name>limit</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>GeoHashFix52Bits</name></type> <name>min</name></decl>, <decl><type ref="prev"/><name>max</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>scoresOfGeoHashBox</name><argument_list>(<argument><expr><name>hash</name></expr></argument>,<argument><expr><operator>&amp;</operator><name>min</name></expr></argument>,<argument><expr><operator>&amp;</operator><name>max</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><call><name>geoGetPointsInRange</name><argument_list>(<argument><expr><name>zobj</name></expr></argument>, <argument><expr><name>min</name></expr></argument>, <argument><expr><name>max</name></expr></argument>, <argument><expr><name>shape</name></expr></argument>, <argument><expr><name>ga</name></expr></argument>, <argument><expr><name>limit</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><name>int</name></type> <name>membersOfAllNeighbors</name><parameter_list>(<parameter><decl><type><name>robj</name> <modifier>*</modifier></type><name>zobj</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>GeoHashRadius</name> <modifier>*</modifier></type><name>n</name></decl></parameter>, <parameter><decl><type><name>GeoShape</name> <modifier>*</modifier></type><name>shape</name></decl></parameter>, <parameter><decl><type><name>geoArray</name> <modifier>*</modifier></type><name>ga</name></decl></parameter>, <parameter><decl><type><name>unsigned</name> <name>long</name></type> <name>limit</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>GeoHashBits</name></type> <name><name>neighbors</name><index>[<expr><literal type="number">9</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>int</name></type> <name>i</name></decl>, <decl><type ref="prev"/><name>count</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>, <decl><type ref="prev"/><name>last_processed</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>debugmsg</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>neighbors</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>=</operator> <name><name>n</name><operator>-&gt;</operator><name>hash</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>neighbors</name><index>[<expr><literal type="number">1</literal></expr>]</index></name> <operator>=</operator> <name><name>n</name><operator>-&gt;</operator><name>neighbors</name><operator>.</operator><name>north</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>neighbors</name><index>[<expr><literal type="number">2</literal></expr>]</index></name> <operator>=</operator> <name><name>n</name><operator>-&gt;</operator><name>neighbors</name><operator>.</operator><name>south</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>neighbors</name><index>[<expr><literal type="number">3</literal></expr>]</index></name> <operator>=</operator> <name><name>n</name><operator>-&gt;</operator><name>neighbors</name><operator>.</operator><name>east</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>neighbors</name><index>[<expr><literal type="number">4</literal></expr>]</index></name> <operator>=</operator> <name><name>n</name><operator>-&gt;</operator><name>neighbors</name><operator>.</operator><name>west</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>neighbors</name><index>[<expr><literal type="number">5</literal></expr>]</index></name> <operator>=</operator> <name><name>n</name><operator>-&gt;</operator><name>neighbors</name><operator>.</operator><name>north_east</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>neighbors</name><index>[<expr><literal type="number">6</literal></expr>]</index></name> <operator>=</operator> <name><name>n</name><operator>-&gt;</operator><name>neighbors</name><operator>.</operator><name>north_west</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>neighbors</name><index>[<expr><literal type="number">7</literal></expr>]</index></name> <operator>=</operator> <name><name>n</name><operator>-&gt;</operator><name>neighbors</name><operator>.</operator><name>south_east</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>neighbors</name><index>[<expr><literal type="number">8</literal></expr>]</index></name> <operator>=</operator> <name><name>n</name><operator>-&gt;</operator><name>neighbors</name><operator>.</operator><name>south_west</name></name></expr>;</expr_stmt>
+
+
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>neighbors</name></expr></argument>)</argument_list></sizeof> <operator>/</operator> <sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>neighbors</name></expr></argument>)</argument_list></sizeof></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>HASHISZERO</name><argument_list>(<argument><expr><name><name>neighbors</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>debugmsg</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><call><name>D</name><argument_list>(<argument><expr><literal type="string">"neighbors[%d] is zero"</literal></expr></argument>,<argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>debugmsg</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>GeoHashRange</name></type> <name>long_range</name></decl>, <decl><type ref="prev"/><name>lat_range</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>geohashGetCoordRange</name><argument_list>(<argument><expr><operator>&amp;</operator><name>long_range</name></expr></argument>,<argument><expr><operator>&amp;</operator><name>lat_range</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>GeoHashArea</name></type> <name>myarea</name> <init>= <expr><block>{<expr><block>{<expr><literal type="number">0</literal></expr>}</block></expr>}</block></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>geohashDecode</name><argument_list>(<argument><expr><name>long_range</name></expr></argument>, <argument><expr><name>lat_range</name></expr></argument>, <argument><expr><name><name>neighbors</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>myarea</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><call><name>D</name><argument_list>(<argument><expr><literal type="string">"neighbors[%d]:\n"</literal></expr></argument>,<argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>D</name><argument_list>(<argument><expr><literal type="string">"area.longitude.min: %f\n"</literal></expr></argument>, <argument><expr><name><name>myarea</name><operator>.</operator><name>longitude</name><operator>.</operator><name>min</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>D</name><argument_list>(<argument><expr><literal type="string">"area.longitude.max: %f\n"</literal></expr></argument>, <argument><expr><name><name>myarea</name><operator>.</operator><name>longitude</name><operator>.</operator><name>max</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>D</name><argument_list>(<argument><expr><literal type="string">"area.latitude.min: %f\n"</literal></expr></argument>, <argument><expr><name><name>myarea</name><operator>.</operator><name>latitude</name><operator>.</operator><name>min</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>D</name><argument_list>(<argument><expr><literal type="string">"area.latitude.max: %f\n"</literal></expr></argument>, <argument><expr><name><name>myarea</name><operator>.</operator><name>latitude</name><operator>.</operator><name>max</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>D</name><argument_list>(<argument><expr><literal type="string">"\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>last_processed</name> <operator>&amp;&amp;</operator>
+<name><name>neighbors</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>bits</name> <operator>==</operator> <name><name>neighbors</name><index>[<expr><name>last_processed</name></expr>]</index></name><operator>.</operator><name>bits</name> <operator>&amp;&amp;</operator>
+<name><name>neighbors</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>step</name> <operator>==</operator> <name><name>neighbors</name><index>[<expr><name>last_processed</name></expr>]</index></name><operator>.</operator><name>step</name></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>debugmsg</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>D</name><argument_list>(<argument><expr><literal type="string">"Skipping processing of %d, same as previous\n"</literal></expr></argument>,<argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>ga</name><operator>-&gt;</operator><name>used</name></name> <operator>&amp;&amp;</operator> <name>limit</name> <operator>&amp;&amp;</operator> <name><name>ga</name><operator>-&gt;</operator><name>used</name></name> <operator>&gt;=</operator> <name>limit</name></expr>)</condition><block type="pseudo"><block_content> <break>break;</break></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>count</name> <operator>+=</operator> <call><name>membersOfGeoHashBox</name><argument_list>(<argument><expr><name>zobj</name></expr></argument>, <argument><expr><name><name>neighbors</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><name>ga</name></expr></argument>, <argument><expr><name>shape</name></expr></argument>, <argument><expr><name>limit</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>last_processed</name> <operator>=</operator> <name>i</name></expr>;</expr_stmt>
+</block_content>}</block></for>
+<return>return <expr><name>count</name></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>int</name></type> <name>sort_gp_asc</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>a</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>b</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name><name>struct</name> <name>geoPoint</name></name> <modifier>*</modifier></type><name>gpa</name> <init>= <expr><name>a</name></expr></init></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>gpb</name> <init>= <expr><name>b</name></expr></init></decl>;</decl_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>gpa</name><operator>-&gt;</operator><name>dist</name></name> <operator>&gt;</operator> <name><name>gpb</name><operator>-&gt;</operator><name>dist</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><literal type="number">1</literal></expr>;</return></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name><name>gpa</name><operator>-&gt;</operator><name>dist</name></name> <operator>==</operator> <name><name>gpb</name><operator>-&gt;</operator><name>dist</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><literal type="number">0</literal></expr>;</return></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></else></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type> <name>sort_gp_desc</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>a</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>b</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<return>return <expr><operator>-</operator><call><name>sort_gp_asc</name><argument_list>(<argument><expr><name>a</name></expr></argument>, <argument><expr><name>b</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+<function><type><name>void</name></type> <name>geoaddCommand</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>xx</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>, <decl><type ref="prev"/><name>nx</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>, <decl><type ref="prev"/><name>longidx</name> <init>= <expr><literal type="number">2</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+
+
+
+<while>while <condition>(<expr><name>longidx</name> <operator>&lt;</operator> <name><name>c</name><operator>-&gt;</operator><name>argc</name></name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>opt</name> <init>= <expr><name><name>c</name><operator>-&gt;</operator><name>argv</name><index>[<expr><name>longidx</name></expr>]</index></name><operator>-&gt;</operator><name>ptr</name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>strcasecmp</name><argument_list>(<argument><expr><name>opt</name></expr></argument>,<argument><expr><literal type="string">"nx"</literal></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>nx</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><operator>!</operator><call><name>strcasecmp</name><argument_list>(<argument><expr><name>opt</name></expr></argument>,<argument><expr><literal type="string">"xx"</literal></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>xx</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><operator>!</operator><call><name>strcasecmp</name><argument_list>(<argument><expr><name>opt</name></expr></argument>,<argument><expr><literal type="string">"ch"</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content> </block_content>}</block></if>
+<else>else<block type="pseudo"><block_content> <break>break;</break></block_content></block></else></if_stmt>
+<expr_stmt><expr><name>longidx</name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></while>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>c</name><operator>-&gt;</operator><name>argc</name></name> <operator>-</operator> <name>longidx</name><operator>)</operator> <operator>%</operator> <literal type="number">3</literal> <operator>||</operator> <operator>(</operator><name>xx</name> <operator>&amp;&amp;</operator> <name>nx</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><call><name>addReplyErrorObject</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><name><name>shared</name><operator>.</operator><name>syntaxerr</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<decl_stmt><decl><type><name>int</name></type> <name>elements</name> <init>= <expr><operator>(</operator><name><name>c</name><operator>-&gt;</operator><name>argc</name></name> <operator>-</operator> <name>longidx</name><operator>)</operator> <operator>/</operator> <literal type="number">3</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>argc</name> <init>= <expr><name>longidx</name><operator>+</operator><name>elements</name><operator>*</operator><literal type="number">2</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>robj</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name> <init>= <expr><call><name>zcalloc</name><argument_list>(<argument><expr><name>argc</name><operator>*</operator><sizeof>sizeof<argument_list>(<argument><expr><name>robj</name><operator>*</operator></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>argv</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>=</operator> <call><name>createRawStringObject</name><argument_list>(<argument><expr><literal type="string">"zadd"</literal></expr></argument>,<argument><expr><literal type="number">4</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">1</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>longidx</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name><name>argv</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <name><name>c</name><operator>-&gt;</operator><name>argv</name><index>[<expr><name>i</name></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>incrRefCount</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+
+
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>elements</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>double</name></type> <name><name>xy</name><index>[<expr><literal type="number">2</literal></expr>]</index></name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>extractLongLatOrReply</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><operator>(</operator><name><name>c</name><operator>-&gt;</operator><name>argv</name></name><operator>+</operator><name>longidx</name><operator>)</operator><operator>+</operator><operator>(</operator><name>i</name><operator>*</operator><literal type="number">3</literal><operator>)</operator></expr></argument>,<argument><expr><name>xy</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>C_ERR</name></expr>)</condition> <block>{<block_content>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>argc</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<expr><name><name>argv</name><index>[<expr><name>i</name></expr>]</index></name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><call><name>decrRefCount</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt></block_content></block></for>
+<expr_stmt><expr><call><name>zfree</name><argument_list>(<argument><expr><name>argv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<decl_stmt><decl><type><name>GeoHashBits</name></type> <name>hash</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>geohashEncodeWGS84</name><argument_list>(<argument><expr><name><name>xy</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>, <argument><expr><name><name>xy</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>, <argument><expr><name>GEO_STEP_MAX</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>hash</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>GeoHashFix52Bits</name></type> <name>bits</name> <init>= <expr><call><name>geohashAlign52Bits</name><argument_list>(<argument><expr><name>hash</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>robj</name> <modifier>*</modifier></type><name>score</name> <init>= <expr><call><name>createObject</name><argument_list>(<argument><expr><name>OBJ_STRING</name></expr></argument>, <argument><expr><call><name>sdsfromlonglong</name><argument_list>(<argument><expr><name>bits</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>robj</name> <modifier>*</modifier></type><name>val</name> <init>= <expr><name><name>c</name><operator>-&gt;</operator><name>argv</name><index>[<expr><name>longidx</name> <operator>+</operator> <name>i</name> <operator>*</operator> <literal type="number">3</literal> <operator>+</operator> <literal type="number">2</literal></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>argv</name><index>[<expr><name>longidx</name><operator>+</operator><name>i</name><operator>*</operator><literal type="number">2</literal></expr>]</index></name> <operator>=</operator> <name>score</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>argv</name><index>[<expr><name>longidx</name><operator>+</operator><literal type="number">1</literal><operator>+</operator><name>i</name><operator>*</operator><literal type="number">2</literal></expr>]</index></name> <operator>=</operator> <name>val</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>incrRefCount</name><argument_list>(<argument><expr><name>val</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+
+<expr_stmt><expr><call><name>replaceClientCommandVector</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><name>argc</name></expr></argument>,<argument><expr><name>argv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>zaddCommand</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>SORT_NONE</name></cpp:macro> <cpp:value>0</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>SORT_ASC</name></cpp:macro> <cpp:value>1</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>SORT_DESC</name></cpp:macro> <cpp:value>2</cpp:value></cpp:define>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>RADIUS_COORDS</name></cpp:macro> <cpp:value>(1&lt;&lt;0)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>RADIUS_MEMBER</name></cpp:macro> <cpp:value>(1&lt;&lt;1)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>RADIUS_NOSTORE</name></cpp:macro> <cpp:value>(1&lt;&lt;2)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>GEOSEARCH</name></cpp:macro> <cpp:value>(1&lt;&lt;3)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>GEOSEARCHSTORE</name></cpp:macro> <cpp:value>(1&lt;&lt;4)</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+
+<function><type><name>void</name></type> <name>georadiusGeneric</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>srcKeyIndex</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>flags</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>robj</name> <modifier>*</modifier></type><name>storekey</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>storedist</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><name>robj</name> <modifier>*</modifier></type><name>zobj</name> <init>= <expr><call><name>lookupKeyRead</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>db</name></name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>argv</name><index>[<expr><name>srcKeyIndex</name></expr>]</index></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>checkType</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name>zobj</name></expr></argument>, <argument><expr><name>OBJ_ZSET</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content> <return>return;</return></block_content></block></if></if_stmt>
+
+
+<decl_stmt><decl><type><name>int</name></type> <name>base_args</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>GeoShape</name></type> <name>shape</name> <init>= <expr><block>{<expr><literal type="number">0</literal></expr>}</block></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>flags</name> <operator>&amp;</operator> <name>RADIUS_COORDS</name></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><name>base_args</name> <operator>=</operator> <literal type="number">6</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>shape</name><operator>.</operator><name>type</name></name> <operator>=</operator> <name>CIRCULAR_TYPE</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>extractLongLatOrReply</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>argv</name></name> <operator>+</operator> <literal type="number">2</literal></expr></argument>, <argument><expr><name><name>shape</name><operator>.</operator><name>xy</name></name></expr></argument>)</argument_list></call> <operator>==</operator> <name>C_ERR</name></expr>)</condition><block type="pseudo"><block_content> <return>return;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>extractDistanceOrReply</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>argv</name></name><operator>+</operator><name>base_args</name><operator>-</operator><literal type="number">2</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>shape</name><operator>.</operator><name>conversion</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>shape</name><operator>.</operator><name>t</name><operator>.</operator><name>radius</name></name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>C_OK</name></expr>)</condition><block type="pseudo"><block_content> <return>return;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>(</operator><name>flags</name> <operator>&amp;</operator> <name>RADIUS_MEMBER</name><operator>)</operator> <operator>&amp;&amp;</operator> <operator>!</operator><name>zobj</name></expr>)</condition> <block>{<block_content>
+
+
+<expr_stmt><expr><name>base_args</name> <operator>=</operator> <literal type="number">5</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>flags</name> <operator>&amp;</operator> <name>RADIUS_MEMBER</name></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><name>base_args</name> <operator>=</operator> <literal type="number">5</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>shape</name><operator>.</operator><name>type</name></name> <operator>=</operator> <name>CIRCULAR_TYPE</name></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>robj</name> <modifier>*</modifier></type><name>member</name> <init>= <expr><name><name>c</name><operator>-&gt;</operator><name>argv</name><index>[<expr><literal type="number">2</literal></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>longLatFromMember</name><argument_list>(<argument><expr><name>zobj</name></expr></argument>, <argument><expr><name>member</name></expr></argument>, <argument><expr><name><name>shape</name><operator>.</operator><name>xy</name></name></expr></argument>)</argument_list></call> <operator>==</operator> <name>C_ERR</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyError</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><literal type="string">"could not decode requested zset member"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>extractDistanceOrReply</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>argv</name></name><operator>+</operator><name>base_args</name><operator>-</operator><literal type="number">2</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>shape</name><operator>.</operator><name>conversion</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>shape</name><operator>.</operator><name>t</name><operator>.</operator><name>radius</name></name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>C_OK</name></expr>)</condition><block type="pseudo"><block_content> <return>return;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>flags</name> <operator>&amp;</operator> <name>GEOSEARCH</name></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><name>base_args</name> <operator>=</operator> <literal type="number">2</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>flags</name> <operator>&amp;</operator> <name>GEOSEARCHSTORE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>base_args</name> <operator>=</operator> <literal type="number">3</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>storekey</name> <operator>=</operator> <name><name>c</name><operator>-&gt;</operator><name>argv</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyError</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><literal type="string">"Unknown georadius search type"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></else></if_stmt>
+
+
+<decl_stmt><decl><type><name>int</name></type> <name>withdist</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>, <decl><type ref="prev"/><name>withhash</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>, <decl><type ref="prev"/><name>withcoords</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>frommember</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>, <decl><type ref="prev"/><name>fromloc</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>, <decl><type ref="prev"/><name>byradius</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>, <decl><type ref="prev"/><name>bybox</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>sort</name> <init>= <expr><name>SORT_NONE</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>any</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>long</name> <name>long</name></type> <name>count</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>c</name><operator>-&gt;</operator><name>argc</name></name> <operator>&gt;</operator> <name>base_args</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>remaining</name> <init>= <expr><name><name>c</name><operator>-&gt;</operator><name>argc</name></name> <operator>-</operator> <name>base_args</name></expr></init></decl>;</decl_stmt>
+<for>for <control>(<init><decl><type><name>int</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>remaining</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>arg</name> <init>= <expr><name><name>c</name><operator>-&gt;</operator><name>argv</name><index>[<expr><name>base_args</name> <operator>+</operator> <name>i</name></expr>]</index></name><operator>-&gt;</operator><name>ptr</name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>strcasecmp</name><argument_list>(<argument><expr><name>arg</name></expr></argument>, <argument><expr><literal type="string">"withdist"</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>withdist</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>!</operator><call><name>strcasecmp</name><argument_list>(<argument><expr><name>arg</name></expr></argument>, <argument><expr><literal type="string">"withhash"</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>withhash</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>!</operator><call><name>strcasecmp</name><argument_list>(<argument><expr><name>arg</name></expr></argument>, <argument><expr><literal type="string">"withcoord"</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>withcoords</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>!</operator><call><name>strcasecmp</name><argument_list>(<argument><expr><name>arg</name></expr></argument>, <argument><expr><literal type="string">"any"</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>any</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>!</operator><call><name>strcasecmp</name><argument_list>(<argument><expr><name>arg</name></expr></argument>, <argument><expr><literal type="string">"asc"</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>sort</name> <operator>=</operator> <name>SORT_ASC</name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>!</operator><call><name>strcasecmp</name><argument_list>(<argument><expr><name>arg</name></expr></argument>, <argument><expr><literal type="string">"desc"</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>sort</name> <operator>=</operator> <name>SORT_DESC</name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>!</operator><call><name>strcasecmp</name><argument_list>(<argument><expr><name>arg</name></expr></argument>, <argument><expr><literal type="string">"count"</literal></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <operator>(</operator><name>i</name><operator>+</operator><literal type="number">1</literal><operator>)</operator> <operator>&lt;</operator> <name>remaining</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>getLongLongFromObjectOrReply</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>argv</name><index>[<expr><name>base_args</name><operator>+</operator><name>i</name><operator>+</operator><literal type="number">1</literal></expr>]</index></name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>count</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>C_OK</name></expr>)</condition><block type="pseudo"><block_content> <return>return;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>count</name> <operator>&lt;=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyError</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><literal type="string">"COUNT must be &gt; 0"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>i</name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>!</operator><call><name>strcasecmp</name><argument_list>(<argument><expr><name>arg</name></expr></argument>, <argument><expr><literal type="string">"store"</literal></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator>
+<operator>(</operator><name>i</name><operator>+</operator><literal type="number">1</literal><operator>)</operator> <operator>&lt;</operator> <name>remaining</name> <operator>&amp;&amp;</operator>
+<operator>!</operator><operator>(</operator><name>flags</name> <operator>&amp;</operator> <name>RADIUS_NOSTORE</name><operator>)</operator> <operator>&amp;&amp;</operator>
+<operator>!</operator><operator>(</operator><name>flags</name> <operator>&amp;</operator> <name>GEOSEARCH</name><operator>)</operator></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>storekey</name> <operator>=</operator> <name><name>c</name><operator>-&gt;</operator><name>argv</name><index>[<expr><name>base_args</name><operator>+</operator><name>i</name><operator>+</operator><literal type="number">1</literal></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>storedist</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>i</name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>!</operator><call><name>strcasecmp</name><argument_list>(<argument><expr><name>arg</name></expr></argument>, <argument><expr><literal type="string">"storedist"</literal></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator>
+<operator>(</operator><name>i</name><operator>+</operator><literal type="number">1</literal><operator>)</operator> <operator>&lt;</operator> <name>remaining</name> <operator>&amp;&amp;</operator>
+<operator>!</operator><operator>(</operator><name>flags</name> <operator>&amp;</operator> <name>RADIUS_NOSTORE</name><operator>)</operator> <operator>&amp;&amp;</operator>
+<operator>!</operator><operator>(</operator><name>flags</name> <operator>&amp;</operator> <name>GEOSEARCH</name><operator>)</operator></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>storekey</name> <operator>=</operator> <name><name>c</name><operator>-&gt;</operator><name>argv</name><index>[<expr><name>base_args</name><operator>+</operator><name>i</name><operator>+</operator><literal type="number">1</literal></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>storedist</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>i</name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>!</operator><call><name>strcasecmp</name><argument_list>(<argument><expr><name>arg</name></expr></argument>, <argument><expr><literal type="string">"storedist"</literal></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator>
+<operator>(</operator><name>flags</name> <operator>&amp;</operator> <name>GEOSEARCH</name><operator>)</operator> <operator>&amp;&amp;</operator>
+<operator>(</operator><name>flags</name> <operator>&amp;</operator> <name>GEOSEARCHSTORE</name><operator>)</operator></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>storedist</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>!</operator><call><name>strcasecmp</name><argument_list>(<argument><expr><name>arg</name></expr></argument>, <argument><expr><literal type="string">"frommember"</literal></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator>
+<operator>(</operator><name>i</name><operator>+</operator><literal type="number">1</literal><operator>)</operator> <operator>&lt;</operator> <name>remaining</name> <operator>&amp;&amp;</operator>
+<name>flags</name> <operator>&amp;</operator> <name>GEOSEARCH</name> <operator>&amp;&amp;</operator>
+<operator>!</operator><name>fromloc</name></expr>)</condition>
+<block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><name>zobj</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>frommember</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>i</name><operator>++</operator></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>longLatFromMember</name><argument_list>(<argument><expr><name>zobj</name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>argv</name><index>[<expr><name>base_args</name><operator>+</operator><name>i</name><operator>+</operator><literal type="number">1</literal></expr>]</index></name></expr></argument>, <argument><expr><name><name>shape</name><operator>.</operator><name>xy</name></name></expr></argument>)</argument_list></call> <operator>==</operator> <name>C_ERR</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyError</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><literal type="string">"could not decode requested zset member"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>frommember</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>i</name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>!</operator><call><name>strcasecmp</name><argument_list>(<argument><expr><name>arg</name></expr></argument>, <argument><expr><literal type="string">"fromlonlat"</literal></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator>
+<operator>(</operator><name>i</name><operator>+</operator><literal type="number">2</literal><operator>)</operator> <operator>&lt;</operator> <name>remaining</name> <operator>&amp;&amp;</operator>
+<name>flags</name> <operator>&amp;</operator> <name>GEOSEARCH</name> <operator>&amp;&amp;</operator>
+<operator>!</operator><name>frommember</name></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>extractLongLatOrReply</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>argv</name></name><operator>+</operator><name>base_args</name><operator>+</operator><name>i</name><operator>+</operator><literal type="number">1</literal></expr></argument>, <argument><expr><name><name>shape</name><operator>.</operator><name>xy</name></name></expr></argument>)</argument_list></call> <operator>==</operator> <name>C_ERR</name></expr>)</condition><block type="pseudo"><block_content> <return>return;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>fromloc</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>i</name> <operator>+=</operator> <literal type="number">2</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>!</operator><call><name>strcasecmp</name><argument_list>(<argument><expr><name>arg</name></expr></argument>, <argument><expr><literal type="string">"byradius"</literal></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator>
+<operator>(</operator><name>i</name><operator>+</operator><literal type="number">2</literal><operator>)</operator> <operator>&lt;</operator> <name>remaining</name> <operator>&amp;&amp;</operator>
+<name>flags</name> <operator>&amp;</operator> <name>GEOSEARCH</name> <operator>&amp;&amp;</operator>
+<operator>!</operator><name>bybox</name></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>extractDistanceOrReply</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>argv</name></name><operator>+</operator><name>base_args</name><operator>+</operator><name>i</name><operator>+</operator><literal type="number">1</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>shape</name><operator>.</operator><name>conversion</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>shape</name><operator>.</operator><name>t</name><operator>.</operator><name>radius</name></name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>C_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>shape</name><operator>.</operator><name>type</name></name> <operator>=</operator> <name>CIRCULAR_TYPE</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>byradius</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>i</name> <operator>+=</operator> <literal type="number">2</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>!</operator><call><name>strcasecmp</name><argument_list>(<argument><expr><name>arg</name></expr></argument>, <argument><expr><literal type="string">"bybox"</literal></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator>
+<operator>(</operator><name>i</name><operator>+</operator><literal type="number">3</literal><operator>)</operator> <operator>&lt;</operator> <name>remaining</name> <operator>&amp;&amp;</operator>
+<name>flags</name> <operator>&amp;</operator> <name>GEOSEARCH</name> <operator>&amp;&amp;</operator>
+<operator>!</operator><name>byradius</name></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>extractBoxOrReply</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>argv</name></name><operator>+</operator><name>base_args</name><operator>+</operator><name>i</name><operator>+</operator><literal type="number">1</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>shape</name><operator>.</operator><name>conversion</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>shape</name><operator>.</operator><name>t</name><operator>.</operator><name>r</name><operator>.</operator><name>width</name></name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name><name>shape</name><operator>.</operator><name>t</name><operator>.</operator><name>r</name><operator>.</operator><name>height</name></name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>C_OK</name></expr>)</condition><block type="pseudo"><block_content> <return>return;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>shape</name><operator>.</operator><name>type</name></name> <operator>=</operator> <name>RECTANGLE_TYPE</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>bybox</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>i</name> <operator>+=</operator> <literal type="number">3</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyErrorObject</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><name><name>shared</name><operator>.</operator><name>syntaxerr</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>storekey</name> <operator>&amp;&amp;</operator> <operator>(</operator><name>withdist</name> <operator>||</operator> <name>withhash</name> <operator>||</operator> <name>withcoords</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyErrorFormat</name><argument_list>(<argument><expr><name>c</name></expr></argument>,
+<argument><expr><literal type="string">"%s is not compatible with WITHDIST, WITHHASH and WITHCOORD options"</literal></expr></argument>,
+<argument><expr><ternary><condition><expr><name>flags</name> <operator>&amp;</operator> <name>GEOSEARCHSTORE</name></expr>?</condition><then> <expr><literal type="string">"GEOSEARCHSTORE"</literal></expr></then><else>: <expr><literal type="string">"STORE option in GEORADIUS"</literal></expr></else></ternary></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>flags</name> <operator>&amp;</operator> <name>GEOSEARCH</name><operator>)</operator> <operator>&amp;&amp;</operator> <operator>!</operator><operator>(</operator><name>frommember</name> <operator>||</operator> <name>fromloc</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyErrorFormat</name><argument_list>(<argument><expr><name>c</name></expr></argument>,
+<argument><expr><literal type="string">"exactly one of FROMMEMBER or FROMLONLAT can be specified for %s"</literal></expr></argument>,
+<argument><expr><operator>(</operator><name>char</name> <operator>*</operator><operator>)</operator><name><name>c</name><operator>-&gt;</operator><name>argv</name><index>[<expr><literal type="number">0</literal></expr>]</index></name><operator>-&gt;</operator><name>ptr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>flags</name> <operator>&amp;</operator> <name>GEOSEARCH</name><operator>)</operator> <operator>&amp;&amp;</operator> <operator>!</operator><operator>(</operator><name>byradius</name> <operator>||</operator> <name>bybox</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyErrorFormat</name><argument_list>(<argument><expr><name>c</name></expr></argument>,
+<argument><expr><literal type="string">"exactly one of BYRADIUS and BYBOX can be specified for %s"</literal></expr></argument>,
+<argument><expr><operator>(</operator><name>char</name> <operator>*</operator><operator>)</operator><name><name>c</name><operator>-&gt;</operator><name>argv</name><index>[<expr><literal type="number">0</literal></expr>]</index></name><operator>-&gt;</operator><name>ptr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>any</name> <operator>&amp;&amp;</operator> <operator>!</operator><name>count</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyErrorFormat</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><literal type="string">"the ANY argument requires COUNT argument"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>zobj</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>storekey</name></expr>)</condition> <block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><call><name>dbDelete</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>db</name></name></expr></argument>, <argument><expr><name>storekey</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>signalModifiedKey</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>db</name></name></expr></argument>, <argument><expr><name>storekey</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>notifyKeyspaceEvent</name><argument_list>(<argument><expr><name>NOTIFY_GENERIC</name></expr></argument>, <argument><expr><literal type="string">"del"</literal></expr></argument>, <argument><expr><name>storekey</name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>db</name><operator>-&gt;</operator><name>id</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>dirty</name></name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>addReply</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name><name>shared</name><operator>.</operator><name>czero</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+<expr_stmt><expr><call><name>addReply</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name><name>shared</name><operator>.</operator><name>emptyarray</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>count</name> <operator>!=</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name>sort</name> <operator>==</operator> <name>SORT_NONE</name> <operator>&amp;&amp;</operator> <operator>!</operator><name>any</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>sort</name> <operator>=</operator> <name>SORT_ASC</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+<decl_stmt><decl><type><name>GeoHashRadius</name></type> <name>georadius</name> <init>= <expr><call><name>geohashCalculateAreasByShapeWGS84</name><argument_list>(<argument><expr><operator>&amp;</operator><name>shape</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><name>geoArray</name> <modifier>*</modifier></type><name>ga</name> <init>= <expr><call><name>geoArrayCreate</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>membersOfAllNeighbors</name><argument_list>(<argument><expr><name>zobj</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>georadius</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>shape</name></expr></argument>, <argument><expr><name>ga</name></expr></argument>, <argument><expr><ternary><condition><expr><name>any</name></expr> ?</condition><then> <expr><name>count</name></expr> </then><else>: <expr><literal type="number">0</literal></expr></else></ternary></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>ga</name><operator>-&gt;</operator><name>used</name></name> <operator>==</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name>storekey</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReply</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><name><name>shared</name><operator>.</operator><name>emptyarray</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>geoArrayFree</name><argument_list>(<argument><expr><name>ga</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+<decl_stmt><decl><type><name>long</name></type> <name>result_length</name> <init>= <expr><name><name>ga</name><operator>-&gt;</operator><name>used</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>long</name></type> <name>returned_items</name> <init>= <expr><ternary><condition><expr><operator>(</operator><name>count</name> <operator>==</operator> <literal type="number">0</literal> <operator>||</operator> <name>result_length</name> <operator>&lt;</operator> <name>count</name><operator>)</operator></expr> ?</condition><then>
+<expr><name>result_length</name></expr> </then><else>: <expr><name>count</name></expr></else></ternary></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>long</name></type> <name>option_length</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>sort</name> <operator>!=</operator> <name>SORT_NONE</name></expr>)</condition> <block>{<block_content>
+<function_decl><type><name>int</name></type> (<modifier>*</modifier><name>sort_gp_callback</name>)<parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>a</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>b</name></decl></parameter>)</parameter_list> <init>= <expr><name>NULL</name></expr></init>;</function_decl>
+<if_stmt><if>if <condition>(<expr><name>sort</name> <operator>==</operator> <name>SORT_ASC</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>sort_gp_callback</name> <operator>=</operator> <name>sort_gp_asc</name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>sort</name> <operator>==</operator> <name>SORT_DESC</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>sort_gp_callback</name> <operator>=</operator> <name>sort_gp_desc</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>returned_items</name> <operator>==</operator> <name>result_length</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>qsort</name><argument_list>(<argument><expr><name><name>ga</name><operator>-&gt;</operator><name>array</name></name></expr></argument>, <argument><expr><name>result_length</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>geoPoint</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><name>sort_gp_callback</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>pqsort</name><argument_list>(<argument><expr><name><name>ga</name><operator>-&gt;</operator><name>array</name></name></expr></argument>, <argument><expr><name>result_length</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>geoPoint</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><name>sort_gp_callback</name></expr></argument>,
+<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><operator>(</operator><name>returned_items</name> <operator>-</operator> <literal type="number">1</literal><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>storekey</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>withdist</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>option_length</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>withcoords</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>option_length</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>withhash</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>option_length</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+
+
+
+<expr_stmt><expr><call><name>addReplyArrayLen</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name>returned_items</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>returned_items</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>geoPoint</name> <modifier>*</modifier></type><name>gp</name> <init>= <expr><name><name>ga</name><operator>-&gt;</operator><name>array</name></name><operator>+</operator><name>i</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>gp</name><operator>-&gt;</operator><name>dist</name></name> <operator>/=</operator> <name><name>shape</name><operator>.</operator><name>conversion</name></name></expr>;</expr_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>option_length</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>addReplyArrayLen</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name>option_length</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>addReplyBulkSds</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><name><name>gp</name><operator>-&gt;</operator><name>member</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>gp</name><operator>-&gt;</operator><name>member</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>withdist</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>addReplyDoubleDistance</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name><name>gp</name><operator>-&gt;</operator><name>dist</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>withhash</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>addReplyLongLong</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name><name>gp</name><operator>-&gt;</operator><name>score</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>withcoords</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyArrayLen</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><literal type="number">2</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>addReplyHumanLongDouble</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name><name>gp</name><operator>-&gt;</operator><name>longitude</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>addReplyHumanLongDouble</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name><name>gp</name><operator>-&gt;</operator><name>latitude</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+<decl_stmt><decl><type><name>robj</name> <modifier>*</modifier></type><name>zobj</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>zset</name> <modifier>*</modifier></type><name>zs</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>maxelelen</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>, <decl><type ref="prev"/><name>totelelen</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>returned_items</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>zobj</name> <operator>=</operator> <call><name>createZsetObject</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>zs</name> <operator>=</operator> <name><name>zobj</name><operator>-&gt;</operator><name>ptr</name></name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>returned_items</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>zskiplistNode</name> <modifier>*</modifier></type><name>znode</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>geoPoint</name> <modifier>*</modifier></type><name>gp</name> <init>= <expr><name><name>ga</name><operator>-&gt;</operator><name>array</name></name><operator>+</operator><name>i</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>gp</name><operator>-&gt;</operator><name>dist</name></name> <operator>/=</operator> <name><name>shape</name><operator>.</operator><name>conversion</name></name></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>double</name></type> <name>score</name> <init>= <expr><ternary><condition><expr><name>storedist</name></expr> ?</condition><then> <expr><name><name>gp</name><operator>-&gt;</operator><name>dist</name></name></expr> </then><else>: <expr><name><name>gp</name><operator>-&gt;</operator><name>score</name></name></expr></else></ternary></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>elelen</name> <init>= <expr><call><name>sdslen</name><argument_list>(<argument><expr><name><name>gp</name><operator>-&gt;</operator><name>member</name></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>maxelelen</name> <operator>&lt;</operator> <name>elelen</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>maxelelen</name> <operator>=</operator> <name>elelen</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>totelelen</name> <operator>+=</operator> <name>elelen</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>znode</name> <operator>=</operator> <call><name>zslInsert</name><argument_list>(<argument><expr><name><name>zs</name><operator>-&gt;</operator><name>zsl</name></name></expr></argument>,<argument><expr><name>score</name></expr></argument>,<argument><expr><name><name>gp</name><operator>-&gt;</operator><name>member</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>serverAssert</name><argument_list>(<argument><expr><call><name>dictAdd</name><argument_list>(<argument><expr><name><name>zs</name><operator>-&gt;</operator><name>dict</name></name></expr></argument>,<argument><expr><name><name>gp</name><operator>-&gt;</operator><name>member</name></name></expr></argument>,<argument><expr><operator>&amp;</operator><name><name>znode</name><operator>-&gt;</operator><name>score</name></name></expr></argument>)</argument_list></call> <operator>==</operator> <name>DICT_OK</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>gp</name><operator>-&gt;</operator><name>member</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<if_stmt><if>if <condition>(<expr><name>returned_items</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>zsetConvertToListpackIfNeeded</name><argument_list>(<argument><expr><name>zobj</name></expr></argument>,<argument><expr><name>maxelelen</name></expr></argument>,<argument><expr><name>totelelen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>setKey</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><name><name>c</name><operator>-&gt;</operator><name>db</name></name></expr></argument>,<argument><expr><name>storekey</name></expr></argument>,<argument><expr><name>zobj</name></expr></argument>,<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>decrRefCount</name><argument_list>(<argument><expr><name>zobj</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>notifyKeyspaceEvent</name><argument_list>(<argument><expr><name>NOTIFY_ZSET</name></expr></argument>,<argument><expr><ternary><condition><expr><name>flags</name> <operator>&amp;</operator> <name>GEOSEARCH</name></expr> ?</condition><then> <expr><literal type="string">"geosearchstore"</literal></expr> </then><else>: <expr><literal type="string">"georadiusstore"</literal></expr></else></ternary></expr></argument>,<argument><expr><name>storekey</name></expr></argument>,
+<argument><expr><name><name>c</name><operator>-&gt;</operator><name>db</name><operator>-&gt;</operator><name>id</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>dirty</name></name> <operator>+=</operator> <name>returned_items</name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><call><name>dbDelete</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>db</name></name></expr></argument>,<argument><expr><name>storekey</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>signalModifiedKey</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><name><name>c</name><operator>-&gt;</operator><name>db</name></name></expr></argument>,<argument><expr><name>storekey</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>notifyKeyspaceEvent</name><argument_list>(<argument><expr><name>NOTIFY_GENERIC</name></expr></argument>,<argument><expr><literal type="string">"del"</literal></expr></argument>,<argument><expr><name>storekey</name></expr></argument>,<argument><expr><name><name>c</name><operator>-&gt;</operator><name>db</name><operator>-&gt;</operator><name>id</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>dirty</name></name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>addReplyLongLong</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name>returned_items</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><call><name>geoArrayFree</name><argument_list>(<argument><expr><name>ga</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+<function><type><name>void</name></type> <name>georadiusCommand</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>georadiusGeneric</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>RADIUS_COORDS</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+<function><type><name>void</name></type> <name>georadiusbymemberCommand</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>georadiusGeneric</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>RADIUS_MEMBER</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+<function><type><name>void</name></type> <name>georadiusroCommand</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>georadiusGeneric</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>RADIUS_COORDS</name><operator>|</operator><name>RADIUS_NOSTORE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+<function><type><name>void</name></type> <name>georadiusbymemberroCommand</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>georadiusGeneric</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>RADIUS_MEMBER</name><operator>|</operator><name>RADIUS_NOSTORE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type> <name>geosearchCommand</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>georadiusGeneric</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>GEOSEARCH</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type> <name>geosearchstoreCommand</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>georadiusGeneric</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><literal type="number">2</literal></expr></argument>, <argument><expr><name>GEOSEARCH</name><operator>|</operator><name>GEOSEARCHSTORE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><name>void</name></type> <name>geohashCommand</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>geoalphabet</name><init>= <expr><literal type="string">"0123456789bcdefghjkmnpqrstuvwxyz"</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>j</name></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><name>robj</name> <modifier>*</modifier></type><name>zobj</name> <init>= <expr><call><name>lookupKeyRead</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>db</name></name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>argv</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>checkType</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name>zobj</name></expr></argument>, <argument><expr><name>OBJ_ZSET</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content> <return>return;</return></block_content></block></if></if_stmt>
+
+
+
+<expr_stmt><expr><call><name>addReplyArrayLen</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><name><name>c</name><operator>-&gt;</operator><name>argc</name></name><operator>-</operator><literal type="number">2</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>j</name> <operator>=</operator> <literal type="number">2</literal></expr>;</init> <condition><expr><name>j</name> <operator>&lt;</operator> <name><name>c</name><operator>-&gt;</operator><name>argc</name></name></expr>;</condition> <incr><expr><name>j</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>double</name></type> <name>score</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>zobj</name> <operator>||</operator> <call><name>zsetScore</name><argument_list>(<argument><expr><name>zobj</name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>argv</name><index>[<expr><name>j</name></expr>]</index></name><operator>-&gt;</operator><name>ptr</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>score</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>C_ERR</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyNull</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+
+
+
+
+
+
+<decl_stmt><decl><type><name>double</name></type> <name><name>xy</name><index>[<expr><literal type="number">2</literal></expr>]</index></name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>decodeGeohash</name><argument_list>(<argument><expr><name>score</name></expr></argument>,<argument><expr><name>xy</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyNull</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+
+
+<decl_stmt><decl><type><name>GeoHashRange</name></type> <name><name>r</name><index>[<expr><literal type="number">2</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>GeoHashBits</name></type> <name>hash</name></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>r</name><index>[<expr><literal type="number">0</literal></expr>]</index></name><operator>.</operator><name>min</name> <operator>=</operator> <operator>-</operator><literal type="number">180</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>r</name><index>[<expr><literal type="number">0</literal></expr>]</index></name><operator>.</operator><name>max</name> <operator>=</operator> <literal type="number">180</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>r</name><index>[<expr><literal type="number">1</literal></expr>]</index></name><operator>.</operator><name>min</name> <operator>=</operator> <operator>-</operator><literal type="number">90</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>r</name><index>[<expr><literal type="number">1</literal></expr>]</index></name><operator>.</operator><name>max</name> <operator>=</operator> <literal type="number">90</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>geohashEncode</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>r</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>,<argument><expr><operator>&amp;</operator><name><name>r</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>,<argument><expr><name><name>xy</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>,<argument><expr><name><name>xy</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>,<argument><expr><literal type="number">26</literal></expr></argument>,<argument><expr><operator>&amp;</operator><name>hash</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>char</name></type> <name><name>buf</name><index>[<expr><literal type="number">12</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <literal type="number">11</literal></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>idx</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>i</name> <operator>==</operator> <literal type="number">10</literal></expr>)</condition> <block>{<block_content>
+
+
+
+<expr_stmt><expr><name>idx</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>idx</name> <operator>=</operator> <operator>(</operator><name><name>hash</name><operator>.</operator><name>bits</name></name> <operator>&gt;&gt;</operator> <operator>(</operator><literal type="number">52</literal><operator>-</operator><operator>(</operator><operator>(</operator><name>i</name><operator>+</operator><literal type="number">1</literal><operator>)</operator><operator>*</operator><literal type="number">5</literal><operator>)</operator><operator>)</operator><operator>)</operator> <operator>&amp;</operator> <literal type="number">0x1f</literal></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><name><name>buf</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <name><name>geoalphabet</name><index>[<expr><name>idx</name></expr>]</index></name></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><name><name>buf</name><index>[<expr><literal type="number">11</literal></expr>]</index></name> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>addReplyBulkCBuffer</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><name>buf</name></expr></argument>,<argument><expr><literal type="number">11</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><name>void</name></type> <name>geoposCommand</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>j</name></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><name>robj</name> <modifier>*</modifier></type><name>zobj</name> <init>= <expr><call><name>lookupKeyRead</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>db</name></name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>argv</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>checkType</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name>zobj</name></expr></argument>, <argument><expr><name>OBJ_ZSET</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content> <return>return;</return></block_content></block></if></if_stmt>
+
+
+
+<expr_stmt><expr><call><name>addReplyArrayLen</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><name><name>c</name><operator>-&gt;</operator><name>argc</name></name><operator>-</operator><literal type="number">2</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>j</name> <operator>=</operator> <literal type="number">2</literal></expr>;</init> <condition><expr><name>j</name> <operator>&lt;</operator> <name><name>c</name><operator>-&gt;</operator><name>argc</name></name></expr>;</condition> <incr><expr><name>j</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>double</name></type> <name>score</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>zobj</name> <operator>||</operator> <call><name>zsetScore</name><argument_list>(<argument><expr><name>zobj</name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>argv</name><index>[<expr><name>j</name></expr>]</index></name><operator>-&gt;</operator><name>ptr</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>score</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>C_ERR</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyNullArray</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+<decl_stmt><decl><type><name>double</name></type> <name><name>xy</name><index>[<expr><literal type="number">2</literal></expr>]</index></name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>decodeGeohash</name><argument_list>(<argument><expr><name>score</name></expr></argument>,<argument><expr><name>xy</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyNullArray</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>addReplyArrayLen</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><literal type="number">2</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>addReplyHumanLongDouble</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><name><name>xy</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>addReplyHumanLongDouble</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><name><name>xy</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+
+
+
+
+
+<function><type><name>void</name></type> <name>geodistCommand</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>double</name></type> <name>to_meter</name> <init>= <expr><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>c</name><operator>-&gt;</operator><name>argc</name></name> <operator>==</operator> <literal type="number">5</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>to_meter</name> <operator>=</operator> <call><name>extractUnitOrReply</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><name><name>c</name><operator>-&gt;</operator><name>argv</name><index>[<expr><literal type="number">4</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>to_meter</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content> <return>return;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>c</name><operator>-&gt;</operator><name>argc</name></name> <operator>&gt;</operator> <literal type="number">5</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyErrorObject</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><name><name>shared</name><operator>.</operator><name>syntaxerr</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<decl_stmt><decl><type><name>robj</name> <modifier>*</modifier></type><name>zobj</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>zobj</name> <operator>=</operator> <call><name>lookupKeyReadOrReply</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>argv</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>, <argument><expr><name><name>shared</name><operator>.</operator><name>null</name><index>[<expr><name><name>c</name><operator>-&gt;</operator><name>resp</name></name></expr>]</index></name></expr></argument>)</argument_list></call><operator>)</operator>
+<operator>==</operator> <name>NULL</name> <operator>||</operator> <call><name>checkType</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name>zobj</name></expr></argument>, <argument><expr><name>OBJ_ZSET</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content> <return>return;</return></block_content></block></if></if_stmt>
+
+
+<decl_stmt><decl><type><name>double</name></type> <name>score1</name></decl>, <decl><type ref="prev"/><name>score2</name></decl>, <decl><type ref="prev"/><name><name>xyxy</name><index>[<expr><literal type="number">4</literal></expr>]</index></name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>zsetScore</name><argument_list>(<argument><expr><name>zobj</name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>argv</name><index>[<expr><literal type="number">2</literal></expr>]</index></name><operator>-&gt;</operator><name>ptr</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>score1</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>C_ERR</name> <operator>||</operator>
+<call><name>zsetScore</name><argument_list>(<argument><expr><name>zobj</name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>argv</name><index>[<expr><literal type="number">3</literal></expr>]</index></name><operator>-&gt;</operator><name>ptr</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>score2</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>C_ERR</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>addReplyNull</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>decodeGeohash</name><argument_list>(<argument><expr><name>score1</name></expr></argument>,<argument><expr><name>xyxy</name></expr></argument>)</argument_list></call> <operator>||</operator> <operator>!</operator><call><name>decodeGeohash</name><argument_list>(<argument><expr><name>score2</name></expr></argument>,<argument><expr><name>xyxy</name><operator>+</operator><literal type="number">2</literal></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>addReplyNull</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>addReplyDoubleDistance</name><argument_list>(<argument><expr><name>c</name></expr></argument>,
+<argument><expr><call><name>geohashGetDistance</name><argument_list>(<argument><expr><name><name>xyxy</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>,<argument><expr><name><name>xyxy</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>,<argument><expr><name><name>xyxy</name><index>[<expr><literal type="number">2</literal></expr>]</index></name></expr></argument>,<argument><expr><name><name>xyxy</name><index>[<expr><literal type="number">3</literal></expr>]</index></name></expr></argument>)</argument_list></call> <operator>/</operator> <name>to_meter</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></function>
+</unit>

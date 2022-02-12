@@ -1,0 +1,589 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/llvm-project/compiler-rt/lib/fuzzer/FuzzerCorpus.h">
+
+
+
+
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>LLVM_FUZZER_CORPUS</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>LLVM_FUZZER_CORPUS</name></cpp:macro></cpp:define>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"FuzzerDataFlowTrace.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"FuzzerDefs.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"FuzzerIO.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"FuzzerRandom.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"FuzzerSHA1.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"FuzzerTracePC.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;algorithm&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;chrono&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;numeric&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;random&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;unordered_set&gt;</cpp:file></cpp:include>
+
+<decl_stmt><decl><type><name>namespace</name></type> <name>fuzzer</name> <block>{<block_content>
+
+<struct>struct <name>InputInfo</name> <block>{
+<decl_stmt><decl><type><name>Unit</name></type> <name>U</name></decl>;</decl_stmt>
+<expr_stmt><expr><name>std</name><operator>::</operator><name>chrono</name><operator>::</operator><name>microseconds</name> <name>TimeOfUnit</name></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>uint8_t</name></type> <name><name>Sha1</name><index>[<expr><name>kSHA1NumBytes</name></expr>]</index></name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>size_t</name></type> <name>NumFeatures</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>Tmp</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>size_t</name></type> <name>NumExecutedMutations</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>NumSuccessfullMutations</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>NeverReduce</name> <init>= <expr><name>false</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>MayDeleteFile</name> <init>= <expr><name>false</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>Reduced</name> <init>= <expr><name>false</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>HasFocusFunction</name> <init>= <expr><name>false</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>Vector</name><argument_list type="generic">&lt;<argument><expr><name>uint32_t</name></expr></argument>&gt;</argument_list></name></type> <name>UniqFeatureSet</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>Vector</name><argument_list type="generic">&lt;<argument><expr><name>uint8_t</name></expr></argument>&gt;</argument_list></name></type> <name>DataFlowTraceForFocusFunction</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>bool</name></type> <name>NeedsEnergyUpdate</name> <init>= <expr><name>false</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>double</name></type> <name>Energy</name> <init>= <expr><literal type="number">0.0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>double</name></type> <name>SumIncidence</name> <init>= <expr><literal type="number">0.0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>Vector</name><argument_list type="generic">&lt;<argument><expr><name>std</name><operator>::</operator><name><name>pair</name><argument_list type="generic">&lt;<argument><expr><name>uint32_t</name></expr></argument>, <argument><expr><name>uint16_t</name></expr></argument>&gt;</argument_list></name></expr></argument>&gt;</argument_list></name></type> <name>FeatureFreqs</name></decl>;</decl_stmt>
+
+
+<function><type><name>bool</name></type> <name>DeleteFeatureFreq</name><parameter_list>(<parameter><decl><type><name>uint32_t</name></type> <name>Idx</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name><name>FeatureFreqs</name><operator>.</operator><name>empty</name></name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>false</name></expr>;</return></block_content></block></if></if_stmt>
+
+
+<decl_stmt><decl><type><name>auto</name></type> <name>Lower</name> <init>= <expr><name>std</name><operator>::</operator><call><name>lower_bound</name><argument_list>(<argument><expr><call><name><name>FeatureFreqs</name><operator>.</operator><name>begin</name></name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><call><name><name>FeatureFreqs</name><operator>.</operator><name>end</name></name><argument_list>()</argument_list></call></expr></argument>,
+<argument><expr><name>std</name><operator>::</operator><call><name><name>pair</name><argument_list type="generic">&lt;<argument><expr><name>uint32_t</name></expr></argument>, <argument><expr><name>uint16_t</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>Idx</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>Lower</name> <operator>!=</operator> <call><name><name>FeatureFreqs</name><operator>.</operator><name>end</name></name><argument_list>()</argument_list></call> <operator>&amp;&amp;</operator> <name><name>Lower</name><operator>-&gt;</operator><name>first</name></name> <operator>==</operator> <name>Idx</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name><name>FeatureFreqs</name><operator>.</operator><name>erase</name></name><argument_list>(<argument><expr><name>Lower</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>true</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name>false</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+<decl_stmt><decl><type><name>void</name></type> <name>UpdateEnergy</name><argument_list>(<argument><expr><name>size_t</name> <name>GlobalNumberOfFeatures</name></expr></argument>, <argument><expr><name>bool</name> <name>ScalePerExecTime</name></expr></argument>,
+<argument><expr><name>std</name><operator>::</operator><name>chrono</name><operator>::</operator><name>microseconds</name> <name>AverageUnitExecutionTime</name></expr></argument>)</argument_list> <block>{<block_content>
+<expr_stmt><expr><name>Energy</name> <operator>=</operator> <literal type="number">0.0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>SumIncidence</name> <operator>=</operator> <literal type="number">0.0</literal></expr>;</expr_stmt>
+
+
+<for>for <control>(<init><decl><type><name>auto</name></type> <name>F</name> <range>: <expr><name>FeatureFreqs</name></expr></range></decl></init>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>double</name></type> <name>LocalIncidence</name> <init>= <expr><name><name>F</name><operator>.</operator><name>second</name></name> <operator>+</operator> <literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>Energy</name> <operator>-=</operator> <name>LocalIncidence</name> <operator>*</operator> <call><name>log</name><argument_list>(<argument><expr><name>LocalIncidence</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>SumIncidence</name> <operator>+=</operator> <name>LocalIncidence</name></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+
+
+<expr_stmt><expr><name>SumIncidence</name> <operator>+=</operator>
+<call><name><name>static_cast</name><argument_list type="generic">&lt;<argument><expr><name>double</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>GlobalNumberOfFeatures</name> <operator>-</operator> <call><name><name>FeatureFreqs</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<decl_stmt><decl><type><name>double</name></type> <name>AbdIncidence</name> <init>= <expr><call><name><name>static_cast</name><argument_list type="generic">&lt;<argument><expr><name>double</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>NumExecutedMutations</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>Energy</name> <operator>-=</operator> <name>AbdIncidence</name> <operator>*</operator> <call><name>log</name><argument_list>(<argument><expr><name>AbdIncidence</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>SumIncidence</name> <operator>+=</operator> <name>AbdIncidence</name></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>SumIncidence</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>Energy</name> <operator>=</operator> <name>Energy</name> <operator>/</operator> <name>SumIncidence</name> <operator>+</operator> <call><name>log</name><argument_list>(<argument><expr><name>SumIncidence</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ScalePerExecTime</name></expr>)</condition> <block>{<block_content>
+
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>PerfScore</name> <init>= <expr><literal type="number">100</literal></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name><name>TimeOfUnit</name><operator>.</operator><name>count</name></name><argument_list>()</argument_list></call> <operator>&gt;</operator> <call><name><name>AverageUnitExecutionTime</name><operator>.</operator><name>count</name></name><argument_list>()</argument_list></call> <operator>*</operator> <literal type="number">10</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>PerfScore</name> <operator>=</operator> <literal type="number">10</literal></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><call><name><name>TimeOfUnit</name><operator>.</operator><name>count</name></name><argument_list>()</argument_list></call> <operator>&gt;</operator> <call><name><name>AverageUnitExecutionTime</name><operator>.</operator><name>count</name></name><argument_list>()</argument_list></call> <operator>*</operator> <literal type="number">4</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>PerfScore</name> <operator>=</operator> <literal type="number">25</literal></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><call><name><name>TimeOfUnit</name><operator>.</operator><name>count</name></name><argument_list>()</argument_list></call> <operator>&gt;</operator> <call><name><name>AverageUnitExecutionTime</name><operator>.</operator><name>count</name></name><argument_list>()</argument_list></call> <operator>*</operator> <literal type="number">2</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>PerfScore</name> <operator>=</operator> <literal type="number">50</literal></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><call><name><name>TimeOfUnit</name><operator>.</operator><name>count</name></name><argument_list>()</argument_list></call> <operator>*</operator> <literal type="number">3</literal> <operator>&gt;</operator> <call><name><name>AverageUnitExecutionTime</name><operator>.</operator><name>count</name></name><argument_list>()</argument_list></call> <operator>*</operator> <literal type="number">4</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>PerfScore</name> <operator>=</operator> <literal type="number">75</literal></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><call><name><name>TimeOfUnit</name><operator>.</operator><name>count</name></name><argument_list>()</argument_list></call> <operator>*</operator> <literal type="number">4</literal> <operator>&lt;</operator> <call><name><name>AverageUnitExecutionTime</name><operator>.</operator><name>count</name></name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>PerfScore</name> <operator>=</operator> <literal type="number">300</literal></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><call><name><name>TimeOfUnit</name><operator>.</operator><name>count</name></name><argument_list>()</argument_list></call> <operator>*</operator> <literal type="number">3</literal> <operator>&lt;</operator> <call><name><name>AverageUnitExecutionTime</name><operator>.</operator><name>count</name></name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>PerfScore</name> <operator>=</operator> <literal type="number">200</literal></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><call><name><name>TimeOfUnit</name><operator>.</operator><name>count</name></name><argument_list>()</argument_list></call> <operator>*</operator> <literal type="number">2</literal> <operator>&lt;</operator> <call><name><name>AverageUnitExecutionTime</name><operator>.</operator><name>count</name></name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>PerfScore</name> <operator>=</operator> <literal type="number">150</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>Energy</name> <operator>*=</operator> <name>PerfScore</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></decl></decl_stmt>
+
+
+<function><type><name>void</name></type> <name>UpdateFeatureFrequency</name><parameter_list>(<parameter><decl><type><name>uint32_t</name></type> <name>Idx</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><name>NeedsEnergyUpdate</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name><name>FeatureFreqs</name><operator>.</operator><name>empty</name></name><argument_list>()</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name><name>FeatureFreqs</name><operator>.</operator><name>push_back</name></name><argument_list>(<argument><expr><name>std</name><operator>::</operator><call><name><name>pair</name><argument_list type="generic">&lt;<argument><expr><name>uint32_t</name></expr></argument>, <argument><expr><name>uint16_t</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>Idx</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<decl_stmt><decl><type><name>auto</name></type> <name>Lower</name> <init>= <expr><name>std</name><operator>::</operator><call><name>lower_bound</name><argument_list>(<argument><expr><call><name><name>FeatureFreqs</name><operator>.</operator><name>begin</name></name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><call><name><name>FeatureFreqs</name><operator>.</operator><name>end</name></name><argument_list>()</argument_list></call></expr></argument>,
+<argument><expr><name>std</name><operator>::</operator><call><name><name>pair</name><argument_list type="generic">&lt;<argument><expr><name>uint32_t</name></expr></argument>, <argument><expr><name>uint16_t</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>Idx</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+
+
+<if_stmt><if>if <condition>(<expr><name>Lower</name> <operator>!=</operator> <call><name><name>FeatureFreqs</name><operator>.</operator><name>end</name></name><argument_list>()</argument_list></call> <operator>&amp;&amp;</operator> <name><name>Lower</name><operator>-&gt;</operator><name>first</name></name> <operator>==</operator> <name>Idx</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>Lower</name><operator>-&gt;</operator><name>second</name></name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name><name>FeatureFreqs</name><operator>.</operator><name>insert</name></name><argument_list>(<argument><expr><name>Lower</name></expr></argument>, <argument><expr><name>std</name><operator>::</operator><call><name><name>pair</name><argument_list type="generic">&lt;<argument><expr><name>uint32_t</name></expr></argument>, <argument><expr><name>uint16_t</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>Idx</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></function>
+}</block>;</struct>
+
+<struct>struct <name>EntropicOptions</name> <block>{
+<decl_stmt><decl><type><name>bool</name></type> <name>Enabled</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>NumberOfRarestFeatures</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>FeatureFrequencyThreshold</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>ScalePerExecTime</name></decl>;</decl_stmt>
+}</block>;</struct>
+
+<decl_stmt><decl><type><name>class</name></type> <name>InputCorpus</name> <block>{<block_content>
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>uint32_t</name></type> <name>kFeatureSetSize</name> <init>= <expr><literal type="number">1</literal> <operator>&lt;&lt;</operator> <literal type="number">21</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>uint8_t</name></type> <name>kMaxMutationFactor</name> <init>= <expr><literal type="number">20</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>size_t</name></type> <name>kSparseEnergyUpdates</name> <init>= <expr><literal type="number">100</literal></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>size_t</name></type> <name>NumExecutedMutations</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>EntropicOptions</name></type> <name>Entropic</name></decl>;</decl_stmt>
+
+<label><name>public</name>:</label>
+<macro><name>InputCorpus</name><argument_list>(<argument>const std::string &amp;OutputCorpus</argument>, <argument>EntropicOptions Entropic</argument>)</argument_list></macro>
+: <expr_stmt><expr><call><name>Entropic</name><argument_list>(<argument><expr><name>Entropic</name></expr></argument>)</argument_list></call></expr><operator>,</operator> <macro><name>OutputCorpus</name><argument_list>(<argument>OutputCorpus</argument>)</argument_list></macro> <expr><block>{
+<expr><call><name>memset</name><argument_list>(<argument><expr><name>InputSizesPerFeature</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>InputSizesPerFeature</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;
+<expr><call><name>memset</name><argument_list>(<argument><expr><name>SmallestElementPerFeature</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>SmallestElementPerFeature</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;
+}</block>
+<operator>~</operator><macro><name>InputCorpus</name><argument_list>()</argument_list></macro> <block>{
+<for>for <control>(<init><decl><type><name>auto</name></type> <name>II</name> <range>: <expr><name>Inputs</name></expr></range></decl></init>)</control><block type="pseudo"><block_content>
+<decl_stmt><decl><type><name>delete</name></type> <name>II</name></decl>;</decl_stmt></block_content></block></for>
+}</block></expr></expr_stmt>
+<expr_stmt><expr><name>size_t</name> <macro><name>size</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{ <return>return <expr><call><name><name>Inputs</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call></expr>;</return> }</block></expr></expr_stmt>
+<expr_stmt><expr><name>size_t</name> <macro><name>SizeInBytes</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{
+<expr><name>size_t</name> <name>Res</name> <operator>=</operator> <literal type="number">0</literal></expr>;
+<for>for <control>(<init><decl><type><name>auto</name></type> <name>II</name> <range>: <expr><name>Inputs</name></expr></range></decl></init>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><name>Res</name> <operator>+=</operator> <call><name><name>II</name><operator>-&gt;</operator><name>U</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></for></block></expr></expr_stmt>
+<return>return <expr><name>Res</name></expr>;</return>
+</block_content>}</block></decl></decl_stmt>
+<expr_stmt><expr><name>size_t</name> <macro><name>NumActiveUnits</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{
+<expr><name>size_t</name> <name>Res</name> <operator>=</operator> <literal type="number">0</literal></expr>;
+<for>for <control>(<init><decl><type><name>auto</name></type> <name>II</name> <range>: <expr><name>Inputs</name></expr></range></decl></init>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><name>Res</name> <operator>+=</operator> <operator>!</operator><call><name><name>II</name><operator>-&gt;</operator><name>U</name><operator>.</operator><name>empty</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></for></block></expr></expr_stmt>
+<return>return <expr><name>Res</name></expr>;</return>
+</block_content>}</block></decl></decl_stmt>
+<expr_stmt><expr><name>size_t</name> <macro><name>MaxInputSize</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{
+<expr><name>size_t</name> <name>Res</name> <operator>=</operator> <literal type="number">0</literal></expr>;
+<for>for <control>(<init><decl><type><name>auto</name></type> <name>II</name> <range>: <expr><name>Inputs</name></expr></range></decl></init>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><name>Res</name> <operator>=</operator> <name>std</name><operator>::</operator><call><name>max</name><argument_list>(<argument><expr><name>Res</name></expr></argument>, <argument><expr><call><name><name>II</name><operator>-&gt;</operator><name>U</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for></block></expr></expr_stmt>
+<return>return <expr><name>Res</name></expr>;</return>
+}
+void <macro><name>IncrementNumExecutedMutations</name><argument_list>()</argument_list></macro> <block>{<block_content> <expr_stmt><expr><name>NumExecutedMutations</name><operator>++</operator></expr>;</expr_stmt> </block_content>}</block>
+
+<function><type><name>size_t</name></type> <name>NumInputsThatTouchFocusFunction</name><parameter_list>()</parameter_list> <block>{<block_content>
+<return>return <expr><name>std</name><operator>::</operator><call><name>count_if</name><argument_list>(<argument><expr><call><name><name>Inputs</name><operator>.</operator><name>begin</name></name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><call><name><name>Inputs</name><operator>.</operator><name>end</name></name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><index>[]</index><operator>(</operator><specifier>const</specifier> <name>InputInfo</name> <operator>*</operator><name>II</name><operator>)</operator> <block>{
+<return>return <expr><name><name>II</name><operator>-&gt;</operator><name>HasFocusFunction</name></name></expr>;</return>
+}</block></expr></argument></argument_list></call></expr></return>)</block_content></block>;</function>
+}
+
+size_t <macro><name>NumInputsWithDataFlowTrace</name><argument_list>()</argument_list></macro> <block>{<block_content>
+<return>return <expr><name>std</name><operator>::</operator><call><name>count_if</name><argument_list>(<argument><expr><call><name><name>Inputs</name><operator>.</operator><name>begin</name></name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><call><name><name>Inputs</name><operator>.</operator><name>end</name></name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><index>[]</index><operator>(</operator><specifier>const</specifier> <name>InputInfo</name> <operator>*</operator><name>II</name><operator>)</operator> <block>{
+<return>return <expr><operator>!</operator><call><name><name>II</name><operator>-&gt;</operator><name>DataFlowTraceForFocusFunction</name><operator>.</operator><name>empty</name></name><argument_list>()</argument_list></call></expr>;</return>
+}</block></expr></argument></argument_list></call></expr></return>)</block_content></block><empty_stmt>;</empty_stmt>
+}
+
+bool <macro><name>empty</name><argument_list>()</argument_list></macro> <expr_stmt><expr><specifier>const</specifier> <block>{ <return>return <expr><call><name><name>Inputs</name><operator>.</operator><name>empty</name></name><argument_list>()</argument_list></call></expr>;</return> }</block></expr></expr_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>Unit</name> <modifier>&amp;</modifier></type><name><name>operator</name><index>[]</index></name> <argument_list>(<argument><expr><name>size_t</name> <name>Idx</name></expr></argument>)</argument_list> const <block>{<block_content> <return>return <expr><name><name>Inputs</name><index>[<expr><name>Idx</name></expr>]</index></name><operator>-&gt;</operator><name>U</name></expr>;</return> </block_content>}</block></decl></decl_stmt>
+<decl_stmt><decl><type><name>InputInfo</name> <modifier>*</modifier></type><name>AddToCorpus</name><argument_list>(<argument><expr><specifier>const</specifier> <name>Unit</name> <operator>&amp;</operator><name>U</name></expr></argument>, <argument><expr><name>size_t</name> <name>NumFeatures</name></expr></argument>, <argument><expr><name>bool</name> <name>MayDeleteFile</name></expr></argument>,
+<argument><expr><name>bool</name> <name>HasFocusFunction</name></expr></argument>, <argument><expr><name>bool</name> <name>NeverReduce</name></expr></argument>,
+<argument><expr><name>std</name><operator>::</operator><name>chrono</name><operator>::</operator><name>microseconds</name> <name>TimeOfUnit</name></expr></argument>,
+<argument><expr><specifier>const</specifier> <name><name>Vector</name><argument_list type="generic">&lt;<argument><expr><name>uint32_t</name></expr></argument>&gt;</argument_list></name> <operator>&amp;</operator><name>FeatureSet</name></expr></argument>,
+<argument><expr><specifier>const</specifier> <name>DataFlowTrace</name> <operator>&amp;</operator><name>DFT</name></expr></argument>, <argument><expr><specifier>const</specifier> <name>InputInfo</name> <operator>*</operator><name>BaseII</name></expr></argument>)</argument_list> <block>{<block_content>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><operator>!</operator><call><name><name>U</name><operator>.</operator><name>empty</name></name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>FeatureDebug</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Printf</name><argument_list>(<argument><expr><literal type="string">"ADD_TO_CORPUS %zd NF %zd\n"</literal></expr></argument>, <argument><expr><call><name><name>Inputs</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><name>NumFeatures</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><call><name><name>Inputs</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call> <operator>&lt;</operator> <name>std</name><operator>::</operator><name><name>numeric_limits</name><argument_list type="generic">&lt;<argument><expr><name>uint32_t</name></expr></argument>&gt;</argument_list></name><operator>::</operator><call><name>max</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<macro><name>Inputs</name></macro><expr_stmt><expr><operator>.</operator><macro><name>push_back</name><argument_list>(<argument>new InputInfo()</argument>)</argument_list></macro></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>InputInfo</name> <modifier>&amp;</modifier></type><name>II</name> <init>= <expr><operator>*</operator><call><name><name>Inputs</name><operator>.</operator><name>back</name></name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>II</name><operator>.</operator><name>U</name></name> <operator>=</operator> <name>U</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>II</name><operator>.</operator><name>NumFeatures</name></name> <operator>=</operator> <name>NumFeatures</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>II</name><operator>.</operator><name>NeverReduce</name></name> <operator>=</operator> <name>NeverReduce</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>II</name><operator>.</operator><name>TimeOfUnit</name></name> <operator>=</operator> <name>TimeOfUnit</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>II</name><operator>.</operator><name>MayDeleteFile</name></name> <operator>=</operator> <name>MayDeleteFile</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>II</name><operator>.</operator><name>UniqFeatureSet</name></name> <operator>=</operator> <name>FeatureSet</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>II</name><operator>.</operator><name>HasFocusFunction</name></name> <operator>=</operator> <name>HasFocusFunction</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>II</name><operator>.</operator><name>Energy</name></name> <operator>=</operator> <ternary><condition><expr><call><name><name>RareFeatures</name><operator>.</operator><name>empty</name></name><argument_list>()</argument_list></call></expr> ?</condition><then> <expr><literal type="number">1.0</literal></expr> </then><else>: <expr><call><name>log</name><argument_list>(<argument><expr><call><name><name>RareFeatures</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr></else></ternary></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>II</name><operator>.</operator><name>SumIncidence</name></name> <operator>=</operator> <call><name><name>static_cast</name><argument_list type="generic">&lt;<argument><expr><name>double</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><call><name><name>RareFeatures</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>II</name><operator>.</operator><name>NeedsEnergyUpdate</name></name> <operator>=</operator> <name>false</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>std</name><operator>::</operator><call><name>sort</name><argument_list>(<argument><expr><call><name><name>II</name><operator>.</operator><name>UniqFeatureSet</name><operator>.</operator><name>begin</name></name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><call><name><name>II</name><operator>.</operator><name>UniqFeatureSet</name><operator>.</operator><name>end</name></name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ComputeSHA1</name><argument_list>(<argument><expr><call><name><name>U</name><operator>.</operator><name>data</name></name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><call><name><name>U</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><name><name>II</name><operator>.</operator><name>Sha1</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>auto</name></type> <name>Sha1Str</name> <init>= <expr><call><name>Sha1ToString</name><argument_list>(<argument><expr><name><name>II</name><operator>.</operator><name>Sha1</name></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name><name>Hashes</name><operator>.</operator><name>insert</name></name><argument_list>(<argument><expr><name>Sha1Str</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>HasFocusFunction</name></expr>)</condition><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<decl><type><name>auto</name></type> <name>V</name> <init>= <expr><call><name><name>DFT</name><operator>.</operator><name>Get</name></name><argument_list>(<argument><expr><name>Sha1Str</name></expr></argument>)</argument_list></call></expr></init></decl>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>II</name><operator>.</operator><name>DataFlowTraceForFocusFunction</name></name> <operator>=</operator> <operator>*</operator><name>V</name></expr>;</expr_stmt></block_content></block></if></if_stmt></block_content></block></if></if_stmt>
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name><name>II</name><operator>.</operator><name>DataFlowTraceForFocusFunction</name><operator>.</operator><name>empty</name></name><argument_list>()</argument_list></call> <operator>&amp;&amp;</operator> <name>BaseII</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>II</name><operator>.</operator><name>DataFlowTraceForFocusFunction</name></name> <operator>=</operator> <name><name>BaseII</name><operator>-&gt;</operator><name>DataFlowTraceForFocusFunction</name></name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>DistributionNeedsUpdate</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>PrintCorpus</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>&amp;</operator><name>II</name></expr>;</return>
+</block_content>}</block></decl></decl_stmt>
+
+
+<function><type><name>void</name></type> <name>PrintUnit</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>Unit</name> <modifier>&amp;</modifier></type><name>U</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>FeatureDebug</name></expr>)</condition><block type="pseudo"><block_content> <return>return;</return></block_content></block></if></if_stmt>
+<for>for <control>(<init><decl><type><name>uint8_t</name></type> <name>C</name> <range>: <expr><name>U</name></expr></range></decl></init>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>C</name> <operator>!=</operator> <literal type="char">'F'</literal> <operator>&amp;&amp;</operator> <name>C</name> <operator>!=</operator> <literal type="char">'U'</literal> <operator>&amp;&amp;</operator> <name>C</name> <operator>!=</operator> <literal type="char">'Z'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>C</name> <operator>=</operator> <literal type="char">'.'</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>Printf</name><argument_list>(<argument><expr><literal type="string">"%c"</literal></expr></argument>, <argument><expr><name>C</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+
+<function><type><name>void</name></type> <name>PrintFeatureSet</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name><name>Vector</name><argument_list type="generic">&lt;<argument><expr><name>uint32_t</name></expr></argument>&gt;</argument_list></name> <modifier>&amp;</modifier></type><name>FeatureSet</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>FeatureDebug</name></expr>)</condition><block type="pseudo"><block_content> <return>return;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>Printf</name><argument_list>(<argument><expr><literal type="string">"{"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><decl><type><name>uint32_t</name></type> <name>Feature</name><range>: <expr><name>FeatureSet</name></expr></range></decl></init>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Printf</name><argument_list>(<argument><expr><literal type="string">"%u,"</literal></expr></argument>, <argument><expr><name>Feature</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+<expr_stmt><expr><call><name>Printf</name><argument_list>(<argument><expr><literal type="string">"}"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+<function><type><name>void</name></type> <name>PrintCorpus</name><parameter_list>()</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>FeatureDebug</name></expr>)</condition><block type="pseudo"><block_content> <return>return;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>Printf</name><argument_list>(<argument><expr><literal type="string">"======= CORPUS:\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<for>for <control>(<init><decl><type><name>auto</name></type> <name>II</name> <range>: <expr><name>Inputs</name></expr></range></decl></init>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>std</name><operator>::</operator><call><name>find</name><argument_list>(<argument><expr><call><name><name>II</name><operator>-&gt;</operator><name>U</name><operator>.</operator><name>begin</name></name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><call><name><name>II</name><operator>-&gt;</operator><name>U</name><operator>.</operator><name>end</name></name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><literal type="char">'F'</literal></expr></argument>)</argument_list></call> <operator>!=</operator> <call><name><name>II</name><operator>-&gt;</operator><name>U</name><operator>.</operator><name>end</name></name><argument_list>()</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>Printf</name><argument_list>(<argument><expr><literal type="string">"[%2d] "</literal></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Printf</name><argument_list>(<argument><expr><literal type="string">"%s sz=%zd "</literal></expr></argument>, <argument><expr><call><name>Sha1ToString</name><argument_list>(<argument><expr><name><name>II</name><operator>-&gt;</operator><name>Sha1</name></name></expr></argument>)</argument_list></call><operator>.</operator><call><name>c_str</name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><call><name><name>II</name><operator>-&gt;</operator><name>U</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>PrintUnit</name><argument_list>(<argument><expr><name><name>II</name><operator>-&gt;</operator><name>U</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Printf</name><argument_list>(<argument><expr><literal type="string">" "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>PrintFeatureSet</name><argument_list>(<argument><expr><name><name>II</name><operator>-&gt;</operator><name>UniqFeatureSet</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Printf</name><argument_list>(<argument><expr><literal type="string">"\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>i</name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type> <name>Replace</name><parameter_list>(<parameter><decl><type><name>InputInfo</name> <modifier>*</modifier></type><name>II</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>Unit</name> <modifier>&amp;</modifier></type><name>U</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><call><name><name>II</name><operator>-&gt;</operator><name>U</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call> <operator>&gt;</operator> <call><name><name>U</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name><name>Hashes</name><operator>.</operator><name>erase</name></name><argument_list>(<argument><expr><call><name>Sha1ToString</name><argument_list>(<argument><expr><name><name>II</name><operator>-&gt;</operator><name>Sha1</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DeleteFile</name><argument_list>(<argument><expr><operator>*</operator><name>II</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ComputeSHA1</name><argument_list>(<argument><expr><call><name><name>U</name><operator>.</operator><name>data</name></name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><call><name><name>U</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><name><name>II</name><operator>-&gt;</operator><name>Sha1</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name><name>Hashes</name><operator>.</operator><name>insert</name></name><argument_list>(<argument><expr><call><name>Sha1ToString</name><argument_list>(<argument><expr><name><name>II</name><operator>-&gt;</operator><name>Sha1</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>II</name><operator>-&gt;</operator><name>U</name></name> <operator>=</operator> <name>U</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>II</name><operator>-&gt;</operator><name>Reduced</name></name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>DistributionNeedsUpdate</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>bool</name></type> <name>HasUnit</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>Unit</name> <modifier>&amp;</modifier></type><name>U</name></decl></parameter>)</parameter_list> <block>{<block_content> <return>return <expr><call><name><name>Hashes</name><operator>.</operator><name>count</name></name><argument_list>(<argument><expr><call><name>Hash</name><argument_list>(<argument><expr><name>U</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</return> </block_content>}</block></function>
+<decl_stmt><decl><type><name>bool</name></type> <name>HasUnit</name><argument_list>(<argument><expr><specifier>const</specifier> <name>std</name><operator>::</operator><name>string</name> <operator>&amp;</operator><name>H</name></expr></argument>)</argument_list> <block>{<block_content> <return>return <expr><call><name><name>Hashes</name><operator>.</operator><name>count</name></name><argument_list>(<argument><expr><name>H</name></expr></argument>)</argument_list></call></expr>;</return> </block_content>}</block></decl></decl_stmt>
+<function><type><name>InputInfo</name> <modifier>&amp;</modifier></type><name>ChooseUnitToMutate</name><parameter_list>(<parameter><decl><type><name>Random</name> <modifier>&amp;</modifier></type><name>Rand</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>InputInfo</name> <modifier>&amp;</modifier></type><name>II</name> <init>= <expr><operator>*</operator><name><name>Inputs</name><index>[<expr><call><name>ChooseUnitIdxToMutate</name><argument_list>(<argument><expr><name>Rand</name></expr></argument>)</argument_list></call></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><operator>!</operator><call><name><name>II</name><operator>.</operator><name>U</name><operator>.</operator><name>empty</name></name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>II</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>InputInfo</name> <modifier>&amp;</modifier></type><name>ChooseUnitToCrossOverWith</name><parameter_list>(<parameter><decl><type><name>Random</name> <modifier>&amp;</modifier></type><name>Rand</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>UniformDist</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>UniformDist</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><call><name>ChooseUnitToMutate</name><argument_list>(<argument><expr><name>Rand</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<decl_stmt><decl><type><name>InputInfo</name> <modifier>&amp;</modifier></type><name>II</name> <init>= <expr><operator>*</operator><name><name>Inputs</name><index>[<expr><call><name>Rand</name><argument_list>(<argument><expr><call><name><name>Inputs</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><operator>!</operator><call><name><name>II</name><operator>.</operator><name>U</name><operator>.</operator><name>empty</name></name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>II</name></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><name>size_t</name></type> <name>ChooseUnitIdxToMutate</name><parameter_list>(<parameter><decl><type><name>Random</name> <modifier>&amp;</modifier></type><name>Rand</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>UpdateCorpusDistribution</name><argument_list>(<argument><expr><name>Rand</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>Idx</name> <init>= <expr><call><name><name>static_cast</name><argument_list type="generic">&lt;<argument><expr><name>size_t</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><call><name>CorpusDistribution</name><argument_list>(<argument><expr><name>Rand</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>Idx</name> <operator>&lt;</operator> <call><name><name>Inputs</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>Idx</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type> <name>PrintStats</name><parameter_list>()</parameter_list> <block>{<block_content>
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name><name>Inputs</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <specifier>auto</specifier> <modifier>&amp;</modifier></type><name>II</name> <init>= <expr><operator>*</operator><name><name>Inputs</name><index>[<expr><name>i</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>Printf</name><argument_list>(<argument><expr><literal type="string">" [% 3zd %s] sz: % 5zd runs: % 5zd succ: % 5zd focus: %d\n"</literal></expr></argument>, <argument><expr><name>i</name></expr></argument>,
+<argument><expr><call><name>Sha1ToString</name><argument_list>(<argument><expr><name><name>II</name><operator>.</operator><name>Sha1</name></name></expr></argument>)</argument_list></call><operator>.</operator><call><name>c_str</name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><call><name><name>II</name><operator>.</operator><name>U</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call></expr></argument>,
+<argument><expr><name><name>II</name><operator>.</operator><name>NumExecutedMutations</name></name></expr></argument>, <argument><expr><name><name>II</name><operator>.</operator><name>NumSuccessfullMutations</name></name></expr></argument>, <argument><expr><name><name>II</name><operator>.</operator><name>HasFocusFunction</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type> <name>PrintFeatureSet</name><parameter_list>()</parameter_list> <block>{<block_content>
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>kFeatureSetSize</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if<condition>(<decl><type><name>size_t</name></type> <name>Sz</name> <init>= <expr><call><name>GetFeature</name><argument_list>(<argument><expr><name>i</name></expr></argument>)</argument_list></call></expr></init></decl>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Printf</name><argument_list>(<argument><expr><literal type="string">"[%zd: id %zd sz%zd] "</literal></expr></argument>, <argument><expr><name>i</name></expr></argument>, <argument><expr><name><name>SmallestElementPerFeature</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><name>Sz</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><call><name>Printf</name><argument_list>(<argument><expr><literal type="string">"\n\t"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name><name>Inputs</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<decl><type><name>size_t</name></type> <name>N</name> <init>= <expr><name><name>Inputs</name><index>[<expr><name>i</name></expr>]</index></name><operator>-&gt;</operator><name>NumFeatures</name></expr></init></decl>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Printf</name><argument_list>(<argument><expr><literal type="string">" %zd=&gt;%zd "</literal></expr></argument>, <argument><expr><name>i</name></expr></argument>, <argument><expr><name>N</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt></block_content></block></for>
+<expr_stmt><expr><call><name>Printf</name><argument_list>(<argument><expr><literal type="string">"\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type> <name>DeleteFile</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>InputInfo</name> <modifier>&amp;</modifier></type><name>II</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name><name>OutputCorpus</name><operator>.</operator><name>empty</name></name><argument_list>()</argument_list></call> <operator>&amp;&amp;</operator> <name><name>II</name><operator>.</operator><name>MayDeleteFile</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>RemoveFile</name><argument_list>(<argument><expr><call><name>DirPlusFile</name><argument_list>(<argument><expr><name>OutputCorpus</name></expr></argument>, <argument><expr><call><name>Sha1ToString</name><argument_list>(<argument><expr><name><name>II</name><operator>.</operator><name>Sha1</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type> <name>DeleteInput</name><parameter_list>(<parameter><decl><type><name>size_t</name></type> <name>Idx</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>InputInfo</name> <modifier>&amp;</modifier></type><name>II</name> <init>= <expr><operator>*</operator><name><name>Inputs</name><index>[<expr><name>Idx</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>DeleteFile</name><argument_list>(<argument><expr><name>II</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Unit</name><argument_list>()</argument_list></call><operator>.</operator><call><name>swap</name><argument_list>(<argument><expr><name><name>II</name><operator>.</operator><name>U</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>II</name><operator>.</operator><name>Energy</name></name> <operator>=</operator> <literal type="number">0.0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>II</name><operator>.</operator><name>NeedsEnergyUpdate</name></name> <operator>=</operator> <name>false</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>DistributionNeedsUpdate</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>FeatureDebug</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Printf</name><argument_list>(<argument><expr><literal type="string">"EVICTED %zd\n"</literal></expr></argument>, <argument><expr><name>Idx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type> <name>AddRareFeature</name><parameter_list>(<parameter><decl><type><name>uint32_t</name></type> <name>Idx</name></decl></parameter>)</parameter_list> <block>{<block_content>
+
+
+
+<while>while <condition>(<expr><call><name><name>RareFeatures</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call> <operator>&gt;</operator> <name><name>Entropic</name><operator>.</operator><name>NumberOfRarestFeatures</name></name> <operator>&amp;&amp;</operator>
+<name>FreqOfMostAbundantRareFeature</name> <operator>&gt;</operator> <name><name>Entropic</name><operator>.</operator><name>FeatureFrequencyThreshold</name></name></expr>)</condition> <block>{<block_content>
+
+
+<decl_stmt><decl><type><name>uint32_t</name></type> <name><name>MostAbundantRareFeatureIndices</name><index>[<expr><literal type="number">2</literal></expr>]</index></name> <init>= <expr><block>{<expr><name><name>RareFeatures</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr>,
+<expr><name><name>RareFeatures</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr>}</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>Delete</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name><name>RareFeatures</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>Idx2</name> <init>= <expr><name><name>RareFeatures</name><index>[<expr><name>i</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>GlobalFeatureFreqs</name><index>[<expr><name>Idx2</name></expr>]</index></name> <operator>&gt;=</operator>
+<name><name>GlobalFeatureFreqs</name><index>[<expr><name><name>MostAbundantRareFeatureIndices</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr>]</index></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>MostAbundantRareFeatureIndices</name><index>[<expr><literal type="number">1</literal></expr>]</index></name> <operator>=</operator> <name><name>MostAbundantRareFeatureIndices</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>MostAbundantRareFeatureIndices</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>=</operator> <name>Idx2</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>Delete</name> <operator>=</operator> <name>i</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+
+
+<expr_stmt><expr><name><name>RareFeatures</name><index>[<expr><name>Delete</name></expr>]</index></name> <operator>=</operator> <call><name><name>RareFeatures</name><operator>.</operator><name>back</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name><name>RareFeatures</name><operator>.</operator><name>pop_back</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+<for>for <control>(<init><decl><type><name>auto</name></type> <name>II</name> <range>: <expr><name>Inputs</name></expr></range></decl></init>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name><name>II</name><operator>-&gt;</operator><name>DeleteFeatureFreq</name></name><argument_list>(<argument><expr><name><name>MostAbundantRareFeatureIndices</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>II</name><operator>-&gt;</operator><name>NeedsEnergyUpdate</name></name> <operator>=</operator> <name>true</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></for>
+
+
+<expr_stmt><expr><name>FreqOfMostAbundantRareFeature</name> <operator>=</operator>
+<name><name>GlobalFeatureFreqs</name><index>[<expr><name><name>MostAbundantRareFeatureIndices</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr>]</index></name></expr>;</expr_stmt>
+</block_content>}</block></while>
+
+
+<expr_stmt><expr><call><name><name>RareFeatures</name><operator>.</operator><name>push_back</name></name><argument_list>(<argument><expr><name>Idx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>GlobalFeatureFreqs</name><index>[<expr><name>Idx</name></expr>]</index></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<for>for <control>(<init><decl><type><name>auto</name></type> <name>II</name> <range>: <expr><name>Inputs</name></expr></range></decl></init>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name><name>II</name><operator>-&gt;</operator><name>DeleteFeatureFreq</name></name><argument_list>(<argument><expr><name>Idx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>II</name><operator>-&gt;</operator><name>Energy</name></name> <operator>&gt;</operator> <literal type="number">0.0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>II</name><operator>-&gt;</operator><name>SumIncidence</name></name> <operator>+=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>II</name><operator>-&gt;</operator><name>Energy</name></name> <operator>+=</operator> <call><name>log</name><argument_list>(<argument><expr><name><name>II</name><operator>-&gt;</operator><name>SumIncidence</name></name></expr></argument>)</argument_list></call> <operator>/</operator> <name><name>II</name><operator>-&gt;</operator><name>SumIncidence</name></name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><name>DistributionNeedsUpdate</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>bool</name></type> <name>AddFeature</name><parameter_list>(<parameter><decl><type><name>size_t</name></type> <name>Idx</name></decl></parameter>, <parameter><decl><type><name>uint32_t</name></type> <name>NewSize</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>Shrink</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>NewSize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>Idx</name> <operator>=</operator> <name>Idx</name> <operator>%</operator> <name>kFeatureSetSize</name></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>OldSize</name> <init>= <expr><call><name>GetFeature</name><argument_list>(<argument><expr><name>Idx</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>OldSize</name> <operator>==</operator> <literal type="number">0</literal> <operator>||</operator> <operator>(</operator><name>Shrink</name> <operator>&amp;&amp;</operator> <name>OldSize</name> <operator>&gt;</operator> <name>NewSize</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>OldSize</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>size_t</name></type> <name>OldIdx</name> <init>= <expr><name><name>SmallestElementPerFeature</name><index>[<expr><name>Idx</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>InputInfo</name> <modifier>&amp;</modifier></type><name>II</name> <init>= <expr><operator>*</operator><name><name>Inputs</name><index>[<expr><name>OldIdx</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>II</name><operator>.</operator><name>NumFeatures</name></name> <operator>&gt;</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>II</name><operator>.</operator><name>NumFeatures</name></name><operator>--</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>II</name><operator>.</operator><name>NumFeatures</name></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>DeleteInput</name><argument_list>(<argument><expr><name>OldIdx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>NumAddedFeatures</name><operator>++</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>Entropic</name><operator>.</operator><name>Enabled</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>AddRareFeature</name><argument_list>(<argument><expr><operator>(</operator><name>uint32_t</name><operator>)</operator><name>Idx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><name>NumUpdatedFeatures</name><operator>++</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>FeatureDebug</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Printf</name><argument_list>(<argument><expr><literal type="string">"ADD FEATURE %zd sz %d\n"</literal></expr></argument>, <argument><expr><name>Idx</name></expr></argument>, <argument><expr><name>NewSize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name><name>SmallestElementPerFeature</name><index>[<expr><name>Idx</name></expr>]</index></name> <operator>=</operator> <call><name><name>static_cast</name><argument_list type="generic">&lt;<argument><expr><name>uint32_t</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><call><name><name>Inputs</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>InputSizesPerFeature</name><index>[<expr><name>Idx</name></expr>]</index></name> <operator>=</operator> <name>NewSize</name></expr>;</expr_stmt>
+<return>return <expr><name>true</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name>false</name></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><name>void</name></type> <name>UpdateFeatureFrequency</name><parameter_list>(<parameter><decl><type><name>InputInfo</name> <modifier>*</modifier></type><name>II</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>Idx</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>Idx32</name> <init>= <expr><name>Idx</name> <operator>%</operator> <name>kFeatureSetSize</name></expr></init></decl>;</decl_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>GlobalFeatureFreqs</name><index>[<expr><name>Idx32</name></expr>]</index></name> <operator>==</operator> <literal type="number">0xFFFF</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+<decl_stmt><decl><type><name>uint16_t</name></type> <name>Freq</name> <init>= <expr><name><name>GlobalFeatureFreqs</name><index>[<expr><name>Idx32</name></expr>]</index></name><operator>++</operator></expr></init></decl>;</decl_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>Freq</name> <operator>&gt;</operator> <name>FreqOfMostAbundantRareFeature</name> <operator>||</operator>
+<name>std</name><operator>::</operator><call><name>find</name><argument_list>(<argument><expr><call><name><name>RareFeatures</name><operator>.</operator><name>begin</name></name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><call><name><name>RareFeatures</name><operator>.</operator><name>end</name></name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><name>Idx32</name></expr></argument>)</argument_list></call> <operator>==</operator>
+<call><name><name>RareFeatures</name><operator>.</operator><name>end</name></name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>Freq</name> <operator>==</operator> <name>FreqOfMostAbundantRareFeature</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>FreqOfMostAbundantRareFeature</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>II</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name><name>II</name><operator>-&gt;</operator><name>UpdateFeatureFrequency</name></name><argument_list>(<argument><expr><name>Idx32</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+<expr_stmt><expr><name>size_t</name> <macro><name>NumFeatures</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{ <return>return <expr><name>NumAddedFeatures</name></expr>;</return> }</block></expr></expr_stmt>
+<expr_stmt><expr><name>size_t</name> <macro><name>NumFeatureUpdates</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{ <return>return <expr><name>NumUpdatedFeatures</name></expr>;</return> }</block></expr></expr_stmt>
+
+<label><name>private</name>:</label>
+
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>bool</name></type> <name>FeatureDebug</name> <init>= <expr><name>false</name></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>GetFeature</name><argument_list>(<argument><expr><name>size_t</name> <name>Idx</name></expr></argument>)</argument_list> const <block>{<block_content> <return>return <expr><name><name>InputSizesPerFeature</name><index>[<expr><name>Idx</name></expr>]</index></name></expr>;</return> </block_content>}</block></decl></decl_stmt>
+
+<function><type><name>void</name></type> <name>ValidateFeatureSet</name><parameter_list>()</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>FeatureDebug</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>PrintFeatureSet</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>Idx</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>Idx</name> <operator>&lt;</operator> <name>kFeatureSetSize</name></expr>;</condition> <incr><expr><name>Idx</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<expr><call><name>GetFeature</name><argument_list>(<argument><expr><name>Idx</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>Inputs</name><index>[<expr><name><name>SmallestElementPerFeature</name><index>[<expr><name>Idx</name></expr>]</index></name></expr>]</index></name><operator>-&gt;</operator><name>Tmp</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt></block_content></block></for>
+<for>for <control>(<init><decl><type><name>auto</name></type> <name>II</name><range>: <expr><name>Inputs</name></expr></range></decl></init>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>II</name><operator>-&gt;</operator><name>Tmp</name></name> <operator>!=</operator> <name><name>II</name><operator>-&gt;</operator><name>NumFeatures</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Printf</name><argument_list>(<argument><expr><literal type="string">"ZZZ %zd %zd\n"</literal></expr></argument>, <argument><expr><name><name>II</name><operator>-&gt;</operator><name>Tmp</name></name></expr></argument>, <argument><expr><name><name>II</name><operator>-&gt;</operator><name>NumFeatures</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>II</name><operator>-&gt;</operator><name>Tmp</name></name> <operator>==</operator> <name><name>II</name><operator>-&gt;</operator><name>NumFeatures</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>II</name><operator>-&gt;</operator><name>Tmp</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+
+
+
+
+
+<function><type><name>void</name></type> <name>UpdateCorpusDistribution</name><parameter_list>(<parameter><decl><type><name>Random</name> <modifier>&amp;</modifier></type><name>Rand</name></decl></parameter>)</parameter_list> <block>{<block_content>
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>DistributionNeedsUpdate</name> <operator>&amp;&amp;</operator>
+<operator>(</operator><operator>!</operator><name><name>Entropic</name><operator>.</operator><name>Enabled</name></name> <operator>||</operator> <call><name>Rand</name><argument_list>(<argument><expr><name>kSparseEnergyUpdates</name></expr></argument>)</argument_list></call><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>DistributionNeedsUpdate</name> <operator>=</operator> <name>false</name></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>size_t</name></type> <name>N</name> <init>= <expr><call><name><name>Inputs</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>N</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name><name>Intervals</name><operator>.</operator><name>resize</name></name><argument_list>(<argument><expr><name>N</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name><name>Weights</name><operator>.</operator><name>resize</name></name><argument_list>(<argument><expr><name>N</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>std</name><operator>::</operator><call><name>iota</name><argument_list>(<argument><expr><call><name><name>Intervals</name><operator>.</operator><name>begin</name></name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><call><name><name>Intervals</name><operator>.</operator><name>end</name></name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>std</name><operator>::</operator><name>chrono</name><operator>::</operator><name>microseconds</name> <call><name>AverageUnitExecutionTime</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><decl><type><name>auto</name></type> <name>II</name> <range>: <expr><name>Inputs</name></expr></range></decl></init>)</control> <block>{<block_content>
+<expr_stmt><expr><name>AverageUnitExecutionTime</name> <operator>+=</operator> <name><name>II</name><operator>-&gt;</operator><name>TimeOfUnit</name></name></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><name>AverageUnitExecutionTime</name> <operator>/=</operator> <name>N</name></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>bool</name></type> <name>VanillaSchedule</name> <init>= <expr><name>true</name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>Entropic</name><operator>.</operator><name>Enabled</name></name></expr>)</condition> <block>{<block_content>
+<for>for <control>(<init><decl><type><name>auto</name></type> <name>II</name> <range>: <expr><name>Inputs</name></expr></range></decl></init>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>II</name><operator>-&gt;</operator><name>NeedsEnergyUpdate</name></name> <operator>&amp;&amp;</operator> <name><name>II</name><operator>-&gt;</operator><name>Energy</name></name> <operator>!=</operator> <literal type="number">0.0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>II</name><operator>-&gt;</operator><name>NeedsEnergyUpdate</name></name> <operator>=</operator> <name>false</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name><name>II</name><operator>-&gt;</operator><name>UpdateEnergy</name></name><argument_list>(<argument><expr><call><name><name>RareFeatures</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><name><name>Entropic</name><operator>.</operator><name>ScalePerExecTime</name></name></expr></argument>,
+<argument><expr><name>AverageUnitExecutionTime</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>N</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><name><name>Inputs</name><index>[<expr><name>i</name></expr>]</index></name><operator>-&gt;</operator><name>NumFeatures</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><name><name>Weights</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <literal type="number">0.</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>Inputs</name><index>[<expr><name>i</name></expr>]</index></name><operator>-&gt;</operator><name>NumExecutedMutations</name> <operator>/</operator> <name>kMaxMutationFactor</name> <operator>&gt;</operator>
+<name>NumExecutedMutations</name> <operator>/</operator> <call><name><name>Inputs</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><name><name>Weights</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <literal type="number">0.</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+<expr_stmt><expr><name><name>Weights</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <name><name>Inputs</name><index>[<expr><name>i</name></expr>]</index></name><operator>-&gt;</operator><name>Energy</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>Weights</name><index>[<expr><name>i</name></expr>]</index></name> <operator>&gt;</operator> <literal type="number">0.0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>VanillaSchedule</name> <operator>=</operator> <name>false</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>VanillaSchedule</name></expr>)</condition> <block>{<block_content>
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>N</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>Weights</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator>
+<ternary><condition><expr><name><name>Inputs</name><index>[<expr><name>i</name></expr>]</index></name><operator>-&gt;</operator><name>NumFeatures</name></expr>
+?</condition><then> <expr><call><name><name>static_cast</name><argument_list type="generic">&lt;<argument><expr><name>double</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><operator>(</operator><name>i</name> <operator>+</operator> <literal type="number">1</literal><operator>)</operator> <operator>*</operator>
+<operator>(</operator><ternary><condition><expr><name><name>Inputs</name><index>[<expr><name>i</name></expr>]</index></name><operator>-&gt;</operator><name>HasFocusFunction</name></expr> ?</condition><then> <expr><literal type="number">1000</literal></expr> </then><else>: <expr><literal type="number">1</literal></expr></else></ternary><operator>)</operator></expr></argument>)</argument_list></call></expr>
+</then><else>: <expr><literal type="number">0.</literal></expr></else></ternary></expr>;</expr_stmt></block_content></block></for>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>FeatureDebug</name></expr>)</condition> <block>{<block_content>
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>N</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Printf</name><argument_list>(<argument><expr><literal type="string">"%zd "</literal></expr></argument>, <argument><expr><name><name>Inputs</name><index>[<expr><name>i</name></expr>]</index></name><operator>-&gt;</operator><name>NumFeatures</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+<expr_stmt><expr><call><name>Printf</name><argument_list>(<argument><expr><literal type="string">"SCORE\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>N</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Printf</name><argument_list>(<argument><expr><literal type="string">"%f "</literal></expr></argument>, <argument><expr><name><name>Weights</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+<expr_stmt><expr><call><name>Printf</name><argument_list>(<argument><expr><literal type="string">"Weights\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>CorpusDistribution</name> <operator>=</operator> <name>std</name><operator>::</operator><call><name><name>piecewise_constant_distribution</name><argument_list type="generic">&lt;<argument><expr><name>double</name></expr></argument>&gt;</argument_list></name><argument_list>(
+<argument><expr><call><name><name>Intervals</name><operator>.</operator><name>begin</name></name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><call><name><name>Intervals</name><operator>.</operator><name>end</name></name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><call><name><name>Weights</name><operator>.</operator><name>begin</name></name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<expr_stmt><expr><name>std</name><operator>::</operator><name><name>piecewise_constant_distribution</name><argument_list type="generic">&lt;<argument><expr><name>double</name></expr></argument>&gt;</argument_list></name> <name>CorpusDistribution</name></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name><name>Vector</name><argument_list type="generic">&lt;<argument><expr><name>double</name></expr></argument>&gt;</argument_list></name></type> <name>Intervals</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>Vector</name><argument_list type="generic">&lt;<argument><expr><name>double</name></expr></argument>&gt;</argument_list></name></type> <name>Weights</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>std</name><operator>::</operator><name><name>unordered_set</name><argument_list type="generic">&lt;<argument><expr><name>std</name><operator>::</operator><name>string</name></expr></argument>&gt;</argument_list></name> <name>Hashes</name></expr>;</expr_stmt>
+<decl_stmt><decl><type><name><name>Vector</name><argument_list type="generic">&lt;<argument><expr><name>InputInfo</name><modifier>*</modifier></expr></argument>&gt;</argument_list></name></type> <name>Inputs</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>size_t</name></type> <name>NumAddedFeatures</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>NumUpdatedFeatures</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name><name>InputSizesPerFeature</name><index>[<expr><name>kFeatureSetSize</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name><name>SmallestElementPerFeature</name><index>[<expr><name>kFeatureSetSize</name></expr>]</index></name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>bool</name></type> <name>DistributionNeedsUpdate</name> <init>= <expr><name>true</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint16_t</name></type> <name>FreqOfMostAbundantRareFeature</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint16_t</name></type> <name><name>GlobalFeatureFreqs</name><index>[<expr><name>kFeatureSetSize</name></expr>]</index></name> <init>= <expr><block>{}</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>Vector</name><argument_list type="generic">&lt;<argument><expr><name>uint32_t</name></expr></argument>&gt;</argument_list></name></type> <name>RareFeatures</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>std</name><operator>::</operator><name>string</name> <name>OutputCorpus</name></expr>;</expr_stmt>
+};
+
+}
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

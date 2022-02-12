@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/results/redis_res/_cppstats/redis/src/bio.c"><cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"server.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"bio.h"</cpp:file></cpp:include>
+<decl_stmt><decl><type><specifier>static</specifier> <name>pthread_t</name></type> <name><name>bio_threads</name><index>[<expr><name>BIO_NUM_OPS</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>pthread_mutex_t</name></type> <name><name>bio_mutex</name><index>[<expr><name>BIO_NUM_OPS</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>pthread_cond_t</name></type> <name><name>bio_newjob_cond</name><index>[<expr><name>BIO_NUM_OPS</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>pthread_cond_t</name></type> <name><name>bio_step_cond</name><index>[<expr><name>BIO_NUM_OPS</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>list</name> <modifier>*</modifier></type><name><name>bio_jobs</name><index>[<expr><name>BIO_NUM_OPS</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>unsigned</name> <name>long</name> <name>long</name></type> <name><name>bio_pending</name><index>[<expr><name>BIO_NUM_OPS</name></expr>]</index></name></decl>;</decl_stmt>
+<struct>struct <name>bio_job</name> <block>{
+<decl_stmt><decl><type><name>int</name></type> <name>fd</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>lazy_free_fn</name> <modifier>*</modifier></type><name>free_fn</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name><name>free_args</name><index>[]</index></name></decl>;</decl_stmt>
+}</block>;</struct>
+<function_decl><type><name>void</name> <modifier>*</modifier></type><name>bioProcessBackgroundJobs</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>)</parameter_list>;</function_decl>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>REDIS_THREAD_STACK_SIZE</name></cpp:macro> <cpp:value>(1024*1024*4)</cpp:value></cpp:define>
+<function><type><name>void</name></type> <name>bioInit</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>pthread_attr_t</name></type> <name>attr</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>pthread_t</name></type> <name>thread</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>stacksize</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>j</name></decl>;</decl_stmt>
+<for>for <control>(<init><expr><name>j</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>j</name> <operator>&lt;</operator> <name>BIO_NUM_OPS</name></expr>;</condition> <incr><expr><name>j</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>pthread_mutex_init</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>bio_mutex</name><index>[<expr><name>j</name></expr>]</index></name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_cond_init</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>bio_newjob_cond</name><index>[<expr><name>j</name></expr>]</index></name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_cond_init</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>bio_step_cond</name><index>[<expr><name>j</name></expr>]</index></name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>bio_jobs</name><index>[<expr><name>j</name></expr>]</index></name> <operator>=</operator> <call><name>listCreate</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>bio_pending</name><index>[<expr><name>j</name></expr>]</index></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><call><name>pthread_attr_init</name><argument_list>(<argument><expr><operator>&amp;</operator><name>attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_attr_getstacksize</name><argument_list>(<argument><expr><operator>&amp;</operator><name>attr</name></expr></argument>,<argument><expr><operator>&amp;</operator><name>stacksize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>stacksize</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>stacksize</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<while>while <condition>(<expr><name>stacksize</name> <operator>&lt;</operator> <name>REDIS_THREAD_STACK_SIZE</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>stacksize</name> <operator>*=</operator> <literal type="number">2</literal></expr>;</expr_stmt></block_content></block></while>
+<expr_stmt><expr><call><name>pthread_attr_setstacksize</name><argument_list>(<argument><expr><operator>&amp;</operator><name>attr</name></expr></argument>, <argument><expr><name>stacksize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>j</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>j</name> <operator>&lt;</operator> <name>BIO_NUM_OPS</name></expr>;</condition> <incr><expr><name>j</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name> <init>= <expr><operator>(</operator><name>void</name><operator>*</operator><operator>)</operator><operator>(</operator><name>unsigned</name> <name>long</name><operator>)</operator> <name>j</name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>pthread_create</name><argument_list>(<argument><expr><operator>&amp;</operator><name>thread</name></expr></argument>,<argument><expr><operator>&amp;</operator><name>attr</name></expr></argument>,<argument><expr><name>bioProcessBackgroundJobs</name></expr></argument>,<argument><expr><name>arg</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>serverLog</name><argument_list>(<argument><expr><name>LL_WARNING</name></expr></argument>,<argument><expr><literal type="string">"Fatal: Can't initialize Background Jobs."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>bio_threads</name><index>[<expr><name>j</name></expr>]</index></name> <operator>=</operator> <name>thread</name></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+<function><type><name>void</name></type> <name>bioSubmitJob</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>type</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>bio_job</name></name> <modifier>*</modifier></type><name>job</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>pthread_mutex_lock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>bio_mutex</name><index>[<expr><name>type</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>listAddNodeTail</name><argument_list>(<argument><expr><name><name>bio_jobs</name><index>[<expr><name>type</name></expr>]</index></name></expr></argument>,<argument><expr><name>job</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>bio_pending</name><index>[<expr><name>type</name></expr>]</index></name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_cond_signal</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>bio_newjob_cond</name><index>[<expr><name>type</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_unlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>bio_mutex</name><index>[<expr><name>type</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><name>void</name></type> <name>bioCreateLazyFreeJob</name><parameter_list>(<parameter><decl><type><name>lazy_free_fn</name></type> <name>free_fn</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>arg_count</name></decl></parameter>, <parameter><decl><type><modifier>...</modifier></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>va_list</name></type> <name>valist</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>bio_job</name></name> <modifier>*</modifier></type><name>job</name> <init>= <expr><call><name>zmalloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>job</name></expr></argument>)</argument_list></sizeof> <operator>+</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>void</name> <operator>*</operator></expr></argument>)</argument_list></sizeof> <operator>*</operator> <operator>(</operator><name>arg_count</name><operator>)</operator></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>job</name><operator>-&gt;</operator><name>free_fn</name></name> <operator>=</operator> <name>free_fn</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>va_start</name><argument_list>(<argument><expr><name>valist</name></expr></argument>, <argument><expr><name>arg_count</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><decl><type><name>int</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>arg_count</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name><name>job</name><operator>-&gt;</operator><name>free_args</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <call><name>va_arg</name><argument_list>(<argument><expr><name>valist</name></expr></argument>, <argument><expr><name>void</name> <operator>*</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><call><name>va_end</name><argument_list>(<argument><expr><name>valist</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>bioSubmitJob</name><argument_list>(<argument><expr><name>BIO_LAZY_FREE</name></expr></argument>, <argument><expr><name>job</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><name>void</name></type> <name>bioCreateCloseJob</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>fd</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>bio_job</name></name> <modifier>*</modifier></type><name>job</name> <init>= <expr><call><name>zmalloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>job</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>job</name><operator>-&gt;</operator><name>fd</name></name> <operator>=</operator> <name>fd</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>bioSubmitJob</name><argument_list>(<argument><expr><name>BIO_CLOSE_FILE</name></expr></argument>, <argument><expr><name>job</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><name>void</name></type> <name>bioCreateFsyncJob</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>fd</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>bio_job</name></name> <modifier>*</modifier></type><name>job</name> <init>= <expr><call><name>zmalloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>job</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>job</name><operator>-&gt;</operator><name>fd</name></name> <operator>=</operator> <name>fd</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>bioSubmitJob</name><argument_list>(<argument><expr><name>BIO_AOF_FSYNC</name></expr></argument>, <argument><expr><name>job</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><name>void</name> <modifier>*</modifier></type><name>bioProcessBackgroundJobs</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>bio_job</name></name> <modifier>*</modifier></type><name>job</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>long</name></type> <name>type</name> <init>= <expr><operator>(</operator><name>unsigned</name> <name>long</name><operator>)</operator> <name>arg</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>sigset_t</name></type> <name>sigset</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>type</name> <operator>&gt;=</operator> <name>BIO_NUM_OPS</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>serverLog</name><argument_list>(<argument><expr><name>LL_WARNING</name></expr></argument>,
+<argument><expr><literal type="string">"Warning: bio thread started with wrong type %lu"</literal></expr></argument>,<argument><expr><name>type</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<switch>switch <condition>(<expr><name>type</name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>BIO_CLOSE_FILE</name></expr>:</case>
+<expr_stmt><expr><call><name>redis_set_thread_title</name><argument_list>(<argument><expr><literal type="string">"bio_close_file"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>BIO_AOF_FSYNC</name></expr>:</case>
+<expr_stmt><expr><call><name>redis_set_thread_title</name><argument_list>(<argument><expr><literal type="string">"bio_aof_fsync"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>BIO_LAZY_FREE</name></expr>:</case>
+<expr_stmt><expr><call><name>redis_set_thread_title</name><argument_list>(<argument><expr><literal type="string">"bio_lazy_free"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></switch>
+<expr_stmt><expr><call><name>redisSetCpuAffinity</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>bio_cpulist</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>makeThreadKillable</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_lock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>bio_mutex</name><index>[<expr><name>type</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>sigemptyset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>sigset</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>sigaddset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>sigset</name></expr></argument>, <argument><expr><name>SIGALRM</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>pthread_sigmask</name><argument_list>(<argument><expr><name>SIG_BLOCK</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>sigset</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>serverLog</name><argument_list>(<argument><expr><name>LL_WARNING</name></expr></argument>,
+<argument><expr><literal type="string">"Warning: can't mask SIGALRM in bio.c thread: %s"</literal></expr></argument>, <argument><expr><call><name>strerror</name><argument_list>(<argument><expr><name>errno</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<while>while<condition>(<expr><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>listNode</name> <modifier>*</modifier></type><name>ln</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>listLength</name><argument_list>(<argument><expr><name><name>bio_jobs</name><index>[<expr><name>type</name></expr>]</index></name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>pthread_cond_wait</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>bio_newjob_cond</name><index>[<expr><name>type</name></expr>]</index></name></expr></argument>,<argument><expr><operator>&amp;</operator><name><name>bio_mutex</name><index>[<expr><name>type</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>ln</name> <operator>=</operator> <call><name>listFirst</name><argument_list>(<argument><expr><name><name>bio_jobs</name><index>[<expr><name>type</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>job</name> <operator>=</operator> <name><name>ln</name><operator>-&gt;</operator><name>value</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_unlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>bio_mutex</name><index>[<expr><name>type</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>type</name> <operator>==</operator> <name>BIO_CLOSE_FILE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>close</name><argument_list>(<argument><expr><name><name>job</name><operator>-&gt;</operator><name>fd</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>type</name> <operator>==</operator> <name>BIO_AOF_FSYNC</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>redis_fsync</name><argument_list>(<argument><expr><name><name>job</name><operator>-&gt;</operator><name>fd</name></name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal> <operator>&amp;&amp;</operator>
+<name>errno</name> <operator>!=</operator> <name>EBADF</name> <operator>&amp;&amp;</operator> <name>errno</name> <operator>!=</operator> <name>EINVAL</name></expr>)</condition>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>last_status</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>atomicGet</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>aof_bio_fsync_status</name></name></expr></argument>,<argument><expr><name>last_status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>atomicSet</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>aof_bio_fsync_status</name></name></expr></argument>,<argument><expr><name>C_ERR</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>atomicSet</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>aof_bio_fsync_errno</name></name></expr></argument>,<argument><expr><name>errno</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>last_status</name> <operator>==</operator> <name>C_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>serverLog</name><argument_list>(<argument><expr><name>LL_WARNING</name></expr></argument>,
+<argument><expr><literal type="string">"Fail to fsync the AOF file: %s"</literal></expr></argument>,<argument><expr><call><name>strerror</name><argument_list>(<argument><expr><name>errno</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>atomicSet</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>aof_bio_fsync_status</name></name></expr></argument>,<argument><expr><name>C_OK</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>type</name> <operator>==</operator> <name>BIO_LAZY_FREE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name><name>job</name><operator>-&gt;</operator><name>free_fn</name></name><argument_list>(<argument><expr><name><name>job</name><operator>-&gt;</operator><name>free_args</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>serverPanic</name><argument_list>(<argument><expr><literal type="string">"Wrong job type in bioProcessBackgroundJobs()."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><call><name>zfree</name><argument_list>(<argument><expr><name>job</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_lock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>bio_mutex</name><index>[<expr><name>type</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>listDelNode</name><argument_list>(<argument><expr><name><name>bio_jobs</name><index>[<expr><name>type</name></expr>]</index></name></expr></argument>,<argument><expr><name>ln</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>bio_pending</name><index>[<expr><name>type</name></expr>]</index></name><operator>--</operator></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_cond_broadcast</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>bio_step_cond</name><index>[<expr><name>type</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></while>
+</block_content>}</block></function>
+<function><type><name>unsigned</name> <name>long</name> <name>long</name></type> <name>bioPendingJobsOfType</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>type</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name> <name>long</name> <name>long</name></type> <name>val</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_lock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>bio_mutex</name><index>[<expr><name>type</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>val</name> <operator>=</operator> <name><name>bio_pending</name><index>[<expr><name>type</name></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_unlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>bio_mutex</name><index>[<expr><name>type</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>val</name></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>unsigned</name> <name>long</name> <name>long</name></type> <name>bioWaitStepOfType</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>type</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name> <name>long</name> <name>long</name></type> <name>val</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_lock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>bio_mutex</name><index>[<expr><name>type</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>val</name> <operator>=</operator> <name><name>bio_pending</name><index>[<expr><name>type</name></expr>]</index></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>val</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>pthread_cond_wait</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>bio_step_cond</name><index>[<expr><name>type</name></expr>]</index></name></expr></argument>,<argument><expr><operator>&amp;</operator><name><name>bio_mutex</name><index>[<expr><name>type</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>val</name> <operator>=</operator> <name><name>bio_pending</name><index>[<expr><name>type</name></expr>]</index></name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_unlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>bio_mutex</name><index>[<expr><name>type</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>val</name></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>void</name></type> <name>bioKillThreads</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>err</name></decl>, <decl><type ref="prev"/><name>j</name></decl>;</decl_stmt>
+<for>for <control>(<init><expr><name>j</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>j</name> <operator>&lt;</operator> <name>BIO_NUM_OPS</name></expr>;</condition> <incr><expr><name>j</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>bio_threads</name><index>[<expr><name>j</name></expr>]</index></name> <operator>==</operator> <call><name>pthread_self</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content> <continue>continue;</continue></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>bio_threads</name><index>[<expr><name>j</name></expr>]</index></name> <operator>&amp;&amp;</operator> <call><name>pthread_cancel</name><argument_list>(<argument><expr><name><name>bio_threads</name><index>[<expr><name>j</name></expr>]</index></name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>err</name> <operator>=</operator> <call><name>pthread_join</name><argument_list>(<argument><expr><name><name>bio_threads</name><index>[<expr><name>j</name></expr>]</index></name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>serverLog</name><argument_list>(<argument><expr><name>LL_WARNING</name></expr></argument>,
+<argument><expr><literal type="string">"Bio thread for job type #%d can not be joined: %s"</literal></expr></argument>,
+<argument><expr><name>j</name></expr></argument>, <argument><expr><call><name>strerror</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>serverLog</name><argument_list>(<argument><expr><name>LL_WARNING</name></expr></argument>,
+<argument><expr><literal type="string">"Bio thread for job type #%d terminated"</literal></expr></argument>,<argument><expr><name>j</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+</unit>

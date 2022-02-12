@@ -1,0 +1,652 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/llvm-project/compiler-rt/lib/xray/xray_segmented_array.h">
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>XRAY_SEGMENTED_ARRAY_H</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>XRAY_SEGMENTED_ARRAY_H</name></cpp:macro></cpp:define>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"sanitizer_common/sanitizer_allocator.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"xray_allocator.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"xray_utils.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;cassert&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;type_traits&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;utility&gt;</cpp:file></cpp:include>
+
+<decl_stmt><decl><type><name>namespace</name></type> <name>__xray</name> <block>{<block_content>
+
+
+
+
+
+
+
+<decl_stmt><decl><type><name><name>template</name> <argument_list type="generic">&lt;<argument><expr><name>class</name> <name>T</name></expr></argument>&gt;</argument_list></name> <name>class</name></type> <name>Array</name> <block>{<block_content>
+<struct>struct <name>Segment</name> <block>{
+<decl_stmt><decl><type><name>Segment</name> <modifier>*</modifier></type><name>Prev</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Segment</name> <modifier>*</modifier></type><name>Next</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name><name>Data</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></decl>;</decl_stmt>
+}</block>;</struct>
+
+<label><name>public</name>:</label>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>constexpr</name> <name>uint64_t</name></type> <name>AlignedElementStorageSize</name> <init>=
+<expr>sizeof<operator>(</operator><name>typename</name> <name>std</name><operator>::</operator><name>aligned_storage</name><operator>&lt;</operator><sizeof>sizeof<argument_list>(<argument><expr><name>T</name></expr></argument>)</argument_list></sizeof>, <call><name>alignof</name><argument_list>(<argument><expr><name>T</name></expr></argument>)</argument_list></call><operator>&gt;</operator><operator>::</operator><name>type</name><operator>)</operator></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>constexpr</name> <name>uint64_t</name></type> <name>SegmentControlBlockSize</name> <init>= <expr><sizeof>sizeof<argument_list>(<argument><expr><name>Segment</name> <operator>*</operator></expr></argument>)</argument_list></sizeof> <operator>*</operator> <literal type="number">2</literal></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>constexpr</name> <name>uint64_t</name></type> <name>SegmentSize</name> <init>= <expr><call><name>nearest_boundary</name><argument_list>(
+<argument><expr><name>SegmentControlBlockSize</name> <operator>+</operator> <call><name>next_pow2</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>T</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>kCacheLineSize</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>using</name></type> <name>AllocatorType</name> <init>= <expr><name><name>Allocator</name><argument_list type="generic">&lt;<argument><expr><name>SegmentSize</name></expr></argument>&gt;</argument_list></name></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>constexpr</name> <name>uint64_t</name></type> <name>ElementsPerSegment</name> <init>=
+<expr><operator>(</operator><name>SegmentSize</name> <operator>-</operator> <name>SegmentControlBlockSize</name><operator>)</operator> <operator>/</operator> <call><name>next_pow2</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>T</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>static_assert</name><argument_list>(<argument><expr><name>ElementsPerSegment</name> <operator>&gt;</operator> <literal type="number">0</literal></expr></argument>,
+<argument><expr><literal type="string">"Must have at least 1 element per segment."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>Segment</name></type> <name>SentinelSegment</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>using</name></type> <name>size_type</name> <init>= <expr><name>uint64_t</name></expr></init></decl>;</decl_stmt>
+
+<label><name>private</name>:</label>
+
+<decl_stmt><decl><type><name><name>template</name> <argument_list type="generic">&lt;<argument><expr><name>class</name> <name>U</name></expr></argument>&gt;</argument_list></name> <name>class</name></type> <name>Iterator</name> <block>{<block_content>
+<decl_stmt><decl><type><name>Segment</name> <modifier>*</modifier></type><name>S</name> <init>= <expr><operator>&amp;</operator><name>SentinelSegment</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>Offset</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>Size</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<label><name>public</name>:</label>
+<macro><name>Iterator</name><argument_list>(<argument>Segment *IS</argument>, <argument>uint64_t Off</argument>, <argument>uint64_t S</argument>)</argument_list></macro> <label><name>XRAY_NEVER_INSTRUMENT</name>
+:</label> <expr_stmt><expr><call><name>S</name><argument_list>(<argument><expr><name>IS</name></expr></argument>)</argument_list></call></expr><operator>,</operator>
+<expr><call><name>Offset</name><argument_list>(<argument><expr><name>Off</name></expr></argument>)</argument_list></call></expr><operator>,</operator>
+<macro><name>Size</name><argument_list>(<argument>S</argument>)</argument_list></macro> <expr><block>{}</block>
+<macro><name>Iterator</name><argument_list>(<argument>const Iterator &amp;</argument>)</argument_list></macro> <name>NOEXCEPT</name> <name>XRAY_NEVER_INSTRUMENT</name> <operator>=</operator> default</expr>;</expr_stmt>
+<macro><name>Iterator</name><argument_list>()</argument_list></macro> <decl_stmt><decl><type><name>NOEXCEPT</name></type> <name>XRAY_NEVER_INSTRUMENT</name> <init>= <expr>default</expr></init></decl>;</decl_stmt>
+<macro><name>Iterator</name><argument_list>(<argument>Iterator &amp;&amp;</argument>)</argument_list></macro> <decl_stmt><decl><type><name>NOEXCEPT</name></type> <name>XRAY_NEVER_INSTRUMENT</name> <init>= <expr>default</expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Iterator</name> <modifier>&amp;</modifier></type><name>operator</name><init>=<expr><operator>(</operator><specifier>const</specifier> <name>Iterator</name> <operator>&amp;</operator><operator>)</operator> <name>XRAY_NEVER_INSTRUMENT</name> <operator>=</operator> default</expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Iterator</name> <modifier>&amp;</modifier></type><name>operator</name><init>=<expr><operator>(</operator><name>Iterator</name> <operator>&amp;&amp;</operator><operator>)</operator> <name>XRAY_NEVER_INSTRUMENT</name> <operator>=</operator> default</expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><operator>~</operator><macro><name>Iterator</name><argument_list>()</argument_list></macro> <name>XRAY_NEVER_INSTRUMENT</name> <operator>=</operator> default</expr>;</expr_stmt>
+
+<expr_stmt><expr><name>Iterator</name> <operator>&amp;</operator><name>operator</name><operator>++</operator><operator>(</operator><operator>)</operator> <name>XRAY_NEVER_INSTRUMENT</name> <block>{
+<if_stmt><if>if <condition>(<expr><operator>++</operator><name>Offset</name> <operator>%</operator> <name>ElementsPerSegment</name> <operator>||</operator> <name>Offset</name> <operator>==</operator> <name>Size</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>*</operator><name>this</name></expr>;</return></block_content></block></if></if_stmt>
+
+
+
+<call><name>DCHECK_EQ</name><argument_list>(<argument><expr><name>Offset</name> <operator>%</operator> <name>ElementsPerSegment</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></block></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DCHECK_NE</name><argument_list>(<argument><expr><name>Offset</name></expr></argument>, <argument><expr><name>Size</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DCHECK_NE</name><argument_list>(<argument><expr><name>S</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DCHECK_NE</name><argument_list>(<argument><expr><name><name>S</name><operator>-&gt;</operator><name>Next</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>S</name> <operator>=</operator> <name><name>S</name><operator>-&gt;</operator><name>Next</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DCHECK_NE</name><argument_list>(<argument><expr><name>S</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>*</operator><name>this</name></expr>;</return>
+</block_content>}</block></decl></decl_stmt>
+
+<expr_stmt><expr><name>Iterator</name> <operator>&amp;</operator><name>operator</name><operator>--</operator><operator>(</operator><operator>)</operator> <name>XRAY_NEVER_INSTRUMENT</name> <block>{
+<expr><call><name>DCHECK_NE</name><argument_list>(<argument><expr><name>S</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;
+<expr><call><name>DCHECK_GT</name><argument_list>(<argument><expr><name>Offset</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;
+
+<expr><name>auto</name> <name>PreviousOffset</name> <operator>=</operator> <name>Offset</name><operator>--</operator></expr>;
+<if_stmt><if>if <condition>(<expr><name>PreviousOffset</name> <operator>!=</operator> <name>Size</name> <operator>&amp;&amp;</operator> <name>PreviousOffset</name> <operator>%</operator> <name>ElementsPerSegment</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>DCHECK_NE</name><argument_list>(<argument><expr><name><name>S</name><operator>-&gt;</operator><name>Prev</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>S</name> <operator>=</operator> <name><name>S</name><operator>-&gt;</operator><name>Prev</name></name></expr>;</expr_stmt>
+<expr_stmt/>}</block_content>
+
+return *this</block><empty_stmt>;</empty_stmt></if></if_stmt>
+}</block></expr></expr_stmt>
+
+<expr_stmt><expr><name>Iterator</name> <name>operator</name><operator>++</operator><operator>(</operator><name>int</name><operator>)</operator> <name>XRAY_NEVER_INSTRUMENT</name> <block>{
+<expr><name>Iterator</name> <call><name>Copy</name><argument_list>(<argument><expr><operator>*</operator><name>this</name></expr></argument>)</argument_list></call></expr>;
+<expr><operator>++</operator><operator>(</operator><operator>*</operator><name>this</name><operator>)</operator></expr>;
+<return>return <expr><name>Copy</name></expr>;</return>
+}</block></expr></expr_stmt>
+
+<expr_stmt><expr><name>Iterator</name> <name>operator</name><operator>--</operator><operator>(</operator><name>int</name><operator>)</operator> <name>XRAY_NEVER_INSTRUMENT</name> <block>{
+<expr><name>Iterator</name> <call><name>Copy</name><argument_list>(<argument><expr><operator>*</operator><name>this</name></expr></argument>)</argument_list></call></expr>;
+<expr><operator>--</operator><operator>(</operator><operator>*</operator><name>this</name><operator>)</operator></expr>;
+<return>return <expr><name>Copy</name></expr>;</return>
+}</block></expr></expr_stmt>
+
+<expr_stmt><expr><name><name>template</name> <argument_list type="generic">&lt;<argument><expr><name>class</name> <name>V</name></expr></argument>, <argument><expr><name>class</name> <name>W</name></expr></argument>&gt;</argument_list></name>
+<name>friend</name> <name>bool</name> <name>operator</name><operator>==</operator><operator>(</operator><specifier>const</specifier> <name><name>Iterator</name><argument_list type="generic">&lt;<argument><expr><name>V</name></expr></argument>&gt;</argument_list></name> <operator>&amp;</operator><name>L</name><operator>,</operator>
+<specifier>const</specifier> <name><name>Iterator</name><argument_list type="generic">&lt;<argument><expr><name>W</name></expr></argument>&gt;</argument_list></name> <operator>&amp;</operator><name>R</name><operator>)</operator> <name>XRAY_NEVER_INSTRUMENT</name> <block>{
+<return>return <expr><name><name>L</name><operator>.</operator><name>S</name></name> <operator>==</operator> <name><name>R</name><operator>.</operator><name>S</name></name> <operator>&amp;&amp;</operator> <name><name>L</name><operator>.</operator><name>Offset</name></name> <operator>==</operator> <name><name>R</name><operator>.</operator><name>Offset</name></name></expr>;</return>
+}</block></expr></expr_stmt>
+
+<expr_stmt><expr><name><name>template</name> <argument_list type="generic">&lt;<argument><expr><name>class</name> <name>V</name></expr></argument>, <argument><expr><name>class</name> <name>W</name></expr></argument>&gt;</argument_list></name>
+<name>friend</name> <name>bool</name> <name>operator</name><operator>!=</operator><operator>(</operator><specifier>const</specifier> <name><name>Iterator</name><argument_list type="generic">&lt;<argument><expr><name>V</name></expr></argument>&gt;</argument_list></name> <operator>&amp;</operator><name>L</name><operator>,</operator>
+<specifier>const</specifier> <name><name>Iterator</name><argument_list type="generic">&lt;<argument><expr><name>W</name></expr></argument>&gt;</argument_list></name> <operator>&amp;</operator><name>R</name><operator>)</operator> <name>XRAY_NEVER_INSTRUMENT</name> <block>{
+<return>return <expr><operator>!</operator><operator>(</operator><name>L</name> <operator>==</operator> <name>R</name><operator>)</operator></expr>;</return>
+}</block></expr></expr_stmt>
+
+<expr_stmt><expr><name>U</name> <operator>&amp;</operator><name>operator</name><operator>*</operator><operator>(</operator><operator>)</operator> <specifier>const</specifier> <name>XRAY_NEVER_INSTRUMENT</name> <block>{
+<expr><call><name>DCHECK_NE</name><argument_list>(<argument><expr><name>S</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;
+<expr><name>auto</name> <name>RelOff</name> <operator>=</operator> <name>Offset</name> <operator>%</operator> <name>ElementsPerSegment</name></expr>;
+
+
+
+<expr><name>auto</name> <name>Base</name> <operator>=</operator> <operator>&amp;</operator><name><name>S</name><operator>-&gt;</operator><name>Data</name></name></expr>;
+<expr><name>auto</name> <name>AlignedOffset</name> <operator>=</operator> <name>Base</name> <operator>+</operator> <operator>(</operator><name>RelOff</name> <operator>*</operator> <name>AlignedElementStorageSize</name><operator>)</operator></expr>;
+<return>return <expr><operator>*</operator><call><name><name>reinterpret_cast</name><argument_list type="generic">&lt;<argument><expr><name>U</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>AlignedOffset</name></expr></argument>)</argument_list></call></expr>;</return>
+}</block></expr></expr_stmt>
+
+<expr_stmt><expr><name>U</name> <operator>*</operator><name><name>operator</name><operator>-&gt;</operator><name/></name>(</expr></expr_stmt>)</block_content> const XRAY_NEVER_INSTRUMENT <block>{<block_content> <return>return <expr><operator>&amp;</operator><operator>(</operator><operator>*</operator><operator>*</operator><name>this</name><operator>)</operator></expr>;</return> </block_content>}</block></block></decl></decl_stmt>
+</block_content>}</block></decl></decl_stmt><empty_stmt>;</empty_stmt>
+
+<decl_stmt><decl><type><name>AllocatorType</name> <modifier>*</modifier></type><name>Alloc</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Segment</name> <modifier>*</modifier></type><name>Head</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Segment</name> <modifier>*</modifier></type><name>Tail</name></decl>;</decl_stmt>
+
+
+
+<decl_stmt><decl><type><name>Segment</name> <modifier>*</modifier></type><name>Freelist</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>Size</name></decl>;</decl_stmt>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><name>Segment</name> <modifier>*</modifier></type><name>NewSegment</name><parameter_list>()</parameter_list> XRAY_NEVER_INSTRUMENT <block>{<block_content>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>Freelist</name> <operator>!=</operator> <operator>&amp;</operator><name>SentinelSegment</name></expr>)</condition> <block>{<block_content>
+
+
+
+
+
+
+
+
+
+
+
+
+<expr_stmt><expr><call><name>DCHECK_EQ</name><argument_list>(<argument><expr><name><name>Freelist</name><operator>-&gt;</operator><name>Prev</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+
+
+
+
+
+<expr_stmt><expr><name>auto</name> <operator>*</operator><name>FreeSegment</name> <operator>=</operator> <name>Freelist</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>Freelist</name> <operator>=</operator> <name><name>Freelist</name><operator>-&gt;</operator><name>Next</name></name></expr>;</expr_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>Freelist</name> <operator>!=</operator> <operator>&amp;</operator><name>SentinelSegment</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>Freelist</name><operator>-&gt;</operator><name>Prev</name></name> <operator>=</operator> <operator>&amp;</operator><name>SentinelSegment</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name><name>FreeSegment</name><operator>-&gt;</operator><name>Next</name></name> <operator>=</operator> <operator>&amp;</operator><name>SentinelSegment</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>FreeSegment</name><operator>-&gt;</operator><name>Prev</name></name> <operator>=</operator> <operator>&amp;</operator><name>SentinelSegment</name></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><call><name>DCHECK_EQ</name><argument_list>(<argument><expr><name><name>Freelist</name><operator>-&gt;</operator><name>Prev</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DCHECK_NE</name><argument_list>(<argument><expr><name>FreeSegment</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>FreeSegment</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<decl_stmt><decl><type><name>auto</name></type> <name>SegmentBlock</name> <init>= <expr><call><name><name>Alloc</name><operator>-&gt;</operator><name>Allocate</name></name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>SegmentBlock</name><operator>.</operator><name>Data</name></name> <operator>==</operator> <name>nullptr</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>nullptr</name></expr>;</return></block_content></block></if></if_stmt>
+
+
+<macro><name>new</name> <argument_list>(<argument>SegmentBlock.Data</argument>)</argument_list></macro> <macro><name>Segment</name></macro><block>{<block_content><expr><operator>&amp;</operator><name>SentinelSegment</name></expr><operator>,</operator> <expr><operator>&amp;</operator><name>SentinelSegment</name></expr><operator>,</operator> <expr><block>{<expr><literal type="number">0</literal></expr>}</block></expr></block_content>}</block><empty_stmt>;</empty_stmt>
+<decl_stmt><decl><type><name>auto</name></type> <name>SB</name> <init>= <expr><call><name><name>reinterpret_cast</name><argument_list type="generic">&lt;<argument><expr><name>Segment</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name><name>SegmentBlock</name><operator>.</operator><name>Data</name></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<return>return <expr><name>SB</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>Segment</name> <modifier>*</modifier></type><name>InitHeadAndTail</name><parameter_list>()</parameter_list> XRAY_NEVER_INSTRUMENT <block>{<block_content>
+<expr_stmt><expr><call><name>DCHECK_EQ</name><argument_list>(<argument><expr><name>Head</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DCHECK_EQ</name><argument_list>(<argument><expr><name>Tail</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>auto</name></type> <name>S</name> <init>= <expr><call><name>NewSegment</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>S</name> <operator>==</operator> <name>nullptr</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>nullptr</name></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>DCHECK_EQ</name><argument_list>(<argument><expr><name><name>S</name><operator>-&gt;</operator><name>Next</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DCHECK_EQ</name><argument_list>(<argument><expr><name><name>S</name><operator>-&gt;</operator><name>Prev</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DCHECK_NE</name><argument_list>(<argument><expr><name>S</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>Head</name> <operator>=</operator> <name>S</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>Tail</name> <operator>=</operator> <name>S</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DCHECK_EQ</name><argument_list>(<argument><expr><name>Head</name></expr></argument>, <argument><expr><name>Tail</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DCHECK_EQ</name><argument_list>(<argument><expr><name><name>Tail</name><operator>-&gt;</operator><name>Next</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DCHECK_EQ</name><argument_list>(<argument><expr><name><name>Tail</name><operator>-&gt;</operator><name>Prev</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>S</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>Segment</name> <modifier>*</modifier></type><name>AppendNewSegment</name><parameter_list>()</parameter_list> XRAY_NEVER_INSTRUMENT <block>{<block_content>
+<decl_stmt><decl><type><name>auto</name></type> <name>S</name> <init>= <expr><call><name>NewSegment</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>S</name> <operator>==</operator> <name>nullptr</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>nullptr</name></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>DCHECK_NE</name><argument_list>(<argument><expr><name>Tail</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DCHECK_EQ</name><argument_list>(<argument><expr><name><name>Tail</name><operator>-&gt;</operator><name>Next</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DCHECK_EQ</name><argument_list>(<argument><expr><name><name>S</name><operator>-&gt;</operator><name>Prev</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DCHECK_EQ</name><argument_list>(<argument><expr><name><name>S</name><operator>-&gt;</operator><name>Next</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>S</name><operator>-&gt;</operator><name>Prev</name></name> <operator>=</operator> <name>Tail</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>Tail</name><operator>-&gt;</operator><name>Next</name></name> <operator>=</operator> <name>S</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>Tail</name> <operator>=</operator> <name>S</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DCHECK_EQ</name><argument_list>(<argument><expr><name>S</name></expr></argument>, <argument><expr><name><name>S</name><operator>-&gt;</operator><name>Prev</name><operator>-&gt;</operator><name>Next</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DCHECK_EQ</name><argument_list>(<argument><expr><name><name>Tail</name><operator>-&gt;</operator><name>Next</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>S</name></expr>;</return>
+</block_content>}</block></function>
+
+<label><name>public</name>:</label>
+<decl_stmt><decl><type><name>explicit</name></type> <name>Array</name><argument_list>(<argument><expr><name>AllocatorType</name> <operator>&amp;</operator><name>A</name></expr></argument>)</argument_list> <name>XRAY_NEVER_INSTRUMENT</name>
+<range>: <expr><call><name>Alloc</name><argument_list>(<argument><expr><operator>&amp;</operator><name>A</name></expr></argument>)</argument_list></call></expr></range></decl>,
+<decl><type ref="prev"/><name>Head</name><argument_list>(<argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></decl>,
+<decl><type ref="prev"/><name>Tail</name><argument_list>(<argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></decl>,
+<decl><type ref="prev"/><name>Freelist</name><argument_list>(<argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></decl>,
+<decl><type ref="prev"/><name>Size</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list> <block>{<block_content/>}</block></decl></decl_stmt>
+
+<macro><name>Array</name><argument_list>()</argument_list></macro> <label><name>XRAY_NEVER_INSTRUMENT</name> :</label> <expr_stmt><expr><call><name>Alloc</name><argument_list>(<argument><expr><name>nullptr</name></expr></argument>)</argument_list></call></expr><operator>,</operator>
+<expr><call><name>Head</name><argument_list>(<argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr><operator>,</operator>
+<expr><call><name>Tail</name><argument_list>(<argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr><operator>,</operator>
+<expr><call><name>Freelist</name><argument_list>(<argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr><operator>,</operator>
+<macro><name>Size</name><argument_list>(<argument><literal type="number">0</literal></argument>)</argument_list></macro> <expr><block>{}</block>
+
+<call><name>Array</name><argument_list>(<argument><expr><specifier>const</specifier> <name>Array</name> <operator>&amp;</operator></expr></argument>)</argument_list></call> <operator>=</operator> <name>delete</name></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>Array</name> <modifier>&amp;</modifier></type><name>operator</name><init>=<expr><operator>(</operator><specifier>const</specifier> <name>Array</name> <operator>&amp;</operator><operator>)</operator> <operator>=</operator> <name>delete</name></expr></init></decl>;</decl_stmt>
+
+<macro><name>Array</name><argument_list>(<argument>Array &amp;&amp;O</argument>)</argument_list></macro> <label><name>XRAY_NEVER_INSTRUMENT</name> :</label> <expr_stmt><expr><call><name>Alloc</name><argument_list>(<argument><expr><name><name>O</name><operator>.</operator><name>Alloc</name></name></expr></argument>)</argument_list></call></expr><operator>,</operator>
+<expr><call><name>Head</name><argument_list>(<argument><expr><name><name>O</name><operator>.</operator><name>Head</name></name></expr></argument>)</argument_list></call></expr><operator>,</operator>
+<expr><call><name>Tail</name><argument_list>(<argument><expr><name><name>O</name><operator>.</operator><name>Tail</name></name></expr></argument>)</argument_list></call></expr><operator>,</operator>
+<expr><call><name>Freelist</name><argument_list>(<argument><expr><name><name>O</name><operator>.</operator><name>Freelist</name></name></expr></argument>)</argument_list></call></expr><operator>,</operator>
+<macro><name>Size</name><argument_list>(<argument>O.Size</argument>)</argument_list></macro> <expr><block>{
+<expr><name><name>O</name><operator>.</operator><name>Alloc</name></name> <operator>=</operator> <name>nullptr</name></expr>;
+<expr><name><name>O</name><operator>.</operator><name>Head</name></name> <operator>=</operator> <operator>&amp;</operator><name>SentinelSegment</name></expr>;
+<expr><name><name>O</name><operator>.</operator><name>Tail</name></name> <operator>=</operator> <operator>&amp;</operator><name>SentinelSegment</name></expr>;
+<expr><name><name>O</name><operator>.</operator><name>Size</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;
+<expr><name><name>O</name><operator>.</operator><name>Freelist</name></name> <operator>=</operator> <operator>&amp;</operator><name>SentinelSegment</name></expr>;
+}</block>
+
+<name>Array</name> <operator>&amp;</operator><name>operator</name><operator>=</operator><operator>(</operator><name>Array</name> <operator>&amp;&amp;</operator><name>O</name><operator>)</operator> <name>XRAY_NEVER_INSTRUMENT</name> <block>{
+<expr><name>Alloc</name> <operator>=</operator> <name><name>O</name><operator>.</operator><name>Alloc</name></name></expr>;
+<expr><name><name>O</name><operator>.</operator><name>Alloc</name></name> <operator>=</operator> <name>nullptr</name></expr>;
+<expr><name>Head</name> <operator>=</operator> <name><name>O</name><operator>.</operator><name>Head</name></name></expr>;
+<expr><name><name>O</name><operator>.</operator><name>Head</name></name> <operator>=</operator> <operator>&amp;</operator><name>SentinelSegment</name></expr>;
+<expr><name>Tail</name> <operator>=</operator> <name><name>O</name><operator>.</operator><name>Tail</name></name></expr>;
+<expr><name><name>O</name><operator>.</operator><name>Tail</name></name> <operator>=</operator> <operator>&amp;</operator><name>SentinelSegment</name></expr>;
+<expr><name>Freelist</name> <operator>=</operator> <name><name>O</name><operator>.</operator><name>Freelist</name></name></expr>;
+<expr><name><name>O</name><operator>.</operator><name>Freelist</name></name> <operator>=</operator> <operator>&amp;</operator><name>SentinelSegment</name></expr>;
+<expr><name>Size</name> <operator>=</operator> <name><name>O</name><operator>.</operator><name>Size</name></name></expr>;
+<expr><name><name>O</name><operator>.</operator><name>Size</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;
+<return>return <expr><operator>*</operator><name>this</name></expr>;</return>
+}</block></expr></expr_stmt>
+
+<expr_stmt><expr><operator>~</operator><macro><name>Array</name><argument_list>()</argument_list></macro> <name>XRAY_NEVER_INSTRUMENT</name> <block>{
+<for>for <control>(<init><expr><name>auto</name> <operator>&amp;</operator><name>E</name> <operator>:</operator> <operator>*</operator><name>this</name></expr></init>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><name><operator>(</operator><operator>&amp;</operator><name>E</name><operator>)</operator><operator>-&gt;</operator><name/></name>~<call><name>T</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+}</block></expr></expr_stmt>
+
+<expr_stmt><expr><name>bool</name> <macro><name>empty</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>XRAY_NEVER_INSTRUMENT</name> <block>{ <return>return <expr><name>Size</name> <operator>==</operator> <literal type="number">0</literal></expr>;</return> }</block></expr></expr_stmt>
+
+<expr_stmt><expr><name>AllocatorType</name> <operator>&amp;</operator><macro><name>allocator</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>XRAY_NEVER_INSTRUMENT</name> <block>{
+<expr><call><name>DCHECK_NE</name><argument_list>(<argument><expr><name>Alloc</name></expr></argument>, <argument><expr><name>nullptr</name></expr></argument>)</argument_list></call></expr>;
+<return>return <expr><operator>*</operator><name>Alloc</name></expr>;</return>
+}</block></expr></expr_stmt>
+
+<expr_stmt><expr><name>uint64_t</name> <macro><name>size</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>XRAY_NEVER_INSTRUMENT</name> <block>{ <return>return <expr><name>Size</name></expr>;</return> }</block></expr></expr_stmt>
+
+<decl_stmt><decl><type><name><name>template</name> <argument_list type="generic">&lt;<argument><expr><name>class</name><modifier>...</modifier> <name>Args</name></expr></argument>&gt;</argument_list></name>
+<name>T</name> <modifier>*</modifier></type><name>AppendEmplace</name><argument_list>(<argument><expr><name>Args</name> <operator>&amp;&amp;</operator><operator>...</operator> <name>args</name></expr></argument>)</argument_list> <name>XRAY_NEVER_INSTRUMENT</name> <block>{<block_content>
+<expr_stmt><expr><call><name>DCHECK</name><argument_list>(<argument><expr><operator>(</operator><name>Size</name> <operator>==</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name>Head</name> <operator>==</operator> <operator>&amp;</operator><name>SentinelSegment</name> <operator>&amp;&amp;</operator> <name>Head</name> <operator>==</operator> <name>Tail</name><operator>)</operator> <operator>||</operator>
+<operator>(</operator><name>Size</name> <operator>!=</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name>Head</name> <operator>!=</operator> <operator>&amp;</operator><name>SentinelSegment</name> <operator>&amp;&amp;</operator> <name>Tail</name> <operator>!=</operator> <operator>&amp;</operator><name>SentinelSegment</name><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>UNLIKELY</name><argument_list>(<argument><expr><name>Head</name> <operator>==</operator> <operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>auto</name></type> <name>R</name> <init>= <expr><call><name>InitHeadAndTail</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>R</name> <operator>==</operator> <name>nullptr</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>nullptr</name></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>DCHECK_NE</name><argument_list>(<argument><expr><name>Head</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DCHECK_NE</name><argument_list>(<argument><expr><name>Tail</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>auto</name></type> <name>Offset</name> <init>= <expr><name>Size</name> <operator>%</operator> <name>ElementsPerSegment</name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>UNLIKELY</name><argument_list>(<argument><expr><name>Size</name> <operator>!=</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name>Offset</name> <operator>==</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<expr><call><name>AppendNewSegment</name><argument_list>()</argument_list></call> <operator>==</operator> <name>nullptr</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>nullptr</name></expr>;</return></block_content></block></if></if_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>DCHECK_NE</name><argument_list>(<argument><expr><name>Tail</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>auto</name></type> <name>Base</name> <init>= <expr><operator>&amp;</operator><name><name>Tail</name><operator>-&gt;</operator><name>Data</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>auto</name></type> <name>AlignedOffset</name> <init>= <expr><name>Base</name> <operator>+</operator> <operator>(</operator><name>Offset</name> <operator>*</operator> <name>AlignedElementStorageSize</name><operator>)</operator></expr></init></decl>;</decl_stmt>
+<macro><name>DCHECK_LE</name><argument_list>(<argument>AlignedOffset + sizeof(T)</argument>,
+<argument>reinterpret_cast&lt;unsigned char *&gt;(Base) + SegmentSize</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+
+
+<macro><name>new</name> <argument_list>(<argument>AlignedOffset</argument>)</argument_list></macro> <macro><name>T</name></macro><block>{<block_content><expr><name>std</name><operator>::</operator><call><name><name>forward</name><argument_list type="generic">&lt;<argument><expr><name>Args</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>args</name></expr></argument>)</argument_list></call><operator>...</operator></expr></block_content>}</block><empty_stmt>;</empty_stmt>
+<expr_stmt><expr><operator>++</operator><name>Size</name></expr>;</expr_stmt>
+<return>return <expr><call><name><name>reinterpret_cast</name><argument_list type="generic">&lt;<argument><expr><name>T</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>AlignedOffset</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></decl></decl_stmt>
+
+<function><type><name>T</name> <modifier>*</modifier></type><name>Append</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>T</name> <modifier>&amp;</modifier></type><name>E</name></decl></parameter>)</parameter_list> XRAY_NEVER_INSTRUMENT <block>{<block_content>
+
+
+
+<expr_stmt><expr><call><name>DCHECK</name><argument_list>(<argument><expr><operator>(</operator><name>Size</name> <operator>==</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name>Head</name> <operator>==</operator> <operator>&amp;</operator><name>SentinelSegment</name> <operator>&amp;&amp;</operator> <name>Head</name> <operator>==</operator> <name>Tail</name><operator>)</operator> <operator>||</operator>
+<operator>(</operator><name>Size</name> <operator>!=</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name>Head</name> <operator>!=</operator> <operator>&amp;</operator><name>SentinelSegment</name> <operator>&amp;&amp;</operator> <name>Tail</name> <operator>!=</operator> <operator>&amp;</operator><name>SentinelSegment</name><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>UNLIKELY</name><argument_list>(<argument><expr><name>Head</name> <operator>==</operator> <operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>auto</name></type> <name>R</name> <init>= <expr><call><name>InitHeadAndTail</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>R</name> <operator>==</operator> <name>nullptr</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>nullptr</name></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>DCHECK_NE</name><argument_list>(<argument><expr><name>Head</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DCHECK_NE</name><argument_list>(<argument><expr><name>Tail</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>auto</name></type> <name>Offset</name> <init>= <expr><name>Size</name> <operator>%</operator> <name>ElementsPerSegment</name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>UNLIKELY</name><argument_list>(<argument><expr><name>Size</name> <operator>!=</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name>Offset</name> <operator>==</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<expr><call><name>AppendNewSegment</name><argument_list>()</argument_list></call> <operator>==</operator> <name>nullptr</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>nullptr</name></expr>;</return></block_content></block></if></if_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>DCHECK_NE</name><argument_list>(<argument><expr><name>Tail</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>auto</name></type> <name>Base</name> <init>= <expr><operator>&amp;</operator><name><name>Tail</name><operator>-&gt;</operator><name>Data</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>auto</name></type> <name>AlignedOffset</name> <init>= <expr><name>Base</name> <operator>+</operator> <operator>(</operator><name>Offset</name> <operator>*</operator> <name>AlignedElementStorageSize</name><operator>)</operator></expr></init></decl>;</decl_stmt>
+<macro><name>DCHECK_LE</name><argument_list>(<argument>AlignedOffset + sizeof(T)</argument>,
+<argument>reinterpret_cast&lt;unsigned char *&gt;(Tail) + SegmentSize</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+
+
+<macro><name>new</name> <argument_list>(<argument>AlignedOffset</argument>)</argument_list></macro> <expr_stmt><expr><call><name>T</name><argument_list>(<argument><expr><name>E</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>++</operator><name>Size</name></expr>;</expr_stmt>
+<return>return <expr><call><name><name>reinterpret_cast</name><argument_list type="generic">&lt;<argument><expr><name>T</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>AlignedOffset</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<decl_stmt><decl><type><name>T</name> <modifier>&amp;</modifier></type><name><name>operator</name><index>[]</index></name><argument_list>(<argument><expr><name>uint64_t</name> <name>Offset</name></expr></argument>)</argument_list> const <name>XRAY_NEVER_INSTRUMENT</name> <block>{<block_content>
+<expr_stmt><expr><call><name>DCHECK_LE</name><argument_list>(<argument><expr><name>Offset</name></expr></argument>, <argument><expr><name>Size</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>auto</name></type> <name>S</name> <init>= <expr><name>Head</name></expr></init></decl>;</decl_stmt>
+<while>while <condition>(<expr><name>Offset</name> <operator>&gt;=</operator> <name>ElementsPerSegment</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>S</name> <operator>=</operator> <name><name>S</name><operator>-&gt;</operator><name>Next</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>Offset</name> <operator>-=</operator> <name>ElementsPerSegment</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DCHECK_NE</name><argument_list>(<argument><expr><name>S</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></while>
+<decl_stmt><decl><type><name>auto</name></type> <name>Base</name> <init>= <expr><operator>&amp;</operator><name><name>S</name><operator>-&gt;</operator><name>Data</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>auto</name></type> <name>AlignedOffset</name> <init>= <expr><name>Base</name> <operator>+</operator> <operator>(</operator><name>Offset</name> <operator>*</operator> <name>AlignedElementStorageSize</name><operator>)</operator></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>auto</name></type> <name>Position</name> <init>= <expr><call><name><name>reinterpret_cast</name><argument_list type="generic">&lt;<argument><expr><name>T</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>AlignedOffset</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<return>return <expr><operator>*</operator><call><name><name>reinterpret_cast</name><argument_list type="generic">&lt;<argument><expr><name>T</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>Position</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></decl></decl_stmt>
+
+<expr_stmt><expr><name>T</name> <operator>&amp;</operator><macro><name>front</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>XRAY_NEVER_INSTRUMENT</name> <block>{
+<expr><call><name>DCHECK_NE</name><argument_list>(<argument><expr><name>Head</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;
+<expr><call><name>DCHECK_NE</name><argument_list>(<argument><expr><name>Size</name></expr></argument>, <argument><expr><literal type="number">0u</literal></expr></argument>)</argument_list></call></expr>;
+<return>return <expr><operator>*</operator><call><name>begin</name><argument_list>()</argument_list></call></expr>;</return>
+}</block></expr></expr_stmt>
+
+<expr_stmt><expr><name>T</name> <operator>&amp;</operator><macro><name>back</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>XRAY_NEVER_INSTRUMENT</name> <block>{
+<expr><call><name>DCHECK_NE</name><argument_list>(<argument><expr><name>Tail</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;
+<expr><call><name>DCHECK_NE</name><argument_list>(<argument><expr><name>Size</name></expr></argument>, <argument><expr><literal type="number">0u</literal></expr></argument>)</argument_list></call></expr>;
+<expr><name>auto</name> <name>It</name> <operator>=</operator> <call><name>end</name><argument_list>()</argument_list></call></expr>;
+<expr><operator>--</operator><name>It</name></expr>;
+<return>return <expr><operator>*</operator><name>It</name></expr>;</return>
+}</block></expr></expr_stmt>
+
+<decl_stmt><decl><type><name><name>template</name> <argument_list type="generic">&lt;<argument><expr><name>class</name> <name>Predicate</name></expr></argument>&gt;</argument_list></name>
+<name>T</name> <modifier>*</modifier></type><name>find_element</name><argument_list>(<argument><expr><name>Predicate</name> <name>P</name></expr></argument>)</argument_list> const <name>XRAY_NEVER_INSTRUMENT</name> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>empty</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>nullptr</name></expr>;</return></block_content></block></if></if_stmt>
+
+<decl_stmt><decl><type><name>auto</name></type> <name>E</name> <init>= <expr><call><name>end</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<for>for <control>(<init><decl><type><name>auto</name></type> <name>I</name> <init>= <expr><call><name>begin</name><argument_list>()</argument_list></call></expr></init></decl>;</init> <condition><expr><name>I</name> <operator>!=</operator> <name>E</name></expr>;</condition> <incr><expr><operator>++</operator><name>I</name></expr></incr>)</control><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<expr><call><name>P</name><argument_list>(<argument><expr><operator>*</operator><name>I</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>&amp;</operator><operator>(</operator><operator>*</operator><name>I</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt></block_content></block></for>
+
+<return>return <expr><name>nullptr</name></expr>;</return>
+</block_content>}</block></decl></decl_stmt>
+
+
+
+<function><type><name>void</name></type> <name>trim</name><parameter_list>(<parameter><decl><type><name>uint64_t</name></type> <name>Elements</name></decl></parameter>)</parameter_list> XRAY_NEVER_INSTRUMENT <block>{<block_content>
+<decl_stmt><decl><type><name>auto</name></type> <name>OldSize</name> <init>= <expr><name>Size</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>Elements</name> <operator>=</operator> <ternary><condition><expr><name>Elements</name> <operator>&gt;</operator> <name>Size</name></expr> ?</condition><then> <expr><name>Size</name></expr> </then><else>: <expr><name>Elements</name></expr></else></ternary></expr>;</expr_stmt>
+<expr_stmt><expr><name>Size</name> <operator>-=</operator> <name>Elements</name></expr>;</expr_stmt>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<decl_stmt><decl><type><name>auto</name></type> <name>F</name> <init>= <expr><index>[]</index><operator>(</operator><name>uint64_t</name> <name>X</name><operator>)</operator> <block>{
+<return>return <expr><ternary><condition><expr><name>X</name></expr> ?</condition><then> <expr><operator>(</operator><name>X</name> <operator>/</operator> <name>ElementsPerSegment</name><operator>)</operator> <operator>+</operator>
+<operator>(</operator><ternary><condition><expr><name>X</name> <operator>&lt;</operator> <name>ElementsPerSegment</name> <operator>||</operator> <name>X</name> <operator>%</operator> <name>ElementsPerSegment</name></expr> ?</condition><then> <expr><literal type="number">1</literal></expr> </then><else>: <expr><literal type="number">0</literal></expr></else></ternary><operator>)</operator></expr>
+</then><else>: <expr><literal type="number">0</literal></expr></else></ternary></expr>;</return>
+}</block></expr></init></decl></decl_stmt><empty_stmt>;</empty_stmt>
+<decl_stmt><decl><type><name>auto</name></type> <name>PS</name> <init>= <expr><call><name>F</name><argument_list>(<argument><expr><name>OldSize</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>auto</name></type> <name>CS</name> <init>= <expr><call><name>F</name><argument_list>(<argument><expr><name>Size</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>DCHECK_GE</name><argument_list>(<argument><expr><name>PS</name></expr></argument>, <argument><expr><name>CS</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>auto</name></type> <name>SegmentsToTrim</name> <init>= <expr><name>PS</name> <operator>-</operator> <name>CS</name></expr></init></decl>;</decl_stmt>
+<for>for <control>(<init><decl><type><name>auto</name></type> <name>I</name> <init>= <expr><literal type="number">0uL</literal></expr></init></decl>;</init> <condition><expr><name>I</name> <operator>&lt;</operator> <name>SegmentsToTrim</name></expr>;</condition> <incr><expr><operator>++</operator><name>I</name></expr></incr>)</control> <block>{<block_content>
+
+
+
+
+
+
+
+<expr_stmt><expr><call><name>DCHECK_NE</name><argument_list>(<argument><expr><name>Head</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DCHECK_NE</name><argument_list>(<argument><expr><name>Tail</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DCHECK_EQ</name><argument_list>(<argument><expr><name><name>Tail</name><operator>-&gt;</operator><name>Next</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>Freelist</name> <operator>==</operator> <operator>&amp;</operator><name>SentinelSegment</name></expr>)</condition> <block>{<block_content>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<decl_stmt><decl><type><name>auto</name></type> <name>SPT</name> <init>= <expr><name><name>Tail</name><operator>-&gt;</operator><name>Prev</name></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>SPT</name><operator>-&gt;</operator><name>Next</name></name> <operator>=</operator> <operator>&amp;</operator><name>SentinelSegment</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>Tail</name><operator>-&gt;</operator><name>Prev</name></name> <operator>=</operator> <operator>&amp;</operator><name>SentinelSegment</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>Tail</name><operator>-&gt;</operator><name>Next</name></name> <operator>=</operator> <name>Freelist</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>Freelist</name> <operator>=</operator> <name>Tail</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>Tail</name> <operator>=</operator> <name>SPT</name></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><call><name>DCHECK_EQ</name><argument_list>(<argument><expr><name><name>Tail</name><operator>-&gt;</operator><name>Next</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DCHECK_EQ</name><argument_list>(<argument><expr><name><name>Freelist</name><operator>-&gt;</operator><name>Prev</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<decl_stmt><decl><type><name>auto</name></type> <name>SFH</name> <init>= <expr><name>Freelist</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>auto</name></type> <name>SPT</name> <init>= <expr><name><name>Tail</name><operator>-&gt;</operator><name>Prev</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>auto</name></type> <name>ST</name> <init>= <expr><name>Tail</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>SFH</name><operator>-&gt;</operator><name>Prev</name></name> <operator>=</operator> <name>ST</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ST</name><operator>-&gt;</operator><name>Next</name></name> <operator>=</operator> <name>Freelist</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ST</name><operator>-&gt;</operator><name>Prev</name></name> <operator>=</operator> <operator>&amp;</operator><name>SentinelSegment</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>SPT</name><operator>-&gt;</operator><name>Next</name></name> <operator>=</operator> <operator>&amp;</operator><name>SentinelSegment</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>Tail</name> <operator>=</operator> <name>SPT</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>Freelist</name> <operator>=</operator> <name>ST</name></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><call><name>DCHECK_EQ</name><argument_list>(<argument><expr><name><name>Tail</name><operator>-&gt;</operator><name>Next</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DCHECK_EQ</name><argument_list>(<argument><expr><name><name>Freelist</name><operator>-&gt;</operator><name>Prev</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SentinelSegment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DCHECK_EQ</name><argument_list>(<argument><expr><name><name>Freelist</name><operator>-&gt;</operator><name>Next</name><operator>-&gt;</operator><name>Prev</name></name></expr></argument>, <argument><expr><name>Freelist</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></for>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>Tail</name> <operator>==</operator> <operator>&amp;</operator><name>SentinelSegment</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>Head</name> <operator>=</operator> <name>Tail</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>DCHECK</name><argument_list>(
+<argument><expr><operator>(</operator><name>Size</name> <operator>==</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name>Head</name> <operator>==</operator> <operator>&amp;</operator><name>SentinelSegment</name> <operator>&amp;&amp;</operator> <name>Tail</name> <operator>==</operator> <operator>&amp;</operator><name>SentinelSegment</name><operator>)</operator> <operator>||</operator>
+<operator>(</operator><name>Size</name> <operator>!=</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name>Head</name> <operator>!=</operator> <operator>&amp;</operator><name>SentinelSegment</name> <operator>&amp;&amp;</operator> <name>Tail</name> <operator>!=</operator> <operator>&amp;</operator><name>SentinelSegment</name><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DCHECK</name><argument_list>(
+<argument><expr><operator>(</operator><name>Freelist</name> <operator>!=</operator> <operator>&amp;</operator><name>SentinelSegment</name> <operator>&amp;&amp;</operator> <name><name>Freelist</name><operator>-&gt;</operator><name>Prev</name></name> <operator>==</operator> <operator>&amp;</operator><name>SentinelSegment</name><operator>)</operator> <operator>||</operator>
+<operator>(</operator><name>Freelist</name> <operator>==</operator> <operator>&amp;</operator><name>SentinelSegment</name> <operator>&amp;&amp;</operator> <name><name>Tail</name><operator>-&gt;</operator><name>Next</name></name> <operator>==</operator> <operator>&amp;</operator><name>SentinelSegment</name><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+<expr_stmt><expr><name><name>Iterator</name><argument_list type="generic">&lt;<argument><expr><name>T</name></expr></argument>&gt;</argument_list></name> <macro><name>begin</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>XRAY_NEVER_INSTRUMENT</name> <block>{
+<return>return <expr><call><name><name>Iterator</name><argument_list type="generic">&lt;<argument><expr><name>T</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>Head</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>Size</name></expr></argument>)</argument_list></call></expr>;</return>
+}</block></expr></expr_stmt>
+<expr_stmt><expr><name><name>Iterator</name><argument_list type="generic">&lt;<argument><expr><name>T</name></expr></argument>&gt;</argument_list></name> <macro><name>end</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>XRAY_NEVER_INSTRUMENT</name> <block>{
+<return>return <expr><call><name><name>Iterator</name><argument_list type="generic">&lt;<argument><expr><name>T</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>Tail</name></expr></argument>, <argument><expr><name>Size</name></expr></argument>, <argument><expr><name>Size</name></expr></argument>)</argument_list></call></expr>;</return>
+}</block></expr></expr_stmt>
+<expr_stmt><expr><name><name>Iterator</name><argument_list type="generic">&lt;<argument><expr><specifier>const</specifier> <name>T</name></expr></argument>&gt;</argument_list></name> <macro><name>cbegin</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>XRAY_NEVER_INSTRUMENT</name> <block>{
+<return>return <expr><call><name><name>Iterator</name><argument_list type="generic">&lt;<argument><expr><specifier>const</specifier> <name>T</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>Head</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>Size</name></expr></argument>)</argument_list></call></expr>;</return>
+}</block></expr></expr_stmt>
+<expr_stmt><expr><name><name>Iterator</name><argument_list type="generic">&lt;<argument><expr><specifier>const</specifier> <name>T</name></expr></argument>&gt;</argument_list></name> <macro><name>cend</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <name>XRAY_NEVER_INSTRUMENT</name> <block>{
+<return>return <expr><call><name><name>Iterator</name><argument_list type="generic">&lt;<argument><expr><specifier>const</specifier> <name>T</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>Tail</name></expr></argument>, <argument><expr><name>Size</name></expr></argument>, <argument><expr><name>Size</name></expr></argument>)</argument_list></call></expr>;</return>
+}</block></expr></expr_stmt>
+};
+
+
+
+
+<expr_stmt><expr><name><name>template</name> <argument_list type="generic">&lt;<argument><expr><name>class</name> <name>T</name></expr></argument>&gt;</argument_list></name>
+<name>typename</name> <name><name>Array</name><argument_list type="generic">&lt;<argument><expr><name>T</name></expr></argument>&gt;</argument_list></name><operator>::</operator><name>Segment</name> <name><name>Array</name><argument_list type="generic">&lt;<argument><expr><name>T</name></expr></argument>&gt;</argument_list></name><operator>::</operator><name>SentinelSegment</name><block>{
+<expr><operator>&amp;</operator><name><name>Array</name><argument_list type="generic">&lt;<argument><expr><name>T</name></expr></argument>&gt;</argument_list></name><operator>::</operator><name>SentinelSegment</name></expr>, <expr><operator>&amp;</operator><name><name>Array</name><argument_list type="generic">&lt;<argument><expr><name>T</name></expr></argument>&gt;</argument_list></name><operator>::</operator><name>SentinelSegment</name></expr>, <expr><block>{<expr><literal type="char">'\0'</literal></expr>}</block></expr>}</block></expr>;</expr_stmt>
+
+}
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

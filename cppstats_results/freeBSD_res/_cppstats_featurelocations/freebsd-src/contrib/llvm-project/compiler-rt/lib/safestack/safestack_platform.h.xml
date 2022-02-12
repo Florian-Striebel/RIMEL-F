@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/llvm-project/compiler-rt/lib/safestack/safestack_platform.h">
+
+
+
+
+
+
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>SAFESTACK_PLATFORM_H</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>SAFESTACK_PLATFORM_H</name></cpp:macro></cpp:define>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"safestack_util.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"sanitizer_common/sanitizer_platform.h"</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;dlfcn.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdint.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdio.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/mman.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/syscall.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/types.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;unistd.h&gt;</cpp:file></cpp:include>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><operator>(</operator><name>SANITIZER_NETBSD</name> <operator>||</operator> <name>SANITIZER_FREEBSD</name> <operator>||</operator> <name>SANITIZER_LINUX</name><operator>)</operator></expr></cpp:if>
+<cpp:error>#<cpp:directive>error</cpp:directive> <cpp:literal>"Support for your platform has not been implemented"</cpp:literal></cpp:error>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SANITIZER_NETBSD</name></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;lwp.h&gt;</cpp:file></cpp:include>
+
+<extern>extern <literal type="string">"C"</literal> <function_decl><type><name>void</name> <modifier>*</modifier></type><name>__mmap</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>size_t</name></type></decl></parameter>, <parameter><decl><type><name>int</name></type></decl></parameter>, <parameter><decl><type><name>int</name></type></decl></parameter>, <parameter><decl><type><name>int</name></type></decl></parameter>, <parameter><decl><type><name>int</name></type></decl></parameter>, <parameter><decl><type><name>off_t</name></type></decl></parameter>)</parameter_list>;</function_decl></extern>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SANITIZER_FREEBSD</name></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/thr.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<decl_stmt><decl><type><name>namespace</name></type> <name>safestack</name> <block>{<block_content>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SANITIZER_NETBSD</name></expr></cpp:if>
+<function><type><specifier>static</specifier> <name>void</name> <modifier>*</modifier></type><name>GetRealLibcAddress</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>symbol</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>real</name> <init>= <expr><call><name>dlsym</name><argument_list>(<argument><expr><name>RTLD_NEXT</name></expr></argument>, <argument><expr><name>symbol</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>real</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>real</name> <operator>=</operator> <call><name>dlsym</name><argument_list>(<argument><expr><name>RTLD_DEFAULT</name></expr></argument>, <argument><expr><name>symbol</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>real</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"safestack GetRealLibcAddress failed for symbol=%s"</literal></expr></argument>,
+<argument><expr><name>symbol</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>abort</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name>real</name></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>_REAL</name><parameter_list>(<parameter><type><name>func</name></type></parameter>, <parameter><type><modifier>...</modifier></type></parameter>)</parameter_list></cpp:macro> <cpp:value>real##_##func(__VA_ARGS__)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>DEFINE__REAL</name><parameter_list>(<parameter><type><name>ret_type</name></type></parameter>, <parameter><type><name>func</name></type></parameter>, <parameter><type><modifier>...</modifier></type></parameter>)</parameter_list></cpp:macro> <cpp:value>static ret_type (*real_##func)(__VA_ARGS__) = NULL; if (!real_##func) { real_##func = (ret_type(*)(__VA_ARGS__))GetRealLibcAddress(#func); } SFS_CHECK(real_##func);</cpp:value></cpp:define>
+
+
+
+
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<decl_stmt><decl><type><name>using</name></type> <name>ThreadId</name> <init>= <expr><name>uint64_t</name></expr></init></decl>;</decl_stmt>
+
+<function><type><specifier>inline</specifier> <name>ThreadId</name></type> <name>GetTid</name><parameter_list>()</parameter_list> <block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SANITIZER_NETBSD</name></expr></cpp:if>
+<expr_stmt><expr><call><name>DEFINE__REAL</name><argument_list>(<argument><expr><name>int</name></expr></argument>, <argument><expr><name>_lwp_self</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><call><name>_REAL</name><argument_list>(<argument><expr><name>_lwp_self</name></expr></argument>)</argument_list></call></expr>;</return>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><name>SANITIZER_FREEBSD</name></expr></cpp:elif>
+<decl_stmt><decl><type><name>long</name></type> <name>Tid</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>thr_self</name><argument_list>(<argument><expr><operator>&amp;</operator><name>Tid</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>Tid</name></expr>;</return>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<return>return <expr><call><name>syscall</name><argument_list>(<argument><expr><name>SYS_gettid</name></expr></argument>)</argument_list></call></expr>;</return>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+<function><type><specifier>inline</specifier> <name>int</name></type> <name>TgKill</name><parameter_list>(<parameter><decl><type><name>pid_t</name></type> <name>pid</name></decl></parameter>, <parameter><decl><type><name>ThreadId</name></type> <name>tid</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>sig</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SANITIZER_NETBSD</name></expr></cpp:if>
+<macro><name>DEFINE__REAL</name><argument_list>(<argument>int</argument>, <argument>_lwp_kill</argument>, <argument>int a</argument>, <argument>int b</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>pid</name></expr>;</expr_stmt>
+<return>return <expr><call><name>_REAL</name><argument_list>(<argument><expr><name>_lwp_kill</name></expr></argument>, <argument><expr><name>tid</name></expr></argument>, <argument><expr><name>sig</name></expr></argument>)</argument_list></call></expr>;</return>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><name>SANITIZER_FREEBSD</name></expr></cpp:elif>
+<return>return <expr><call><name>syscall</name><argument_list>(<argument><expr><name>SYS_thr_kill2</name></expr></argument>, <argument><expr><name>pid</name></expr></argument>, <argument><expr><name>tid</name></expr></argument>, <argument><expr><name>sig</name></expr></argument>)</argument_list></call></expr>;</return>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<return>return <expr><call><name>syscall</name><argument_list>(<argument><expr><name>SYS_tgkill</name></expr></argument>, <argument><expr><name>pid</name></expr></argument>, <argument><expr><name>tid</name></expr></argument>, <argument><expr><name>sig</name></expr></argument>)</argument_list></call></expr>;</return>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+<function><type><specifier>inline</specifier> <name>void</name> <modifier>*</modifier></type><name>Mmap</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>addr</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>length</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>prot</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>flags</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>fd</name></decl></parameter>,
+<parameter><decl><type><name>off_t</name></type> <name>offset</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SANITIZER_NETBSD</name></expr></cpp:if>
+<return>return <expr><call><name>__mmap</name><argument_list>(<argument><expr><name>addr</name></expr></argument>, <argument><expr><name>length</name></expr></argument>, <argument><expr><name>prot</name></expr></argument>, <argument><expr><name>flags</name></expr></argument>, <argument><expr><name>fd</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>offset</name></expr></argument>)</argument_list></call></expr>;</return>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__x86_64__</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <operator>(</operator><name>SANITIZER_FREEBSD</name><operator>)</operator></expr></cpp:elif>
+<return>return <expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><call><name>__syscall</name><argument_list>(<argument><expr><name>SYS_mmap</name></expr></argument>, <argument><expr><name>addr</name></expr></argument>, <argument><expr><name>length</name></expr></argument>, <argument><expr><name>prot</name></expr></argument>, <argument><expr><name>flags</name></expr></argument>, <argument><expr><name>fd</name></expr></argument>, <argument><expr><name>offset</name></expr></argument>)</argument_list></call></expr>;</return>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<return>return <expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><call><name>syscall</name><argument_list>(<argument><expr><name>SYS_mmap</name></expr></argument>, <argument><expr><name>addr</name></expr></argument>, <argument><expr><name>length</name></expr></argument>, <argument><expr><name>prot</name></expr></argument>, <argument><expr><name>flags</name></expr></argument>, <argument><expr><name>fd</name></expr></argument>, <argument><expr><name>offset</name></expr></argument>)</argument_list></call></expr>;</return>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+<function><type><specifier>inline</specifier> <name>int</name></type> <name>Munmap</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>addr</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>length</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SANITIZER_NETBSD</name></expr></cpp:if>
+<macro><name>DEFINE__REAL</name><argument_list>(<argument>int</argument>, <argument>munmap</argument>, <argument>void *a</argument>, <argument>size_t b</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<return>return <expr><call><name>_REAL</name><argument_list>(<argument><expr><name>munmap</name></expr></argument>, <argument><expr><name>addr</name></expr></argument>, <argument><expr><name>length</name></expr></argument>)</argument_list></call></expr>;</return>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<return>return <expr><call><name>syscall</name><argument_list>(<argument><expr><name>SYS_munmap</name></expr></argument>, <argument><expr><name>addr</name></expr></argument>, <argument><expr><name>length</name></expr></argument>)</argument_list></call></expr>;</return>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+<function><type><specifier>inline</specifier> <name>int</name></type> <name>Mprotect</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>addr</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>length</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>prot</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SANITIZER_NETBSD</name></expr></cpp:if>
+<macro><name>DEFINE__REAL</name><argument_list>(<argument>int</argument>, <argument>mprotect</argument>, <argument>void *a</argument>, <argument>size_t b</argument>, <argument>int c</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<return>return <expr><call><name>_REAL</name><argument_list>(<argument><expr><name>mprotect</name></expr></argument>, <argument><expr><name>addr</name></expr></argument>, <argument><expr><name>length</name></expr></argument>, <argument><expr><name>prot</name></expr></argument>)</argument_list></call></expr>;</return>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<return>return <expr><call><name>syscall</name><argument_list>(<argument><expr><name>SYS_mprotect</name></expr></argument>, <argument><expr><name>addr</name></expr></argument>, <argument><expr><name>length</name></expr></argument>, <argument><expr><name>prot</name></expr></argument>)</argument_list></call></expr>;</return>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+</block_content>}</block></decl></decl_stmt>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

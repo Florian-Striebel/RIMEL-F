@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/llvm-project/compiler-rt/lib/scudo/standalone/mutex.h">
+
+
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>SCUDO_MUTEX_H_</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>SCUDO_MUTEX_H_</name></cpp:macro></cpp:define>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"atomic_helpers.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"common.h"</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;string.h&gt;</cpp:file></cpp:include>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SCUDO_FUCHSIA</name></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;lib/sync/mutex.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<decl_stmt><decl><type><name>namespace</name></type> <name>scudo</name> <block>{<block_content>
+
+<decl_stmt><decl><type><name>class</name></type> <name>HybridMutex</name> <block>{<block_content>
+<label><name>public</name>:</label>
+<function_decl><type><name>bool</name></type> <name>tryLock</name><parameter_list>()</parameter_list>;</function_decl>
+<function><type><name>NOINLINE</name> <name>void</name></type> <name>lock</name><parameter_list>()</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>LIKELY</name><argument_list>(<argument><expr><call><name>tryLock</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__clang__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:pragma>#<cpp:directive>pragma</cpp:directive> <name>nounroll</name></cpp:pragma>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<for>for <control>(<init><decl><type><name>u8</name></type> <name>I</name> <init>= <expr><literal type="number">0U</literal></expr></init></decl>;</init> <condition><expr><name>I</name> <operator>&lt;</operator> <name>NumberOfTries</name></expr>;</condition> <incr><expr><name>I</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>yieldProcessor</name><argument_list>(<argument><expr><name>NumberOfYields</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>tryLock</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><call><name>lockSlow</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function_decl><type><name>void</name></type> <name>unlock</name><parameter_list>()</parameter_list>;</function_decl>
+
+<label><name>private</name>:</label>
+<decl_stmt><decl><type><specifier>static</specifier> <name>constexpr</name> <name>u8</name></type> <name>NumberOfTries</name> <init>= <expr><literal type="number">8U</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>constexpr</name> <name>u8</name></type> <name>NumberOfYields</name> <init>= <expr><literal type="number">8U</literal></expr></init></decl>;</decl_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SCUDO_LINUX</name></expr></cpp:if>
+<decl_stmt><decl><type><name>atomic_u32</name></type> <name>M</name> <init>= <expr><block>{}</block></expr></init></decl>;</decl_stmt>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><name>SCUDO_FUCHSIA</name></expr></cpp:elif>
+<decl_stmt><decl><type><name>sync_mutex_t</name></type> <name>M</name> <init>= <expr><block>{}</block></expr></init></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<function_decl><type><name>void</name></type> <name>lockSlow</name><parameter_list>()</parameter_list>;</function_decl>
+</block_content>}</block></decl></decl_stmt><empty_stmt>;</empty_stmt>
+
+<decl_stmt><decl><type><name>class</name></type> <name>ScopedLock</name> <block>{<block_content>
+<label><name>public</name>:</label>
+<macro><name>explicit</name></macro> <expr_stmt><expr><call><name>ScopedLock</name><argument_list>(<argument><expr><name>HybridMutex</name> <operator>&amp;</operator><name>M</name></expr></argument>)</argument_list></call> <operator>:</operator> <macro><name>Mutex</name><argument_list>(<argument>M</argument>)</argument_list></macro> <block>{ <expr><call><name><name>Mutex</name><operator>.</operator><name>lock</name></name><argument_list>()</argument_list></call></expr>; }</block>
+<operator>~</operator><macro><name>ScopedLock</name><argument_list>()</argument_list></macro> <block>{ <expr><call><name><name>Mutex</name><operator>.</operator><name>unlock</name></name><argument_list>()</argument_list></call></expr>; }</block>
+
+<name>private</name><operator>:</operator>
+<name>HybridMutex</name> <operator>&amp;</operator><name>Mutex</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>ScopedLock</name><argument_list>(<argument><expr><specifier>const</specifier> <name>ScopedLock</name> <operator>&amp;</operator></expr></argument>)</argument_list></call> <operator>=</operator> <name>delete</name></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>void</name></type> <name>operator</name><init>=<expr><operator>(</operator><specifier>const</specifier> <name>ScopedLock</name> <operator>&amp;</operator><operator>)</operator> <operator>=</operator> <name>delete</name></expr></init></decl>;</decl_stmt>
+</block_content>}</block></decl></decl_stmt><empty_stmt>;</empty_stmt>
+
+</block_content>}</block></decl></decl_stmt>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

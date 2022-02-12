@@ -1,0 +1,569 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/libevent/kqueue.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"event2/event-config.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"evconfig-private.h"</cpp:file></cpp:include>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>EVENT__HAVE_KQUEUE</name></expr></argument>)</argument_list></call></expr></cpp:if>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/types.h&gt;</cpp:file></cpp:include>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>EVENT__HAVE_SYS_TIME_H</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/time.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/queue.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/event.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;signal.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdio.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;string.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;unistd.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;errno.h&gt;</cpp:file></cpp:include>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>EVENT__HAVE_INTTYPES_H</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;inttypes.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>EVENT__HAVE_INTTYPES_H</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>__OpenBSD__</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>__FreeBSD__</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>__darwin__</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>__APPLE__</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>__CloudABI__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>PTR_TO_UDATA</name><parameter_list>(<parameter><type><name>x</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((intptr_t)(x))</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>INT_TO_UDATA</name><parameter_list>(<parameter><type><name>x</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((intptr_t)(x))</cpp:value></cpp:define>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>PTR_TO_UDATA</name><parameter_list>(<parameter><type><name>x</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>(x)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>INT_TO_UDATA</name><parameter_list>(<parameter><type><name>x</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((void*)(x))</cpp:value></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"event-internal.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"log-internal.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"evmap-internal.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"event2/thread.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"evthread-internal.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"changelist-internal.h"</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"kqueue-internal.h"</cpp:file></cpp:include>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>NEVENT</name></cpp:macro> <cpp:value>64</cpp:value></cpp:define>
+
+<struct>struct <name>kqop</name> <block>{
+<decl_stmt><decl><type><name><name>struct</name> <name>kevent</name></name> <modifier>*</modifier></type><name>changes</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>changes_size</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name><name>struct</name> <name>kevent</name></name> <modifier>*</modifier></type><name>events</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>events_size</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>kq</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>notify_event_added</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>pid_t</name></type> <name>pid</name></decl>;</decl_stmt>
+}</block>;</struct>
+
+<function_decl><type><specifier>static</specifier> <name>void</name></type> <name>kqop_free</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>kqop</name></name> <modifier>*</modifier></type><name>kqop</name></decl></parameter>)</parameter_list>;</function_decl>
+
+<function_decl><type><specifier>static</specifier> <name>void</name> <modifier>*</modifier></type><name>kq_init</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>event_base</name></name> <modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>kq_sig_add</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>event_base</name></name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>int</name></type></decl></parameter>, <parameter><decl><type><name>short</name></type></decl></parameter>, <parameter><decl><type><name>short</name></type></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>kq_sig_del</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>event_base</name></name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>int</name></type></decl></parameter>, <parameter><decl><type><name>short</name></type></decl></parameter>, <parameter><decl><type><name>short</name></type></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>kq_dispatch</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>event_base</name></name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>timeval</name></name> <modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>void</name></type> <name>kq_dealloc</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>event_base</name></name> <modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl>
+
+<decl_stmt><decl><type><specifier>const</specifier> <name><name>struct</name> <name>eventop</name></name></type> <name>kqops</name> <init>= <expr><block>{
+<expr><literal type="string">"kqueue"</literal></expr>,
+<expr><name>kq_init</name></expr>,
+<expr><name>event_changelist_add_</name></expr>,
+<expr><name>event_changelist_del_</name></expr>,
+<expr><name>kq_dispatch</name></expr>,
+<expr><name>kq_dealloc</name></expr>,
+<expr><literal type="number">1</literal></expr> ,
+<expr><name>EV_FEATURE_ET</name><operator>|</operator><name>EV_FEATURE_O1</name><operator>|</operator><name>EV_FEATURE_FDS</name></expr>,
+<expr><name>EVENT_CHANGELIST_FDINFO_SIZE</name></expr>
+}</block></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name><name>struct</name> <name>eventop</name></name></type> <name>kqsigops</name> <init>= <expr><block>{
+<expr><literal type="string">"kqueue_signal"</literal></expr>,
+<expr><name>NULL</name></expr>,
+<expr><name>kq_sig_add</name></expr>,
+<expr><name>kq_sig_del</name></expr>,
+<expr><name>NULL</name></expr>,
+<expr><name>NULL</name></expr>,
+<expr><literal type="number">1</literal></expr> ,
+<expr><literal type="number">0</literal></expr>,
+<expr><literal type="number">0</literal></expr>
+}</block></expr></init></decl>;</decl_stmt>
+
+<function><type><specifier>static</specifier> <name>void</name> <modifier>*</modifier></type>
+<name>kq_init</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>event_base</name></name> <modifier>*</modifier></type><name>base</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>kq</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>kqop</name></name> <modifier>*</modifier></type><name>kqueueop</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name>kqueueop</name> <operator>=</operator> <call><name>mm_calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr>struct <name>kqop</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>kq</name> <operator>=</operator> <call><name>kqueue</name><argument_list>()</argument_list></call><operator>)</operator> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>event_warn</name><argument_list>(<argument><expr><literal type="string">"kqueue"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>err</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>kqueueop</name><operator>-&gt;</operator><name>kq</name></name> <operator>=</operator> <name>kq</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>kqueueop</name><operator>-&gt;</operator><name>pid</name></name> <operator>=</operator> <call><name>getpid</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><name><name>kqueueop</name><operator>-&gt;</operator><name>changes</name></name> <operator>=</operator> <call><name>mm_calloc</name><argument_list>(<argument><expr><name>NEVENT</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr>struct <name>kevent</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>kqueueop</name><operator>-&gt;</operator><name>changes</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>err</name>;</goto></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>kqueueop</name><operator>-&gt;</operator><name>events</name></name> <operator>=</operator> <call><name>mm_calloc</name><argument_list>(<argument><expr><name>NEVENT</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr>struct <name>kevent</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>kqueueop</name><operator>-&gt;</operator><name>events</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>err</name>;</goto></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>kqueueop</name><operator>-&gt;</operator><name>events_size</name></name> <operator>=</operator> <name><name>kqueueop</name><operator>-&gt;</operator><name>changes_size</name></name> <operator>=</operator> <name>NEVENT</name></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>kqueueop</name><operator>-&gt;</operator><name>changes</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof <name><name>kqueueop</name><operator>-&gt;</operator><name>changes</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>kqueueop</name><operator>-&gt;</operator><name>changes</name><index>[<expr><literal type="number">0</literal></expr>]</index></name><operator>.</operator><name>ident</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>kqueueop</name><operator>-&gt;</operator><name>changes</name><index>[<expr><literal type="number">0</literal></expr>]</index></name><operator>.</operator><name>filter</name> <operator>=</operator> <name>EVFILT_READ</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>kqueueop</name><operator>-&gt;</operator><name>changes</name><index>[<expr><literal type="number">0</literal></expr>]</index></name><operator>.</operator><name>flags</name> <operator>=</operator> <name>EV_ADD</name></expr>;</expr_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>kevent</name><argument_list>(<argument><expr><name>kq</name></expr></argument>,
+<argument><expr><name><name>kqueueop</name><operator>-&gt;</operator><name>changes</name></name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name><name>kqueueop</name><operator>-&gt;</operator><name>events</name></name></expr></argument>, <argument><expr><name>NEVENT</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">1</literal> <operator>||</operator>
+<operator>(</operator><name>int</name><operator>)</operator><name><name>kqueueop</name><operator>-&gt;</operator><name>events</name><index>[<expr><literal type="number">0</literal></expr>]</index></name><operator>.</operator><name>ident</name> <operator>!=</operator> <operator>-</operator><literal type="number">1</literal> <operator>||</operator>
+<operator>!</operator><operator>(</operator><name><name>kqueueop</name><operator>-&gt;</operator><name>events</name><index>[<expr><literal type="number">0</literal></expr>]</index></name><operator>.</operator><name>flags</name> <operator>&amp;</operator> <name>EV_ERROR</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>event_warn</name><argument_list>(<argument><expr><literal type="string">"%s: detected broken kqueue; not using."</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>err</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>base</name><operator>-&gt;</operator><name>evsigsel</name></name> <operator>=</operator> <operator>&amp;</operator><name>kqsigops</name></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>kqueueop</name><operator>)</operator></expr>;</return>
+<label><name>err</name>:</label>
+<if_stmt><if>if <condition>(<expr><name>kqueueop</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>kqop_free</name><argument_list>(<argument><expr><name>kqueueop</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ADD_UDATA</name></cpp:macro> <cpp:value>0x30303</cpp:value></cpp:define>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>kq_setup_kevent</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>kevent</name></name> <modifier>*</modifier></type><name>out</name></decl></parameter>, <parameter><decl><type><name>evutil_socket_t</name></type> <name>fd</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>filter</name></decl></parameter>, <parameter><decl><type><name>short</name></type> <name>change</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr>struct <name>kevent</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>out</name><operator>-&gt;</operator><name>ident</name></name> <operator>=</operator> <name>fd</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>out</name><operator>-&gt;</operator><name>filter</name></name> <operator>=</operator> <name>filter</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>change</name> <operator>&amp;</operator> <name>EV_CHANGE_ADD</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>out</name><operator>-&gt;</operator><name>flags</name></name> <operator>=</operator> <name>EV_ADD</name></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><name><name>out</name><operator>-&gt;</operator><name>udata</name></name> <operator>=</operator> <call><name>INT_TO_UDATA</name><argument_list>(<argument><expr><name>ADD_UDATA</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>change</name> <operator>&amp;</operator> <name>EV_ET</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>out</name><operator>-&gt;</operator><name>flags</name></name> <operator>|=</operator> <name>EV_CLEAR</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>NOTE_EOF</name></expr></argument>)</argument_list></call></expr></cpp:if>
+
+<if_stmt><if>if <condition>(<expr><name>filter</name> <operator>==</operator> <name>EVFILT_READ</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>out</name><operator>-&gt;</operator><name>fflags</name></name> <operator>=</operator> <name>NOTE_EOF</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>EVUTIL_ASSERT</name><argument_list>(<argument><expr><name>change</name> <operator>&amp;</operator> <name>EV_CHANGE_DEL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>out</name><operator>-&gt;</operator><name>flags</name></name> <operator>=</operator> <name>EV_DELETE</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>kq_build_changes_list</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name><name>struct</name> <name>event_changelist</name></name> <modifier>*</modifier></type><name>changelist</name></decl></parameter>,
+<parameter><decl><type><name><name>struct</name> <name>kqop</name></name> <modifier>*</modifier></type><name>kqop</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>n_changes</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name><name>changelist</name><operator>-&gt;</operator><name>n_changes</name></name></expr>;</condition> <incr><expr><operator>++</operator><name>i</name></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>event_change</name></name> <modifier>*</modifier></type><name>in_ch</name> <init>= <expr><operator>&amp;</operator><name><name>changelist</name><operator>-&gt;</operator><name>changes</name><index>[<expr><name>i</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>kevent</name></name> <modifier>*</modifier></type><name>out_ch</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>n_changes</name> <operator>&gt;=</operator> <name><name>kqop</name><operator>-&gt;</operator><name>changes_size</name></name> <operator>-</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>newsize</name> <init>= <expr><name><name>kqop</name><operator>-&gt;</operator><name>changes_size</name></name> <operator>*</operator> <literal type="number">2</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>kevent</name></name> <modifier>*</modifier></type><name>newchanges</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>newchanges</name> <operator>=</operator> <call><name>mm_realloc</name><argument_list>(<argument><expr><name><name>kqop</name><operator>-&gt;</operator><name>changes</name></name></expr></argument>,
+<argument><expr><name>newsize</name> <operator>*</operator> <sizeof>sizeof<argument_list>(<argument><expr>struct <name>kevent</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>newchanges</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>event_warn</name><argument_list>(<argument><expr><literal type="string">"%s: realloc"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>kqop</name><operator>-&gt;</operator><name>changes</name></name> <operator>=</operator> <name>newchanges</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>kqop</name><operator>-&gt;</operator><name>changes_size</name></name> <operator>=</operator> <name>newsize</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>in_ch</name><operator>-&gt;</operator><name>read_change</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>out_ch</name> <operator>=</operator> <operator>&amp;</operator><name><name>kqop</name><operator>-&gt;</operator><name>changes</name><index>[<expr><name>n_changes</name><operator>++</operator></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>kq_setup_kevent</name><argument_list>(<argument><expr><name>out_ch</name></expr></argument>, <argument><expr><name><name>in_ch</name><operator>-&gt;</operator><name>fd</name></name></expr></argument>, <argument><expr><name>EVFILT_READ</name></expr></argument>,
+<argument><expr><name><name>in_ch</name><operator>-&gt;</operator><name>read_change</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>in_ch</name><operator>-&gt;</operator><name>write_change</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>out_ch</name> <operator>=</operator> <operator>&amp;</operator><name><name>kqop</name><operator>-&gt;</operator><name>changes</name><index>[<expr><name>n_changes</name><operator>++</operator></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>kq_setup_kevent</name><argument_list>(<argument><expr><name>out_ch</name></expr></argument>, <argument><expr><name><name>in_ch</name><operator>-&gt;</operator><name>fd</name></name></expr></argument>, <argument><expr><name>EVFILT_WRITE</name></expr></argument>,
+<argument><expr><name><name>in_ch</name><operator>-&gt;</operator><name>write_change</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+<return>return <expr><name>n_changes</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>kq_grow_events</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>kqop</name></name> <modifier>*</modifier></type><name>kqop</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>new_size</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>kevent</name></name> <modifier>*</modifier></type><name>newresult</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>newresult</name> <operator>=</operator> <call><name>mm_realloc</name><argument_list>(<argument><expr><name><name>kqop</name><operator>-&gt;</operator><name>events</name></name></expr></argument>,
+<argument><expr><name>new_size</name> <operator>*</operator> <sizeof>sizeof<argument_list>(<argument><expr>struct <name>kevent</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>newresult</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>kqop</name><operator>-&gt;</operator><name>events</name></name> <operator>=</operator> <name>newresult</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>kqop</name><operator>-&gt;</operator><name>events_size</name></name> <operator>=</operator> <name>new_size</name></expr>;</expr_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>kq_dispatch</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>event_base</name></name> <modifier>*</modifier></type><name>base</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>timeval</name></name> <modifier>*</modifier></type><name>tv</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>kqop</name></name> <modifier>*</modifier></type><name>kqop</name> <init>= <expr><name><name>base</name><operator>-&gt;</operator><name>evbase</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>kevent</name></name> <modifier>*</modifier></type><name>events</name> <init>= <expr><name><name>kqop</name><operator>-&gt;</operator><name>events</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>kevent</name></name> <modifier>*</modifier></type><name>changes</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>timespec</name></name></type> <name>ts</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>ts_p</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>, <decl><type ref="prev"/><name>n_changes</name></decl>, <decl><type ref="prev"/><name>res</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>tv</name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>ts</name><operator>.</operator><name>tv_sec</name></name> <operator>=</operator> <name><name>tv</name><operator>-&gt;</operator><name>tv_sec</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ts</name><operator>.</operator><name>tv_nsec</name></name> <operator>=</operator> <name><name>tv</name><operator>-&gt;</operator><name>tv_usec</name></name> <operator>*</operator> <literal type="number">1000</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>ts_p</name> <operator>=</operator> <operator>&amp;</operator><name>ts</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><call><name>EVUTIL_ASSERT</name><argument_list>(<argument><expr><name><name>kqop</name><operator>-&gt;</operator><name>changes</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>n_changes</name> <operator>=</operator> <call><name>kq_build_changes_list</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>base</name><operator>-&gt;</operator><name>changelist</name></name></expr></argument>, <argument><expr><name>kqop</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>n_changes</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>event_changelist_remove_all_</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>base</name><operator>-&gt;</operator><name>changelist</name></name></expr></argument>, <argument><expr><name>base</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+<expr_stmt><expr><name>changes</name> <operator>=</operator> <name><name>kqop</name><operator>-&gt;</operator><name>changes</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>kqop</name><operator>-&gt;</operator><name>changes</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+
+
+
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>kqop</name><operator>-&gt;</operator><name>events_size</name></name> <operator>&lt;</operator> <name>n_changes</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>new_size</name> <init>= <expr><name><name>kqop</name><operator>-&gt;</operator><name>events_size</name></name></expr></init></decl>;</decl_stmt>
+<do>do <block>{<block_content>
+<expr_stmt><expr><name>new_size</name> <operator>*=</operator> <literal type="number">2</literal></expr>;</expr_stmt>
+</block_content>}</block> while <condition>(<expr><name>new_size</name> <operator>&lt;</operator> <name>n_changes</name></expr>)</condition>;</do>
+
+<expr_stmt><expr><call><name>kq_grow_events</name><argument_list>(<argument><expr><name>kqop</name></expr></argument>, <argument><expr><name>new_size</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>events</name> <operator>=</operator> <name><name>kqop</name><operator>-&gt;</operator><name>events</name></name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>EVBASE_RELEASE_LOCK</name><argument_list>(<argument><expr><name>base</name></expr></argument>, <argument><expr><name>th_base_lock</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>res</name> <operator>=</operator> <call><name>kevent</name><argument_list>(<argument><expr><name><name>kqop</name><operator>-&gt;</operator><name>kq</name></name></expr></argument>, <argument><expr><name>changes</name></expr></argument>, <argument><expr><name>n_changes</name></expr></argument>,
+<argument><expr><name>events</name></expr></argument>, <argument><expr><name><name>kqop</name><operator>-&gt;</operator><name>events_size</name></name></expr></argument>, <argument><expr><name>ts_p</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>EVBASE_ACQUIRE_LOCK</name><argument_list>(<argument><expr><name>base</name></expr></argument>, <argument><expr><name>th_base_lock</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>EVUTIL_ASSERT</name><argument_list>(<argument><expr><name><name>kqop</name><operator>-&gt;</operator><name>changes</name></name> <operator>==</operator> <name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>kqop</name><operator>-&gt;</operator><name>changes</name></name> <operator>=</operator> <name>changes</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>res</name> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>errno</name> <operator>!=</operator> <name>EINTR</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>event_warn</name><argument_list>(<argument><expr><literal type="string">"kevent"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>event_debug</name><argument_list>(<argument><expr><operator>(</operator><literal type="string">"%s: kevent reports %d"</literal><operator>,</operator> <name>__func__</name><operator>,</operator> <name>res</name><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>res</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>which</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>events</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>flags</name> <operator>&amp;</operator> <name>EV_ERROR</name></expr>)</condition> <block>{<block_content>
+<switch>switch <condition>(<expr><name><name>events</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>data</name></expr>)</condition> <block>{<block_content>
+
+
+
+
+
+<case>case <expr><name>ENOENT</name></expr>:</case>
+
+
+<case>case <expr><name>EINVAL</name></expr>:</case>
+<continue>continue;</continue>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__FreeBSD__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<case>case <expr><name>ENOTCAPABLE</name></expr>:</case>
+<continue>continue;</continue>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+<case>case <expr><name>EBADF</name></expr>:</case>
+
+
+
+
+
+
+<continue>continue;</continue>
+
+
+<case>case <expr><name>EPERM</name></expr>:</case>
+<case>case <expr><name>EPIPE</name></expr>:</case>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>events</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>udata</name></expr>)</condition> <block>{<block_content>
+
+
+<expr_stmt><expr><name>which</name> <operator>|=</operator> <name>EV_READ</name></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+
+<continue>continue;</continue>
+</block_content>}</block></else></if_stmt>
+
+
+<default>default:</default>
+<expr_stmt><expr><name>errno</name> <operator>=</operator> <name><name>events</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>data</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></switch>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>events</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>filter</name> <operator>==</operator> <name>EVFILT_READ</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>which</name> <operator>|=</operator> <name>EV_READ</name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>events</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>filter</name> <operator>==</operator> <name>EVFILT_WRITE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>which</name> <operator>|=</operator> <name>EV_WRITE</name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>events</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>filter</name> <operator>==</operator> <name>EVFILT_SIGNAL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>which</name> <operator>|=</operator> <name>EV_SIGNAL</name></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>EVFILT_USER</name></expr></argument>)</argument_list></call></expr></cpp:if>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>events</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>filter</name> <operator>==</operator> <name>EVFILT_USER</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>base</name><operator>-&gt;</operator><name>is_notify_pending</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>which</name></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>events</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>filter</name> <operator>==</operator> <name>EVFILT_SIGNAL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>evmap_signal_active_</name><argument_list>(<argument><expr><name>base</name></expr></argument>, <argument><expr><name><name>events</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>ident</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>evmap_io_active_</name><argument_list>(<argument><expr><name>base</name></expr></argument>, <argument><expr><name><name>events</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>ident</name></expr></argument>, <argument><expr><name>which</name> <operator>|</operator> <name>EV_ET</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></for>
+
+<if_stmt><if>if <condition>(<expr><name>res</name> <operator>==</operator> <name><name>kqop</name><operator>-&gt;</operator><name>events_size</name></name></expr>)</condition> <block>{<block_content>
+
+
+<expr_stmt><expr><call><name>kq_grow_events</name><argument_list>(<argument><expr><name>kqop</name></expr></argument>, <argument><expr><name><name>kqop</name><operator>-&gt;</operator><name>events_size</name></name> <operator>*</operator> <literal type="number">2</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>kqop_free</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>kqop</name></name> <modifier>*</modifier></type><name>kqop</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>kqop</name><operator>-&gt;</operator><name>changes</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>mm_free</name><argument_list>(<argument><expr><name><name>kqop</name><operator>-&gt;</operator><name>changes</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>kqop</name><operator>-&gt;</operator><name>events</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>mm_free</name><argument_list>(<argument><expr><name><name>kqop</name><operator>-&gt;</operator><name>events</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>kqop</name><operator>-&gt;</operator><name>kq</name></name> <operator>&gt;=</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name><name>kqop</name><operator>-&gt;</operator><name>pid</name></name> <operator>==</operator> <call><name>getpid</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>close</name><argument_list>(<argument><expr><name><name>kqop</name><operator>-&gt;</operator><name>kq</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><name>kqop</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr>struct <name>kqop</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>mm_free</name><argument_list>(<argument><expr><name>kqop</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>kq_dealloc</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>event_base</name></name> <modifier>*</modifier></type><name>base</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>kqop</name></name> <modifier>*</modifier></type><name>kqop</name> <init>= <expr><name><name>base</name><operator>-&gt;</operator><name>evbase</name></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>evsig_dealloc_</name><argument_list>(<argument><expr><name>base</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>kqop_free</name><argument_list>(<argument><expr><name>kqop</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>kq_sig_add</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>event_base</name></name> <modifier>*</modifier></type><name>base</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>nsignal</name></decl></parameter>, <parameter><decl><type><name>short</name></type> <name>old</name></decl></parameter>, <parameter><decl><type><name>short</name></type> <name>events</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>p</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>kqop</name></name> <modifier>*</modifier></type><name>kqop</name> <init>= <expr><name><name>base</name><operator>-&gt;</operator><name>evbase</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>kevent</name></name></type> <name>kev</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>timespec</name></name></type> <name>timeout</name> <init>= <expr><block>{ <expr><literal type="number">0</literal></expr>, <expr><literal type="number">0</literal></expr> }</block></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>p</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>EVUTIL_ASSERT</name><argument_list>(<argument><expr><name>nsignal</name> <operator>&gt;=</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name>nsignal</name> <operator>&lt;</operator> <name>NSIG</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>kev</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>kev</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>kev</name><operator>.</operator><name>ident</name></name> <operator>=</operator> <name>nsignal</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>kev</name><operator>.</operator><name>filter</name></name> <operator>=</operator> <name>EVFILT_SIGNAL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>kev</name><operator>.</operator><name>flags</name></name> <operator>=</operator> <name>EV_ADD</name></expr>;</expr_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>kevent</name><argument_list>(<argument><expr><name><name>kqop</name><operator>-&gt;</operator><name>kq</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>kev</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>timeout</name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>evsig_set_handler_</name><argument_list>(<argument><expr><name>base</name></expr></argument>, <argument><expr><name>nsignal</name></expr></argument>,
+<argument><expr><ternary><condition><expr><name>nsignal</name> <operator>==</operator> <name>SIGCHLD</name></expr> ?</condition><then> <expr><name>SIG_DFL</name></expr> </then><else>: <expr><name>SIG_IGN</name></expr></else></ternary></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>kq_sig_del</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>event_base</name></name> <modifier>*</modifier></type><name>base</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>nsignal</name></decl></parameter>, <parameter><decl><type><name>short</name></type> <name>old</name></decl></parameter>, <parameter><decl><type><name>short</name></type> <name>events</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>p</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>kqop</name></name> <modifier>*</modifier></type><name>kqop</name> <init>= <expr><name><name>base</name><operator>-&gt;</operator><name>evbase</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>kevent</name></name></type> <name>kev</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name><name>struct</name> <name>timespec</name></name></type> <name>timeout</name> <init>= <expr><block>{ <expr><literal type="number">0</literal></expr>, <expr><literal type="number">0</literal></expr> }</block></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>p</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>EVUTIL_ASSERT</name><argument_list>(<argument><expr><name>nsignal</name> <operator>&gt;=</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name>nsignal</name> <operator>&lt;</operator> <name>NSIG</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>kev</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>kev</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>kev</name><operator>.</operator><name>ident</name></name> <operator>=</operator> <name>nsignal</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>kev</name><operator>.</operator><name>filter</name></name> <operator>=</operator> <name>EVFILT_SIGNAL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>kev</name><operator>.</operator><name>flags</name></name> <operator>=</operator> <name>EV_DELETE</name></expr>;</expr_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>kevent</name><argument_list>(<argument><expr><name><name>kqop</name><operator>-&gt;</operator><name>kq</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>kev</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>timeout</name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>evsig_restore_handler_</name><argument_list>(<argument><expr><name>base</name></expr></argument>, <argument><expr><name>nsignal</name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>NOTIFY_IDENT</name></cpp:macro> <cpp:value>42</cpp:value></cpp:define>
+
+<function><type><name>int</name></type>
+<name>event_kq_add_notify_event_</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>event_base</name></name> <modifier>*</modifier></type><name>base</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>kqop</name></name> <modifier>*</modifier></type><name>kqop</name> <init>= <expr><name><name>base</name><operator>-&gt;</operator><name>evbase</name></name></expr></init></decl>;</decl_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>EVFILT_USER</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <call><name>defined</name><argument_list>(<argument><expr><name>NOTE_TRIGGER</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<decl_stmt><decl><type><name><name>struct</name> <name>kevent</name></name></type> <name>kev</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>timespec</name></name></type> <name>timeout</name> <init>= <expr><block>{ <expr><literal type="number">0</literal></expr>, <expr><literal type="number">0</literal></expr> }</block></expr></init></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<if_stmt><if>if <condition>(<expr><name><name>kqop</name><operator>-&gt;</operator><name>notify_event_added</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><literal type="number">0</literal></expr>;</return></block_content></block></if></if_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>EVFILT_USER</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <call><name>defined</name><argument_list>(<argument><expr><name>NOTE_TRIGGER</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>kev</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>kev</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>kev</name><operator>.</operator><name>ident</name></name> <operator>=</operator> <name>NOTIFY_IDENT</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>kev</name><operator>.</operator><name>filter</name></name> <operator>=</operator> <name>EVFILT_USER</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>kev</name><operator>.</operator><name>flags</name></name> <operator>=</operator> <name>EV_ADD</name> <operator>|</operator> <name>EV_CLEAR</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>kevent</name><argument_list>(<argument><expr><name><name>kqop</name><operator>-&gt;</operator><name>kq</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>kev</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>timeout</name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>event_warn</name><argument_list>(<argument><expr><literal type="string">"kevent: adding EVFILT_USER event"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>kqop</name><operator>-&gt;</operator><name>notify_event_added</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>event_kq_notify_base_</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>event_base</name></name> <modifier>*</modifier></type><name>base</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>kqop</name></name> <modifier>*</modifier></type><name>kqop</name> <init>= <expr><name><name>base</name><operator>-&gt;</operator><name>evbase</name></name></expr></init></decl>;</decl_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>EVFILT_USER</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <call><name>defined</name><argument_list>(<argument><expr><name>NOTE_TRIGGER</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<decl_stmt><decl><type><name><name>struct</name> <name>kevent</name></name></type> <name>kev</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>timespec</name></name></type> <name>timeout</name> <init>= <expr><block>{ <expr><literal type="number">0</literal></expr>, <expr><literal type="number">0</literal></expr> }</block></expr></init></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<if_stmt><if>if <condition>(<expr><operator>!</operator> <name><name>kqop</name><operator>-&gt;</operator><name>notify_event_added</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>EVFILT_USER</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <call><name>defined</name><argument_list>(<argument><expr><name>NOTE_TRIGGER</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>kev</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>kev</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>kev</name><operator>.</operator><name>ident</name></name> <operator>=</operator> <name>NOTIFY_IDENT</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>kev</name><operator>.</operator><name>filter</name></name> <operator>=</operator> <name>EVFILT_USER</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>kev</name><operator>.</operator><name>fflags</name></name> <operator>=</operator> <name>NOTE_TRIGGER</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>kevent</name><argument_list>(<argument><expr><name><name>kqop</name><operator>-&gt;</operator><name>kq</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>kev</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>timeout</name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>event_warn</name><argument_list>(<argument><expr><literal type="string">"kevent: triggering EVFILT_USER event"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

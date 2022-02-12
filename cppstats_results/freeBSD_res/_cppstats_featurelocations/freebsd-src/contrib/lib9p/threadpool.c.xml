@@ -1,0 +1,424 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/lib9p/threadpool.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;errno.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;pthread.h&gt;</cpp:file></cpp:include>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__FreeBSD__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;pthread_np.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/queue.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"lib9p.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"threadpool.h"</cpp:file></cpp:include>
+
+<function_decl><type><specifier>static</specifier> <name>void</name></type> <name>l9p_threadpool_rflush</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>l9p_threadpool</name></name> <modifier>*</modifier></type><name>tp</name></decl></parameter>,
+<parameter><decl><type><name><name>struct</name> <name>l9p_request</name></name> <modifier>*</modifier></type><name>req</name></decl></parameter>)</parameter_list>;</function_decl>
+
+<function><type><specifier>static</specifier> <name>void</name> <modifier>*</modifier></type>
+<name>l9p_responder</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>l9p_threadpool</name></name> <modifier>*</modifier></type><name>tp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>l9p_worker</name></name> <modifier>*</modifier></type><name>worker</name> <init>= <expr><name>arg</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>l9p_request</name></name> <modifier>*</modifier></type><name>req</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>tp</name> <operator>=</operator> <name><name>worker</name><operator>-&gt;</operator><name>ltw_tp</name></name></expr>;</expr_stmt>
+<for>for <control>(<init>;</init><condition>;</condition><incr/>)</control> <block>{<block_content>
+
+<expr_stmt><expr><call><name>pthread_mutex_lock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_mtx</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<while>while <condition>(<expr><call><name>STAILQ_EMPTY</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_replyq</name></name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <operator>!</operator><name><name>worker</name><operator>-&gt;</operator><name>ltw_exiting</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>pthread_cond_wait</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_reply_cv</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_mtx</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></while>
+<if_stmt><if>if <condition>(<expr><name><name>worker</name><operator>-&gt;</operator><name>ltw_exiting</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>pthread_mutex_unlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_mtx</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><name>req</name> <operator>=</operator> <call><name>STAILQ_FIRST</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_replyq</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>STAILQ_REMOVE_HEAD</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_replyq</name></name></expr></argument>, <argument><expr><name>lr_worklink</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><name><name>req</name><operator>-&gt;</operator><name>lr_workstate</name></name> <operator>=</operator> <name>L9P_WS_REPLYING</name></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>req</name><operator>-&gt;</operator><name>lr_flushstate</name></name> <operator>!=</operator> <name>L9P_FLUSH_NONE</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>l9p_threadpool_rflush</name><argument_list>(<argument><expr><name>tp</name></expr></argument>, <argument><expr><name>req</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>pthread_mutex_unlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_mtx</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><call><name>l9p_respond</name><argument_list>(<argument><expr><name>req</name></expr></argument>, <argument><expr><name>false</name></expr></argument>, <argument><expr><name>true</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name> <modifier>*</modifier></type>
+<name>l9p_worker</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>l9p_threadpool</name></name> <modifier>*</modifier></type><name>tp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>l9p_worker</name></name> <modifier>*</modifier></type><name>worker</name> <init>= <expr><name>arg</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>l9p_request</name></name> <modifier>*</modifier></type><name>req</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>tp</name> <operator>=</operator> <name><name>worker</name><operator>-&gt;</operator><name>ltw_tp</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_lock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_mtx</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init>;</init><condition>;</condition><incr/>)</control> <block>{<block_content>
+<while>while <condition>(<expr><call><name>STAILQ_EMPTY</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_workq</name></name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <operator>!</operator><name><name>worker</name><operator>-&gt;</operator><name>ltw_exiting</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>pthread_cond_wait</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_work_cv</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_mtx</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></while>
+<if_stmt><if>if <condition>(<expr><name><name>worker</name><operator>-&gt;</operator><name>ltw_exiting</name></name></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+
+
+<expr_stmt><expr><name>req</name> <operator>=</operator> <call><name>STAILQ_FIRST</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_workq</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>STAILQ_REMOVE_HEAD</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_workq</name></name></expr></argument>, <argument><expr><name>lr_worklink</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>req</name><operator>-&gt;</operator><name>lr_workstate</name></name> <operator>=</operator> <name>L9P_WS_INPROGRESS</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>req</name><operator>-&gt;</operator><name>lr_worker</name></name> <operator>=</operator> <name>worker</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_unlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_mtx</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><name><name>req</name><operator>-&gt;</operator><name>lr_error</name></name> <operator>=</operator> <call><name>l9p_dispatch_request</name><argument_list>(<argument><expr><name>req</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><call><name>pthread_mutex_lock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_mtx</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>req</name><operator>-&gt;</operator><name>lr_workstate</name></name> <operator>=</operator> <name>L9P_WS_RESPQUEUED</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>req</name><operator>-&gt;</operator><name>lr_worker</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>STAILQ_INSERT_TAIL</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_replyq</name></name></expr></argument>, <argument><expr><name>req</name></expr></argument>, <argument><expr><name>lr_worklink</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><call><name>pthread_cond_signal</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_reply_cv</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><call><name>pthread_mutex_unlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_mtx</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>l9p_threadpool_rflush</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>l9p_threadpool</name></name> <modifier>*</modifier></type><name>tp</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>l9p_request</name></name> <modifier>*</modifier></type><name>req</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>l9p_request</name></name> <modifier>*</modifier></type><name>flusher</name></decl>;</decl_stmt>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<macro><name>STAILQ_FOREACH</name><argument_list>(<argument>flusher</argument>, <argument>&amp;req-&gt;lr_flushq</argument>, <argument>lr_flushlink</argument>)</argument_list></macro> <block>{<block_content>
+<expr_stmt><expr><name><name>flusher</name><operator>-&gt;</operator><name>lr_workstate</name></name> <operator>=</operator> <name>L9P_WS_RESPQUEUED</name></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>notdef</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name>not</name> <name>the</name> <name>last</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>flusher</name><operator>-&gt;</operator><name>lr_flushstate</name></name> <operator>=</operator> <name>L9P_FLUSH_NOT_RUN</name></expr>;</expr_stmt>
+
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<expr_stmt><expr><call><name>STAILQ_INSERT_TAIL</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_replyq</name></name></expr></argument>, <argument><expr><name>flusher</name></expr></argument>, <argument><expr><name>lr_worklink</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>l9p_threadpool_init</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>l9p_threadpool</name></name> <modifier>*</modifier></type><name>tp</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>size</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>l9p_worker</name></name> <modifier>*</modifier></type><name>worker</name></decl>;</decl_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__FreeBSD__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<decl_stmt><decl><type><name>char</name></type> <name><name>threadname</name><index>[<expr><literal type="number">16</literal></expr>]</index></name></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<decl_stmt><decl><type><name>int</name></type> <name>error</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>, <decl><type ref="prev"/><name>nworkers</name></decl>, <decl><type ref="prev"/><name>nresponders</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>size</name> <operator>&lt;=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>EINVAL</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>error</name> <operator>=</operator> <call><name>pthread_mutex_init</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_mtx</name></name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>error</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>error</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>error</name> <operator>=</operator> <call><name>pthread_cond_init</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_work_cv</name></name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>error</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>fail_work_cv</name>;</goto></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>error</name> <operator>=</operator> <call><name>pthread_cond_init</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_reply_cv</name></name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>error</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>fail_reply_cv</name>;</goto></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>STAILQ_INIT</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_workq</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>STAILQ_INIT</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_replyq</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>LIST_INIT</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_workers</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>nresponders</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>nworkers</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;=</operator> <name>size</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>worker</name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr>struct <name>l9p_worker</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>worker</name><operator>-&gt;</operator><name>ltw_tp</name></name> <operator>=</operator> <name>tp</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>worker</name><operator>-&gt;</operator><name>ltw_responder</name></name> <operator>=</operator> <name>i</name> <operator>==</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>error</name> <operator>=</operator> <call><name>pthread_create</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>worker</name><operator>-&gt;</operator><name>ltw_thread</name></name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>,
+<argument><expr><ternary><condition><expr><name><name>worker</name><operator>-&gt;</operator><name>ltw_responder</name></name></expr> ?</condition><then> <expr><name>l9p_responder</name></expr> </then><else>: <expr><name>l9p_worker</name></expr></else></ternary></expr></argument>,
+<argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name>worker</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>error</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>worker</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>worker</name><operator>-&gt;</operator><name>ltw_responder</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>nresponders</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>nworkers</name><operator>++</operator></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__FreeBSD__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name><name>worker</name><operator>-&gt;</operator><name>ltw_responder</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>pthread_set_name_np</name><argument_list>(<argument><expr><name><name>worker</name><operator>-&gt;</operator><name>ltw_thread</name></name></expr></argument>, <argument><expr><literal type="string">"9p-responder"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>sprintf</name><argument_list>(<argument><expr><name>threadname</name></expr></argument>, <argument><expr><literal type="string">"9p-worker:%d"</literal></expr></argument>, <argument><expr><name>i</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_set_name_np</name><argument_list>(<argument><expr><name><name>worker</name><operator>-&gt;</operator><name>ltw_thread</name></name></expr></argument>, <argument><expr><name>threadname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<expr_stmt><expr><call><name>LIST_INSERT_HEAD</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_workers</name></name></expr></argument>, <argument><expr><name>worker</name></expr></argument>, <argument><expr><name>ltw_link</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+<if_stmt><if>if <condition>(<expr><name>nresponders</name> <operator>==</operator> <literal type="number">0</literal> <operator>||</operator> <name>nworkers</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><call><name>l9p_threadpool_shutdown</name><argument_list>(<argument><expr><name>tp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>error</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+
+
+
+
+
+
+
+<label><name>fail_reply_cv</name>:</label>
+<expr_stmt><expr><call><name>pthread_cond_destroy</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_work_cv</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<label><name>fail_work_cv</name>:</label>
+<expr_stmt><expr><call><name>pthread_mutex_destroy</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_mtx</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>error</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>void</name></type>
+<name>l9p_threadpool_run</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>l9p_threadpool</name></name> <modifier>*</modifier></type><name>tp</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>l9p_request</name></name> <modifier>*</modifier></type><name>req</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>req</name><operator>-&gt;</operator><name>lr_req</name><operator>.</operator><name>hdr</name><operator>.</operator><name>type</name></name> <operator>==</operator> <name>L9P_TFLUSH</name></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><name><name>req</name><operator>-&gt;</operator><name>lr_workstate</name></name> <operator>=</operator> <name>L9P_WS_IMMEDIATE</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>l9p_dispatch_request</name><argument_list>(<argument><expr><name>req</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>pthread_mutex_lock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_mtx</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>req</name><operator>-&gt;</operator><name>lr_workstate</name></name> <operator>=</operator> <name>L9P_WS_NOTSTARTED</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>STAILQ_INSERT_TAIL</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_workq</name></name></expr></argument>, <argument><expr><name>req</name></expr></argument>, <argument><expr><name>lr_worklink</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_cond_signal</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_work_cv</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_unlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_mtx</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><name>int</name></type>
+<name>l9p_threadpool_tflush</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>l9p_request</name></name> <modifier>*</modifier></type><name>req</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>l9p_connection</name></name> <modifier>*</modifier></type><name>conn</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>l9p_threadpool</name></name> <modifier>*</modifier></type><name>tp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>l9p_request</name></name> <modifier>*</modifier></type><name>flushee</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint16_t</name></type> <name>oldtag</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>enum</name> <name>l9p_flushstate</name></name></type> <name>nstate</name></decl>;</decl_stmt>
+
+
+
+
+<expr_stmt><expr><name><name>req</name><operator>-&gt;</operator><name>lr_error</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>conn</name> <operator>=</operator> <name><name>req</name><operator>-&gt;</operator><name>lr_conn</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>tp</name> <operator>=</operator> <operator>&amp;</operator><name><name>conn</name><operator>-&gt;</operator><name>lc_tp</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>oldtag</name> <operator>=</operator> <name><name>req</name><operator>-&gt;</operator><name>lr_req</name><operator>.</operator><name>tflush</name><operator>.</operator><name>oldtag</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ht_wrlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>conn</name><operator>-&gt;</operator><name>lc_requests</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>flushee</name> <operator>=</operator> <call><name>ht_find_locked</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>conn</name><operator>-&gt;</operator><name>lc_requests</name></name></expr></argument>, <argument><expr><name>oldtag</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>flushee</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+
+
+
+
+
+<expr_stmt><expr><call><name>ht_unlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>conn</name><operator>-&gt;</operator><name>lc_requests</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_lock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_mtx</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>done</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<expr_stmt><expr><call><name>pthread_mutex_lock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_mtx</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ht_unlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>conn</name><operator>-&gt;</operator><name>lc_requests</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<switch>switch <condition>(<expr><name><name>flushee</name><operator>-&gt;</operator><name>lr_workstate</name></name></expr>)</condition> <block>{<block_content>
+
+<case>case <expr><name>L9P_WS_NOTSTARTED</name></expr>:</case>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<expr_stmt><expr><name>nstate</name> <operator>=</operator> <name>L9P_FLUSH_REQUESTED_PRE_START</name></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>L9P_WS_IMMEDIATE</name></expr>:</case>
+
+
+
+
+
+
+
+<expr_stmt><expr><name>nstate</name> <operator>=</operator> <name>L9P_FLUSH_REQUESTED_POST_START</name></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>L9P_WS_INPROGRESS</name></expr>:</case>
+
+
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>notyet</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr_stmt><expr><call><name>pthread_kill</name><argument_list>(<argument><expr><operator>...</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<expr_stmt><expr><name>nstate</name> <operator>=</operator> <name>L9P_FLUSH_REQUESTED_POST_START</name></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>L9P_WS_RESPQUEUED</name></expr>:</case>
+
+
+
+
+
+<expr_stmt><expr><name>nstate</name> <operator>=</operator> <name>L9P_FLUSH_TOOLATE</name></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>L9P_WS_REPLYING</name></expr>:</case>
+
+
+
+
+
+
+
+
+
+<goto>goto <name>done</name>;</goto>
+</block_content>}</block></switch>
+
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>flushee</name><operator>-&gt;</operator><name>lr_flushstate</name></name> <operator>==</operator> <name>L9P_FLUSH_NONE</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>STAILQ_INIT</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>flushee</name><operator>-&gt;</operator><name>lr_flushq</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>flushee</name><operator>-&gt;</operator><name>lr_flushstate</name></name> <operator>=</operator> <name>nstate</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>STAILQ_INSERT_TAIL</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>flushee</name><operator>-&gt;</operator><name>lr_flushq</name></name></expr></argument>, <argument><expr><name>req</name></expr></argument>, <argument><expr><name>lr_flushlink</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>pthread_mutex_unlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_mtx</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+
+<label><name>done</name>:</label>
+
+
+
+
+<expr_stmt><expr><name><name>req</name><operator>-&gt;</operator><name>lr_workstate</name></name> <operator>=</operator> <name>L9P_WS_RESPQUEUED</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>STAILQ_INSERT_TAIL</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_replyq</name></name></expr></argument>, <argument><expr><name>req</name></expr></argument>, <argument><expr><name>lr_worklink</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_unlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_mtx</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_cond_signal</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_reply_cv</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>l9p_threadpool_shutdown</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>l9p_threadpool</name></name> <modifier>*</modifier></type><name>tp</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>l9p_worker</name></name> <modifier>*</modifier></type><name>worker</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>tmp</name></decl>;</decl_stmt>
+
+<macro><name>LIST_FOREACH_SAFE</name><argument_list>(<argument>worker</argument>, <argument>&amp;tp-&gt;ltp_workers</argument>, <argument>ltw_link</argument>, <argument>tmp</argument>)</argument_list></macro> <block>{<block_content>
+<expr_stmt><expr><call><name>pthread_mutex_lock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_mtx</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>worker</name><operator>-&gt;</operator><name>ltw_exiting</name></name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>worker</name><operator>-&gt;</operator><name>ltw_responder</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>pthread_cond_signal</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_reply_cv</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>pthread_cond_broadcast</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_work_cv</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_unlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_mtx</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_join</name><argument_list>(<argument><expr><name><name>worker</name><operator>-&gt;</operator><name>ltw_thread</name></name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>LIST_REMOVE</name><argument_list>(<argument><expr><name>worker</name></expr></argument>, <argument><expr><name>ltw_link</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>worker</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block>
+<expr_stmt><expr><call><name>pthread_cond_destroy</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_reply_cv</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_cond_destroy</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_work_cv</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_destroy</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>tp</name><operator>-&gt;</operator><name>ltp_mtx</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+</unit>

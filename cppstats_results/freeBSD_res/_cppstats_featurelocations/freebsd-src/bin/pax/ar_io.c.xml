@@ -1,0 +1,1292 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/bin/pax/ar_io.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>lint</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><literal type="number">0</literal></expr></cpp:if>
+static char sccsid[] = "@(#)ar_io.c 8.2 (Berkeley) 4/18/94";
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/cdefs.h&gt;</cpp:file></cpp:include>
+<expr_stmt><expr><call><name>__FBSDID</name><argument_list>(<argument><expr><literal type="string">"$FreeBSD$"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/types.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/ioctl.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/mtio.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/stat.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/wait.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;err.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;errno.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;fcntl.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;signal.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdint.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdio.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;string.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;unistd.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"pax.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"options.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"extern.h"</cpp:file></cpp:include>
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>DMOD</name></cpp:macro> <cpp:value>0666</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>EXT_MODE</name></cpp:macro> <cpp:value>O_RDONLY</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>AR_MODE</name></cpp:macro> <cpp:value>(O_WRONLY | O_CREAT | O_TRUNC)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>APP_MODE</name></cpp:macro> <cpp:value>O_RDWR</cpp:value></cpp:define>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>char</name></type> <name><name>none</name><index>[]</index></name> <init>= <expr><literal type="string">"&lt;NONE&gt;"</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>char</name></type> <name><name>stdo</name><index>[]</index></name> <init>= <expr><literal type="string">"&lt;STDOUT&gt;"</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>char</name></type> <name><name>stdn</name><index>[]</index></name> <init>= <expr><literal type="string">"&lt;STDIN&gt;"</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>arfd</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>artyp</name> <init>= <expr><name>ISREG</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>arvol</name> <init>= <expr><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>lstrval</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>io_ok</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>did_io</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>done</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name><name>struct</name> <name>stat</name></name></type> <name>arsb</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>invld_rec</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>wr_trail</name> <init>= <expr><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>can_unlnk</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>arcname</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>gzip_program</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>pid_t</name></type> <name>zpid</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>get_phys</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>void</name></type> <name>ar_start_gzip</name><parameter_list>(<parameter><decl><type><name>int</name></type></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>int</name></type></decl></parameter>)</parameter_list>;</function_decl>
+
+
+
+
+
+
+
+
+
+
+<function><type><name>int</name></type>
+<name>ar_open</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>name</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>mtget</name></name></type> <name>mb</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>arfd</name> <operator>!=</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>close</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>arfd</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>can_unlnk</name> <operator>=</operator> <name>did_io</name> <operator>=</operator> <name>io_ok</name> <operator>=</operator> <name>invld_rec</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>artyp</name> <operator>=</operator> <name>ISREG</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>flcnt</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+
+
+
+<switch>switch <condition>(<expr><name>act</name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>LIST</name></expr>:</case>
+<case>case <expr><name>EXTRACT</name></expr>:</case>
+<if_stmt><if>if <condition>(<expr><name>name</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>arfd</name> <operator>=</operator> <name>STDIN_FILENO</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>arcname</name> <operator>=</operator> <name>stdn</name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>(</operator><name>arfd</name> <operator>=</operator> <call><name>open</name><argument_list>(<argument><expr><name>name</name></expr></argument>, <argument><expr><name>EXT_MODE</name></expr></argument>, <argument><expr><name>DMOD</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>syswarn</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>errno</name></expr></argument>, <argument><expr><literal type="string">"Failed open to read on %s"</literal></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>arfd</name> <operator>!=</operator> <operator>-</operator><literal type="number">1</literal> <operator>&amp;&amp;</operator> <name>gzip_program</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>ar_start_gzip</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><name>gzip_program</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<break>break;</break>
+<case>case <expr><name>ARCHIVE</name></expr>:</case>
+<if_stmt><if>if <condition>(<expr><name>name</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>arfd</name> <operator>=</operator> <name>STDOUT_FILENO</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>arcname</name> <operator>=</operator> <name>stdo</name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>(</operator><name>arfd</name> <operator>=</operator> <call><name>open</name><argument_list>(<argument><expr><name>name</name></expr></argument>, <argument><expr><name>AR_MODE</name></expr></argument>, <argument><expr><name>DMOD</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>syswarn</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>errno</name></expr></argument>, <argument><expr><literal type="string">"Failed open to write on %s"</literal></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>can_unlnk</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>arfd</name> <operator>!=</operator> <operator>-</operator><literal type="number">1</literal> <operator>&amp;&amp;</operator> <name>gzip_program</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>ar_start_gzip</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><name>gzip_program</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<break>break;</break>
+<case>case <expr><name>APPND</name></expr>:</case>
+<if_stmt><if>if <condition>(<expr><name>name</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>arfd</name> <operator>=</operator> <name>STDOUT_FILENO</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>arcname</name> <operator>=</operator> <name>stdo</name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>(</operator><name>arfd</name> <operator>=</operator> <call><name>open</name><argument_list>(<argument><expr><name>name</name></expr></argument>, <argument><expr><name>APP_MODE</name></expr></argument>, <argument><expr><name>DMOD</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>syswarn</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>errno</name></expr></argument>, <argument><expr><literal type="string">"Failed open to read/write on %s"</literal></expr></argument>,
+<argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<break>break;</break>
+<case>case <expr><name>COPY</name></expr>:</case>
+
+
+
+<expr_stmt><expr><name>arcname</name> <operator>=</operator> <name>none</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>lstrval</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></switch>
+<if_stmt><if>if <condition>(<expr><name>arfd</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>chdname</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<expr><call><name>chdir</name><argument_list>(<argument><expr><name>chdname</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syswarn</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>errno</name></expr></argument>, <argument><expr><literal type="string">"Failed chdir to %s"</literal></expr></argument>, <argument><expr><name>chdname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt></block_content></block></if></if_stmt>
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>fstat</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>arsb</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syswarn</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>errno</name></expr></argument>, <argument><expr><literal type="string">"Failed stat on %s"</literal></expr></argument>, <argument><expr><name>arcname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>close</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>arfd</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>can_unlnk</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>S_ISDIR</name><argument_list>(<argument><expr><name><name>arsb</name><operator>.</operator><name>st_mode</name></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>paxwarn</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="string">"Cannot write an archive on top of a directory %s"</literal></expr></argument>,
+<argument><expr><name>arcname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>close</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>arfd</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>can_unlnk</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>S_ISCHR</name><argument_list>(<argument><expr><name><name>arsb</name><operator>.</operator><name>st_mode</name></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>artyp</name> <operator>=</operator> <ternary><condition><expr><call><name>ioctl</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><name>MTIOCGET</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>mb</name></expr></argument>)</argument_list></call></expr> ?</condition><then> <expr><name>ISCHR</name></expr> </then><else>: <expr><name>ISTAPE</name></expr></else></ternary></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><call><name>S_ISBLK</name><argument_list>(<argument><expr><name><name>arsb</name><operator>.</operator><name>st_mode</name></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>artyp</name> <operator>=</operator> <name>ISBLK</name></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><operator>(</operator><call><name>lseek</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><operator>(</operator><name>off_t</name><operator>)</operator><literal type="number">0L</literal></expr></argument>, <argument><expr><name>SEEK_CUR</name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator> <operator>&amp;&amp;</operator> <operator>(</operator><name>errno</name> <operator>==</operator> <name>ESPIPE</name><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>artyp</name> <operator>=</operator> <name>ISPIPE</name></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>artyp</name> <operator>=</operator> <name>ISREG</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>artyp</name> <operator>!=</operator> <name>ISREG</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>can_unlnk</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+
+<if_stmt><if>if <condition>(<expr><name>act</name> <operator>==</operator> <name>ARCHIVE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>blksz</name> <operator>=</operator> <name>rdblksz</name> <operator>=</operator> <name>wrblksz</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>lstrval</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+
+
+
+<switch>switch<condition>(<expr><name>artyp</name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>ISTAPE</name></expr>:</case>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<expr_stmt><expr><name>blksz</name> <operator>=</operator> <name>rdblksz</name> <operator>=</operator> <name>MAXBLK</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>ISPIPE</name></expr>:</case>
+<case>case <expr><name>ISBLK</name></expr>:</case>
+<case>case <expr><name>ISCHR</name></expr>:</case>
+
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>act</name> <operator>==</operator> <name>APPND</name><operator>)</operator> <operator>&amp;&amp;</operator> <name>wrblksz</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>blksz</name> <operator>=</operator> <name>rdblksz</name> <operator>=</operator> <name>wrblksz</name></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>arsb</name><operator>.</operator><name>st_blksize</name></name> <operator>&gt;</operator> <literal type="number">0</literal><operator>)</operator> <operator>&amp;&amp;</operator> <operator>(</operator><name><name>arsb</name><operator>.</operator><name>st_blksize</name></name> <operator>&lt;</operator> <name>MAXBLK</name><operator>)</operator> <operator>&amp;&amp;</operator>
+<operator>(</operator><operator>(</operator><name><name>arsb</name><operator>.</operator><name>st_blksize</name></name> <operator>%</operator> <name>BLKMULT</name><operator>)</operator> <operator>==</operator> <literal type="number">0</literal><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>rdblksz</name> <operator>=</operator> <name><name>arsb</name><operator>.</operator><name>st_blksize</name></name></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>rdblksz</name> <operator>=</operator> <name>DEVBLK</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>act</name> <operator>==</operator> <name>APPND</name><operator>)</operator> <operator>||</operator> <operator>(</operator><name>artyp</name> <operator>==</operator> <name>ISCHR</name><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>blksz</name> <operator>=</operator> <name>rdblksz</name></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>blksz</name> <operator>=</operator> <name>MAXBLK</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<break>break;</break>
+<case>case <expr><name>ISREG</name></expr>:</case>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>act</name> <operator>==</operator> <name>APPND</name><operator>)</operator> <operator>&amp;&amp;</operator> <name>wrblksz</name> <operator>&amp;&amp;</operator> <operator>(</operator><operator>(</operator><name><name>arsb</name><operator>.</operator><name>st_size</name></name><operator>%</operator><name>wrblksz</name><operator>)</operator><operator>==</operator><literal type="number">0</literal><operator>)</operator></expr>)</condition><block>{<block_content>
+<expr_stmt><expr><name>blksz</name> <operator>=</operator> <name>rdblksz</name> <operator>=</operator> <name>wrblksz</name></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+
+
+
+<for>for <control>(<init><expr><name>rdblksz</name> <operator>=</operator> <name>MAXBLK</name></expr>;</init> <condition><expr><name>rdblksz</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>;</condition> <incr><expr><name>rdblksz</name> <operator>-=</operator> <name>BLKMULT</name></expr></incr>)</control><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>arsb</name><operator>.</operator><name>st_size</name></name> <operator>%</operator> <name>rdblksz</name><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt></block_content></block></for>
+
+
+
+<if_stmt><if>if <condition>(<expr><name>rdblksz</name> <operator>&lt;=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>rdblksz</name> <operator>=</operator> <name>FILEBLK</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+
+<if_stmt><if>if <condition>(<expr><name>act</name> <operator>==</operator> <name>APPND</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>blksz</name> <operator>=</operator> <name>rdblksz</name></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>blksz</name> <operator>=</operator> <name>MAXBLK</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<break>break;</break>
+<default>default:</default>
+
+
+
+<expr_stmt><expr><name>blksz</name> <operator>=</operator> <name>rdblksz</name> <operator>=</operator> <name>BLKMULT</name></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></switch>
+<expr_stmt><expr><name>lstrval</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><name>void</name></type>
+<name>ar_close</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>status</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>arfd</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>did_io</name> <operator>=</operator> <name>io_ok</name> <operator>=</operator> <name>flcnt</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>vflag</name> <operator>&amp;&amp;</operator> <operator>(</operator><name>artyp</name> <operator>==</operator> <name>ISTAPE</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>vfpart</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>putc</name><argument_list>(<argument><expr><literal type="char">'\n'</literal></expr></argument>, <argument><expr><name>listf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>fprintf</name><argument_list>(<argument><expr><name>listf</name></expr></argument>,
+<argument><expr><literal type="string">"%s: Waiting for tape drive close to complete..."</literal></expr></argument>,
+<argument><expr><name>argv0</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>fflush</name><argument_list>(<argument><expr><name>listf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>can_unlnk</name> <operator>&amp;&amp;</operator> <operator>(</operator><call><name>fstat</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>arsb</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal><operator>)</operator> <operator>&amp;&amp;</operator> <operator>(</operator><call><name>S_ISREG</name><argument_list>(<argument><expr><name><name>arsb</name><operator>.</operator><name>st_mode</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&amp;&amp;</operator>
+<operator>(</operator><name><name>arsb</name><operator>.</operator><name>st_size</name></name> <operator>==</operator> <literal type="number">0</literal><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>unlink</name><argument_list>(<argument><expr><name>arcname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>can_unlnk</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>act</name> <operator>==</operator> <name>LIST</name> <operator>||</operator> <name>act</name> <operator>==</operator> <name>EXTRACT</name><operator>)</operator> <operator>&amp;&amp;</operator> <name>nflag</name> <operator>&amp;&amp;</operator> <name>zpid</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>kill</name><argument_list>(<argument><expr><name>zpid</name></expr></argument>, <argument><expr><name>SIGINT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>close</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>zpid</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>waitpid</name><argument_list>(<argument><expr><name>zpid</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>status</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>vflag</name> <operator>&amp;&amp;</operator> <operator>(</operator><name>artyp</name> <operator>==</operator> <name>ISTAPE</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>fputs</name><argument_list>(<argument><expr><literal type="string">"done.\n"</literal></expr></argument>, <argument><expr><name>listf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>vfpart</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>fflush</name><argument_list>(<argument><expr><name>listf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>arfd</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>io_ok</name> <operator>&amp;&amp;</operator> <operator>!</operator><name>did_io</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>flcnt</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>did_io</name> <operator>=</operator> <name>io_ok</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>frmt</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>++</operator><name>arvol</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>vflag</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>flcnt</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>vfpart</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>putc</name><argument_list>(<argument><expr><literal type="char">'\n'</literal></expr></argument>, <argument><expr><name>listf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>vfpart</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>frmt</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>NET2_STAT</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>fprintf</name><argument_list>(<argument><expr><name>listf</name></expr></argument>, <argument><expr><literal type="string">"%s: unknown format, %lu bytes skipped.\n"</literal></expr></argument>,
+<argument><expr><name>argv0</name></expr></argument>, <argument><expr><name>rdcnt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>fprintf</name><argument_list>(<argument><expr><name>listf</name></expr></argument>, <argument><expr><literal type="string">"%s: unknown format, %ju bytes skipped.\n"</literal></expr></argument>,
+<argument><expr><name>argv0</name></expr></argument>, <argument><expr><operator>(</operator><name>uintmax_t</name><operator>)</operator><name>rdcnt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>fflush</name><argument_list>(<argument><expr><name>listf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>flcnt</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>strcmp</name><argument_list>(<argument><expr><name>NM_CPIO</name></expr></argument>, <argument><expr><name>argv0</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>fprintf</name><argument_list>(<argument><expr><name>listf</name></expr></argument>, <argument><expr><literal type="string">"%llu blocks\n"</literal></expr></argument>,
+<argument><expr><operator>(</operator><name>unsigned</name> <name>long</name> <name>long</name><operator>)</operator><operator>(</operator><operator>(</operator><ternary><condition><expr><name>rdcnt</name></expr> ?</condition><then> <expr><name>rdcnt</name></expr> </then><else>: <expr><name>wrcnt</name></expr></else></ternary><operator>)</operator> <operator>/</operator> <literal type="number">5120</literal><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><call><name>strcmp</name><argument_list>(<argument><expr><name>NM_TAR</name></expr></argument>, <argument><expr><name>argv0</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>fprintf</name><argument_list>(<argument><expr><name>listf</name></expr></argument>,
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>NET2_STAT</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<argument><expr><literal type="string">"%s: %s vol %d, %lu files, %lu bytes read, %lu bytes written.\n"</literal></expr></argument>,
+<argument><expr><name>argv0</name></expr></argument>, <argument><expr><name><name>frmt</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><name>arvol</name><operator>-</operator><literal type="number">1</literal></expr></argument>, <argument><expr><name>flcnt</name></expr></argument>, <argument><expr><name>rdcnt</name></expr></argument>, <argument><expr><name>wrcnt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><literal type="string">"%s: %s vol %d, %ju files, %ju bytes read, %ju bytes written.\n"</literal></expr><operator>,</operator>
+<expr><name>argv0</name></expr><operator>,</operator> <expr><name><name>frmt</name><operator>-&gt;</operator><name>name</name></name></expr><operator>,</operator> <expr><name>arvol</name><operator>-</operator><literal type="number">1</literal></expr><operator>,</operator> <expr><operator>(</operator><name>uintmax_t</name><operator>)</operator><name>flcnt</name></expr><operator>,</operator>
+<expr><operator>(</operator><name>uintmax_t</name><operator>)</operator><name>rdcnt</name></expr><operator>,</operator> <expr><operator>(</operator><name>uintmax_t</name><operator>)</operator><name>wrcnt</name></expr></expr_stmt>)</block_content></block>;</function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>fflush</name><argument_list>(<argument><expr><name>listf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>flcnt</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+}
+
+
+
+
+
+
+
+
+void
+<macro><name>ar_drain</name><argument_list>(<argument>void</argument>)</argument_list></macro>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>res</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name><name>drbuf</name><index>[<expr><name>MAXBLK</name></expr>]</index></name></decl>;</decl_stmt>
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>artyp</name> <operator>!=</operator> <name>ISPIPE</name><operator>)</operator> <operator>||</operator> <operator>(</operator><name>lstrval</name> <operator>&lt;=</operator> <literal type="number">0</literal><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+
+
+
+<while>while <condition>(<expr><operator>(</operator><name>res</name> <operator>=</operator> <call><name>read</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><name>drbuf</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>drbuf</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<empty_stmt>;</empty_stmt></block_content></block></while>
+<expr_stmt><expr><name>lstrval</name> <operator>=</operator> <name>res</name></expr>;</expr_stmt>
+</block_content>}</block>
+
+
+
+
+
+
+
+
+
+
+
+<function><type><name>int</name></type>
+<name>ar_set_wr</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>off_t</name></type> <name>cpos</name></decl>;</decl_stmt>
+
+
+
+
+
+<expr_stmt><expr><name>wr_trail</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>artyp</name> <operator>!=</operator> <name>ISREG</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return<expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><operator>(</operator><name>cpos</name> <operator>=</operator> <call><name>lseek</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><operator>(</operator><name>off_t</name><operator>)</operator><literal type="number">0L</literal></expr></argument>, <argument><expr><name>SEEK_CUR</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal><operator>)</operator> <operator>||</operator>
+<operator>(</operator><call><name>ftruncate</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><name>cpos</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syswarn</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>errno</name></expr></argument>, <argument><expr><literal type="string">"Unable to truncate archive file"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return<expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+<function><type><name>int</name></type>
+<name>ar_app_ok</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>artyp</name> <operator>==</operator> <name>ISPIPE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>paxwarn</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="string">"Cannot append to an archive obtained from a pipe."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>invld_rec</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return<expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>paxwarn</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>,<argument><expr><literal type="string">"Cannot append, device record size %d does not support %s spec"</literal></expr></argument>,
+<argument><expr><name>rdblksz</name></expr></argument>, <argument><expr><name>argv0</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+<function><type><name>int</name></type>
+<name>ar_read</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>cnt</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>res</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>lstrval</name> <operator>&lt;=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return<expr><operator>(</operator><name>lstrval</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+
+
+
+<switch>switch <condition>(<expr><name>artyp</name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>ISTAPE</name></expr>:</case>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>res</name> <operator>=</operator> <call><name>read</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><name>buf</name></expr></argument>, <argument><expr><name>cnt</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+
+
+
+
+
+
+
+<expr_stmt><expr><name>io_ok</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>res</name> <operator>!=</operator> <name>rdblksz</name></expr>)</condition> <block>{<block_content>
+
+
+
+
+
+
+
+
+
+<expr_stmt><expr><name>rdblksz</name> <operator>=</operator> <name>res</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>rdblksz</name> <operator>%</operator> <name>BLKMULT</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>invld_rec</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<return>return<expr><operator>(</operator><name>res</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<break>break;</break>
+<case>case <expr><name>ISREG</name></expr>:</case>
+<case>case <expr><name>ISBLK</name></expr>:</case>
+<case>case <expr><name>ISCHR</name></expr>:</case>
+<case>case <expr><name>ISPIPE</name></expr>:</case>
+<default>default:</default>
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>res</name> <operator>=</operator> <call><name>read</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><name>buf</name></expr></argument>, <argument><expr><name>cnt</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>io_ok</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><name>res</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<break>break;</break>
+</block_content>}</block></switch>
+
+
+
+
+<expr_stmt><expr><name>lstrval</name> <operator>=</operator> <name>res</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>res</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>syswarn</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>errno</name></expr></argument>, <argument><expr><literal type="string">"Failed read on archive volume %d"</literal></expr></argument>, <argument><expr><name>arvol</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>paxwarn</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="string">"End of archive volume %d reached"</literal></expr></argument>, <argument><expr><name>arvol</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<return>return<expr><operator>(</operator><name>res</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><name>int</name></type>
+<name>ar_write</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>bsz</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>res</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>off_t</name></type> <name>cpos</name></decl>;</decl_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>lstrval</name> <operator>&lt;=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return<expr><operator>(</operator><name>lstrval</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>res</name> <operator>=</operator> <call><name>write</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><name>buf</name></expr></argument>, <argument><expr><name>bsz</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>bsz</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>wr_trail</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>io_ok</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><name>bsz</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>res</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>lstrval</name> <operator>=</operator> <name>res</name></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>lstrval</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<switch>switch <condition>(<expr><name>artyp</name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>ISREG</name></expr>:</case>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>res</name> <operator>&gt;</operator> <literal type="number">0</literal><operator>)</operator> <operator>&amp;&amp;</operator> <operator>(</operator><name>res</name> <operator>%</operator> <name>BLKMULT</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>cpos</name> <operator>=</operator> <call><name>lseek</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><operator>(</operator><name>off_t</name><operator>)</operator><literal type="number">0L</literal></expr></argument>, <argument><expr><name>SEEK_CUR</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>cpos</name> <operator>-=</operator> <operator>(</operator><name>off_t</name><operator>)</operator><name>res</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>ftruncate</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><name>cpos</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>res</name> <operator>=</operator> <name>lstrval</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>res</name> <operator>&gt;=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>errno</name> <operator>==</operator> <name>ENOSPC</name><operator>)</operator> <operator>||</operator> <operator>(</operator><name>errno</name> <operator>==</operator> <name>EFBIG</name><operator>)</operator> <operator>||</operator> <operator>(</operator><name>errno</name> <operator>==</operator> <name>EDQUOT</name><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>res</name> <operator>=</operator> <name>lstrval</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<break>break;</break>
+<case>case <expr><name>ISTAPE</name></expr>:</case>
+<case>case <expr><name>ISCHR</name></expr>:</case>
+<case>case <expr><name>ISBLK</name></expr>:</case>
+<if_stmt><if>if <condition>(<expr><name>res</name> <operator>&gt;=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>errno</name> <operator>==</operator> <name>EACCES</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>paxwarn</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="string">"Write failed, archive is write protected."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>res</name> <operator>=</operator> <name>lstrval</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>errno</name> <operator>==</operator> <name>ENOSPC</name><operator>)</operator> <operator>||</operator> <operator>(</operator><name>errno</name> <operator>==</operator> <name>EIO</name><operator>)</operator> <operator>||</operator> <operator>(</operator><name>errno</name> <operator>==</operator> <name>ENXIO</name><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>res</name> <operator>=</operator> <name>lstrval</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<break>break;</break>
+<case>case <expr><name>ISPIPE</name></expr>:</case>
+<default>default:</default>
+
+
+
+<break>break;</break>
+</block_content>}</block></switch>
+
+
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>res</name> <operator>&gt;=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>res</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>wr_trail</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>io_ok</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>wr_trail</name> <operator>&amp;&amp;</operator> <operator>(</operator><name>res</name> <operator>&lt;=</operator> <literal type="number">0</literal><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>paxwarn</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>,<argument><expr><literal type="string">"Unable to append, trailer re-write failed. Quitting."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><name>res</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>res</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>paxwarn</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="string">"End of archive volume %d reached"</literal></expr></argument>, <argument><expr><name>arvol</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name>res</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>syswarn</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>errno</name></expr></argument>, <argument><expr><literal type="string">"Failed write to archive volume: %d"</literal></expr></argument>, <argument><expr><name>arvol</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><operator>!</operator><name><name>frmt</name><operator>-&gt;</operator><name>blkalgn</name></name> <operator>||</operator> <operator>(</operator><operator>(</operator><name>res</name> <operator>%</operator> <name><name>frmt</name><operator>-&gt;</operator><name>blkalgn</name></name><operator>)</operator> <operator>==</operator> <literal type="number">0</literal><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>paxwarn</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>,<argument><expr><literal type="string">"WARNING: partial archive write. Archive MAY BE FLAWED"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>paxwarn</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>,<argument><expr><literal type="string">"WARNING: partial archive write. Archive IS FLAWED"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<return>return<expr><operator>(</operator><name>res</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+<function><type><name>int</name></type>
+<name>ar_rdsync</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>long</name></type> <name>fsbz</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>off_t</name></type> <name>cpos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>off_t</name></type> <name>mpos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>mtop</name></name></type> <name>mb</name></decl>;</decl_stmt>
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>done</name> <operator>&gt;</operator> <literal type="number">0</literal><operator>)</operator> <operator>||</operator> <operator>(</operator><name>lstrval</name> <operator>==</operator> <literal type="number">0</literal><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>act</name> <operator>==</operator> <name>APPND</name><operator>)</operator> <operator>||</operator> <operator>(</operator><name>act</name> <operator>==</operator> <name>ARCHIVE</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>paxwarn</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="string">"Cannot allow updates to an archive with flaws."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>io_ok</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>did_io</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<switch>switch<condition>(<expr><name>artyp</name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>ISTAPE</name></expr>:</case>
+
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>io_ok</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>io_ok</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>lstrval</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>mb</name><operator>.</operator><name>mt_op</name></name> <operator>=</operator> <name>MTFSR</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>mb</name><operator>.</operator><name>mt_count</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>ioctl</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><name>MTIOCTOP</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>mb</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>lstrval</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>ISREG</name></expr>:</case>
+<case>case <expr><name>ISCHR</name></expr>:</case>
+<case>case <expr><name>ISBLK</name></expr>:</case>
+
+
+
+<expr_stmt><expr><name>io_ok</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><operator>(</operator><name>fsbz</name> <operator>=</operator> <name><name>arsb</name><operator>.</operator><name>st_blksize</name></name><operator>)</operator> <operator>&lt;=</operator> <literal type="number">0</literal><operator>)</operator> <operator>||</operator> <operator>(</operator><name>artyp</name> <operator>!=</operator> <name>ISREG</name><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>fsbz</name> <operator>=</operator> <name>BLKMULT</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>cpos</name> <operator>=</operator> <call><name>lseek</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><operator>(</operator><name>off_t</name><operator>)</operator><literal type="number">0L</literal></expr></argument>, <argument><expr><name>SEEK_CUR</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>mpos</name> <operator>=</operator> <name>fsbz</name> <operator>-</operator> <operator>(</operator><name>cpos</name> <operator>%</operator> <operator>(</operator><name>off_t</name><operator>)</operator><name>fsbz</name><operator>)</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>lseek</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><name>mpos</name></expr></argument>, <argument><expr><name>SEEK_CUR</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>lstrval</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>ISPIPE</name></expr>:</case>
+<default>default:</default>
+
+
+
+<expr_stmt><expr><name>io_ok</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></switch>
+<if_stmt><if>if <condition>(<expr><name>lstrval</name> <operator>&lt;=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>paxwarn</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="string">"Unable to recover from an archive read failure."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>paxwarn</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="string">"Attempting to recover from an archive read failure."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+<function><type><name>int</name></type>
+<name>ar_fow</name><parameter_list>(<parameter><decl><type><name>off_t</name></type> <name>sksz</name></decl></parameter>, <parameter><decl><type><name>off_t</name> <modifier>*</modifier></type><name>skipped</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>off_t</name></type> <name>cpos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>off_t</name></type> <name>mpos</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>skipped</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>sksz</name> <operator>&lt;=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return<expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>lstrval</name> <operator>&lt;=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return<expr><operator>(</operator><name>lstrval</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>artyp</name> <operator>!=</operator> <name>ISREG</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return<expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>cpos</name> <operator>=</operator> <call><name>lseek</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><operator>(</operator><name>off_t</name><operator>)</operator><literal type="number">0L</literal></expr></argument>, <argument><expr><name>SEEK_CUR</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&gt;=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>mpos</name> <operator>=</operator> <name>cpos</name> <operator>+</operator> <name>sksz</name><operator>)</operator> <operator>&gt;</operator> <name><name>arsb</name><operator>.</operator><name>st_size</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>skipped</name> <operator>=</operator> <name><name>arsb</name><operator>.</operator><name>st_size</name></name> <operator>-</operator> <name>cpos</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>mpos</name> <operator>=</operator> <name><name>arsb</name><operator>.</operator><name>st_size</name></name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><operator>*</operator><name>skipped</name> <operator>=</operator> <name>sksz</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>lseek</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><name>mpos</name></expr></argument>, <argument><expr><name>SEEK_SET</name></expr></argument>)</argument_list></call> <operator>&gt;=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return<expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>syswarn</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>errno</name></expr></argument>, <argument><expr><literal type="string">"Forward positioning operation on archive failed"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>lstrval</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><name>int</name></type>
+<name>ar_rev</name><parameter_list>(<parameter><decl><type><name>off_t</name></type> <name>sksz</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>off_t</name></type> <name>cpos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>mtop</name></name></type> <name>mb</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>phyblk</name></decl>;</decl_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>lstrval</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return<expr><operator>(</operator><name>lstrval</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<switch>switch<condition>(<expr><name>artyp</name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>ISPIPE</name></expr>:</case>
+<if_stmt><if>if <condition>(<expr><name>sksz</name> <operator>&lt;=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+
+
+
+<expr_stmt><expr><call><name>paxwarn</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="string">"Reverse positioning on pipes is not supported."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>lstrval</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+<case>case <expr><name>ISREG</name></expr>:</case>
+<case>case <expr><name>ISBLK</name></expr>:</case>
+<case>case <expr><name>ISCHR</name></expr>:</case>
+<default>default:</default>
+<if_stmt><if>if <condition>(<expr><name>sksz</name> <operator>&lt;=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>cpos</name> <operator>=</operator> <call><name>lseek</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><operator>(</operator><name>off_t</name><operator>)</operator><literal type="number">0L</literal></expr></argument>, <argument><expr><name>SEEK_CUR</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syswarn</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>errno</name></expr></argument>,
+<argument><expr><literal type="string">"Unable to obtain current archive byte offset"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>lstrval</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>cpos</name> <operator>-=</operator> <name>sksz</name><operator>)</operator> <operator>&lt;</operator> <operator>(</operator><name>off_t</name><operator>)</operator><literal type="number">0L</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>arvol</name> <operator>&gt;</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+
+
+
+<expr_stmt><expr><call><name>paxwarn</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>,<argument><expr><literal type="string">"Reverse position on previous volume."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>lstrval</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>cpos</name> <operator>=</operator> <operator>(</operator><name>off_t</name><operator>)</operator><literal type="number">0L</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>lseek</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><name>cpos</name></expr></argument>, <argument><expr><name>SEEK_SET</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syswarn</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>errno</name></expr></argument>, <argument><expr><literal type="string">"Unable to seek archive backwards"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>lstrval</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<break>break;</break>
+<case>case <expr><name>ISTAPE</name></expr>:</case>
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>phyblk</name> <operator>=</operator> <call><name>get_phys</name><argument_list>()</argument_list></call><operator>)</operator> <operator>&lt;=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>lstrval</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<expr_stmt><expr><name>rdblksz</name> <operator>=</operator> <name>phyblk</name></expr>;</expr_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>sksz</name> <operator>&lt;=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>sksz</name> <operator>%</operator> <name>phyblk</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>paxwarn</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>,
+<argument><expr><literal type="string">"Tape drive unable to backspace requested amount"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>lstrval</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+<expr_stmt><expr><name><name>mb</name><operator>.</operator><name>mt_op</name></name> <operator>=</operator> <name>MTBSR</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>mb</name><operator>.</operator><name>mt_count</name></name> <operator>=</operator> <name>sksz</name><operator>/</operator><name>phyblk</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>ioctl</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><name>MTIOCTOP</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>mb</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syswarn</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>,<argument><expr><name>errno</name></expr></argument>, <argument><expr><literal type="string">"Unable to backspace tape %d blocks."</literal></expr></argument>,
+<argument><expr><name><name>mb</name><operator>.</operator><name>mt_count</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>lstrval</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<break>break;</break>
+</block_content>}</block></switch>
+<expr_stmt><expr><name>lstrval</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>get_phys</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>padsz</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>res</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>phyblk</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>mtop</name></name></type> <name>mb</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name><name>scbuf</name><index>[<expr><name>MAXBLK</name></expr>]</index></name></decl>;</decl_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>lstrval</name> <operator>==</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+
+
+
+
+<while>while <condition>(<expr><operator>(</operator><name>res</name> <operator>=</operator> <call><name>read</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><name>scbuf</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>scbuf</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>padsz</name> <operator>+=</operator> <name>res</name></expr>;</expr_stmt></block_content></block></while>
+<if_stmt><if>if <condition>(<expr><name>res</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syswarn</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>errno</name></expr></argument>, <argument><expr><literal type="string">"Unable to locate tape filemark."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<expr_stmt><expr><name><name>mb</name><operator>.</operator><name>mt_op</name></name> <operator>=</operator> <name>MTBSF</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>mb</name><operator>.</operator><name>mt_count</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>ioctl</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><name>MTIOCTOP</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>mb</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syswarn</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>errno</name></expr></argument>, <argument><expr><literal type="string">"Unable to backspace over tape filemark."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<expr_stmt><expr><name><name>mb</name><operator>.</operator><name>mt_op</name></name> <operator>=</operator> <name>MTBSR</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>mb</name><operator>.</operator><name>mt_count</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>ioctl</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><name>MTIOCTOP</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>mb</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syswarn</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>errno</name></expr></argument>, <argument><expr><literal type="string">"Unable to backspace over last tape block."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>phyblk</name> <operator>=</operator> <call><name>read</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><name>scbuf</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>scbuf</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syswarn</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>errno</name></expr></argument>, <argument><expr><literal type="string">"Cannot determine archive tape blocksize."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<while>while <condition>(<expr><operator>(</operator><name>res</name> <operator>=</operator> <call><name>read</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><name>scbuf</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>scbuf</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<empty_stmt>;</empty_stmt></block_content></block></while>
+<if_stmt><if>if <condition>(<expr><name>res</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syswarn</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>errno</name></expr></argument>, <argument><expr><literal type="string">"Unable to locate tape filemark."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>mb</name><operator>.</operator><name>mt_op</name></name> <operator>=</operator> <name>MTBSF</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>mb</name><operator>.</operator><name>mt_count</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>ioctl</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><name>MTIOCTOP</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>mb</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syswarn</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>errno</name></expr></argument>, <argument><expr><literal type="string">"Unable to backspace over tape filemark."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+<expr_stmt><expr><name>lstrval</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>padsz</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return<expr><operator>(</operator><name>phyblk</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>padsz</name> <operator>%</operator> <name>phyblk</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>paxwarn</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="string">"Tape drive unable to backspace requested amount"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<expr_stmt><expr><name><name>mb</name><operator>.</operator><name>mt_op</name></name> <operator>=</operator> <name>MTBSR</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>mb</name><operator>.</operator><name>mt_count</name></name> <operator>=</operator> <name>padsz</name><operator>/</operator><name>phyblk</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>ioctl</name><argument_list>(<argument><expr><name>arfd</name></expr></argument>, <argument><expr><name>MTIOCTOP</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>mb</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>syswarn</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>,<argument><expr><name>errno</name></expr></argument>,<argument><expr><literal type="string">"Unable to backspace tape over %d pad blocks"</literal></expr></argument>,
+<argument><expr><name><name>mb</name><operator>.</operator><name>mt_count</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return<expr><operator>(</operator><name>phyblk</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+<function><type><name>int</name></type>
+<name>ar_next</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type><name>arcbuf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name><name>buf</name><index>[<expr><name>PAXPATHLEN</name><operator>+</operator><literal type="number">2</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>sigset_t</name></type> <name>o_mask</name></decl>;</decl_stmt>
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>sigprocmask</name><argument_list>(<argument><expr><name>SIG_BLOCK</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>s_mask</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>o_mask</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>syswarn</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>errno</name></expr></argument>, <argument><expr><literal type="string">"Unable to set signal mask"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>ar_close</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>sigprocmask</name><argument_list>(<argument><expr><name>SIG_SETMASK</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>o_mask</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>syswarn</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>errno</name></expr></argument>, <argument><expr><literal type="string">"Unable to restore signal mask"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>done</name> <operator>||</operator> <operator>!</operator><name>wr_trail</name> <operator>||</operator> <name>Oflag</name> <operator>||</operator> <call><name>strcmp</name><argument_list>(<argument><expr><name>NM_TAR</name></expr></argument>, <argument><expr><name>argv0</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>tty_prnt</name><argument_list>(<argument><expr><literal type="string">"\nATTENTION! %s archive volume change required.\n"</literal></expr></argument>, <argument><expr><name>argv0</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>strcmp</name><argument_list>(<argument><expr><name>arcname</name></expr></argument>, <argument><expr><name>stdo</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <call><name>strcmp</name><argument_list>(<argument><expr><name>arcname</name></expr></argument>, <argument><expr><name>stdn</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <operator>(</operator><name>artyp</name> <operator>!=</operator> <name>ISREG</name><operator>)</operator>
+<operator>&amp;&amp;</operator> <operator>(</operator><name>artyp</name> <operator>!=</operator> <name>ISPIPE</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>artyp</name> <operator>==</operator> <name>ISTAPE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>tty_prnt</name><argument_list>(<argument><expr><literal type="string">"%s ready for archive tape volume: %d\n"</literal></expr></argument>,
+<argument><expr><name>arcname</name></expr></argument>, <argument><expr><name>arvol</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>tty_prnt</name><argument_list>(<argument><expr><literal type="string">"Load the NEXT TAPE on the tape drive"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>tty_prnt</name><argument_list>(<argument><expr><literal type="string">"%s ready for archive volume: %d\n"</literal></expr></argument>,
+<argument><expr><name>arcname</name></expr></argument>, <argument><expr><name>arvol</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>tty_prnt</name><argument_list>(<argument><expr><literal type="string">"Load the NEXT STORAGE MEDIA (if required)"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>act</name> <operator>==</operator> <name>ARCHIVE</name><operator>)</operator> <operator>||</operator> <operator>(</operator><name>act</name> <operator>==</operator> <name>APPND</name><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>tty_prnt</name><argument_list>(<argument><expr><literal type="string">" and make sure it is WRITE ENABLED.\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>tty_prnt</name><argument_list>(<argument><expr><literal type="string">"\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<for>for<control>(<init>;</init><condition>;</condition><incr/>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>tty_prnt</name><argument_list>(<argument><expr><literal type="string">"Type \"y\" to continue, \".\" to quit %s,"</literal></expr></argument>,
+<argument><expr><name>argv0</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>tty_prnt</name><argument_list>(<argument><expr><literal type="string">" or \"s\" to switch to new device.\nIf you"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>tty_prnt</name><argument_list>(<argument><expr><literal type="string">" cannot change storage media, type \"s\"\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>tty_prnt</name><argument_list>(<argument><expr><literal type="string">"Is the device ready and online? &gt; "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><call><name>tty_read</name><argument_list>(<argument><expr><name>buf</name></expr></argument>,<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>&lt;</operator><literal type="number">0</literal><operator>)</operator> <operator>||</operator> <operator>!</operator><call><name>strcmp</name><argument_list>(<argument><expr><name>buf</name></expr></argument>,<argument><expr><literal type="string">"."</literal></expr></argument>)</argument_list></call></expr>)</condition><block>{<block_content>
+<expr_stmt><expr><name>done</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>lstrval</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>tty_prnt</name><argument_list>(<argument><expr><literal type="string">"Quitting %s!\n"</literal></expr></argument>, <argument><expr><name>argv0</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>vfpart</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>buf</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'\0'</literal><operator>)</operator> <operator>||</operator> <operator>(</operator><name><name>buf</name><index>[<expr><literal type="number">1</literal></expr>]</index></name> <operator>!=</operator> <literal type="char">'\0'</literal><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>tty_prnt</name><argument_list>(<argument><expr><literal type="string">"%s unknown command, try again\n"</literal></expr></argument>,<argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+
+<switch>switch <condition>(<expr><name><name>buf</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr>)</condition> <block>{<block_content>
+<case>case <expr><literal type="char">'y'</literal></expr>:</case>
+<case>case <expr><literal type="char">'Y'</literal></expr>:</case>
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>ar_open</name><argument_list>(<argument><expr><name>arcname</name></expr></argument>)</argument_list></call> <operator>&gt;=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return<expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>tty_prnt</name><argument_list>(<argument><expr><literal type="string">"Cannot re-open %s, try again\n"</literal></expr></argument>,
+<argument><expr><name>arcname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+<case>case <expr><literal type="char">'s'</literal></expr>:</case>
+<case>case <expr><literal type="char">'S'</literal></expr>:</case>
+
+
+
+<expr_stmt><expr><call><name>tty_prnt</name><argument_list>(<argument><expr><literal type="string">"Switching to a different archive\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<default>default:</default>
+<expr_stmt><expr><call><name>tty_prnt</name><argument_list>(<argument><expr><literal type="string">"%s unknown command, try again\n"</literal></expr></argument>,<argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></switch>
+<break>break;</break>
+</block_content>}</block></for>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>tty_prnt</name><argument_list>(<argument><expr><literal type="string">"Ready for archive volume: %d\n"</literal></expr></argument>, <argument><expr><name>arvol</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+
+
+
+<for>for <control>(<init>;</init><condition>;</condition><incr/>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>tty_prnt</name><argument_list>(<argument><expr><literal type="string">"Input archive name or \".\" to quit %s.\n"</literal></expr></argument>, <argument><expr><name>argv0</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>tty_prnt</name><argument_list>(<argument><expr><literal type="string">"Archive name &gt; "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><call><name>tty_read</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal><operator>)</operator> <operator>||</operator> <operator>!</operator><call><name>strcmp</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><literal type="string">"."</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>done</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>lstrval</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>tty_prnt</name><argument_list>(<argument><expr><literal type="string">"Quitting %s!\n"</literal></expr></argument>, <argument><expr><name>argv0</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>vfpart</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>buf</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'\0'</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>tty_prnt</name><argument_list>(<argument><expr><literal type="string">"Empty file name, try again\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>strcmp</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><literal type="string">".."</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>tty_prnt</name><argument_list>(<argument><expr><literal type="string">"Illegal file name: .. try again\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>strlen</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call> <operator>&gt;</operator> <name>PAXPATHLEN</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>tty_prnt</name><argument_list>(<argument><expr><literal type="string">"File name too long, try again\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>ar_open</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call> <operator>&gt;=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>arcbuf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>arcbuf</name> <operator>=</operator> <call><name>strdup</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>done</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>lstrval</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>paxwarn</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="string">"Cannot save archive name."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return<expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>arcname</name> <operator>=</operator> <name>arcbuf</name></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>tty_prnt</name><argument_list>(<argument><expr><literal type="string">"Cannot open %s, try again\n"</literal></expr></argument>, <argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></for>
+<return>return<expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+<function><type><name>void</name></type>
+<name>ar_start_gzip</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>fd</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>gzip_prog</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>wr</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name><name>fds</name><index>[<expr><literal type="number">2</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>gzip_flags</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>pipe</name><argument_list>(<argument><expr><name>fds</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="string">"could not pipe"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>zpid</name> <operator>=</operator> <call><name>fork</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>zpid</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="string">"could not fork"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>zpid</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>wr</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>dup2</name><argument_list>(<argument><expr><name><name>fds</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>, <argument><expr><name>fd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>dup2</name><argument_list>(<argument><expr><name><name>fds</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>, <argument><expr><name>fd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<expr_stmt><expr><call><name>close</name><argument_list>(<argument><expr><name><name>fds</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>close</name><argument_list>(<argument><expr><name><name>fds</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>wr</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>dup2</name><argument_list>(<argument><expr><name><name>fds</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>, <argument><expr><name>STDIN_FILENO</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dup2</name><argument_list>(<argument><expr><name>fd</name></expr></argument>, <argument><expr><name>STDOUT_FILENO</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>gzip_flags</name> <operator>=</operator> <literal type="string">"-c"</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>dup2</name><argument_list>(<argument><expr><name><name>fds</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>, <argument><expr><name>STDOUT_FILENO</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dup2</name><argument_list>(<argument><expr><name>fd</name></expr></argument>, <argument><expr><name>STDIN_FILENO</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>gzip_flags</name> <operator>=</operator> <literal type="string">"-dc"</literal></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><call><name>close</name><argument_list>(<argument><expr><name><name>fds</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>close</name><argument_list>(<argument><expr><name><name>fds</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>execlp</name><argument_list>(<argument><expr><name>gzip_prog</name></expr></argument>, <argument><expr><name>gzip_prog</name></expr></argument>, <argument><expr><name>gzip_flags</name></expr></argument>,
+<argument><expr><operator>(</operator><name>char</name> <operator>*</operator><operator>)</operator><name>NULL</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="string">"could not exec"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></function>
+</unit>

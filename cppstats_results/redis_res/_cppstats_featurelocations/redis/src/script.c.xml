@@ -1,0 +1,542 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/results/redis_res/_cppstats_featurelocations/redis/src/script.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"server.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"script.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"cluster.h"</cpp:file></cpp:include>
+
+<decl_stmt><decl><type><name>scriptFlag</name></type> <name><name>scripts_flags_def</name><index>[]</index></name> <init>= <expr><block>{
+<expr><block>{<expr><operator>.</operator><name>flag</name> <operator>=</operator> <name>SCRIPT_FLAG_NO_WRITES</name></expr>, <expr><operator>.</operator><name>str</name> <operator>=</operator> <literal type="string">"no-writes"</literal></expr>}</block></expr>,
+<expr><block>{<expr><operator>.</operator><name>flag</name> <operator>=</operator> <name>SCRIPT_FLAG_ALLOW_OOM</name></expr>, <expr><operator>.</operator><name>str</name> <operator>=</operator> <literal type="string">"allow-oom"</literal></expr>}</block></expr>,
+<expr><block>{<expr><operator>.</operator><name>flag</name> <operator>=</operator> <name>SCRIPT_FLAG_ALLOW_STALE</name></expr>, <expr><operator>.</operator><name>str</name> <operator>=</operator> <literal type="string">"allow-stale"</literal></expr>}</block></expr>,
+<expr><block>{<expr><operator>.</operator><name>flag</name> <operator>=</operator> <name>SCRIPT_FLAG_NO_CLUSTER</name></expr>, <expr><operator>.</operator><name>str</name> <operator>=</operator> <literal type="string">"no-cluster"</literal></expr>}</block></expr>,
+<expr><block>{<expr><operator>.</operator><name>flag</name> <operator>=</operator> <literal type="number">0</literal></expr>, <expr><operator>.</operator><name>str</name> <operator>=</operator> <name>NULL</name></expr>}</block></expr>,
+}</block></expr></init></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>scriptRunCtx</name> <modifier>*</modifier></type><name>curr_run_ctx</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+
+<function><type><specifier>static</specifier> <name>void</name></type> <name>exitScriptTimedoutMode</name><parameter_list>(<parameter><decl><type><name>scriptRunCtx</name> <modifier>*</modifier></type><name>run_ctx</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>serverAssert</name><argument_list>(<argument><expr><name>run_ctx</name> <operator>==</operator> <name>curr_run_ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>serverAssert</name><argument_list>(<argument><expr><call><name>scriptIsTimedout</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>run_ctx</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;=</operator> <operator>~</operator><name>SCRIPT_TIMEDOUT</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>blockingOperationEnds</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>server</name><operator>.</operator><name>masterhost</name></name> <operator>&amp;&amp;</operator> <name><name>server</name><operator>.</operator><name>master</name></name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><call><name>queueClientForReprocessing</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>master</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type> <name>enterScriptTimedoutMode</name><parameter_list>(<parameter><decl><type><name>scriptRunCtx</name> <modifier>*</modifier></type><name>run_ctx</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>serverAssert</name><argument_list>(<argument><expr><name>run_ctx</name> <operator>==</operator> <name>curr_run_ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>serverAssert</name><argument_list>(<argument><expr><operator>!</operator><call><name>scriptIsTimedout</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>run_ctx</name><operator>-&gt;</operator><name>flags</name></name> <operator>|=</operator> <name>SCRIPT_TIMEDOUT</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>blockingOperationStarts</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type> <name>scriptIsTimedout</name><parameter_list>()</parameter_list> <block>{<block_content>
+<return>return <expr><call><name>scriptIsRunning</name><argument_list>()</argument_list></call> <operator>&amp;&amp;</operator> <operator>(</operator><name><name>curr_run_ctx</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>SCRIPT_TIMEDOUT</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>client</name><modifier>*</modifier></type> <name>scriptGetClient</name><parameter_list>()</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>serverAssert</name><argument_list>(<argument><expr><call><name>scriptIsRunning</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name><name>curr_run_ctx</name><operator>-&gt;</operator><name>c</name></name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>client</name><modifier>*</modifier></type> <name>scriptGetCaller</name><parameter_list>()</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>serverAssert</name><argument_list>(<argument><expr><call><name>scriptIsRunning</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name><name>curr_run_ctx</name><operator>-&gt;</operator><name>original_client</name></name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>int</name></type> <name>scriptInterrupt</name><parameter_list>(<parameter><decl><type><name>scriptRunCtx</name> <modifier>*</modifier></type><name>run_ctx</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>run_ctx</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>SCRIPT_TIMEDOUT</name></expr>)</condition> <block>{<block_content>
+
+
+<expr_stmt><expr><call><name>processEventsWhileBlocked</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><ternary><condition><expr><operator>(</operator><name><name>run_ctx</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>SCRIPT_KILLED</name><operator>)</operator></expr> ?</condition><then> <expr><name>SCRIPT_KILL</name></expr> </then><else>: <expr><name>SCRIPT_CONTINUE</name></expr></else></ternary></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<decl_stmt><decl><type><name>long</name> <name>long</name></type> <name>elapsed</name> <init>= <expr><call><name>elapsedMs</name><argument_list>(<argument><expr><name><name>run_ctx</name><operator>-&gt;</operator><name>start_time</name></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>elapsed</name> <operator>&lt;</operator> <name><name>server</name><operator>.</operator><name>busy_reply_threshold</name></name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>SCRIPT_CONTINUE</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>serverLog</name><argument_list>(<argument><expr><name>LL_WARNING</name></expr></argument>,
+<argument><expr><literal type="string">"Slow script detected: still in execution after %lld milliseconds. "</literal>
+<literal type="string">"You can try killing the script using the %s command."</literal></expr></argument>,
+<argument><expr><name>elapsed</name></expr></argument>, <argument><expr><ternary><condition><expr><operator>(</operator><name><name>run_ctx</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>SCRIPT_EVAL_MODE</name><operator>)</operator></expr> ?</condition><then> <expr><literal type="string">"SCRIPT KILL"</literal></expr> </then><else>: <expr><literal type="string">"FUNCTION KILL"</literal></expr></else></ternary></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>enterScriptTimedoutMode</name><argument_list>(<argument><expr><name>run_ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+<expr_stmt><expr><call><name>protectClient</name><argument_list>(<argument><expr><name><name>run_ctx</name><operator>-&gt;</operator><name>original_client</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>processEventsWhileBlocked</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><ternary><condition><expr><operator>(</operator><name><name>run_ctx</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>SCRIPT_KILLED</name><operator>)</operator></expr> ?</condition><then> <expr><name>SCRIPT_KILL</name></expr> </then><else>: <expr><name>SCRIPT_CONTINUE</name></expr></else></ternary></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><name>int</name></type> <name>scriptPrepareForRun</name><parameter_list>(<parameter><decl><type><name>scriptRunCtx</name> <modifier>*</modifier></type><name>run_ctx</name></decl></parameter>, <parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>engine_client</name></decl></parameter>, <parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>caller</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>funcname</name></decl></parameter>, <parameter><decl><type><name>uint64_t</name></type> <name>script_flags</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ro</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>serverAssert</name><argument_list>(<argument><expr><operator>!</operator><name>curr_run_ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>int</name></type> <name>running_stale</name> <init>= <expr><name><name>server</name><operator>.</operator><name>masterhost</name></name> <operator>&amp;&amp;</operator>
+<name><name>server</name><operator>.</operator><name>repl_state</name></name> <operator>!=</operator> <name>REPL_STATE_CONNECTED</name> <operator>&amp;&amp;</operator>
+<name><name>server</name><operator>.</operator><name>repl_serve_stale_data</name></name> <operator>==</operator> <literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name>script_flags</name> <operator>&amp;</operator> <name>SCRIPT_FLAG_EVAL_COMPAT_MODE</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>script_flags</name> <operator>&amp;</operator> <name>SCRIPT_FLAG_NO_CLUSTER</name><operator>)</operator> <operator>&amp;&amp;</operator> <name><name>server</name><operator>.</operator><name>cluster_enabled</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyError</name><argument_list>(<argument><expr><name>caller</name></expr></argument>, <argument><expr><literal type="string">"Can not run script on cluster, 'no-cluster' flag is set."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name>script_flags</name> <operator>&amp;</operator> <name>SCRIPT_FLAG_ALLOW_OOM</name><operator>)</operator> <operator>&amp;&amp;</operator> <name><name>server</name><operator>.</operator><name>script_oom</name></name> <operator>&amp;&amp;</operator> <name><name>server</name><operator>.</operator><name>maxmemory</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyError</name><argument_list>(<argument><expr><name>caller</name></expr></argument>, <argument><expr><literal type="string">"-OOM allow-oom flag is not set on the script, "</literal>
+<literal type="string">"can not run it when used memory &gt; 'maxmemory'"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>running_stale</name> <operator>&amp;&amp;</operator> <operator>!</operator><operator>(</operator><name>script_flags</name> <operator>&amp;</operator> <name>SCRIPT_FLAG_ALLOW_STALE</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyError</name><argument_list>(<argument><expr><name>caller</name></expr></argument>, <argument><expr><literal type="string">"-MASTERDOWN Link with MASTER is down, "</literal>
+<literal type="string">"replica-serve-stale-data is set to 'no' "</literal>
+<literal type="string">"and 'allow-stale' flag is not set on the script."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name>script_flags</name> <operator>&amp;</operator> <name>SCRIPT_FLAG_NO_WRITES</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>server</name><operator>.</operator><name>masterhost</name></name> <operator>&amp;&amp;</operator> <name><name>server</name><operator>.</operator><name>repl_slave_ro</name></name> <operator>&amp;&amp;</operator> <name><name>caller</name><operator>-&gt;</operator><name>id</name></name> <operator>!=</operator> <name>CLIENT_ID_AOF</name>
+<operator>&amp;&amp;</operator> <operator>!</operator><operator>(</operator><name><name>caller</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>CLIENT_MASTER</name><operator>)</operator></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>addReplyError</name><argument_list>(<argument><expr><name>caller</name></expr></argument>, <argument><expr><literal type="string">"Can not run script with write flag on readonly replica"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<decl_stmt><decl><type><name>int</name></type> <name>deny_write_type</name> <init>= <expr><call><name>writeCommandsDeniedByDiskError</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>deny_write_type</name> <operator>!=</operator> <name>DISK_ERROR_TYPE_NONE</name> <operator>&amp;&amp;</operator> <name><name>server</name><operator>.</operator><name>masterhost</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>deny_write_type</name> <operator>==</operator> <name>DISK_ERROR_TYPE_RDB</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>addReplyError</name><argument_list>(<argument><expr><name>caller</name></expr></argument>, <argument><expr><literal type="string">"-MISCONF Redis is configured to save RDB snapshots, "</literal>
+<literal type="string">"but it's currently unable to persist to disk. "</literal>
+<literal type="string">"Writable scripts are blocked. Use 'no-writes' flag for read only scripts."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>addReplyErrorFormat</name><argument_list>(<argument><expr><name>caller</name></expr></argument>, <argument><expr><literal type="string">"-MISCONF Redis is configured to persist data to AOF, "</literal>
+<literal type="string">"but it's currently unable to persist to disk. "</literal>
+<literal type="string">"Writable scripts are blocked. Use 'no-writes' flag for read only scripts. "</literal>
+<literal type="string">"AOF error: %s"</literal></expr></argument>, <argument><expr><call><name>strerror</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>aof_last_write_errno</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ro</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyError</name><argument_list>(<argument><expr><name>caller</name></expr></argument>, <argument><expr><literal type="string">"Can not execute a script with write flag using *_ro command."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><name>running_stale</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyErrorObject</name><argument_list>(<argument><expr><name>caller</name></expr></argument>, <argument><expr><name><name>shared</name><operator>.</operator><name>masterdownerr</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+
+<expr_stmt><expr><name><name>run_ctx</name><operator>-&gt;</operator><name>c</name></name> <operator>=</operator> <name>engine_client</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>run_ctx</name><operator>-&gt;</operator><name>original_client</name></name> <operator>=</operator> <name>caller</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>run_ctx</name><operator>-&gt;</operator><name>funcname</name></name> <operator>=</operator> <name>funcname</name></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>client</name> <modifier>*</modifier></type><name>script_client</name> <init>= <expr><name><name>run_ctx</name><operator>-&gt;</operator><name>c</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>client</name> <modifier>*</modifier></type><name>curr_client</name> <init>= <expr><name><name>run_ctx</name><operator>-&gt;</operator><name>original_client</name></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>script_caller</name></name> <operator>=</operator> <name>curr_client</name></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><call><name>selectDb</name><argument_list>(<argument><expr><name>script_client</name></expr></argument>, <argument><expr><name><name>curr_client</name><operator>-&gt;</operator><name>db</name><operator>-&gt;</operator><name>id</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>script_client</name><operator>-&gt;</operator><name>resp</name></name> <operator>=</operator> <literal type="number">2</literal></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>curr_client</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>CLIENT_MULTI</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>script_client</name><operator>-&gt;</operator><name>flags</name></name> <operator>|=</operator> <name>CLIENT_MULTI</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>in_script</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>run_ctx</name><operator>-&gt;</operator><name>start_time</name></name> <operator>=</operator> <call><name>getMonotonicUs</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>run_ctx</name><operator>-&gt;</operator><name>snapshot_time</name></name> <operator>=</operator> <call><name>mstime</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>run_ctx</name><operator>-&gt;</operator><name>flags</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>run_ctx</name><operator>-&gt;</operator><name>repl_flags</name></name> <operator>=</operator> <name>PROPAGATE_AOF</name> <operator>|</operator> <name>PROPAGATE_REPL</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ro</name> <operator>||</operator> <operator>(</operator><operator>!</operator><operator>(</operator><name>script_flags</name> <operator>&amp;</operator> <name>SCRIPT_FLAG_EVAL_COMPAT_MODE</name><operator>)</operator> <operator>&amp;&amp;</operator> <operator>(</operator><name>script_flags</name> <operator>&amp;</operator> <name>SCRIPT_FLAG_NO_WRITES</name><operator>)</operator><operator>)</operator></expr>)</condition> <block>{<block_content>
+
+
+<expr_stmt><expr><name><name>run_ctx</name><operator>-&gt;</operator><name>flags</name></name> <operator>|=</operator> <name>SCRIPT_READ_ONLY</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name>script_flags</name> <operator>&amp;</operator> <name>SCRIPT_FLAG_EVAL_COMPAT_MODE</name><operator>)</operator> <operator>&amp;&amp;</operator> <operator>(</operator><name>script_flags</name> <operator>&amp;</operator> <name>SCRIPT_FLAG_ALLOW_OOM</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>run_ctx</name><operator>-&gt;</operator><name>flags</name></name> <operator>|=</operator> <name>SCRIPT_ALLOW_OOM</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><name>curr_run_ctx</name> <operator>=</operator> <name>run_ctx</name></expr>;</expr_stmt>
+
+<return>return <expr><name>C_OK</name></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><name>void</name></type> <name>scriptResetRun</name><parameter_list>(<parameter><decl><type><name>scriptRunCtx</name> <modifier>*</modifier></type><name>run_ctx</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>serverAssert</name><argument_list>(<argument><expr><name>curr_run_ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><name><name>run_ctx</name><operator>-&gt;</operator><name>c</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;=</operator> <operator>~</operator><name>CLIENT_MULTI</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>in_script</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>script_caller</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>scriptIsTimedout</name><argument_list>()</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>exitScriptTimedoutMode</name><argument_list>(<argument><expr><name>run_ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><call><name>unprotectClient</name><argument_list>(<argument><expr><name><name>run_ctx</name><operator>-&gt;</operator><name>original_client</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>preventCommandPropagation</name><argument_list>(<argument><expr><name><name>run_ctx</name><operator>-&gt;</operator><name>original_client</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><name>curr_run_ctx</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+<function><type><name>int</name></type> <name>scriptIsRunning</name><parameter_list>()</parameter_list> <block>{<block_content>
+<return>return <expr><name>curr_run_ctx</name> <operator>!=</operator> <name>NULL</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>const</specifier> <name>char</name><modifier>*</modifier></type> <name>scriptCurrFunction</name><parameter_list>()</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>serverAssert</name><argument_list>(<argument><expr><call><name>scriptIsRunning</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name><name>curr_run_ctx</name><operator>-&gt;</operator><name>funcname</name></name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type> <name>scriptIsEval</name><parameter_list>()</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>serverAssert</name><argument_list>(<argument><expr><call><name>scriptIsRunning</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name><name>curr_run_ctx</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>SCRIPT_EVAL_MODE</name></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><name>void</name></type> <name>scriptKill</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>is_eval</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>curr_run_ctx</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyError</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><literal type="string">"-NOTBUSY No scripts in execution right now."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>curr_run_ctx</name><operator>-&gt;</operator><name>original_client</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>CLIENT_MASTER</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyError</name><argument_list>(<argument><expr><name>c</name></expr></argument>,
+<argument><expr><literal type="string">"-UNKILLABLE The busy script was sent by a master instance in the context of replication and cannot be killed."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>curr_run_ctx</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>SCRIPT_WRITE_DIRTY</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyError</name><argument_list>(<argument><expr><name>c</name></expr></argument>,
+<argument><expr><literal type="string">"-UNKILLABLE Sorry the script already executed write "</literal>
+<literal type="string">"commands against the dataset. You can either wait the "</literal>
+<literal type="string">"script termination or kill the server in a hard way "</literal>
+<literal type="string">"using the SHUTDOWN NOSAVE command."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>is_eval</name> <operator>&amp;&amp;</operator> <operator>!</operator><operator>(</operator><name><name>curr_run_ctx</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>SCRIPT_EVAL_MODE</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><call><name>addReplyErrorObject</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name><name>shared</name><operator>.</operator><name>slowscripterr</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>is_eval</name> <operator>&amp;&amp;</operator> <operator>(</operator><name><name>curr_run_ctx</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>SCRIPT_EVAL_MODE</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><call><name>addReplyErrorObject</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name><name>shared</name><operator>.</operator><name>slowevalerr</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>curr_run_ctx</name><operator>-&gt;</operator><name>flags</name></name> <operator>|=</operator> <name>SCRIPT_KILLED</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>addReply</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name><name>shared</name><operator>.</operator><name>ok</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type> <name>scriptVerifyCommandArity</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>redisCommand</name></name> <modifier>*</modifier></type><name>cmd</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>argc</name></decl></parameter>, <parameter><decl><type><name>sds</name> <modifier>*</modifier></type><name>err</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>cmd</name> <operator>||</operator> <operator>(</operator><operator>(</operator><name><name>cmd</name><operator>-&gt;</operator><name>arity</name></name> <operator>&gt;</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name><name>cmd</name><operator>-&gt;</operator><name>arity</name></name> <operator>!=</operator> <name>argc</name><operator>)</operator> <operator>||</operator> <operator>(</operator><name>argc</name> <operator>&lt;</operator> <operator>-</operator><name><name>cmd</name><operator>-&gt;</operator><name>arity</name></name><operator>)</operator><operator>)</operator></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>cmd</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>*</operator><name>err</name> <operator>=</operator> <call><name>sdsnew</name><argument_list>(<argument><expr><literal type="string">"Wrong number of args calling Redis command from script"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><operator>*</operator><name>err</name> <operator>=</operator> <call><name>sdsnew</name><argument_list>(<argument><expr><literal type="string">"Unknown Redis command called from script"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name>C_OK</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type> <name>scriptVerifyACL</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>, <parameter><decl><type><name>sds</name> <modifier>*</modifier></type><name>err</name></decl></parameter>)</parameter_list> <block>{<block_content>
+
+<decl_stmt><decl><type><name>int</name></type> <name>acl_errpos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>acl_retval</name> <init>= <expr><call><name>ACLCheckAllPerm</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>acl_errpos</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>acl_retval</name> <operator>!=</operator> <name>ACL_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addACLLogEntry</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><name>acl_retval</name></expr></argument>,<argument><expr><name>ACL_LOG_CTX_LUA</name></expr></argument>,<argument><expr><name>acl_errpos</name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<switch>switch <condition>(<expr><name>acl_retval</name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>ACL_DENIED_CMD</name></expr>:</case>
+<expr_stmt><expr><operator>*</operator><name>err</name> <operator>=</operator> <call><name>sdsnew</name><argument_list>(<argument><expr><literal type="string">"The user executing the script can't run this "</literal>
+<literal type="string">"command or subcommand"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>ACL_DENIED_KEY</name></expr>:</case>
+<expr_stmt><expr><operator>*</operator><name>err</name> <operator>=</operator> <call><name>sdsnew</name><argument_list>(<argument><expr><literal type="string">"The user executing the script can't access "</literal>
+<literal type="string">"at least one of the keys mentioned in the "</literal>
+<literal type="string">"command arguments"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>ACL_DENIED_CHANNEL</name></expr>:</case>
+<expr_stmt><expr><operator>*</operator><name>err</name> <operator>=</operator> <call><name>sdsnew</name><argument_list>(<argument><expr><literal type="string">"The user executing the script can't publish "</literal>
+<literal type="string">"to the channel mentioned in the command"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<default>default:</default>
+<expr_stmt><expr><operator>*</operator><name>err</name> <operator>=</operator> <call><name>sdsnew</name><argument_list>(<argument><expr><literal type="string">"The user executing the script is lacking the "</literal>
+<literal type="string">"permissions for the command"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></switch>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name>C_OK</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type> <name>scriptVerifyWriteCommandAllow</name><parameter_list>(<parameter><decl><type><name>scriptRunCtx</name> <modifier>*</modifier></type><name>run_ctx</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>err</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name><name>run_ctx</name><operator>-&gt;</operator><name>c</name><operator>-&gt;</operator><name>cmd</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>CMD_WRITE</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>C_OK</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>run_ctx</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>SCRIPT_READ_ONLY</name></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><operator>*</operator><name>err</name> <operator>=</operator> <call><name>sdsnew</name><argument_list>(<argument><expr><literal type="string">"Write commands are not allowed from read-only scripts."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+<decl_stmt><decl><type><name>int</name></type> <name>deny_write_type</name> <init>= <expr><call><name>writeCommandsDeniedByDiskError</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>server</name><operator>.</operator><name>masterhost</name></name> <operator>&amp;&amp;</operator> <name><name>server</name><operator>.</operator><name>repl_slave_ro</name></name> <operator>&amp;&amp;</operator> <name><name>run_ctx</name><operator>-&gt;</operator><name>original_client</name><operator>-&gt;</operator><name>id</name></name> <operator>!=</operator> <name>CLIENT_ID_AOF</name>
+<operator>&amp;&amp;</operator> <operator>!</operator><operator>(</operator><name><name>run_ctx</name><operator>-&gt;</operator><name>original_client</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>CLIENT_MASTER</name><operator>)</operator></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>err</name> <operator>=</operator> <call><name>sdsdup</name><argument_list>(<argument><expr><name><name>shared</name><operator>.</operator><name>roslaveerr</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>deny_write_type</name> <operator>!=</operator> <name>DISK_ERROR_TYPE_NONE</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>deny_write_type</name> <operator>==</operator> <name>DISK_ERROR_TYPE_RDB</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>err</name> <operator>=</operator> <call><name>sdsdup</name><argument_list>(<argument><expr><name><name>shared</name><operator>.</operator><name>bgsaveerr</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>err</name> <operator>=</operator> <call><name>sdsempty</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>err</name> <operator>=</operator> <call><name>sdscatfmt</name><argument_list>(<argument><expr><operator>*</operator><name>err</name></expr></argument>,
+<argument><expr><literal type="string">"-MISCONF Errors writing to the AOF file: %s\r\n"</literal></expr></argument>,
+<argument><expr><call><name>strerror</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>aof_last_write_errno</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><name>C_OK</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type> <name>scriptVerifyOOM</name><parameter_list>(<parameter><decl><type><name>scriptRunCtx</name> <modifier>*</modifier></type><name>run_ctx</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>err</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>run_ctx</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>SCRIPT_ALLOW_OOM</name></expr>)</condition> <block>{<block_content>
+
+<return>return <expr><name>C_OK</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>server</name><operator>.</operator><name>maxmemory</name></name> <operator>&amp;&amp;</operator>
+<name><name>run_ctx</name><operator>-&gt;</operator><name>original_client</name><operator>-&gt;</operator><name>id</name></name> <operator>!=</operator> <name>CLIENT_ID_AOF</name> <operator>&amp;&amp;</operator>
+<operator>!</operator><name><name>server</name><operator>.</operator><name>masterhost</name></name> <operator>&amp;&amp;</operator>
+<operator>!</operator><operator>(</operator><name><name>run_ctx</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>SCRIPT_WRITE_DIRTY</name><operator>)</operator> <operator>&amp;&amp;</operator>
+<name><name>server</name><operator>.</operator><name>script_oom</name></name> <operator>&amp;&amp;</operator>
+<operator>(</operator><name><name>run_ctx</name><operator>-&gt;</operator><name>c</name><operator>-&gt;</operator><name>cmd</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>CMD_DENYOOM</name><operator>)</operator></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>err</name> <operator>=</operator> <call><name>sdsdup</name><argument_list>(<argument><expr><name><name>shared</name><operator>.</operator><name>oomerr</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><name>C_OK</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type> <name>scriptVerifyClusterState</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>, <parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>original_c</name></decl></parameter>, <parameter><decl><type><name>sds</name> <modifier>*</modifier></type><name>err</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>server</name><operator>.</operator><name>cluster_enabled</name></name> <operator>||</operator> <name><name>original_c</name><operator>-&gt;</operator><name>id</name></name> <operator>==</operator> <name>CLIENT_ID_AOF</name> <operator>||</operator> <operator>(</operator><name><name>original_c</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>CLIENT_MASTER</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>C_OK</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+<decl_stmt><decl><type><name>int</name></type> <name>error_code</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;=</operator> <operator>~</operator><operator>(</operator><name>CLIENT_READONLY</name> <operator>|</operator> <name>CLIENT_ASKING</name><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>flags</name></name> <operator>|=</operator> <name><name>original_c</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <operator>(</operator><name>CLIENT_READONLY</name> <operator>|</operator> <name>CLIENT_ASKING</name><operator>)</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>getNodeByQuery</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>cmd</name></name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>argv</name></name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>argc</name></name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>error_code</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name><name>server</name><operator>.</operator><name>cluster</name><operator>-&gt;</operator><name>myself</name></name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>error_code</name> <operator>==</operator> <name>CLUSTER_REDIR_DOWN_RO_STATE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>err</name> <operator>=</operator> <call><name>sdsnew</name><argument_list>(
+<argument><expr><literal type="string">"Script attempted to execute a write command while the "</literal>
+<literal type="string">"cluster is down and readonly"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>error_code</name> <operator>==</operator> <name>CLUSTER_REDIR_DOWN_STATE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>err</name> <operator>=</operator> <call><name>sdsnew</name><argument_list>(<argument><expr><literal type="string">"Script attempted to execute a command while the "</literal>
+<literal type="string">"cluster is down"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>err</name> <operator>=</operator> <call><name>sdsnew</name><argument_list>(<argument><expr><literal type="string">"Script attempted to access a non local key in a "</literal>
+<literal type="string">"cluster node"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name>C_OK</name></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><name>int</name></type> <name>scriptSetResp</name><parameter_list>(<parameter><decl><type><name>scriptRunCtx</name> <modifier>*</modifier></type><name>run_ctx</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>resp</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>resp</name> <operator>!=</operator> <literal type="number">2</literal> <operator>&amp;&amp;</operator> <name>resp</name> <operator>!=</operator> <literal type="number">3</literal></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>run_ctx</name><operator>-&gt;</operator><name>c</name><operator>-&gt;</operator><name>resp</name></name> <operator>=</operator> <name>resp</name></expr>;</expr_stmt>
+<return>return <expr><name>C_OK</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<function><type><name>int</name></type> <name>scriptSetRepl</name><parameter_list>(<parameter><decl><type><name>scriptRunCtx</name> <modifier>*</modifier></type><name>run_ctx</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>repl</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>repl</name> <operator>&amp;</operator> <operator>~</operator><operator>(</operator><name>PROPAGATE_AOF</name> <operator>|</operator> <name>PROPAGATE_REPL</name><operator>)</operator><operator>)</operator> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>run_ctx</name><operator>-&gt;</operator><name>repl_flags</name></name> <operator>=</operator> <name>repl</name></expr>;</expr_stmt>
+<return>return <expr><name>C_OK</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type> <name>scriptVerifyAllowStale</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>, <parameter><decl><type><name>sds</name> <modifier>*</modifier></type><name>err</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>server</name><operator>.</operator><name>masterhost</name></name></expr>)</condition> <block>{<block_content>
+
+<return>return <expr><name>C_OK</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>server</name><operator>.</operator><name>repl_state</name></name> <operator>==</operator> <name>REPL_STATE_CONNECTED</name></expr>)</condition> <block>{<block_content>
+
+<return>return <expr><name>C_OK</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>server</name><operator>.</operator><name>repl_serve_stale_data</name></name> <operator>==</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+
+<return>return <expr><name>C_OK</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>c</name><operator>-&gt;</operator><name>cmd</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>CMD_STALE</name></expr>)</condition> <block>{<block_content>
+
+<return>return <expr><name>C_OK</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><operator>*</operator><name>err</name> <operator>=</operator> <call><name>sdsnew</name><argument_list>(<argument><expr><literal type="string">"Can not execute the command on a stale replica"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+<function><type><name>void</name></type> <name>scriptCall</name><parameter_list>(<parameter><decl><type><name>scriptRunCtx</name> <modifier>*</modifier></type><name>run_ctx</name></decl></parameter>, <parameter><decl><type><name>robj</name><modifier>*</modifier> <modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>argc</name></decl></parameter>, <parameter><decl><type><name>sds</name> <modifier>*</modifier></type><name>err</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name> <init>= <expr><name><name>run_ctx</name><operator>-&gt;</operator><name>c</name></name></expr></init></decl>;</decl_stmt>
+
+
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>argv</name></name> <operator>=</operator> <name>argv</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>argc</name></name> <operator>=</operator> <name>argc</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>user</name></name> <operator>=</operator> <name><name>run_ctx</name><operator>-&gt;</operator><name>original_client</name><operator>-&gt;</operator><name>user</name></name></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><call><name>moduleCallCommandFilters</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>argv</name> <operator>=</operator> <name><name>c</name><operator>-&gt;</operator><name>argv</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>argc</name> <operator>=</operator> <name><name>c</name><operator>-&gt;</operator><name>argc</name></name></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name><name>struct</name> <name>redisCommand</name></name> <modifier>*</modifier></type><name>cmd</name> <init>= <expr><call><name>lookupCommand</name><argument_list>(<argument><expr><name>argv</name></expr></argument>, <argument><expr><name>argc</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>scriptVerifyCommandArity</name><argument_list>(<argument><expr><name>cmd</name></expr></argument>, <argument><expr><name>argc</name></expr></argument>, <argument><expr><name>err</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>C_OK</name></expr>)</condition> <block>{<block_content>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>cmd</name></name> <operator>=</operator> <name><name>c</name><operator>-&gt;</operator><name>lastcmd</name></name> <operator>=</operator> <name>cmd</name></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>server</name><operator>.</operator><name>script_disable_deny_script</name></name> <operator>&amp;&amp;</operator> <operator>(</operator><name><name>cmd</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>CMD_NOSCRIPT</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>err</name> <operator>=</operator> <call><name>sdsnew</name><argument_list>(<argument><expr><literal type="string">"This Redis command is not allowed from script"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>scriptVerifyAllowStale</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name>err</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>C_OK</name></expr>)</condition> <block>{<block_content>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>scriptVerifyACL</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name>err</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>C_OK</name></expr>)</condition> <block>{<block_content>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>scriptVerifyWriteCommandAllow</name><argument_list>(<argument><expr><name>run_ctx</name></expr></argument>, <argument><expr><name>err</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>C_OK</name></expr>)</condition> <block>{<block_content>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>scriptVerifyOOM</name><argument_list>(<argument><expr><name>run_ctx</name></expr></argument>, <argument><expr><name>err</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>C_OK</name></expr>)</condition> <block>{<block_content>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>cmd</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>CMD_WRITE</name></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><name><name>run_ctx</name><operator>-&gt;</operator><name>flags</name></name> <operator>|=</operator> <name>SCRIPT_WRITE_DIRTY</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>scriptVerifyClusterState</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name><name>run_ctx</name><operator>-&gt;</operator><name>original_client</name></name></expr></argument>, <argument><expr><name>err</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>C_OK</name></expr>)</condition> <block>{<block_content>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+<decl_stmt><decl><type><name>int</name></type> <name>call_flags</name> <init>= <expr><name>CMD_CALL_SLOWLOG</name> <operator>|</operator> <name>CMD_CALL_STATS</name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>run_ctx</name><operator>-&gt;</operator><name>repl_flags</name></name> <operator>&amp;</operator> <name>PROPAGATE_AOF</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>call_flags</name> <operator>|=</operator> <name>CMD_CALL_PROPAGATE_AOF</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>run_ctx</name><operator>-&gt;</operator><name>repl_flags</name></name> <operator>&amp;</operator> <name>PROPAGATE_REPL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>call_flags</name> <operator>|=</operator> <name>CMD_CALL_PROPAGATE_REPL</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>call</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name>call_flags</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>serverAssert</name><argument_list>(<argument><expr><operator>(</operator><name><name>c</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>CLIENT_BLOCKED</name><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+<function><type><name>mstime_t</name></type> <name>scriptTimeSnapshot</name><parameter_list>()</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>serverAssert</name><argument_list>(<argument><expr><name>curr_run_ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name><name>curr_run_ctx</name><operator>-&gt;</operator><name>snapshot_time</name></name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>long</name> <name>long</name></type> <name>scriptRunDuration</name><parameter_list>()</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>serverAssert</name><argument_list>(<argument><expr><call><name>scriptIsRunning</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><call><name>elapsedMs</name><argument_list>(<argument><expr><name><name>curr_run_ctx</name><operator>-&gt;</operator><name>start_time</name></name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+</unit>

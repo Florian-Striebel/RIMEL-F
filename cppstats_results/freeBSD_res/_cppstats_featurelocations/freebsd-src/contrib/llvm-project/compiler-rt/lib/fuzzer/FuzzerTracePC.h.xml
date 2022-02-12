@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/llvm-project/compiler-rt/lib/fuzzer/FuzzerTracePC.h">
+
+
+
+
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>LLVM_FUZZER_TRACE_PC</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>LLVM_FUZZER_TRACE_PC</name></cpp:macro></cpp:define>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"FuzzerDefs.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"FuzzerDictionary.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"FuzzerValueBitMap.h"</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;set&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;unordered_map&gt;</cpp:file></cpp:include>
+
+<decl_stmt><decl><type><name>namespace</name></type> <name>fuzzer</name> <block>{<block_content>
+
+
+
+
+
+
+
+
+<macro><name>template</name></macro><expr_stmt><expr><operator>&lt;</operator><name>class</name> <name>T</name></expr><operator>,</operator> <expr><name>size_t</name> <name>kSizeT</name><operator>&gt;</operator>
+struct <name>TableOfRecentCompares</name> <block>{
+<expr><specifier>static</specifier> <specifier>const</specifier> <name>size_t</name> <name>kSize</name> <operator>=</operator> <name>kSizeT</name></expr>;
+struct <expr><name>Pair</name> <block>{
+<expr><name>T</name> <name>A</name></expr>, <expr><name>B</name></expr>;
+}</block></expr>;
+<expr><name>ATTRIBUTE_NO_SANITIZE_ALL</name>
+<name>void</name> <macro><name>Insert</name><argument_list>(<argument>size_t Idx</argument>, <argument>const T &amp;Arg1</argument>, <argument>const T &amp;Arg2</argument>)</argument_list></macro> <block>{
+<expr><name>Idx</name> <operator>=</operator> <name>Idx</name> <operator>%</operator> <name>kSize</name></expr>;
+<expr><name><name>Table</name><index>[<expr><name>Idx</name></expr>]</index></name><operator>.</operator><name>A</name> <operator>=</operator> <name>Arg1</name></expr>;
+<expr><name><name>Table</name><index>[<expr><name>Idx</name></expr>]</index></name><operator>.</operator><name>B</name> <operator>=</operator> <name>Arg2</name></expr>;
+}</block>
+
+<name>Pair</name> <macro><name>Get</name><argument_list>(<argument>size_t I</argument>)</argument_list></macro> <block>{ <return>return <expr><name><name>Table</name><index>[<expr><name>I</name> <operator>%</operator> <name>kSize</name></expr>]</index></name></expr>;</return> }</block>
+
+<name>Pair</name> <name><name>Table</name><index>[<expr><name>kSize</name></expr>]</index></name></expr>;
+}</block></expr>;</expr_stmt>
+
+<macro><name>template</name></macro> <expr_stmt><expr><operator>&lt;</operator><name>size_t</name> <name>kSizeT</name><operator>&gt;</operator>
+struct <name>MemMemTable</name> <block>{
+<expr><specifier>static</specifier> <specifier>const</specifier> <name>size_t</name> <name>kSize</name> <operator>=</operator> <name>kSizeT</name></expr>;
+<expr><name>Word</name> <name><name>MemMemWords</name><index>[<expr><name>kSize</name></expr>]</index></name></expr>;
+<expr><name>Word</name> <name>EmptyWord</name></expr>;
+
+<expr><name>void</name> <macro><name>Add</name><argument_list>(<argument>const uint8_t *Data</argument>, <argument>size_t Size</argument>)</argument_list></macro> <block>{
+<if_stmt><if>if <condition>(<expr><name>Size</name> <operator>&lt;=</operator> <literal type="number">2</literal></expr>)</condition><block type="pseudo"><block_content> <return>return;</return></block_content></block></if></if_stmt>
+<name>Size</name> <operator>=</operator> <name>std</name><operator>::</operator><call><name>min</name><argument_list>(<argument><expr><name>Size</name></expr></argument>, <argument><expr><name>Word</name><operator>::</operator><call><name>GetMaxSize</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></block></expr>;
+<expr><name>auto</name> <name>Idx</name> <operator>=</operator> <call><name>SimpleFastHash</name><argument_list>(<argument><expr><name>Data</name></expr></argument>, <argument><expr><name>Size</name></expr></argument>)</argument_list></call> <operator>%</operator> <name>kSize</name></expr>;
+<expr><name><name>MemMemWords</name><index>[<expr><name>Idx</name></expr>]</index></name><operator>.</operator><call><name>Set</name><argument_list>(<argument><expr><name>Data</name></expr></argument>, <argument><expr><name>Size</name></expr></argument>)</argument_list></call></expr>;
+}</block>
+<specifier>const</specifier> <name>Word</name> <operator>&amp;</operator><macro><name>Get</name><argument_list>(<argument>size_t Idx</argument>)</argument_list></macro> <block>{
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>kSize</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>Word</name> <modifier>&amp;</modifier></type><name>W</name> <init>= <expr><name><name>MemMemWords</name><index>[<expr><operator>(</operator><name>Idx</name> <operator>+</operator> <name>i</name><operator>)</operator> <operator>%</operator> <name>kSize</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name><name>W</name><operator>.</operator><name>size</name></name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><name>W</name></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt/>}</block_content>
+EmptyWord.Set(nullptr</block><operator>,</operator> <expr_stmt><expr><literal type="number">0</literal></expr></expr_stmt></for>)</block></expr>;</expr_stmt>
+<return>return <expr><name>EmptyWord</name></expr>;</return>
+</block_content>}</block></decl></decl_stmt>
+};
+
+<decl_stmt><decl><type><name>class</name></type> <name>TracePC</name> <block>{<block_content>
+<label><name>public</name>:</label>
+<function_decl><type><name>void</name></type> <name>HandleInline8bitCountersInit</name><parameter_list>(<parameter><decl><type><name>uint8_t</name> <modifier>*</modifier></type><name>Start</name></decl></parameter>, <parameter><decl><type><name>uint8_t</name> <modifier>*</modifier></type><name>Stop</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><name>void</name></type> <name>HandlePCsInit</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>uintptr_t</name> <modifier>*</modifier></type><name>Start</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>uintptr_t</name> <modifier>*</modifier></type><name>Stop</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><name>void</name></type> <name>HandleCallerCallee</name><parameter_list>(<parameter><decl><type><name>uintptr_t</name></type> <name>Caller</name></decl></parameter>, <parameter><decl><type><name>uintptr_t</name></type> <name>Callee</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><name><name>template</name> <argument_list type="generic">&lt;<argument><expr><name>class</name> <name>T</name></expr></argument>&gt;</argument_list></name> <name>void</name></type> <name>HandleCmp</name><parameter_list>(<parameter><decl><type><name>uintptr_t</name></type> <name>PC</name></decl></parameter>, <parameter><decl><type><name>T</name></type> <name>Arg1</name></decl></parameter>, <parameter><decl><type><name>T</name></type> <name>Arg2</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><name>size_t</name></type> <name>GetTotalPCCoverage</name><parameter_list>()</parameter_list>;</function_decl>
+<function><type><name>void</name></type> <name>SetUseCounters</name><parameter_list>(<parameter><decl><type><name>bool</name></type> <name>UC</name></decl></parameter>)</parameter_list> <block>{<block_content> <expr_stmt><expr><name>UseCounters</name> <operator>=</operator> <name>UC</name></expr>;</expr_stmt> </block_content>}</block></function>
+<function><type><name>void</name></type> <name>SetUseValueProfileMask</name><parameter_list>(<parameter><decl><type><name>uint32_t</name></type> <name>VPMask</name></decl></parameter>)</parameter_list> <block>{<block_content> <expr_stmt><expr><name>UseValueProfileMask</name> <operator>=</operator> <name>VPMask</name></expr>;</expr_stmt> </block_content>}</block></function>
+<function><type><name>void</name></type> <name>SetPrintNewPCs</name><parameter_list>(<parameter><decl><type><name>bool</name></type> <name>P</name></decl></parameter>)</parameter_list> <block>{<block_content> <expr_stmt><expr><name>DoPrintNewPCs</name> <operator>=</operator> <name>P</name></expr>;</expr_stmt> </block_content>}</block></function>
+<function><type><name>void</name></type> <name>SetPrintNewFuncs</name><parameter_list>(<parameter><decl><type><name>size_t</name></type> <name>P</name></decl></parameter>)</parameter_list> <block>{<block_content> <expr_stmt><expr><name>NumPrintNewFuncs</name> <operator>=</operator> <name>P</name></expr>;</expr_stmt> </block_content>}</block></function>
+<function_decl><type><name>void</name></type> <name>UpdateObservedPCs</name><parameter_list>()</parameter_list>;</function_decl>
+<decl_stmt><decl><type><name><name>template</name> <argument_list type="generic">&lt;<argument><expr><name>class</name> <name>Callback</name></expr></argument>&gt;</argument_list></name> <name>size_t</name></type> <name>CollectFeatures</name><argument_list>(<argument><expr><name>Callback</name> <name>CB</name></expr></argument>)</argument_list> const</decl>;</decl_stmt>
+
+<function><type><name>void</name></type> <name>ResetMaps</name><parameter_list>()</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name><name>ValueProfileMap</name><operator>.</operator><name>Reset</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ClearExtraCounters</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ClearInlineCounters</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function_decl><type><name>void</name></type> <name>ClearInlineCounters</name><parameter_list>()</parameter_list>;</function_decl>
+
+<function_decl><type><name>void</name></type> <name>UpdateFeatureSet</name><parameter_list>(<parameter><decl><type><name>size_t</name></type> <name>CurrentElementIdx</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>CurrentElementSize</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><name>void</name></type> <name>PrintFeatureSet</name><parameter_list>()</parameter_list>;</function_decl>
+
+<function_decl><type><name>void</name></type> <name>PrintModuleInfo</name><parameter_list>()</parameter_list>;</function_decl>
+
+<function_decl><type><name>void</name></type> <name>PrintCoverage</name><parameter_list>(<parameter><decl><type><name>bool</name></type> <name>PrintAllCounters</name></decl></parameter>)</parameter_list>;</function_decl>
+
+<function_decl><type><name><name>template</name><argument_list type="generic">&lt;<argument><expr><name>class</name> <name>CallBack</name></expr></argument>&gt;</argument_list></name>
+<name>void</name></type> <name>IterateCoveredFunctions</name><parameter_list>(<parameter><decl><type><name>CallBack</name></type> <name>CB</name></decl></parameter>)</parameter_list>;</function_decl>
+
+<function_decl><type><name>void</name></type> <name>AddValueForMemcmp</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>caller_pc</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>s1</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>s2</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>n</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>StopAtZero</name></decl></parameter>)</parameter_list>;</function_decl>
+
+<decl_stmt><decl><type><name><name>TableOfRecentCompares</name><argument_list type="generic">&lt;<argument><expr><name>uint32_t</name></expr></argument>, <argument><expr><literal type="number">32</literal></expr></argument>&gt;</argument_list></name></type> <name>TORC4</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>TableOfRecentCompares</name><argument_list type="generic">&lt;<argument><expr><name>uint64_t</name></expr></argument>, <argument><expr><literal type="number">32</literal></expr></argument>&gt;</argument_list></name></type> <name>TORC8</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>TableOfRecentCompares</name><argument_list type="generic">&lt;<argument><expr><name>Word</name></expr></argument>, <argument><expr><literal type="number">32</literal></expr></argument>&gt;</argument_list></name></type> <name>TORCW</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>MemMemTable</name><argument_list type="generic">&lt;<argument><expr><literal type="number">1024</literal></expr></argument>&gt;</argument_list></name></type> <name>MMT</name></decl>;</decl_stmt>
+
+<function_decl><type><name>void</name></type> <name>RecordInitialStack</name><parameter_list>()</parameter_list>;</function_decl>
+<expr_stmt><expr><name>uintptr_t</name> <macro><name>GetMaxStackOffset</name><argument_list>()</argument_list></macro> <specifier>const</specifier></expr>;</expr_stmt>
+
+<function><type><name><name>template</name><argument_list type="generic">&lt;<argument><expr><name>class</name> <name>CallBack</name></expr></argument>&gt;</argument_list></name>
+<name>void</name></type> <name>ForEachObservedPC</name><parameter_list>(<parameter><decl><type><name>CallBack</name></type> <name>CB</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<for>for <control>(<init><decl><type><name>auto</name></type> <name>PC</name> <range>: <expr><name>ObservedPCs</name></expr></range></decl></init>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>CB</name><argument_list>(<argument><expr><name>PC</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+</block_content>}</block></function>
+
+<decl_stmt><decl><type><name>void</name></type> <name>SetFocusFunction</name><argument_list>(<argument><expr><specifier>const</specifier> <name>std</name><operator>::</operator><name>string</name> <operator>&amp;</operator><name>FuncName</name></expr></argument>)</argument_list></decl>;</decl_stmt>
+<function_decl><type><name>bool</name></type> <name>ObservedFocusFunction</name><parameter_list>()</parameter_list>;</function_decl>
+
+<struct>struct <name>PCTableEntry</name> <block>{
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>PC</name></decl>, <decl><type ref="prev"/><name>PCFlags</name></decl>;</decl_stmt>
+}</block>;</struct>
+
+<function_decl><type><name>uintptr_t</name></type> <name>PCTableEntryIdx</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>PCTableEntry</name> <modifier>*</modifier></type><name>TE</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>const</specifier> <name>PCTableEntry</name> <modifier>*</modifier></type><name>PCTableEntryByIdx</name><parameter_list>(<parameter><decl><type><name>uintptr_t</name></type> <name>Idx</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>uintptr_t</name></type> <name>GetNextInstructionPc</name><parameter_list>(<parameter><decl><type><name>uintptr_t</name></type> <name>PC</name></decl></parameter>)</parameter_list>;</function_decl>
+<function><type><name>bool</name></type> <name>PcIsFuncEntry</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>PCTableEntry</name> <modifier>*</modifier></type><name>TE</name></decl></parameter>)</parameter_list> <block>{<block_content> <return>return <expr><name><name>TE</name><operator>-&gt;</operator><name>PCFlags</name></name> <operator>&amp;</operator> <literal type="number">1</literal></expr>;</return> </block_content>}</block></function>
+
+<label><name>private</name>:</label>
+<decl_stmt><decl><type><name>bool</name></type> <name>UseCounters</name> <init>= <expr><name>false</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>UseValueProfileMask</name> <init>= <expr><name>false</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>DoPrintNewPCs</name> <init>= <expr><name>false</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>NumPrintNewFuncs</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+
+
+
+<struct>struct <name>Module</name> <block>{
+<struct>struct <name>Region</name> <block>{
+<decl_stmt><decl><type><name>uint8_t</name> <modifier>*</modifier></type><name>Start</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>Stop</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>Enabled</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>OneFullPage</name></decl>;</decl_stmt>
+}</block>;</struct>
+<decl_stmt><decl><type><name>Region</name> <modifier>*</modifier></type><name>Regions</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>NumRegions</name></decl>;</decl_stmt>
+<function><type><name>uint8_t</name> <modifier>*</modifier></type><name>Start</name><parameter_list>()</parameter_list> <block>{<block_content> <return>return <expr><name><name>Regions</name><index>[<expr><literal type="number">0</literal></expr>]</index></name><operator>.</operator><name>Start</name></expr>;</return> </block_content>}</block></function>
+<function><type><name>uint8_t</name> <modifier>*</modifier></type><name>Stop</name><parameter_list>()</parameter_list> <block>{<block_content> <return>return <expr><name><name>Regions</name><index>[<expr><name>NumRegions</name> <operator>-</operator> <literal type="number">1</literal></expr>]</index></name><operator>.</operator><name>Stop</name></expr>;</return> </block_content>}</block></function>
+<function><type><name>size_t</name></type> <name>Size</name><parameter_list>()</parameter_list> <block>{<block_content> <return>return <expr><call><name>Stop</name><argument_list>()</argument_list></call> <operator>-</operator> <call><name>Start</name><argument_list>()</argument_list></call></expr>;</return> </block_content>}</block></function>
+<function><type><name>size_t</name></type> <name>Idx</name><parameter_list>(<parameter><decl><type><name>uint8_t</name> <modifier>*</modifier></type><name>P</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>P</name> <operator>&gt;=</operator> <call><name>Start</name><argument_list>()</argument_list></call> <operator>&amp;&amp;</operator> <name>P</name> <operator>&lt;</operator> <call><name>Stop</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>P</name> <operator>-</operator> <call><name>Start</name><argument_list>()</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+}</block>;</struct>
+
+<decl_stmt><decl><type><name>Module</name></type> <name><name>Modules</name><index>[<expr><literal type="number">4096</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>NumModules</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>NumInline8bitCounters</name></decl>;</decl_stmt>
+
+<function><type><name><name>template</name> <argument_list type="generic">&lt;<argument><expr><name>class</name> <name>Callback</name></expr></argument>&gt;</argument_list></name>
+<name>void</name></type> <name>IterateCounterRegions</name><parameter_list>(<parameter><decl><type><name>Callback</name></type> <name>CB</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>m</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>m</name> <operator>&lt;</operator> <name>NumModules</name></expr>;</condition> <incr><expr><name>m</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>r</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>r</name> <operator>&lt;</operator> <name><name>Modules</name><index>[<expr><name>m</name></expr>]</index></name><operator>.</operator><name>NumRegions</name></expr>;</condition> <incr><expr><name>r</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>CB</name><argument_list>(<argument><expr><name><name>Modules</name><index>[<expr><name>m</name></expr>]</index></name><operator>.</operator><name><name>Regions</name><index>[<expr><name>r</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for></block_content></block></for>
+</block_content>}</block></function>
+
+<struct>struct <block>{ <decl_stmt><decl><type><specifier>const</specifier> <name>PCTableEntry</name> <modifier>*</modifier></type><name>Start</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>Stop</name></decl>;</decl_stmt> }</block> <decl><name><name>ModulePCTable</name><index>[<expr><literal type="number">4096</literal></expr>]</index></name></decl>;</struct>
+<decl_stmt><decl><type><name>size_t</name></type> <name>NumPCTables</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>NumPCsInPCTables</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name><name>Set</name><argument_list type="generic">&lt;<argument><expr><specifier>const</specifier> <name>PCTableEntry</name><modifier>*</modifier></expr></argument>&gt;</argument_list></name></type> <name>ObservedPCs</name></decl>;</decl_stmt>
+<expr_stmt><expr><name>std</name><operator>::</operator><name><name>unordered_map</name><argument_list type="generic">&lt;<argument><expr><name>uintptr_t</name></expr></argument>, <argument><expr><name>uintptr_t</name></expr></argument>&gt;</argument_list></name> <name>ObservedFuncs</name></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>uint8_t</name> <modifier>*</modifier></type><name>FocusFunctionCounterPtr</name> <init>= <expr><name>nullptr</name></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>ValueBitMap</name></type> <name>ValueProfileMap</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>InitialStack</name></decl>;</decl_stmt>
+</block_content>}</block></decl></decl_stmt><empty_stmt>;</empty_stmt>
+
+<function><type><name><name>template</name> <argument_list type="generic">&lt;<argument><expr><name>class</name> <name>Callback</name></expr></argument>&gt;</argument_list></name>
+
+<name>ATTRIBUTE_NO_SANITIZE_ALL</name>
+<name>size_t</name></type> <name>ForEachNonZeroByte</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>uint8_t</name> <modifier>*</modifier></type><name>Begin</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>uint8_t</name> <modifier>*</modifier></type><name>End</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>FirstFeature</name></decl></parameter>, <parameter><decl><type><name>Callback</name></type> <name>Handle8bitCounter</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<typedef>typedef <type><name>uintptr_t</name></type> <name>LargeType</name>;</typedef>
+<decl_stmt><decl><type><specifier>const</specifier> <name>size_t</name></type> <name>Step</name> <init>= <expr><sizeof>sizeof<argument_list>(<argument><expr><name>LargeType</name></expr></argument>)</argument_list></sizeof> <operator>/</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>uint8_t</name></expr></argument>)</argument_list></sizeof></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>size_t</name></type> <name>StepMask</name> <init>= <expr><name>Step</name> <operator>-</operator> <literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>auto</name></type> <name>P</name> <init>= <expr><name>Begin</name></expr></init></decl>;</decl_stmt>
+
+<for>for <control>(<init>;</init> <condition><expr><call><name><name>reinterpret_cast</name><argument_list type="generic">&lt;<argument><expr><name>uintptr_t</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>P</name></expr></argument>)</argument_list></call> <operator>&amp;</operator> <name>StepMask</name> <operator>&amp;&amp;</operator> <name>P</name> <operator>&lt;</operator> <name>End</name></expr>;</condition> <incr><expr><name>P</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<decl><type><name>uint8_t</name></type> <name>V</name> <init>= <expr><operator>*</operator><name>P</name></expr></init></decl>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Handle8bitCounter</name><argument_list>(<argument><expr><name>FirstFeature</name></expr></argument>, <argument><expr><name>P</name> <operator>-</operator> <name>Begin</name></expr></argument>, <argument><expr><name>V</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt></block_content></block></for>
+
+
+<for>for <control>(<init>;</init> <condition><expr><name>P</name> <operator>+</operator> <name>Step</name> <operator>&lt;=</operator> <name>End</name></expr>;</condition> <incr><expr><name>P</name> <operator>+=</operator> <name>Step</name></expr></incr>)</control><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<decl><type><name>LargeType</name></type> <name>Bundle</name> <init>= <expr><operator>*</operator><call><name><name>reinterpret_cast</name><argument_list type="generic">&lt;<argument><expr><specifier>const</specifier> <name>LargeType</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>P</name></expr></argument>)</argument_list></call></expr></init></decl>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>Bundle</name> <operator>=</operator> <call><name>HostToLE</name><argument_list>(<argument><expr><name>Bundle</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>I</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>I</name> <operator>&lt;</operator> <name>Step</name></expr>;</condition> <incr><expr><name>I</name><operator>++</operator></expr><operator>,</operator> <expr><name>Bundle</name> <operator>&gt;&gt;=</operator> <literal type="number">8</literal></expr></incr>)</control><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<decl><type><name>uint8_t</name></type> <name>V</name> <init>= <expr><name>Bundle</name> <operator>&amp;</operator> <literal type="number">0xff</literal></expr></init></decl>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Handle8bitCounter</name><argument_list>(<argument><expr><name>FirstFeature</name></expr></argument>, <argument><expr><name>P</name> <operator>-</operator> <name>Begin</name> <operator>+</operator> <name>I</name></expr></argument>, <argument><expr><name>V</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt></block_content></block></for>
+</block_content>}</block></if></if_stmt></block_content></block></for>
+
+
+<for>for <control>(<init>;</init> <condition><expr><name>P</name> <operator>&lt;</operator> <name>End</name></expr>;</condition> <incr><expr><name>P</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<decl><type><name>uint8_t</name></type> <name>V</name> <init>= <expr><operator>*</operator><name>P</name></expr></init></decl>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Handle8bitCounter</name><argument_list>(<argument><expr><name>FirstFeature</name></expr></argument>, <argument><expr><name>P</name> <operator>-</operator> <name>Begin</name></expr></argument>, <argument><expr><name>V</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt></block_content></block></for>
+<return>return <expr><name>End</name> <operator>-</operator> <name>Begin</name></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><name><name>template</name><argument_list type="generic">&lt;<argument><expr><name>class</name> <name>T</name></expr></argument>&gt;</argument_list></name>
+<name>unsigned</name></type> <name>CounterToFeature</name><parameter_list>(<parameter><decl><type><name>T</name></type> <name>Counter</name></decl></parameter>)</parameter_list> <block>{<block_content>
+
+
+
+
+
+
+
+
+
+
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>Counter</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>unsigned</name></type> <name>Bit</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>Counter</name> <operator>&gt;=</operator> <literal type="number">128</literal></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>Bit</name> <operator>=</operator> <literal type="number">7</literal></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name>Counter</name> <operator>&gt;=</operator> <literal type="number">32</literal></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>Bit</name> <operator>=</operator> <literal type="number">6</literal></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name>Counter</name> <operator>&gt;=</operator> <literal type="number">16</literal></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>Bit</name> <operator>=</operator> <literal type="number">5</literal></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name>Counter</name> <operator>&gt;=</operator> <literal type="number">8</literal></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>Bit</name> <operator>=</operator> <literal type="number">4</literal></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name>Counter</name> <operator>&gt;=</operator> <literal type="number">4</literal></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>Bit</name> <operator>=</operator> <literal type="number">3</literal></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name>Counter</name> <operator>&gt;=</operator> <literal type="number">3</literal></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>Bit</name> <operator>=</operator> <literal type="number">2</literal></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name>Counter</name> <operator>&gt;=</operator> <literal type="number">2</literal></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>Bit</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><name>Bit</name></expr>;</return>
+</block_content>}</block></function>
+
+<expr_stmt><expr><name><name>template</name> <argument_list type="generic">&lt;<argument><expr><name>class</name> <name>Callback</name></expr></argument>&gt;</argument_list></name>
+<name>ATTRIBUTE_NO_SANITIZE_ADDRESS</name> <name>ATTRIBUTE_NOINLINE</name> <name>size_t</name>
+<name>TracePC</name><operator>::</operator><macro><name>CollectFeatures</name><argument_list>(<argument>Callback HandleFeature</argument>)</argument_list></macro> <specifier>const</specifier> <block>{
+<expr><name>auto</name> <name>Handle8bitCounter</name> <operator>=</operator> <index>[<expr><operator>&amp;</operator></expr>]</index><operator>(</operator><name>size_t</name> <name>FirstFeature</name><operator>,</operator>
+<name>size_t</name> <name>Idx</name><operator>,</operator> <name>uint8_t</name> <name>Counter</name><operator>)</operator> <block>{
+<if_stmt><if>if <condition>(<expr><name>UseCounters</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>HandleFeature</name><argument_list>(<argument><expr><call><name><name>static_cast</name><argument_list type="generic">&lt;<argument><expr><name>uint32_t</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>FirstFeature</name> <operator>+</operator> <name>Idx</name> <operator>*</operator> <literal type="number">8</literal> <operator>+</operator>
+<call><name>CounterToFeature</name><argument_list>(<argument><expr><name>Counter</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>HandleFeature</name><argument_list>(<argument><expr><call><name><name>static_cast</name><argument_list type="generic">&lt;<argument><expr><name>uint32_t</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>FirstFeature</name> <operator>+</operator> <name>Idx</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt></block></expr>
+}</block></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>size_t</name></type> <name>FirstFeature</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>NumModules</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>r</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>r</name> <operator>&lt;</operator> <name><name>Modules</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>NumRegions</name></expr>;</condition> <incr><expr><name>r</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>Modules</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name><name>Regions</name><index>[<expr><name>r</name></expr>]</index></name><operator>.</operator><name>Enabled</name></expr>)</condition><block type="pseudo"><block_content> <continue>continue;</continue></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>FirstFeature</name> <operator>+=</operator> <literal type="number">8</literal> <operator>*</operator> <call><name>ForEachNonZeroByte</name><argument_list>(<argument><expr><name><name>Modules</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name><name>Regions</name><index>[<expr><name>r</name></expr>]</index></name><operator>.</operator><name>Start</name></expr></argument>,
+<argument><expr><name><name>Modules</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name><name>Regions</name><index>[<expr><name>r</name></expr>]</index></name><operator>.</operator><name>Stop</name></expr></argument>,
+<argument><expr><name>FirstFeature</name></expr></argument>, <argument><expr><name>Handle8bitCounter</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></for>
+
+<expr_stmt><expr><name>FirstFeature</name> <operator>+=</operator>
+<literal type="number">8</literal> <operator>*</operator> <call><name>ForEachNonZeroByte</name><argument_list>(<argument><expr><call><name>ExtraCountersBegin</name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><call><name>ExtraCountersEnd</name><argument_list>()</argument_list></call></expr></argument>,
+<argument><expr><name>FirstFeature</name></expr></argument>, <argument><expr><name>Handle8bitCounter</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>UseValueProfileMask</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name><name>ValueProfileMap</name><operator>.</operator><name>ForEach</name></name><argument_list>(<argument><expr><index>[<expr><operator>&amp;</operator></expr>]</index><operator>(</operator><name>size_t</name> <name>Idx</name><operator>)</operator> <block>{
+<expr><call><name>HandleFeature</name><argument_list>(<argument><expr><call><name><name>static_cast</name><argument_list type="generic">&lt;<argument><expr><name>uint32_t</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>FirstFeature</name> <operator>+</operator> <name>Idx</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;
+}</block></expr></argument></argument_list></call></expr></expr_stmt>)</block_content></block><empty_stmt>;</empty_stmt></if></if_stmt>
+<expr_stmt><expr><name>FirstFeature</name> <operator>+=</operator> <call><name><name>ValueProfileMap</name><operator>.</operator><name>SizeInBits</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+}
+
+
+auto <expr_stmt><expr><name>StackDepthStepFunction</name> <operator>=</operator> <index>[]</index><operator>(</operator><name>size_t</name> <name>A</name><operator>)</operator> <operator>-&gt;</operator> <name>size_t</name> <block>{
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>A</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>A</name></expr>;</return></block_content></block></if></if_stmt>
+<name>auto</name> <name>Log2</name> <operator>=</operator> <call><name>Log</name><argument_list>(<argument><expr><name>A</name></expr></argument>)</argument_list></call></block></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>Log2</name> <operator>&lt;</operator> <literal type="number">3</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>A</name></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>Log2</name> <operator>-=</operator> <literal type="number">3</literal></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>Log2</name> <operator>+</operator> <literal type="number">1</literal><operator>)</operator> <operator>*</operator> <literal type="number">8</literal> <operator>+</operator> <operator>(</operator><operator>(</operator><name>A</name> <operator>&gt;&gt;</operator> <name>Log2</name><operator>)</operator> <operator>&amp;</operator> <literal type="number">7</literal><operator>)</operator></expr>;</return>
+};
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><call><name>StackDepthStepFunction</name><argument_list>(<argument><expr><literal type="number">1024</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">64</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><call><name>StackDepthStepFunction</name><argument_list>(<argument><expr><literal type="number">1024</literal> <operator>*</operator> <literal type="number">4</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">80</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><call><name>StackDepthStepFunction</name><argument_list>(<argument><expr><literal type="number">1024</literal> <operator>*</operator> <literal type="number">1024</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">144</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<decl><type><name>auto</name></type> <name>MaxStackOffset</name> <init>= <expr><call><name>GetMaxStackOffset</name><argument_list>()</argument_list></call></expr></init></decl>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>HandleFeature</name><argument_list>(<argument><expr><call><name><name>static_cast</name><argument_list type="generic">&lt;<argument><expr><name>uint32_t</name></expr></argument>&gt;</argument_list></name><argument_list>(
+<argument><expr><name>FirstFeature</name> <operator>+</operator> <call><name>StackDepthStepFunction</name><argument_list>(<argument><expr><name>MaxStackOffset</name> <operator>/</operator> <literal type="number">8</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>FirstFeature</name> <operator>+=</operator> <call><name>StackDepthStepFunction</name><argument_list>(<argument><expr><name>std</name><operator>::</operator><name><name>numeric_limits</name><argument_list type="generic">&lt;<argument><expr><name>size_t</name></expr></argument>&gt;</argument_list></name><operator>::</operator><call><name>max</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><name>FirstFeature</name></expr>;</return>
+}
+
+extern <decl_stmt><decl><type><name>TracePC</name></type> <name>TPC</name></decl>;</decl_stmt>
+
+}
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

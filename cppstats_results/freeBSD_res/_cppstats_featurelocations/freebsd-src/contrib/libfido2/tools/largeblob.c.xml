@@ -1,0 +1,595 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/libfido2/tools/largeblob.c">
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/types.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/stat.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;fido.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;fido/credman.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;cbor.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;fcntl.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;limits.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdio.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;string.h&gt;</cpp:file></cpp:include>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_UNISTD_H</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;unistd.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;zlib.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"../openbsd-compat/openbsd-compat.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"extern.h"</cpp:file></cpp:include>
+
+<struct>struct <name>rkmap</name> <block>{
+<decl_stmt><decl><type><name>fido_credman_rp_t</name> <modifier>*</modifier></type><name>rp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>fido_credman_rk_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>rk</name></decl>;</decl_stmt>
+}</block>;</struct>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>free_rkmap</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>rkmap</name></name> <modifier>*</modifier></type><name>map</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>map</name><operator>-&gt;</operator><name>rp</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>fido_credman_rp_count</name><argument_list>(<argument><expr><name><name>map</name><operator>-&gt;</operator><name>rp</name></name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>fido_credman_rk_free</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>map</name><operator>-&gt;</operator><name>rk</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+<expr_stmt><expr><call><name>fido_credman_rp_free</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>map</name><operator>-&gt;</operator><name>rp</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>map</name><operator>-&gt;</operator><name>rk</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>map_known_rps</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>path</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>rkmap</name></name> <modifier>*</modifier></type><name>map</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>rp_id</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>pin</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>n</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name></decl>, <decl><type ref="prev"/><name>ok</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>map</name><operator>-&gt;</operator><name>rp</name></name> <operator>=</operator> <call><name>fido_credman_rp_new</name><argument_list>()</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"%s: fido_credman_rp_new"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>pin</name> <operator>=</operator> <call><name>get_pin</name><argument_list>(<argument><expr><name>path</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>fido_credman_get_dev_rp</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name><name>map</name><operator>-&gt;</operator><name>rp</name></name></expr></argument>, <argument><expr><name>pin</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"fido_credman_get_dev_rp: %s"</literal></expr></argument>, <argument><expr><call><name>fido_strerr</name><argument_list>(<argument><expr><name>r</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>n</name> <operator>=</operator> <call><name>fido_credman_rp_count</name><argument_list>(<argument><expr><name><name>map</name><operator>-&gt;</operator><name>rp</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&gt;</operator> <name>UINT8_MAX</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"%s: fido_credman_rp_count &gt; UINT8_MAX"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>map</name><operator>-&gt;</operator><name>rk</name></name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><name>n</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name><name>map</name><operator>-&gt;</operator><name>rk</name></name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"%s: calloc"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>n</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>rp_id</name> <operator>=</operator> <call><name>fido_credman_rp_id</name><argument_list>(<argument><expr><name><name>map</name><operator>-&gt;</operator><name>rp</name></name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"%s: fido_credman_rp_id %zu"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>map</name><operator>-&gt;</operator><name>rk</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <call><name>fido_credman_rk_new</name><argument_list>()</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"%s: fido_credman_rk_new"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>fido_credman_get_dev_rk</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>rp_id</name></expr></argument>, <argument><expr><name><name>map</name><operator>-&gt;</operator><name>rk</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>,
+<argument><expr><name>pin</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"%s: fido_credman_get_dev_rk %s: %s"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>,
+<argument><expr><name>rp_id</name></expr></argument>, <argument><expr><call><name>fido_strerr</name><argument_list>(<argument><expr><name>r</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><name>ok</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<label><name>out</name>:</label>
+<expr_stmt><expr><call><name>freezero</name><argument_list>(<argument><expr><name>pin</name></expr></argument>, <argument><expr><name>PINBUF_LEN</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><name>ok</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>lookup_key</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>path</name></decl></parameter>, <parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>rp_id</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name><name>struct</name> <name>blob</name></name> <modifier>*</modifier></type><name>cred_id</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>pin</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>blob</name></name> <modifier>*</modifier></type><name>key</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>fido_credman_rk_t</name> <modifier>*</modifier></type><name>rk</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>fido_cred_t</name> <modifier>*</modifier></type><name>cred</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>i</name></decl>, <decl><type ref="prev"/><name>n</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name></decl>, <decl><type ref="prev"/><name>ok</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>rk</name> <operator>=</operator> <call><name>fido_credman_rk_new</name><argument_list>()</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"%s: fido_credman_rk_new"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>fido_credman_get_dev_rk</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>rp_id</name></expr></argument>, <argument><expr><name>rk</name></expr></argument>, <argument><expr><operator>*</operator><name>pin</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name> <operator>&amp;&amp;</operator>
+<operator>*</operator><name>pin</name> <operator>==</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <call><name>should_retry_with_pin</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>r</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><operator>*</operator><name>pin</name> <operator>=</operator> <call><name>get_pin</name><argument_list>(<argument><expr><name>path</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <call><name>fido_credman_get_dev_rk</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>rp_id</name></expr></argument>, <argument><expr><name>rk</name></expr></argument>, <argument><expr><operator>*</operator><name>pin</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>r</name> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"%s: fido_credman_get_dev_rk: %s"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>,
+<argument><expr><call><name>fido_strerr</name><argument_list>(<argument><expr><name>r</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>n</name> <operator>=</operator> <call><name>fido_credman_rk_count</name><argument_list>(<argument><expr><name>rk</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"%s: rp id not found"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>n</name> <operator>==</operator> <literal type="number">1</literal> <operator>&amp;&amp;</operator> <name><name>cred_id</name><operator>-&gt;</operator><name>len</name></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><name>cred</name> <operator>=</operator> <call><name>fido_credman_rk</name><argument_list>(<argument><expr><name>rk</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>cred_id</name><operator>-&gt;</operator><name>len</name></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"%s: multiple credentials found"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>n</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>fido_cred_t</name> <modifier>*</modifier></type><name>x</name> <init>= <expr><call><name>fido_credman_rk</name><argument_list>(<argument><expr><name>rk</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>fido_cred_id_len</name><argument_list>(<argument><expr><name>x</name></expr></argument>)</argument_list></call> <operator>&lt;=</operator> <name><name>cred_id</name><operator>-&gt;</operator><name>len</name></name> <operator>&amp;&amp;</operator>
+<operator>!</operator><call><name>memcmp</name><argument_list>(<argument><expr><call><name>fido_cred_id_ptr</name><argument_list>(<argument><expr><name>x</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name><name>cred_id</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>,
+<argument><expr><call><name>fido_cred_id_len</name><argument_list>(<argument><expr><name>x</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>cred</name> <operator>=</operator> <name>x</name></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>cred</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"%s: credential not found"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>fido_cred_largeblob_key_ptr</name><argument_list>(<argument><expr><name>cred</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"%s: no associated blob key"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>key</name><operator>-&gt;</operator><name>len</name></name> <operator>=</operator> <call><name>fido_cred_largeblob_key_len</name><argument_list>(<argument><expr><name>cred</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>key</name><operator>-&gt;</operator><name>ptr</name></name> <operator>=</operator> <call><name>malloc</name><argument_list>(<argument><expr><name><name>key</name><operator>-&gt;</operator><name>len</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"%s: malloc"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name><name>key</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>, <argument><expr><call><name>fido_cred_largeblob_key_ptr</name><argument_list>(<argument><expr><name>cred</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name><name>key</name><operator>-&gt;</operator><name>len</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>ok</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<label><name>out</name>:</label>
+<expr_stmt><expr><call><name>fido_credman_rk_free</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rk</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><name>ok</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>load_key</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>keyf</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>cred_id64</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>rp_id</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>path</name></decl></parameter>, <parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>pin</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>blob</name></name> <modifier>*</modifier></type><name>key</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>blob</name></name></type> <name>cred_id</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>FILE</name> <modifier>*</modifier></type><name>fp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>cred_id</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>cred_id</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>keyf</name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>rp_id</name> <operator>!=</operator> <name>NULL</name> <operator>||</operator> <name>cred_id64</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>usage</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>fp</name> <operator>=</operator> <call><name>open_read</name><argument_list>(<argument><expr><name>keyf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>base64_read</name><argument_list>(<argument><expr><name>fp</name></expr></argument>, <argument><expr><name>key</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"%s: base64_read %s"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>, <argument><expr><name>keyf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>fclose</name><argument_list>(<argument><expr><name>fp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>r</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>rp_id</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>usage</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>cred_id64</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <call><name>base64_decode</name><argument_list>(<argument><expr><name>cred_id64</name></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><operator>&amp;</operator><name><name>cred_id</name><operator>.</operator><name>ptr</name></name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name><name>cred_id</name><operator>.</operator><name>len</name></name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"%s: base64_decode %s"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>, <argument><expr><name>cred_id64</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <call><name>lookup_key</name><argument_list>(<argument><expr><name>path</name></expr></argument>, <argument><expr><name>dev</name></expr></argument>, <argument><expr><name>rp_id</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>cred_id</name></expr></argument>, <argument><expr><name>pin</name></expr></argument>, <argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>cred_id</name><operator>.</operator><name>ptr</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><name>r</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>blob_set</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>path</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>keyf</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>rp_id</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>cred_id64</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>blobf</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>blob</name></name></type> <name>key</name></decl>, <decl><type ref="prev"/><name>blob</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>pin</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name></decl>, <decl><type ref="prev"/><name>ok</name> <init>= <expr><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>dev</name> <operator>=</operator> <call><name>open_dev</name><argument_list>(<argument><expr><name>path</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>key</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>blob</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>blob</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>read_file</name><argument_list>(<argument><expr><name>blobf</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>blob</name><operator>.</operator><name>ptr</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>blob</name><operator>.</operator><name>len</name></name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>load_key</name><argument_list>(<argument><expr><name>keyf</name></expr></argument>, <argument><expr><name>cred_id64</name></expr></argument>, <argument><expr><name>rp_id</name></expr></argument>, <argument><expr><name>path</name></expr></argument>, <argument><expr><name>dev</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>pin</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>key</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>fido_dev_largeblob_set</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name><name>key</name><operator>.</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>key</name><operator>.</operator><name>len</name></name></expr></argument>, <argument><expr><name><name>blob</name><operator>.</operator><name>ptr</name></name></expr></argument>,
+<argument><expr><name><name>blob</name><operator>.</operator><name>len</name></name></expr></argument>, <argument><expr><name>pin</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name> <operator>&amp;&amp;</operator> <call><name>should_retry_with_pin</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>r</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>pin</name> <operator>=</operator> <call><name>get_pin</name><argument_list>(<argument><expr><name>path</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <call><name>fido_dev_largeblob_set</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name><name>key</name><operator>.</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>key</name><operator>.</operator><name>len</name></name></expr></argument>, <argument><expr><name><name>blob</name><operator>.</operator><name>ptr</name></name></expr></argument>,
+<argument><expr><name><name>blob</name><operator>.</operator><name>len</name></name></expr></argument>, <argument><expr><name>pin</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>r</name> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"fido_dev_largeblob_set: %s"</literal></expr></argument>, <argument><expr><call><name>fido_strerr</name><argument_list>(<argument><expr><name>r</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>ok</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<label><name>out</name>:</label>
+<expr_stmt><expr><call><name>freezero</name><argument_list>(<argument><expr><name><name>key</name><operator>.</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>key</name><operator>.</operator><name>len</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>freezero</name><argument_list>(<argument><expr><name><name>blob</name><operator>.</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>blob</name><operator>.</operator><name>len</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>freezero</name><argument_list>(<argument><expr><name>pin</name></expr></argument>, <argument><expr><name>PINBUF_LEN</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>fido_dev_close</name><argument_list>(<argument><expr><name>dev</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fido_dev_free</name><argument_list>(<argument><expr><operator>&amp;</operator><name>dev</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><name>ok</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>blob_get</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>path</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>keyf</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>rp_id</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>cred_id64</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>blobf</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>blob</name></name></type> <name>key</name></decl>, <decl><type ref="prev"/><name>blob</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>pin</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name></decl>, <decl><type ref="prev"/><name>ok</name> <init>= <expr><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>dev</name> <operator>=</operator> <call><name>open_dev</name><argument_list>(<argument><expr><name>path</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>key</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>blob</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>blob</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>load_key</name><argument_list>(<argument><expr><name>keyf</name></expr></argument>, <argument><expr><name>cred_id64</name></expr></argument>, <argument><expr><name>rp_id</name></expr></argument>, <argument><expr><name>path</name></expr></argument>, <argument><expr><name>dev</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>pin</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>key</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>fido_dev_largeblob_get</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name><name>key</name><operator>.</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>key</name><operator>.</operator><name>len</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>blob</name><operator>.</operator><name>ptr</name></name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name><name>blob</name><operator>.</operator><name>len</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"fido_dev_largeblob_get: %s"</literal></expr></argument>, <argument><expr><call><name>fido_strerr</name><argument_list>(<argument><expr><name>r</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>write_file</name><argument_list>(<argument><expr><name>blobf</name></expr></argument>, <argument><expr><name><name>blob</name><operator>.</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>blob</name><operator>.</operator><name>len</name></name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>ok</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<label><name>out</name>:</label>
+<expr_stmt><expr><call><name>freezero</name><argument_list>(<argument><expr><name><name>key</name><operator>.</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>key</name><operator>.</operator><name>len</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>freezero</name><argument_list>(<argument><expr><name><name>blob</name><operator>.</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>blob</name><operator>.</operator><name>len</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>freezero</name><argument_list>(<argument><expr><name>pin</name></expr></argument>, <argument><expr><name>PINBUF_LEN</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>fido_dev_close</name><argument_list>(<argument><expr><name>dev</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fido_dev_free</name><argument_list>(<argument><expr><operator>&amp;</operator><name>dev</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><name>ok</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>blob_delete</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>path</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>keyf</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>rp_id</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>cred_id64</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>blob</name></name></type> <name>key</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>pin</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name></decl>, <decl><type ref="prev"/><name>ok</name> <init>= <expr><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>dev</name> <operator>=</operator> <call><name>open_dev</name><argument_list>(<argument><expr><name>path</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>key</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>load_key</name><argument_list>(<argument><expr><name>keyf</name></expr></argument>, <argument><expr><name>cred_id64</name></expr></argument>, <argument><expr><name>rp_id</name></expr></argument>, <argument><expr><name>path</name></expr></argument>, <argument><expr><name>dev</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>pin</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>key</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>fido_dev_largeblob_remove</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name><name>key</name><operator>.</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>key</name><operator>.</operator><name>len</name></name></expr></argument>,
+<argument><expr><name>pin</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name> <operator>&amp;&amp;</operator> <call><name>should_retry_with_pin</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>r</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>pin</name> <operator>=</operator> <call><name>get_pin</name><argument_list>(<argument><expr><name>path</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <call><name>fido_dev_largeblob_remove</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name><name>key</name><operator>.</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>key</name><operator>.</operator><name>len</name></name></expr></argument>, <argument><expr><name>pin</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>r</name> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"fido_dev_largeblob_remove: %s"</literal></expr></argument>, <argument><expr><call><name>fido_strerr</name><argument_list>(<argument><expr><name>r</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>ok</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<label><name>out</name>:</label>
+<expr_stmt><expr><call><name>freezero</name><argument_list>(<argument><expr><name><name>key</name><operator>.</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>key</name><operator>.</operator><name>len</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>freezero</name><argument_list>(<argument><expr><name>pin</name></expr></argument>, <argument><expr><name>PINBUF_LEN</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>fido_dev_close</name><argument_list>(<argument><expr><name>dev</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fido_dev_free</name><argument_list>(<argument><expr><operator>&amp;</operator><name>dev</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><name>ok</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>decompress</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name><name>struct</name> <name>blob</name></name> <modifier>*</modifier></type><name>plaintext</name></decl></parameter>, <parameter><decl><type><name>uint64_t</name></type> <name>origsiz</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>blob</name></name></type> <name>inflated</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>u_long</name></type> <name>ilen</name></decl>, <decl><type ref="prev"/><name>plen</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ok</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>inflated</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>inflated</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>plaintext</name><operator>-&gt;</operator><name>len</name></name> <operator>&gt;</operator> <name>ULONG_MAX</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>origsiz</name> <operator>&gt;</operator> <name>ULONG_MAX</name> <operator>||</operator> <name>origsiz</name> <operator>&gt;</operator> <name>SIZE_MAX</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>plen</name> <operator>=</operator> <operator>(</operator><name>u_long</name><operator>)</operator><name><name>plaintext</name><operator>-&gt;</operator><name>len</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>ilen</name> <operator>=</operator> <operator>(</operator><name>u_long</name><operator>)</operator><name>origsiz</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>inflated</name><operator>.</operator><name>len</name></name> <operator>=</operator> <operator>(</operator><name>size_t</name><operator>)</operator><name>origsiz</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>inflated</name><operator>.</operator><name>ptr</name></name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name><name>inflated</name><operator>.</operator><name>len</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>uncompress</name><argument_list>(<argument><expr><name><name>inflated</name><operator>.</operator><name>ptr</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ilen</name></expr></argument>, <argument><expr><name><name>plaintext</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>, <argument><expr><name>plen</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>Z_OK</name> <operator>||</operator>
+<name>ilen</name> <operator>&gt;</operator> <name>SIZE_MAX</name> <operator>||</operator> <operator>(</operator><name>size_t</name><operator>)</operator><name>ilen</name> <operator>!=</operator> <operator>(</operator><name>size_t</name><operator>)</operator><name>origsiz</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>ok</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<label><name>out</name>:</label>
+<expr_stmt><expr><call><name>freezero</name><argument_list>(<argument><expr><name><name>inflated</name><operator>.</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>inflated</name><operator>.</operator><name>len</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><name>ok</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>decode</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name><name>struct</name> <name>blob</name></name> <modifier>*</modifier></type><name>ciphertext</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name><name>struct</name> <name>blob</name></name> <modifier>*</modifier></type><name>nonce</name></decl></parameter>,
+<parameter><decl><type><name>uint64_t</name></type> <name>origsiz</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>fido_cred_t</name> <modifier>*</modifier></type><name>cred</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>uint8_t</name></type> <name><name>aad</name><index>[<expr><literal type="number">4</literal> <operator>+</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>uint64_t</name></expr></argument>)</argument_list></sizeof></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>EVP_CIPHER_CTX</name> <modifier>*</modifier></type><name>ctx</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>EVP_CIPHER</name> <modifier>*</modifier></type><name>cipher</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>blob</name></name></type> <name>plaintext</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>tmp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ok</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>plaintext</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>plaintext</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>nonce</name><operator>-&gt;</operator><name>len</name></name> <operator>!=</operator> <literal type="number">12</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>cred</name> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<call><name>fido_cred_largeblob_key_ptr</name><argument_list>(<argument><expr><name>cred</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<call><name>fido_cred_largeblob_key_len</name><argument_list>(<argument><expr><name>cred</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">32</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>ciphertext</name><operator>-&gt;</operator><name>len</name></name> <operator>&gt;</operator> <name>UINT_MAX</name> <operator>||</operator>
+<name><name>ciphertext</name><operator>-&gt;</operator><name>len</name></name> <operator>&gt;</operator> <name>SIZE_MAX</name> <operator>-</operator> <literal type="number">16</literal> <operator>||</operator>
+<name><name>ciphertext</name><operator>-&gt;</operator><name>len</name></name> <operator>&lt;</operator> <literal type="number">16</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>plaintext</name><operator>.</operator><name>len</name></name> <operator>=</operator> <name><name>ciphertext</name><operator>-&gt;</operator><name>len</name></name> <operator>-</operator> <literal type="number">16</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>plaintext</name><operator>.</operator><name>ptr</name></name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name><name>plaintext</name><operator>.</operator><name>len</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>ctx</name> <operator>=</operator> <call><name>EVP_CIPHER_CTX_new</name><argument_list>()</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<operator>(</operator><name>cipher</name> <operator>=</operator> <call><name>EVP_aes_256_gcm</name><argument_list>()</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<call><name>EVP_CipherInit</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>cipher</name></expr></argument>, <argument><expr><call><name>fido_cred_largeblob_key_ptr</name><argument_list>(<argument><expr><name>cred</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name><name>nonce</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>EVP_CIPHER_CTX_ctrl</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>EVP_CTRL_GCM_SET_TAG</name></expr></argument>, <argument><expr><literal type="number">16</literal></expr></argument>,
+<argument><expr><name><name>ciphertext</name><operator>-&gt;</operator><name>ptr</name></name> <operator>+</operator> <name><name>ciphertext</name><operator>-&gt;</operator><name>len</name></name> <operator>-</operator> <literal type="number">16</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>aad</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>=</operator> <literal type="number">0x62</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>aad</name><index>[<expr><literal type="number">1</literal></expr>]</index></name> <operator>=</operator> <literal type="number">0x6c</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>aad</name><index>[<expr><literal type="number">2</literal></expr>]</index></name> <operator>=</operator> <literal type="number">0x6f</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>aad</name><index>[<expr><literal type="number">3</literal></expr>]</index></name> <operator>=</operator> <literal type="number">0x62</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>tmp</name> <operator>=</operator> <call><name>htole64</name><argument_list>(<argument><expr><name>origsiz</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>aad</name><index>[<expr><literal type="number">4</literal></expr>]</index></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>tmp</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>uint64_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>EVP_Cipher</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>aad</name></expr></argument>, <argument><expr><operator>(</operator><name>u_int</name><operator>)</operator><sizeof>sizeof<argument_list>(<argument><expr><name>aad</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>EVP_Cipher</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name><name>plaintext</name><operator>.</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>ciphertext</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>,
+<argument><expr><operator>(</operator><name>u_int</name><operator>)</operator><name><name>plaintext</name><operator>.</operator><name>len</name></name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>EVP_Cipher</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>decompress</name><argument_list>(<argument><expr><operator>&amp;</operator><name>plaintext</name></expr></argument>, <argument><expr><name>origsiz</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>ok</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<label><name>out</name>:</label>
+<expr_stmt><expr><call><name>freezero</name><argument_list>(<argument><expr><name><name>plaintext</name><operator>.</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>plaintext</name><operator>.</operator><name>len</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ctx</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>EVP_CIPHER_CTX_free</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<return>return <expr><name>ok</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <specifier>const</specifier> <name>fido_cred_t</name> <modifier>*</modifier></type>
+<name>try_rp</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>fido_credman_rk_t</name> <modifier>*</modifier></type><name>rk</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name><name>struct</name> <name>blob</name></name> <modifier>*</modifier></type><name>ciphertext</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name><name>struct</name> <name>blob</name></name> <modifier>*</modifier></type><name>nonce</name></decl></parameter>, <parameter><decl><type><name>uint64_t</name></type> <name>origsiz</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>fido_cred_t</name> <modifier>*</modifier></type><name>cred</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>fido_credman_rk_count</name><argument_list>(<argument><expr><name>rk</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>cred</name> <operator>=</operator> <call><name>fido_credman_rk</name><argument_list>(<argument><expr><name>rk</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator>
+<call><name>decode</name><argument_list>(<argument><expr><name>ciphertext</name></expr></argument>, <argument><expr><name>nonce</name></expr></argument>, <argument><expr><name>origsiz</name></expr></argument>, <argument><expr><name>cred</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>cred</name></expr>;</return></block_content></block></if></if_stmt></block_content></block></for>
+
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>decode_cbor_blob</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>blob</name></name> <modifier>*</modifier></type><name>out</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>cbor_item_t</name> <modifier>*</modifier></type><name>item</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>out</name><operator>-&gt;</operator><name>ptr</name></name> <operator>!=</operator> <name>NULL</name> <operator>||</operator>
+<call><name>cbor_isa_bytestring</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name> <operator>||</operator>
+<call><name>cbor_bytestring_is_definite</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>out</name><operator>-&gt;</operator><name>len</name></name> <operator>=</operator> <call><name>cbor_bytestring_length</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>out</name><operator>-&gt;</operator><name>ptr</name></name> <operator>=</operator> <call><name>malloc</name><argument_list>(<argument><expr><name><name>out</name><operator>-&gt;</operator><name>len</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name><name>out</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>, <argument><expr><call><name>cbor_bytestring_handle</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name><name>out</name><operator>-&gt;</operator><name>len</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>decode_blob_entry</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>cbor_item_t</name> <modifier>*</modifier></type><name>item</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>blob</name></name> <modifier>*</modifier></type><name>ciphertext</name></decl></parameter>,
+<parameter><decl><type><name><name>struct</name> <name>blob</name></name> <modifier>*</modifier></type><name>nonce</name></decl></parameter>, <parameter><decl><type><name>uint64_t</name> <modifier>*</modifier></type><name>origsiz</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>cbor_pair</name></name> <modifier>*</modifier></type><name>v</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>item</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>cbor_isa_map</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name> <operator>||</operator>
+<call><name>cbor_map_is_definite</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name> <operator>||</operator>
+<operator>(</operator><name>v</name> <operator>=</operator> <call><name>cbor_map_handle</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>cbor_map_size</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call> <operator>&gt;</operator> <name>UINT8_MAX</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>cbor_map_size</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>cbor_isa_uint</name><argument_list>(<argument><expr><name><name>v</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>key</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name> <operator>||</operator>
+<call><name>cbor_int_get_width</name><argument_list>(<argument><expr><name><name>v</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>key</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>CBOR_INT_8</name></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+<switch>switch <condition>(<expr><call><name>cbor_get_uint8</name><argument_list>(<argument><expr><name><name>v</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>key</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<case>case <expr><literal type="number">1</literal></expr>:</case>
+<if_stmt><if>if <condition>(<expr><call><name>decode_cbor_blob</name><argument_list>(<argument><expr><name>ciphertext</name></expr></argument>, <argument><expr><name><name>v</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>value</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+<break>break;</break>
+<case>case <expr><literal type="number">2</literal></expr>:</case>
+<if_stmt><if>if <condition>(<expr><call><name>decode_cbor_blob</name><argument_list>(<argument><expr><name>nonce</name></expr></argument>, <argument><expr><name><name>v</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>value</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+<break>break;</break>
+<case>case <expr><literal type="number">3</literal></expr>:</case>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>origsiz</name> <operator>!=</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>cbor_isa_uint</name><argument_list>(<argument><expr><name><name>v</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>value</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name> <operator>||</operator>
+<operator>(</operator><operator>*</operator><name>origsiz</name> <operator>=</operator> <call><name>cbor_get_int</name><argument_list>(<argument><expr><name><name>v</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>value</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&gt;</operator> <name>SIZE_MAX</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></switch>
+</block_content>}</block></for>
+<if_stmt><if>if <condition>(<expr><name><name>ciphertext</name><operator>-&gt;</operator><name>ptr</name></name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <name><name>nonce</name><operator>-&gt;</operator><name>ptr</name></name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <operator>*</operator><name>origsiz</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>print_blob_entry</name><parameter_list>(<parameter><decl><type><name>size_t</name></type> <name>idx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>cbor_item_t</name> <modifier>*</modifier></type><name>item</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name><name>struct</name> <name>rkmap</name></name> <modifier>*</modifier></type><name>map</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>blob</name></name></type> <name>ciphertext</name></decl>, <decl><type ref="prev"/><name>nonce</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>fido_cred_t</name> <modifier>*</modifier></type><name>cred</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>rp_id</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>cred_id</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>origsiz</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ciphertext</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>ciphertext</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>nonce</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>nonce</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>decode_blob_entry</name><argument_list>(<argument><expr><name>item</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ciphertext</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>nonce</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>origsiz</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%02zu: &lt;skipped: bad cbor&gt;\n"</literal></expr></argument>, <argument><expr><name>idx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>fido_credman_rp_count</name><argument_list>(<argument><expr><name><name>map</name><operator>-&gt;</operator><name>rp</name></name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>cred</name> <operator>=</operator> <call><name>try_rp</name><argument_list>(<argument><expr><name><name>map</name><operator>-&gt;</operator><name>rk</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ciphertext</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>nonce</name></expr></argument>,
+<argument><expr><name>origsiz</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>rp_id</name> <operator>=</operator> <call><name>fido_credman_rp_id</name><argument_list>(<argument><expr><name><name>map</name><operator>-&gt;</operator><name>rp</name></name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+<if_stmt><if>if <condition>(<expr><name>cred</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>cred_id</name> <operator>=</operator> <call><name>strdup</name><argument_list>(<argument><expr><literal type="string">"&lt;unknown&gt;"</literal></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%02zu: &lt;skipped: strdup failed&gt;\n"</literal></expr></argument>, <argument><expr><name>idx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>base64_encode</name><argument_list>(<argument><expr><call><name>fido_cred_id_ptr</name><argument_list>(<argument><expr><name>cred</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>fido_cred_id_len</name><argument_list>(<argument><expr><name>cred</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><operator>&amp;</operator><name>cred_id</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%02zu: &lt;skipped: base64_encode failed&gt;\n"</literal></expr></argument>, <argument><expr><name>idx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>rp_id</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>rp_id</name> <operator>=</operator> <literal type="string">"&lt;unknown&gt;"</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%02zu: %4zu %4zu %s %s\n"</literal></expr></argument>, <argument><expr><name>idx</name></expr></argument>, <argument><expr><name><name>ciphertext</name><operator>.</operator><name>len</name></name></expr></argument>,
+<argument><expr><operator>(</operator><name>size_t</name><operator>)</operator><name>origsiz</name></expr></argument>, <argument><expr><name>cred_id</name></expr></argument>, <argument><expr><name>rp_id</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<label><name>out</name>:</label>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>ciphertext</name><operator>.</operator><name>ptr</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>nonce</name><operator>.</operator><name>ptr</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>cred_id</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>cbor_item_t</name> <modifier>*</modifier></type>
+<name>get_cbor_array</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>cbor_load_result</name></name></type> <name>cbor_result</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>cbor_item_t</name> <modifier>*</modifier></type><name>item</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>u_char</name> <modifier>*</modifier></type><name>cbor_ptr</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>cbor_len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name></decl>, <decl><type ref="prev"/><name>ok</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>fido_dev_largeblob_get_array</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>cbor_ptr</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>cbor_len</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"%s: fido_dev_largeblob_get_array: %s"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>,
+<argument><expr><call><name>fido_strerr</name><argument_list>(<argument><expr><name>r</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>item</name> <operator>=</operator> <call><name>cbor_load</name><argument_list>(<argument><expr><name>cbor_ptr</name></expr></argument>, <argument><expr><name>cbor_len</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>cbor_result</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"%s: cbor_load"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>cbor_result</name><operator>.</operator><name>read</name></name> <operator>!=</operator> <name>cbor_len</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"%s: cbor_result.read (%zu) != cbor_len (%zu)"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>,
+<argument><expr><name><name>cbor_result</name><operator>.</operator><name>read</name></name></expr></argument>, <argument><expr><name>cbor_len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>cbor_isa_array</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name> <operator>||</operator>
+<call><name>cbor_array_is_definite</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"%s: cbor type"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>cbor_array_size</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call> <operator>&gt;</operator> <name>UINT8_MAX</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"%s: cbor_array_size &gt; UINT8_MAX"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>cbor_array_size</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>ok</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"total map size: %zu byte%s\n"</literal></expr></argument>, <argument><expr><name>cbor_len</name></expr></argument>, <argument><expr><call><name>plural</name><argument_list>(<argument><expr><name>cbor_len</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>ok</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<label><name>out</name>:</label>
+<if_stmt><if>if <condition>(<expr><name>ok</name> <operator>&lt;</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name>item</name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>cbor_decref</name><argument_list>(<argument><expr><operator>&amp;</operator><name>item</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>item</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>cbor_ptr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><name>item</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>blob_list</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>path</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>rkmap</name></name></type> <name>map</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>cbor_item_t</name> <modifier>*</modifier></type><name>item</name> <init>= <expr><name>NULL</name></expr></init></decl>, <decl><type ref="prev"><modifier>*</modifier><modifier>*</modifier></type><name>v</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ok</name> <init>= <expr><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>map</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>map</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>dev</name> <operator>=</operator> <call><name>open_dev</name><argument_list>(<argument><expr><name>path</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>map_known_rps</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>path</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>map</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<operator>(</operator><name>item</name> <operator>=</operator> <call><name>get_cbor_array</name><argument_list>(<argument><expr><name>dev</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>cbor_array_size</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>ok</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>v</name> <operator>=</operator> <call><name>cbor_array_handle</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"%s: cbor_array_handle"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>cbor_array_size</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>print_blob_entry</name><argument_list>(<argument><expr><name>i</name></expr></argument>, <argument><expr><name><name>v</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>map</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+
+<expr_stmt><expr><name>ok</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<label><name>out</name>:</label>
+<expr_stmt><expr><call><name>free_rkmap</name><argument_list>(<argument><expr><operator>&amp;</operator><name>map</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>item</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>cbor_decref</name><argument_list>(<argument><expr><operator>&amp;</operator><name>item</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>fido_dev_close</name><argument_list>(<argument><expr><name>dev</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fido_dev_free</name><argument_list>(<argument><expr><operator>&amp;</operator><name>dev</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><name>ok</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+</unit>

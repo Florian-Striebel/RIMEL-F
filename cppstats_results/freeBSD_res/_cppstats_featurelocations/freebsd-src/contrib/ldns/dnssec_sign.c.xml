@@ -1,0 +1,1601 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/ldns/dnssec_sign.c"><cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;ldns/config.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;ldns/ldns.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;ldns/dnssec.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;ldns/dnssec_sign.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;strings.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;time.h&gt;</cpp:file></cpp:include>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_SSL</name></expr></argument>)</argument_list></call></expr></cpp:if>
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;openssl/ssl.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;openssl/evp.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;openssl/rand.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;openssl/err.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;openssl/md5.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<function><type><name>ldns_rr</name> <modifier>*</modifier></type>
+<name>ldns_create_empty_rrsig</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>ldns_rr_list</name> <modifier>*</modifier></type><name>rrset</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>ldns_key</name> <modifier>*</modifier></type><name>current_key</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>orig_ttl</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rr_class</name></type> <name>orig_class</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>time_t</name></type> <name>now</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rr</name> <modifier>*</modifier></type><name>current_sig</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint8_t</name></type> <name>label_count</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rdf</name> <modifier>*</modifier></type><name>signame</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>label_count</name> <operator>=</operator> <call><name>ldns_dname_label_count</name><argument_list>(<argument><expr><call><name>ldns_rr_owner</name><argument_list>(<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>rrset</name></expr></argument>,
+<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if<condition>(<expr><call><name>ldns_dname_is_wildcard</name><argument_list>(<argument><expr><call><name>ldns_rr_owner</name><argument_list>(<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>rrset</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>label_count</name> <operator>--</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>current_sig</name> <operator>=</operator> <call><name>ldns_rr_new_frm_type</name><argument_list>(<argument><expr><name>LDNS_RR_TYPE_RRSIG</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><name>orig_ttl</name> <operator>=</operator> <call><name>ldns_rr_ttl</name><argument_list>(<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>rrset</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>orig_class</name> <operator>=</operator> <call><name>ldns_rr_get_class</name><argument_list>(<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>rrset</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>ldns_rr_set_ttl</name><argument_list>(<argument><expr><name>current_sig</name></expr></argument>, <argument><expr><name>orig_ttl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_set_class</name><argument_list>(<argument><expr><name>current_sig</name></expr></argument>, <argument><expr><name>orig_class</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_set_owner</name><argument_list>(<argument><expr><name>current_sig</name></expr></argument>,
+<argument><expr><call><name>ldns_rdf_clone</name><argument_list>(
+<argument><expr><call><name>ldns_rr_owner</name><argument_list>(
+<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>rrset</name></expr></argument>,
+<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>ldns_rr_rrsig_set_origttl</name><argument_list>(
+<argument><expr><name>current_sig</name></expr></argument>,
+<argument><expr><call><name>ldns_native2rdf_int32</name><argument_list>(<argument><expr><name>LDNS_RDF_TYPE_INT32</name></expr></argument>,
+<argument><expr><name>orig_ttl</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>signame</name> <operator>=</operator> <call><name>ldns_rdf_clone</name><argument_list>(<argument><expr><call><name>ldns_key_pubkey_owner</name><argument_list>(<argument><expr><name>current_key</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_dname2canonical</name><argument_list>(<argument><expr><name>signame</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>ldns_rr_rrsig_set_signame</name><argument_list>(
+<argument><expr><name>current_sig</name></expr></argument>,
+<argument><expr><name>signame</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>ldns_rr_rrsig_set_labels</name><argument_list>(
+<argument><expr><name>current_sig</name></expr></argument>,
+<argument><expr><call><name>ldns_native2rdf_int8</name><argument_list>(<argument><expr><name>LDNS_RDF_TYPE_INT8</name></expr></argument>,
+<argument><expr><name>label_count</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>now</name> <operator>=</operator> <call><name>time</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>ldns_key_inception</name><argument_list>(<argument><expr><name>current_key</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>ldns_rr_rrsig_set_inception</name><argument_list>(
+<argument><expr><name>current_sig</name></expr></argument>,
+<argument><expr><call><name>ldns_native2rdf_int32</name><argument_list>(
+<argument><expr><name>LDNS_RDF_TYPE_TIME</name></expr></argument>,
+<argument><expr><call><name>ldns_key_inception</name><argument_list>(<argument><expr><name>current_key</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>ldns_rr_rrsig_set_inception</name><argument_list>(
+<argument><expr><name>current_sig</name></expr></argument>,
+<argument><expr><call><name>ldns_native2rdf_int32</name><argument_list>(<argument><expr><name>LDNS_RDF_TYPE_TIME</name></expr></argument>, <argument><expr><name>now</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>ldns_key_expiration</name><argument_list>(<argument><expr><name>current_key</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>ldns_rr_rrsig_set_expiration</name><argument_list>(
+<argument><expr><name>current_sig</name></expr></argument>,
+<argument><expr><call><name>ldns_native2rdf_int32</name><argument_list>(
+<argument><expr><name>LDNS_RDF_TYPE_TIME</name></expr></argument>,
+<argument><expr><call><name>ldns_key_expiration</name><argument_list>(<argument><expr><name>current_key</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>ldns_rr_rrsig_set_expiration</name><argument_list>(
+<argument><expr><name>current_sig</name></expr></argument>,
+<argument><expr><call><name>ldns_native2rdf_int32</name><argument_list>(
+<argument><expr><name>LDNS_RDF_TYPE_TIME</name></expr></argument>,
+<argument><expr><name>now</name> <operator>+</operator> <name>LDNS_DEFAULT_EXP_TIME</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>ldns_rr_rrsig_set_keytag</name><argument_list>(
+<argument><expr><name>current_sig</name></expr></argument>,
+<argument><expr><call><name>ldns_native2rdf_int16</name><argument_list>(<argument><expr><name>LDNS_RDF_TYPE_INT16</name></expr></argument>,
+<argument><expr><call><name>ldns_key_keytag</name><argument_list>(<argument><expr><name>current_key</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>ldns_rr_rrsig_set_algorithm</name><argument_list>(
+<argument><expr><name>current_sig</name></expr></argument>,
+<argument><expr><call><name>ldns_native2rdf_int8</name><argument_list>(
+<argument><expr><name>LDNS_RDF_TYPE_ALG</name></expr></argument>,
+<argument><expr><call><name>ldns_key_algorithm</name><argument_list>(<argument><expr><name>current_key</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>ldns_rr_rrsig_set_typecovered</name><argument_list>(
+<argument><expr><name>current_sig</name></expr></argument>,
+<argument><expr><call><name>ldns_native2rdf_int16</name><argument_list>(
+<argument><expr><name>LDNS_RDF_TYPE_TYPE</name></expr></argument>,
+<argument><expr><call><name>ldns_rr_get_type</name><argument_list>(<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>rrset</name></expr></argument>,
+<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>current_sig</name></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_SSL</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<function><type><name>ldns_rdf</name> <modifier>*</modifier></type>
+<name>ldns_sign_public_buffer</name><parameter_list>(<parameter><decl><type><name>ldns_buffer</name> <modifier>*</modifier></type><name>sign_buf</name></decl></parameter>, <parameter><decl><type><name>ldns_key</name> <modifier>*</modifier></type><name>current_key</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ldns_rdf</name> <modifier>*</modifier></type><name>b64rdf</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+
+<switch>switch<condition>(<expr><call><name>ldns_key_algorithm</name><argument_list>(<argument><expr><name>current_key</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_DSA</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<case>case <expr><name>LDNS_SIGN_DSA</name></expr>:</case>
+<case>case <expr><name>LDNS_SIGN_DSA_NSEC3</name></expr>:</case>
+<expr_stmt><expr><name>b64rdf</name> <operator>=</operator> <call><name>ldns_sign_public_evp</name><argument_list>(
+<argument><expr><name>sign_buf</name></expr></argument>,
+<argument><expr><call><name>ldns_key_evp_key</name><argument_list>(<argument><expr><name>current_key</name></expr></argument>)</argument_list></call></expr></argument>,
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_EVP_DSS1</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<argument><expr><macro><name>EVP_dss1</name><argument_list>()</argument_list></macro>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<call><name>EVP_sha1</name><argument_list>()</argument_list></call></expr></argument>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<case>case <expr><name>LDNS_SIGN_RSASHA1</name></expr>:</case>
+<case>case <expr><name>LDNS_SIGN_RSASHA1_NSEC3</name></expr>:</case>
+<expr_stmt><expr><name>b64rdf</name> <operator>=</operator> <call><name>ldns_sign_public_evp</name><argument_list>(
+<argument><expr><name>sign_buf</name></expr></argument>,
+<argument><expr><call><name>ldns_key_evp_key</name><argument_list>(<argument><expr><name>current_key</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>EVP_sha1</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_SHA2</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<case>case <expr><name>LDNS_SIGN_RSASHA256</name></expr>:</case>
+<expr_stmt><expr><name>b64rdf</name> <operator>=</operator> <call><name>ldns_sign_public_evp</name><argument_list>(
+<argument><expr><name>sign_buf</name></expr></argument>,
+<argument><expr><call><name>ldns_key_evp_key</name><argument_list>(<argument><expr><name>current_key</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>EVP_sha256</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>LDNS_SIGN_RSASHA512</name></expr>:</case>
+<expr_stmt><expr><name>b64rdf</name> <operator>=</operator> <call><name>ldns_sign_public_evp</name><argument_list>(
+<argument><expr><name>sign_buf</name></expr></argument>,
+<argument><expr><call><name>ldns_key_evp_key</name><argument_list>(<argument><expr><name>current_key</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>EVP_sha512</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_GOST</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<case>case <expr><name>LDNS_SIGN_ECC_GOST</name></expr>:</case>
+<expr_stmt><expr><name>b64rdf</name> <operator>=</operator> <call><name>ldns_sign_public_evp</name><argument_list>(
+<argument><expr><name>sign_buf</name></expr></argument>,
+<argument><expr><call><name>ldns_key_evp_key</name><argument_list>(<argument><expr><name>current_key</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>EVP_get_digestbyname</name><argument_list>(<argument><expr><literal type="string">"md_gost94"</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_ECDSA</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<case>case <expr><name>LDNS_SIGN_ECDSAP256SHA256</name></expr>:</case>
+<expr_stmt><expr><name>b64rdf</name> <operator>=</operator> <call><name>ldns_sign_public_evp</name><argument_list>(
+<argument><expr><name>sign_buf</name></expr></argument>,
+<argument><expr><call><name>ldns_key_evp_key</name><argument_list>(<argument><expr><name>current_key</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>EVP_sha256</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>LDNS_SIGN_ECDSAP384SHA384</name></expr>:</case>
+<expr_stmt><expr><name>b64rdf</name> <operator>=</operator> <call><name>ldns_sign_public_evp</name><argument_list>(
+<argument><expr><name>sign_buf</name></expr></argument>,
+<argument><expr><call><name>ldns_key_evp_key</name><argument_list>(<argument><expr><name>current_key</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>EVP_sha384</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_ED25519</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<case>case <expr><name>LDNS_SIGN_ED25519</name></expr>:</case>
+<expr_stmt><expr><name>b64rdf</name> <operator>=</operator> <call><name>ldns_sign_public_evp</name><argument_list>(
+<argument><expr><name>sign_buf</name></expr></argument>,
+<argument><expr><call><name>ldns_key_evp_key</name><argument_list>(<argument><expr><name>current_key</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>EVP_sha512</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_ED448</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<case>case <expr><name>LDNS_SIGN_ED448</name></expr>:</case>
+<expr_stmt><expr><name>b64rdf</name> <operator>=</operator> <call><name>ldns_sign_public_evp</name><argument_list>(
+<argument><expr><name>sign_buf</name></expr></argument>,
+<argument><expr><call><name>ldns_key_evp_key</name><argument_list>(<argument><expr><name>current_key</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>EVP_sha512</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<case>case <expr><name>LDNS_SIGN_RSAMD5</name></expr>:</case>
+<expr_stmt><expr><name>b64rdf</name> <operator>=</operator> <call><name>ldns_sign_public_evp</name><argument_list>(
+<argument><expr><name>sign_buf</name></expr></argument>,
+<argument><expr><call><name>ldns_key_evp_key</name><argument_list>(<argument><expr><name>current_key</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>EVP_md5</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<default>default:</default>
+
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"unknown algorithm, "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"is the one used available on this system?\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></switch>
+
+<return>return <expr><name>b64rdf</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><name>ldns_rr_list</name> <modifier>*</modifier></type>
+<name>ldns_sign_public</name><parameter_list>(<parameter><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>rrset</name></decl></parameter>, <parameter><decl><type><name>ldns_key_list</name> <modifier>*</modifier></type><name>keys</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>signatures</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>rrset_clone</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rr</name> <modifier>*</modifier></type><name>current_sig</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rdf</name> <modifier>*</modifier></type><name>b64rdf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_key</name> <modifier>*</modifier></type><name>current_key</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>key_count</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint16_t</name></type> <name>i</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_buffer</name> <modifier>*</modifier></type><name>sign_buf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rdf</name> <modifier>*</modifier></type><name>new_owner</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>rrset</name> <operator>||</operator> <call><name>ldns_rr_list_rr_count</name><argument_list>(<argument><expr><name>rrset</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">1</literal> <operator>||</operator> <operator>!</operator><name>keys</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>new_owner</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>signatures</name> <operator>=</operator> <call><name>ldns_rr_list_new</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+
+
+<expr_stmt><expr><name>rrset_clone</name> <operator>=</operator> <call><name>ldns_rr_list_clone</name><argument_list>(<argument><expr><name>rrset</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>rrset_clone</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<for>for<control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>ldns_rr_list_rr_count</name><argument_list>(<argument><expr><name>rrset_clone</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_rr_set_ttl</name><argument_list>(<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>rrset_clone</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>ldns_rr_ttl</name><argument_list>(<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>rrset</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr2canonical</name><argument_list>(<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>rrset_clone</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><call><name>ldns_rr_list_sort</name><argument_list>(<argument><expr><name>rrset_clone</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<for>for <control>(<init><expr><name>key_count</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init>
+<condition><expr><name>key_count</name> <operator>&lt;</operator> <call><name>ldns_key_list_key_count</name><argument_list>(<argument><expr><name>keys</name></expr></argument>)</argument_list></call></expr>;</condition>
+<incr><expr><name>key_count</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>ldns_key_use</name><argument_list>(<argument><expr><call><name>ldns_key_list_key</name><argument_list>(<argument><expr><name>keys</name></expr></argument>, <argument><expr><name>key_count</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>sign_buf</name> <operator>=</operator> <call><name>ldns_buffer_new</name><argument_list>(<argument><expr><name>LDNS_MAX_PACKETLEN</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>sign_buf</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_rr_list_free</name><argument_list>(<argument><expr><name>rrset_clone</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_free</name><argument_list>(<argument><expr><name>signatures</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rdf_free</name><argument_list>(<argument><expr><name>new_owner</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>b64rdf</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>current_key</name> <operator>=</operator> <call><name>ldns_key_list_key</name><argument_list>(<argument><expr><name>keys</name></expr></argument>, <argument><expr><name>key_count</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>ldns_key_flags</name><argument_list>(<argument><expr><name>current_key</name></expr></argument>)</argument_list></call> <operator>&amp;</operator> <name>LDNS_KEY_ZONE_KEY</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>current_sig</name> <operator>=</operator> <call><name>ldns_create_empty_rrsig</name><argument_list>(<argument><expr><name>rrset_clone</name></expr></argument>,
+<argument><expr><name>current_key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>ldns_rrsig2buffer_wire</name><argument_list>(<argument><expr><name>sign_buf</name></expr></argument>, <argument><expr><name>current_sig</name></expr></argument>)</argument_list></call>
+<operator>!=</operator> <name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_buffer_free</name><argument_list>(<argument><expr><name>sign_buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>rrset_clone</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_free</name><argument_list>(<argument><expr><name>current_sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>signatures</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>ldns_rr_list2buffer_wire</name><argument_list>(<argument><expr><name>sign_buf</name></expr></argument>, <argument><expr><name>rrset_clone</name></expr></argument>)</argument_list></call>
+<operator>!=</operator> <name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_buffer_free</name><argument_list>(<argument><expr><name>sign_buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>rrset_clone</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_free</name><argument_list>(<argument><expr><name>current_sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>signatures</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>b64rdf</name> <operator>=</operator> <call><name>ldns_sign_public_buffer</name><argument_list>(<argument><expr><name>sign_buf</name></expr></argument>, <argument><expr><name>current_key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>b64rdf</name></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>rrset_clone</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_free</name><argument_list>(<argument><expr><name>current_sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>signatures</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>ldns_rr_rrsig_set_sig</name><argument_list>(<argument><expr><name>current_sig</name></expr></argument>, <argument><expr><name>b64rdf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><call><name>ldns_rr_list_push_rr</name><argument_list>(<argument><expr><name>signatures</name></expr></argument>, <argument><expr><name>current_sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>ldns_buffer_free</name><argument_list>(<argument><expr><name>sign_buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>rrset_clone</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><name>signatures</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+<function><type><name>ldns_rdf</name> <modifier>*</modifier></type>
+<name>ldns_sign_public_dsa</name><parameter_list>(<parameter><decl><type><name>ldns_buffer</name> <modifier>*</modifier></type><name>to_sign</name></decl></parameter>, <parameter><decl><type><name>DSA</name> <modifier>*</modifier></type><name>key</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_DSA</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>sha1_hash</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rdf</name> <modifier>*</modifier></type><name>sigdata_rdf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_buffer</name> <modifier>*</modifier></type><name>b64sig</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>DSA_SIG</name> <modifier>*</modifier></type><name>sig</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>BIGNUM</name> <modifier>*</modifier></type><name>R</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>S</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint8_t</name> <modifier>*</modifier></type><name>data</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>pad</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>b64sig</name> <operator>=</operator> <call><name>ldns_buffer_new</name><argument_list>(<argument><expr><name>LDNS_MAX_PACKETLEN</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>b64sig</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>sha1_hash</name> <operator>=</operator> <call><name>SHA1</name><argument_list>(<argument><expr><operator>(</operator><name>unsigned</name> <name>char</name><operator>*</operator><operator>)</operator><call><name>ldns_buffer_begin</name><argument_list>(<argument><expr><name>to_sign</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>ldns_buffer_position</name><argument_list>(<argument><expr><name>to_sign</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>sha1_hash</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_buffer_free</name><argument_list>(<argument><expr><name>b64sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>sig</name> <operator>=</operator> <call><name>DSA_do_sign</name><argument_list>(<argument><expr><name>sha1_hash</name></expr></argument>, <argument><expr><name>SHA_DIGEST_LENGTH</name></expr></argument>, <argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if<condition>(<expr><operator>!</operator><name>sig</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_buffer_free</name><argument_list>(<argument><expr><name>b64sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>data</name> <operator>=</operator> <call><name>LDNS_XMALLOC</name><argument_list>(<argument><expr><name>uint8_t</name></expr></argument>, <argument><expr><literal type="number">1</literal> <operator>+</operator> <literal type="number">2</literal> <operator>*</operator> <name>SHA_DIGEST_LENGTH</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if<condition>(<expr><operator>!</operator><name>data</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_buffer_free</name><argument_list>(<argument><expr><name>b64sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DSA_SIG_free</name><argument_list>(<argument><expr><name>sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>data</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_DSA_SIG_GET0</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr_stmt><expr><call><name>DSA_SIG_get0</name><argument_list>(<argument><expr><name>sig</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>R</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>S</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><name>R</name> <operator>=</operator> <name><name>sig</name><operator>-&gt;</operator><name>r</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>S</name> <operator>=</operator> <name><name>sig</name><operator>-&gt;</operator><name>s</name></name></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<expr_stmt><expr><name>pad</name> <operator>=</operator> <literal type="number">20</literal> <operator>-</operator> <operator>(</operator><name>size_t</name><operator>)</operator> <call><name>BN_num_bytes</name><argument_list>(<argument><expr><name>R</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>pad</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><name>data</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>pad</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>BN_bn2bin</name><argument_list>(<argument><expr><name>R</name></expr></argument>, <argument><expr><operator>(</operator><name>unsigned</name> <name>char</name> <operator>*</operator><operator>)</operator> <operator>(</operator><name>data</name> <operator>+</operator> <literal type="number">1</literal><operator>)</operator> <operator>+</operator> <name>pad</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>pad</name> <operator>=</operator> <literal type="number">20</literal> <operator>-</operator> <operator>(</operator><name>size_t</name><operator>)</operator> <call><name>BN_num_bytes</name><argument_list>(<argument><expr><name>S</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>pad</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><name>data</name> <operator>+</operator> <literal type="number">1</literal> <operator>+</operator> <name>SHA_DIGEST_LENGTH</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>pad</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>BN_bn2bin</name><argument_list>(<argument><expr><name>S</name></expr></argument>, <argument><expr><operator>(</operator><name>unsigned</name> <name>char</name> <operator>*</operator><operator>)</operator> <operator>(</operator><name>data</name> <operator>+</operator> <literal type="number">1</literal> <operator>+</operator> <name>SHA_DIGEST_LENGTH</name> <operator>+</operator> <name>pad</name><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>sigdata_rdf</name> <operator>=</operator> <call><name>ldns_rdf_new_frm_data</name><argument_list>(<argument><expr><name>LDNS_RDF_TYPE_B64</name></expr></argument>,
+<argument><expr><literal type="number">1</literal> <operator>+</operator> <literal type="number">2</literal> <operator>*</operator> <name>SHA_DIGEST_LENGTH</name></expr></argument>,
+<argument><expr><name>data</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>ldns_buffer_free</name><argument_list>(<argument><expr><name>b64sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>LDNS_FREE</name><argument_list>(<argument><expr><name>data</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DSA_SIG_free</name><argument_list>(<argument><expr><name>sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><name>sigdata_rdf</name></expr>;</return>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>to_sign</name></expr>;</expr_stmt> <expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>key</name></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_ECDSA</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>S_SPLINT_S</name></expr></argument>)</argument_list></call></expr></cpp:if>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>ldns_pkey_is_ecdsa</name><parameter_list>(<parameter><decl><type><name>EVP_PKEY</name><modifier>*</modifier></type> <name>pkey</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>EC_KEY</name><modifier>*</modifier></type> <name>ec</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>EC_GROUP</name><modifier>*</modifier></type> <name>g</name></decl>;</decl_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_EVP_PKEY_BASE_ID</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<if_stmt><if>if<condition>(<expr><call><name>EVP_PKEY_base_id</name><argument_list>(<argument><expr><name>pkey</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>EVP_PKEY_EC</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><literal type="number">0</literal></expr>;</return></block_content></block></if></if_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<if_stmt><if>if<condition>(<expr><call><name>EVP_PKEY_type</name><argument_list>(<argument><expr><name><name>key</name><operator>-&gt;</operator><name>type</name></name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>EVP_PKEY_EC</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><literal type="number">0</literal></expr>;</return></block_content></block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<expr_stmt><expr><name>ec</name> <operator>=</operator> <call><name>EVP_PKEY_get1_EC_KEY</name><argument_list>(<argument><expr><name>pkey</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>g</name> <operator>=</operator> <call><name>EC_KEY_get0_group</name><argument_list>(<argument><expr><name>ec</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if<condition>(<expr><operator>!</operator><name>g</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>EC_KEY_free</name><argument_list>(<argument><expr><name>ec</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if<condition>(<expr><call><name>EC_GROUP_get_curve_name</name><argument_list>(<argument><expr><name>g</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>NID_X9_62_prime256v1</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>EC_KEY_free</name><argument_list>(<argument><expr><name>ec</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><literal type="number">32</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if<condition>(<expr><call><name>EC_GROUP_get_curve_name</name><argument_list>(<argument><expr><name>g</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>NID_secp384r1</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>EC_KEY_free</name><argument_list>(<argument><expr><name>ec</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><literal type="number">48</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>EC_KEY_free</name><argument_list>(<argument><expr><name>ec</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<function><type><name>ldns_rdf</name> <modifier>*</modifier></type>
+<name>ldns_sign_public_evp</name><parameter_list>(<parameter><decl><type><name>ldns_buffer</name> <modifier>*</modifier></type><name>to_sign</name></decl></parameter>,
+<parameter><decl><type><name>EVP_PKEY</name> <modifier>*</modifier></type><name>key</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>EVP_MD</name> <modifier>*</modifier></type><name>digest_type</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name> <name>int</name></type> <name>siglen</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rdf</name> <modifier>*</modifier></type><name>sigdata_rdf</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_buffer</name> <modifier>*</modifier></type><name>b64sig</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>EVP_MD_CTX</name> <modifier>*</modifier></type><name>ctx</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>EVP_MD</name> <modifier>*</modifier></type><name>md_type</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>siglen</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>b64sig</name> <operator>=</operator> <call><name>ldns_buffer_new</name><argument_list>(<argument><expr><name>LDNS_MAX_PACKETLEN</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>b64sig</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><name>md_type</name> <operator>=</operator> <name>digest_type</name></expr>;</expr_stmt>
+<if_stmt><if>if<condition>(<expr><operator>!</operator><name>md_type</name></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><call><name>ldns_buffer_free</name><argument_list>(<argument><expr><name>b64sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_EVP_MD_CTX_NEW</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr_stmt><expr><name>ctx</name> <operator>=</operator> <call><name>EVP_MD_CTX_new</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><name>ctx</name> <operator>=</operator> <operator>(</operator><name>EVP_MD_CTX</name><operator>*</operator><operator>)</operator><call><name>malloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if<condition>(<expr><name>ctx</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><call><name>EVP_MD_CTX_init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<if_stmt><if>if<condition>(<expr><operator>!</operator><name>ctx</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_buffer_free</name><argument_list>(<argument><expr><name>b64sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>r</name> <operator>=</operator> <call><name>EVP_SignInit</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>md_type</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if<condition>(<expr><name>r</name> <operator>==</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <call><name>EVP_SignUpdate</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><operator>(</operator><name>unsigned</name> <name>char</name><operator>*</operator><operator>)</operator>
+<call><name>ldns_buffer_begin</name><argument_list>(<argument><expr><name>to_sign</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>ldns_buffer_position</name><argument_list>(<argument><expr><name>to_sign</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_buffer_free</name><argument_list>(<argument><expr><name>b64sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>EVP_MD_CTX_destroy</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></else></if_stmt>
+<if_stmt><if>if<condition>(<expr><name>r</name> <operator>==</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <call><name>EVP_SignFinal</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><operator>(</operator><name>unsigned</name> <name>char</name><operator>*</operator><operator>)</operator>
+<call><name>ldns_buffer_begin</name><argument_list>(<argument><expr><name>b64sig</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><operator>&amp;</operator><name>siglen</name></expr></argument>, <argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_buffer_free</name><argument_list>(<argument><expr><name>b64sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>EVP_MD_CTX_destroy</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></else></if_stmt>
+<if_stmt><if>if<condition>(<expr><name>r</name> <operator>!=</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_buffer_free</name><argument_list>(<argument><expr><name>b64sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>EVP_MD_CTX_destroy</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><name>r</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_DSA</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>S_SPLINT_S</name></expr></argument>)</argument_list></call></expr></cpp:if>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_EVP_PKEY_BASE_ID</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><call><name>EVP_PKEY_base_id</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>EVP_PKEY_DSA</name></expr>)</condition> <block>{<block_content>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<if_stmt><if>if <condition>(<expr><call><name>EVP_PKEY_type</name><argument_list>(<argument><expr><name><name>key</name><operator>-&gt;</operator><name>type</name></name></expr></argument>)</argument_list></call> <operator>==</operator> <name>EVP_PKEY_DSA</name></expr>)</condition> <block>{<block_content>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>sigdata_rdf</name> <operator>=</operator> <call><name>ldns_convert_dsa_rrsig_asn12rdf</name><argument_list>(<argument><expr><name>b64sig</name></expr></argument>, <argument><expr><name>siglen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_ECDSA</name></expr></argument>)</argument_list></call> <operator>||</operator> <call><name>defined</name><argument_list>(<argument><expr><name>USE_ED25519</name></expr></argument>)</argument_list></call> <operator>||</operator> <call><name>defined</name><argument_list>(<argument><expr><name>USE_ED448</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<if_stmt><if>if<condition>(
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_EVP_PKEY_BASE_ID</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr><macro><name>EVP_PKEY_base_id</name><argument_list>(<argument>key</argument>)</argument_list></macro>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<call><name>EVP_PKEY_type</name><argument_list>(<argument><expr><name><name>key</name><operator>-&gt;</operator><name>type</name></name></expr></argument>)</argument_list></call>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<operator>==</operator> <name>EVP_PKEY_EC</name></expr>)</condition> <block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_ECDSA</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<if_stmt><if>if<condition>(<expr><call><name>ldns_pkey_is_ecdsa</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>sigdata_rdf</name> <operator>=</operator> <call><name>ldns_convert_ecdsa_rrsig_asn1len2rdf</name><argument_list>(
+<argument><expr><name>b64sig</name></expr></argument>, <argument><expr><operator>(</operator><name>long</name><operator>)</operator><name>siglen</name></expr></argument>, <argument><expr><call><name>ldns_pkey_is_ecdsa</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_ED25519</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<if_stmt><if>if<condition>(<expr><call><name>EVP_PKEY_id</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>NID_X25519</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>sigdata_rdf</name> <operator>=</operator> <call><name>ldns_convert_ed25519_rrsig_asn12rdf</name><argument_list>(
+<argument><expr><name>b64sig</name></expr></argument>, <argument><expr><name>siglen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_ED448</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<if_stmt><if>if<condition>(<expr><call><name>EVP_PKEY_id</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>NID_X448</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>sigdata_rdf</name> <operator>=</operator> <call><name>ldns_convert_ed448_rrsig_asn12rdf</name><argument_list>(
+<argument><expr><name>b64sig</name></expr></argument>, <argument><expr><name>siglen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<if_stmt><if>if<condition>(<expr><name>r</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><name>sigdata_rdf</name> <operator>=</operator> <call><name>ldns_rdf_new_frm_data</name><argument_list>(<argument><expr><name>LDNS_RDF_TYPE_B64</name></expr></argument>, <argument><expr><name>siglen</name></expr></argument>,
+<argument><expr><call><name>ldns_buffer_begin</name><argument_list>(<argument><expr><name>b64sig</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>ldns_buffer_free</name><argument_list>(<argument><expr><name>b64sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>EVP_MD_CTX_destroy</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>sigdata_rdf</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<function><type><name>ldns_rdf</name> <modifier>*</modifier></type>
+<name>ldns_sign_public_rsasha1</name><parameter_list>(<parameter><decl><type><name>ldns_buffer</name> <modifier>*</modifier></type><name>to_sign</name></decl></parameter>, <parameter><decl><type><name>RSA</name> <modifier>*</modifier></type><name>key</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>sha1_hash</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>int</name></type> <name>siglen</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rdf</name> <modifier>*</modifier></type><name>sigdata_rdf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_buffer</name> <modifier>*</modifier></type><name>b64sig</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>result</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>siglen</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>b64sig</name> <operator>=</operator> <call><name>ldns_buffer_new</name><argument_list>(<argument><expr><name>LDNS_MAX_PACKETLEN</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>b64sig</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>sha1_hash</name> <operator>=</operator> <call><name>SHA1</name><argument_list>(<argument><expr><operator>(</operator><name>unsigned</name> <name>char</name><operator>*</operator><operator>)</operator><call><name>ldns_buffer_begin</name><argument_list>(<argument><expr><name>to_sign</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>ldns_buffer_position</name><argument_list>(<argument><expr><name>to_sign</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>sha1_hash</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_buffer_free</name><argument_list>(<argument><expr><name>b64sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>result</name> <operator>=</operator> <call><name>RSA_sign</name><argument_list>(<argument><expr><name>NID_sha1</name></expr></argument>, <argument><expr><name>sha1_hash</name></expr></argument>, <argument><expr><name>SHA_DIGEST_LENGTH</name></expr></argument>,
+<argument><expr><operator>(</operator><name>unsigned</name> <name>char</name><operator>*</operator><operator>)</operator><call><name>ldns_buffer_begin</name><argument_list>(<argument><expr><name>b64sig</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>siglen</name></expr></argument>, <argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>result</name> <operator>!=</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_buffer_free</name><argument_list>(<argument><expr><name>b64sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>sigdata_rdf</name> <operator>=</operator> <call><name>ldns_rdf_new_frm_data</name><argument_list>(<argument><expr><name>LDNS_RDF_TYPE_B64</name></expr></argument>, <argument><expr><name>siglen</name></expr></argument>,
+<argument><expr><call><name>ldns_buffer_begin</name><argument_list>(<argument><expr><name>b64sig</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_buffer_free</name><argument_list>(<argument><expr><name>b64sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>sigdata_rdf</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>ldns_rdf</name> <modifier>*</modifier></type>
+<name>ldns_sign_public_rsamd5</name><parameter_list>(<parameter><decl><type><name>ldns_buffer</name> <modifier>*</modifier></type><name>to_sign</name></decl></parameter>, <parameter><decl><type><name>RSA</name> <modifier>*</modifier></type><name>key</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>md5_hash</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>int</name></type> <name>siglen</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rdf</name> <modifier>*</modifier></type><name>sigdata_rdf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_buffer</name> <modifier>*</modifier></type><name>b64sig</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>b64sig</name> <operator>=</operator> <call><name>ldns_buffer_new</name><argument_list>(<argument><expr><name>LDNS_MAX_PACKETLEN</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>b64sig</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>md5_hash</name> <operator>=</operator> <call><name>MD5</name><argument_list>(<argument><expr><operator>(</operator><name>unsigned</name> <name>char</name><operator>*</operator><operator>)</operator><call><name>ldns_buffer_begin</name><argument_list>(<argument><expr><name>to_sign</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>ldns_buffer_position</name><argument_list>(<argument><expr><name>to_sign</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>md5_hash</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_buffer_free</name><argument_list>(<argument><expr><name>b64sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>RSA_sign</name><argument_list>(<argument><expr><name>NID_md5</name></expr></argument>, <argument><expr><name>md5_hash</name></expr></argument>, <argument><expr><name>MD5_DIGEST_LENGTH</name></expr></argument>,
+<argument><expr><operator>(</operator><name>unsigned</name> <name>char</name><operator>*</operator><operator>)</operator><call><name>ldns_buffer_begin</name><argument_list>(<argument><expr><name>b64sig</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>siglen</name></expr></argument>, <argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>sigdata_rdf</name> <operator>=</operator> <call><name>ldns_rdf_new_frm_data</name><argument_list>(<argument><expr><name>LDNS_RDF_TYPE_B64</name></expr></argument>, <argument><expr><name>siglen</name></expr></argument>,
+<argument><expr><call><name>ldns_buffer_begin</name><argument_list>(<argument><expr><name>b64sig</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_buffer_free</name><argument_list>(<argument><expr><name>b64sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>sigdata_rdf</name></expr>;</return>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+
+<function><type><specifier>static</specifier> <name>ldns_status</name></type>
+<name>ldns_dnssec_addresses_on_glue_list</name><parameter_list>(
+<parameter><decl><type><name>ldns_dnssec_rrsets</name> <modifier>*</modifier></type><name>cur_rrset</name></decl></parameter>,
+<parameter><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>glue_list</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ldns_dnssec_rrs</name> <modifier>*</modifier></type><name>cur_rrs</name></decl>;</decl_stmt>
+<while>while <condition>(<expr><name>cur_rrset</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>cur_rrset</name><operator>-&gt;</operator><name>type</name></name> <operator>==</operator> <name>LDNS_RR_TYPE_A</name>
+<operator>||</operator> <name><name>cur_rrset</name><operator>-&gt;</operator><name>type</name></name> <operator>==</operator> <name>LDNS_RR_TYPE_AAAA</name></expr>)</condition> <block>{<block_content>
+<for>for <control>(<init><expr><name>cur_rrs</name> <operator>=</operator> <name><name>cur_rrset</name><operator>-&gt;</operator><name>rrs</name></name></expr>;</init>
+<condition><expr><name>cur_rrs</name></expr>;</condition>
+<incr><expr><name>cur_rrs</name> <operator>=</operator> <name><name>cur_rrs</name><operator>-&gt;</operator><name>next</name></name></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>cur_rrs</name><operator>-&gt;</operator><name>rr</name></name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>ldns_rr_list_push_rr</name><argument_list>(<argument><expr><name>glue_list</name></expr></argument>,
+<argument><expr><name><name>cur_rrs</name><operator>-&gt;</operator><name>rr</name></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>LDNS_STATUS_MEM_ERR</name></expr>;</return>
+
+
+
+
+
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>cur_rrset</name> <operator>=</operator> <name><name>cur_rrset</name><operator>-&gt;</operator><name>next</name></name></expr>;</expr_stmt>
+</block_content>}</block></while>
+<return>return <expr><name>LDNS_STATUS_OK</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><name>ldns_status</name></type>
+<name>ldns_dnssec_zone_mark_and_get_glue</name><parameter_list>(<parameter><decl><type><name>ldns_dnssec_zone</name> <modifier>*</modifier></type><name>zone</name></decl></parameter>,
+<parameter><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>glue_list</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ldns_rbnode_t</name> <modifier>*</modifier></type><name>node</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_dnssec_name</name> <modifier>*</modifier></type><name>name</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rdf</name> <modifier>*</modifier></type><name>owner</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rdf</name> <modifier>*</modifier></type><name>cut</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+
+
+
+<decl_stmt><decl><type><name>int</name></type> <name>below_delegation</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_status</name></type> <name>s</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>zone</name> <operator>||</operator> <operator>!</operator><name><name>zone</name><operator>-&gt;</operator><name>names</name></name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>LDNS_STATUS_NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<for>for <control>(<init><expr><name>node</name> <operator>=</operator> <call><name>ldns_rbtree_first</name><argument_list>(<argument><expr><name><name>zone</name><operator>-&gt;</operator><name>names</name></name></expr></argument>)</argument_list></call></expr>;</init>
+<condition><expr><name>node</name> <operator>!=</operator> <name>LDNS_RBTREE_NULL</name></expr>;</condition>
+<incr><expr><name>node</name> <operator>=</operator> <call><name>ldns_rbtree_next</name><argument_list>(<argument><expr><name>node</name></expr></argument>)</argument_list></call></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>name</name> <operator>=</operator> <operator>(</operator><name>ldns_dnssec_name</name> <operator>*</operator><operator>)</operator> <name><name>node</name><operator>-&gt;</operator><name>data</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>owner</name> <operator>=</operator> <call><name>ldns_dnssec_name_name</name><argument_list>(<argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>cut</name></expr>)</condition> <block>{<block_content>
+
+
+
+
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>ldns_dname_is_subdomain</name><argument_list>(<argument><expr><name>owner</name></expr></argument>, <argument><expr><name>cut</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator>
+<operator>!</operator><call><name>ldns_dnssec_rrsets_contains_type</name><argument_list>(
+<argument><expr><name><name>name</name><operator>-&gt;</operator><name>rrsets</name></name></expr></argument>, <argument><expr><name>LDNS_RR_TYPE_SOA</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><name>below_delegation</name> <operator>&amp;&amp;</operator> <name>glue_list</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>s</name> <operator>=</operator> <call><name>ldns_dnssec_addresses_on_glue_list</name><argument_list>(
+<argument><expr><name><name>name</name><operator>-&gt;</operator><name>rrsets</name></name></expr></argument>, <argument><expr><name>glue_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>s</name> <operator>!=</operator> <name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>s</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>name</name><operator>-&gt;</operator><name>is_glue</name></name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>cut</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>ldns_dnssec_rrsets_contains_type</name><argument_list>(
+<argument><expr><name><name>name</name><operator>-&gt;</operator><name>rrsets</name></name></expr></argument>, <argument><expr><name>LDNS_RR_TYPE_NS</name></expr></argument>)</argument_list></call>
+<operator>&amp;&amp;</operator> <operator>!</operator><call><name>ldns_dnssec_rrsets_contains_type</name><argument_list>(
+<argument><expr><name><name>name</name><operator>-&gt;</operator><name>rrsets</name></name></expr></argument>, <argument><expr><name>LDNS_RR_TYPE_SOA</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>cut</name> <operator>=</operator> <name>owner</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>below_delegation</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>glue_list</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>s</name> <operator>=</operator> <call><name>ldns_dnssec_addresses_on_glue_list</name><argument_list>(
+<argument><expr><name><name>name</name><operator>-&gt;</operator><name>rrsets</name></name></expr></argument>, <argument><expr><name>glue_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>s</name> <operator>!=</operator> <name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>s</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><call><name>ldns_dnssec_rrsets_contains_type</name><argument_list>(
+<argument><expr><name><name>name</name><operator>-&gt;</operator><name>rrsets</name></name></expr></argument>, <argument><expr><name>LDNS_RR_TYPE_DNAME</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>cut</name> <operator>=</operator> <name>owner</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>below_delegation</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+<return>return <expr><name>LDNS_STATUS_OK</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+<function><type><name>ldns_status</name></type>
+<name>ldns_dnssec_zone_mark_glue</name><parameter_list>(<parameter><decl><type><name>ldns_dnssec_zone</name> <modifier>*</modifier></type><name>zone</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><call><name>ldns_dnssec_zone_mark_and_get_glue</name><argument_list>(<argument><expr><name>zone</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>ldns_rbnode_t</name> <modifier>*</modifier></type>
+<name>ldns_dnssec_name_node_next_nonglue</name><parameter_list>(<parameter><decl><type><name>ldns_rbnode_t</name> <modifier>*</modifier></type><name>node</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ldns_rbnode_t</name> <modifier>*</modifier></type><name>next_node</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_dnssec_name</name> <modifier>*</modifier></type><name>next_name</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>done</name> <init>= <expr><name>false</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>node</name> <operator>==</operator> <name>LDNS_RBTREE_NULL</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>next_node</name> <operator>=</operator> <name>node</name></expr>;</expr_stmt>
+<while>while <condition>(<expr><operator>!</operator><name>done</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>next_node</name> <operator>==</operator> <name>LDNS_RBTREE_NULL</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>next_name</name> <operator>=</operator> <operator>(</operator><name>ldns_dnssec_name</name> <operator>*</operator><operator>)</operator><name><name>next_node</name><operator>-&gt;</operator><name>data</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>next_name</name><operator>-&gt;</operator><name>is_glue</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>done</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>next_node</name> <operator>=</operator> <call><name>ldns_rbtree_next</name><argument_list>(<argument><expr><name>next_node</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></while>
+<return>return <expr><name>next_node</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>ldns_status</name></type>
+<name>ldns_dnssec_zone_create_nsecs</name><parameter_list>(<parameter><decl><type><name>ldns_dnssec_zone</name> <modifier>*</modifier></type><name>zone</name></decl></parameter>,
+<parameter><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>new_rrs</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+<decl_stmt><decl><type><name>ldns_rbnode_t</name> <modifier>*</modifier></type><name>first_node</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>cur_node</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>next_node</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_dnssec_name</name> <modifier>*</modifier></type><name>cur_name</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>next_name</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rr</name> <modifier>*</modifier></type><name>nsec_rr</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>nsec_ttl</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_dnssec_rrsets</name> <modifier>*</modifier></type><name>soa</name></decl>;</decl_stmt>
+
+
+
+
+<expr_stmt><expr><name>soa</name> <operator>=</operator> <call><name>ldns_dnssec_name_find_rrset</name><argument_list>(<argument><expr><name><name>zone</name><operator>-&gt;</operator><name>soa</name></name></expr></argument>, <argument><expr><name>LDNS_RR_TYPE_SOA</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>soa</name> <operator>&amp;&amp;</operator> <name><name>soa</name><operator>-&gt;</operator><name>rrs</name></name> <operator>&amp;&amp;</operator> <name><name>soa</name><operator>-&gt;</operator><name>rrs</name><operator>-&gt;</operator><name>rr</name></name>
+<operator>&amp;&amp;</operator> <operator>(</operator><call><name>ldns_rr_rdf</name><argument_list>(<argument><expr><name><name>soa</name><operator>-&gt;</operator><name>rrs</name><operator>-&gt;</operator><name>rr</name></name></expr></argument>, <argument><expr><literal type="number">6</literal></expr></argument>)</argument_list></call> <operator>!=</operator> <name>NULL</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>nsec_ttl</name> <operator>=</operator> <call><name>ldns_rdf2native_int32</name><argument_list>(<argument><expr><call><name>ldns_rr_rdf</name><argument_list>(<argument><expr><name><name>soa</name><operator>-&gt;</operator><name>rrs</name><operator>-&gt;</operator><name>rr</name></name></expr></argument>, <argument><expr><literal type="number">6</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>nsec_ttl</name> <operator>=</operator> <name>LDNS_DEFAULT_TTL</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<expr_stmt><expr><name>first_node</name> <operator>=</operator> <call><name>ldns_dnssec_name_node_next_nonglue</name><argument_list>(
+<argument><expr><call><name>ldns_rbtree_first</name><argument_list>(<argument><expr><name><name>zone</name><operator>-&gt;</operator><name>names</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>cur_node</name> <operator>=</operator> <name>first_node</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>cur_node</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>next_node</name> <operator>=</operator> <call><name>ldns_dnssec_name_node_next_nonglue</name><argument_list>(
+<argument><expr><call><name>ldns_rbtree_next</name><argument_list>(<argument><expr><name>cur_node</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>next_node</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<while>while <condition>(<expr><name>cur_node</name> <operator>&amp;&amp;</operator> <name>next_node</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>cur_name</name> <operator>=</operator> <operator>(</operator><name>ldns_dnssec_name</name> <operator>*</operator><operator>)</operator><name><name>cur_node</name><operator>-&gt;</operator><name>data</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>next_name</name> <operator>=</operator> <operator>(</operator><name>ldns_dnssec_name</name> <operator>*</operator><operator>)</operator><name><name>next_node</name><operator>-&gt;</operator><name>data</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>nsec_rr</name> <operator>=</operator> <call><name>ldns_dnssec_create_nsec</name><argument_list>(<argument><expr><name>cur_name</name></expr></argument>,
+<argument><expr><name>next_name</name></expr></argument>,
+<argument><expr><name>LDNS_RR_TYPE_NSEC</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_set_ttl</name><argument_list>(<argument><expr><name>nsec_rr</name></expr></argument>, <argument><expr><name>nsec_ttl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if<condition>(<expr><call><name>ldns_dnssec_name_add_rr</name><argument_list>(<argument><expr><name>cur_name</name></expr></argument>, <argument><expr><name>nsec_rr</name></expr></argument>)</argument_list></call><operator>!=</operator><name>LDNS_STATUS_OK</name></expr>)</condition><block>{<block_content>
+<expr_stmt><expr><call><name>ldns_rr_free</name><argument_list>(<argument><expr><name>nsec_rr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>LDNS_STATUS_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_push_rr</name><argument_list>(<argument><expr><name>new_rrs</name></expr></argument>, <argument><expr><name>nsec_rr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>cur_node</name> <operator>=</operator> <name>next_node</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>cur_node</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>next_node</name> <operator>=</operator> <call><name>ldns_dnssec_name_node_next_nonglue</name><argument_list>(
+<argument><expr><call><name>ldns_rbtree_next</name><argument_list>(<argument><expr><name>cur_node</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></while>
+
+<if_stmt><if>if <condition>(<expr><name>cur_node</name> <operator>&amp;&amp;</operator> <operator>!</operator><name>next_node</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>cur_name</name> <operator>=</operator> <operator>(</operator><name>ldns_dnssec_name</name> <operator>*</operator><operator>)</operator><name><name>cur_node</name><operator>-&gt;</operator><name>data</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>next_name</name> <operator>=</operator> <operator>(</operator><name>ldns_dnssec_name</name> <operator>*</operator><operator>)</operator><name><name>first_node</name><operator>-&gt;</operator><name>data</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>nsec_rr</name> <operator>=</operator> <call><name>ldns_dnssec_create_nsec</name><argument_list>(<argument><expr><name>cur_name</name></expr></argument>,
+<argument><expr><name>next_name</name></expr></argument>,
+<argument><expr><name>LDNS_RR_TYPE_NSEC</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_set_ttl</name><argument_list>(<argument><expr><name>nsec_rr</name></expr></argument>, <argument><expr><name>nsec_ttl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if<condition>(<expr><call><name>ldns_dnssec_name_add_rr</name><argument_list>(<argument><expr><name>cur_name</name></expr></argument>, <argument><expr><name>nsec_rr</name></expr></argument>)</argument_list></call><operator>!=</operator><name>LDNS_STATUS_OK</name></expr>)</condition><block>{<block_content>
+<expr_stmt><expr><call><name>ldns_rr_free</name><argument_list>(<argument><expr><name>nsec_rr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>LDNS_STATUS_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_push_rr</name><argument_list>(<argument><expr><name>new_rrs</name></expr></argument>, <argument><expr><name>nsec_rr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"error\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<return>return <expr><name>LDNS_STATUS_OK</name></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_SSL</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>ldns_hashed_names_node_free</name><parameter_list>(<parameter><decl><type><name>ldns_rbnode_t</name> <modifier>*</modifier></type><name>node</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <name>arg</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>LDNS_FREE</name><argument_list>(<argument><expr><name>node</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>ldns_status</name></type>
+<name>ldns_dnssec_zone_create_nsec3s_mkmap</name><parameter_list>(<parameter><decl><type><name>ldns_dnssec_zone</name> <modifier>*</modifier></type><name>zone</name></decl></parameter>,
+<parameter><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>new_rrs</name></decl></parameter>,
+<parameter><decl><type><name>uint8_t</name></type> <name>algorithm</name></decl></parameter>,
+<parameter><decl><type><name>uint8_t</name></type> <name>flags</name></decl></parameter>,
+<parameter><decl><type><name>uint16_t</name></type> <name>iterations</name></decl></parameter>,
+<parameter><decl><type><name>uint8_t</name></type> <name>salt_length</name></decl></parameter>,
+<parameter><decl><type><name>uint8_t</name> <modifier>*</modifier></type><name>salt</name></decl></parameter>,
+<parameter><decl><type><name>ldns_rbtree_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>map</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ldns_rbnode_t</name> <modifier>*</modifier></type><name>first_name_node</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rbnode_t</name> <modifier>*</modifier></type><name>current_name_node</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_dnssec_name</name> <modifier>*</modifier></type><name>current_name</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_status</name></type> <name>result</name> <init>= <expr><name>LDNS_STATUS_OK</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rr</name> <modifier>*</modifier></type><name>nsec_rr</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>nsec3_list</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>nsec_ttl</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_dnssec_rrsets</name> <modifier>*</modifier></type><name>soa</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rbnode_t</name> <modifier>*</modifier></type><name>hashmap_node</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>zone</name> <operator>||</operator> <operator>!</operator><name>new_rrs</name> <operator>||</operator> <operator>!</operator><name><name>zone</name><operator>-&gt;</operator><name>names</name></name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>LDNS_STATUS_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+<expr_stmt><expr><name>soa</name> <operator>=</operator> <call><name>ldns_dnssec_name_find_rrset</name><argument_list>(<argument><expr><name><name>zone</name><operator>-&gt;</operator><name>soa</name></name></expr></argument>, <argument><expr><name>LDNS_RR_TYPE_SOA</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>soa</name> <operator>&amp;&amp;</operator> <name><name>soa</name><operator>-&gt;</operator><name>rrs</name></name> <operator>&amp;&amp;</operator> <name><name>soa</name><operator>-&gt;</operator><name>rrs</name><operator>-&gt;</operator><name>rr</name></name>
+<operator>&amp;&amp;</operator> <call><name>ldns_rr_rdf</name><argument_list>(<argument><expr><name><name>soa</name><operator>-&gt;</operator><name>rrs</name><operator>-&gt;</operator><name>rr</name></name></expr></argument>, <argument><expr><literal type="number">6</literal></expr></argument>)</argument_list></call> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>nsec_ttl</name> <operator>=</operator> <call><name>ldns_rdf2native_int32</name><argument_list>(<argument><expr><call><name>ldns_rr_rdf</name><argument_list>(<argument><expr><name><name>soa</name><operator>-&gt;</operator><name>rrs</name><operator>-&gt;</operator><name>rr</name></name></expr></argument>, <argument><expr><literal type="number">6</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>nsec_ttl</name> <operator>=</operator> <name>LDNS_DEFAULT_TTL</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>ldns_rdf_size</name><argument_list>(<argument><expr><name><name>zone</name><operator>-&gt;</operator><name>soa</name><operator>-&gt;</operator><name>name</name></name></expr></argument>)</argument_list></call> <operator>&gt;</operator> <literal type="number">222</literal></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>LDNS_STATUS_NSEC3_DOMAINNAME_OVERFLOW</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>zone</name><operator>-&gt;</operator><name>hashed_names</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_traverse_postorder</name><argument_list>(<argument><expr><name><name>zone</name><operator>-&gt;</operator><name>hashed_names</name></name></expr></argument>,
+<argument><expr><name>ldns_hashed_names_node_free</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>LDNS_FREE</name><argument_list>(<argument><expr><name><name>zone</name><operator>-&gt;</operator><name>hashed_names</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>zone</name><operator>-&gt;</operator><name>hashed_names</name></name> <operator>=</operator> <call><name>ldns_rbtree_create</name><argument_list>(<argument><expr><name>ldns_dname_compare_v</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>zone</name><operator>-&gt;</operator><name>hashed_names</name></name> <operator>&amp;&amp;</operator> <name>map</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>map</name> <operator>=</operator> <name><name>zone</name><operator>-&gt;</operator><name>hashed_names</name></name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>first_name_node</name> <operator>=</operator> <call><name>ldns_dnssec_name_node_next_nonglue</name><argument_list>(
+<argument><expr><call><name>ldns_rbtree_first</name><argument_list>(<argument><expr><name><name>zone</name><operator>-&gt;</operator><name>names</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>current_name_node</name> <operator>=</operator> <name>first_name_node</name></expr>;</expr_stmt>
+
+<while>while <condition>(<expr><name>current_name_node</name> <operator>&amp;&amp;</operator> <name>current_name_node</name> <operator>!=</operator> <name>LDNS_RBTREE_NULL</name> <operator>&amp;&amp;</operator>
+<name>result</name> <operator>==</operator> <name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><name>current_name</name> <operator>=</operator> <operator>(</operator><name>ldns_dnssec_name</name> <operator>*</operator><operator>)</operator> <name><name>current_name_node</name><operator>-&gt;</operator><name>data</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>nsec_rr</name> <operator>=</operator> <call><name>ldns_dnssec_create_nsec3</name><argument_list>(<argument><expr><name>current_name</name></expr></argument>,
+<argument><expr><name>NULL</name></expr></argument>,
+<argument><expr><name><name>zone</name><operator>-&gt;</operator><name>soa</name><operator>-&gt;</operator><name>name</name></name></expr></argument>,
+<argument><expr><name>algorithm</name></expr></argument>,
+<argument><expr><name>flags</name></expr></argument>,
+<argument><expr><name>iterations</name></expr></argument>,
+<argument><expr><name>salt_length</name></expr></argument>,
+<argument><expr><name>salt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>current_name</name><operator>-&gt;</operator><name>rrsets</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_rdf_deep_free</name><argument_list>(<argument><expr><call><name>ldns_rr_pop_rdf</name><argument_list>(<argument><expr><name>nsec_rr</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>ldns_rr_set_ttl</name><argument_list>(<argument><expr><name>nsec_rr</name></expr></argument>, <argument><expr><name>nsec_ttl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <call><name>ldns_dnssec_name_add_rr</name><argument_list>(<argument><expr><name>current_name</name></expr></argument>, <argument><expr><name>nsec_rr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_push_rr</name><argument_list>(<argument><expr><name>new_rrs</name></expr></argument>, <argument><expr><name>nsec_rr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>ldns_rr_owner</name><argument_list>(<argument><expr><name>nsec_rr</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>hashmap_node</name> <operator>=</operator> <call><name>LDNS_MALLOC</name><argument_list>(<argument><expr><name>ldns_rbnode_t</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>hashmap_node</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>LDNS_STATUS_MEM_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>current_name</name><operator>-&gt;</operator><name>hashed_name</name></name> <operator>=</operator>
+<call><name>ldns_dname_label</name><argument_list>(<argument><expr><call><name>ldns_rr_owner</name><argument_list>(<argument><expr><name>nsec_rr</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>current_name</name><operator>-&gt;</operator><name>hashed_name</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LDNS_FREE</name><argument_list>(<argument><expr><name>hashmap_node</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>LDNS_STATUS_MEM_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>hashmap_node</name><operator>-&gt;</operator><name>key</name></name> <operator>=</operator> <name><name>current_name</name><operator>-&gt;</operator><name>hashed_name</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>hashmap_node</name><operator>-&gt;</operator><name>data</name></name> <operator>=</operator> <name>current_name</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator> <call><name>ldns_rbtree_insert</name><argument_list>(<argument><expr><name><name>zone</name><operator>-&gt;</operator><name>hashed_names</name></name></expr></argument>
+, <argument><expr><name>hashmap_node</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LDNS_FREE</name><argument_list>(<argument><expr><name>hashmap_node</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>current_name_node</name> <operator>=</operator> <call><name>ldns_dnssec_name_node_next_nonglue</name><argument_list>(
+<argument><expr><call><name>ldns_rbtree_next</name><argument_list>(<argument><expr><name>current_name_node</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></while>
+<if_stmt><if>if <condition>(<expr><name>result</name> <operator>!=</operator> <name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+<expr_stmt><expr><name>nsec3_list</name> <operator>=</operator> <call><name>ldns_rr_list_new</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>nsec3_list</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>LDNS_STATUS_MEM_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<for>for <control>( <init><expr><name>hashmap_node</name> <operator>=</operator> <call><name>ldns_rbtree_first</name><argument_list>(<argument><expr><name><name>zone</name><operator>-&gt;</operator><name>hashed_names</name></name></expr></argument>)</argument_list></call></expr>
+;</init> <condition><expr><name>hashmap_node</name> <operator>!=</operator> <name>LDNS_RBTREE_NULL</name></expr>
+;</condition> <incr><expr><name>hashmap_node</name> <operator>=</operator> <call><name>ldns_rbtree_next</name><argument_list>(<argument><expr><name>hashmap_node</name></expr></argument>)</argument_list></call></expr></incr>
+)</control> <block>{<block_content>
+<expr_stmt><expr><name>current_name</name> <operator>=</operator> <operator>(</operator><name>ldns_dnssec_name</name> <operator>*</operator><operator>)</operator> <name><name>hashmap_node</name><operator>-&gt;</operator><name>data</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>nsec_rr</name> <operator>=</operator> <operator>(</operator><operator>(</operator><name>ldns_dnssec_name</name> <operator>*</operator><operator>)</operator> <name><name>hashmap_node</name><operator>-&gt;</operator><name>data</name></name><operator>)</operator><operator>-&gt;</operator><name>nsec</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>nsec_rr</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_rr_list_push_rr</name><argument_list>(<argument><expr><name>nsec3_list</name></expr></argument>, <argument><expr><name>nsec_rr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <call><name>ldns_dnssec_chain_nsec3_list</name><argument_list>(<argument><expr><name>nsec3_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_free</name><argument_list>(<argument><expr><name>nsec3_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>ldns_status</name></type>
+<name>ldns_dnssec_zone_create_nsec3s</name><parameter_list>(<parameter><decl><type><name>ldns_dnssec_zone</name> <modifier>*</modifier></type><name>zone</name></decl></parameter>,
+<parameter><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>new_rrs</name></decl></parameter>,
+<parameter><decl><type><name>uint8_t</name></type> <name>algorithm</name></decl></parameter>,
+<parameter><decl><type><name>uint8_t</name></type> <name>flags</name></decl></parameter>,
+<parameter><decl><type><name>uint16_t</name></type> <name>iterations</name></decl></parameter>,
+<parameter><decl><type><name>uint8_t</name></type> <name>salt_length</name></decl></parameter>,
+<parameter><decl><type><name>uint8_t</name> <modifier>*</modifier></type><name>salt</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><call><name>ldns_dnssec_zone_create_nsec3s_mkmap</name><argument_list>(<argument><expr><name>zone</name></expr></argument>, <argument><expr><name>new_rrs</name></expr></argument>, <argument><expr><name>algorithm</name></expr></argument>,
+<argument><expr><name>flags</name></expr></argument>, <argument><expr><name>iterations</name></expr></argument>, <argument><expr><name>salt_length</name></expr></argument>, <argument><expr><name>salt</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</return>
+
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<decl_stmt><decl><type><name>ldns_dnssec_rrs</name> <modifier>*</modifier></type>
+<name>ldns_dnssec_remove_signatures</name><argument_list>( <argument><expr><name>ldns_dnssec_rrs</name> <operator>*</operator><name>signatures</name></expr></argument>
+, <argument><expr><call><name>ATTR_UNUSED</name><argument_list>(<argument><expr><name>ldns_key_list</name> <operator>*</operator><name>key_list</name></expr></argument>)</argument_list></call></expr></argument>
+, <argument><expr><call><call><name>int</name> <argument_list>(<argument><expr><operator>*</operator><name>func</name></expr></argument>)</argument_list></call><argument_list>(<argument><expr><name>ldns_rr</name> <operator>*</operator></expr></argument>, <argument><expr><name>void</name> <operator>*</operator></expr></argument>)</argument_list></call></expr></argument>
+, <argument><expr><name>void</name> <operator>*</operator><name>arg</name></expr></argument>
+)</argument_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ldns_dnssec_rrs</name> <modifier>*</modifier></type><name>base_rrs</name> <init>= <expr><name>signatures</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_dnssec_rrs</name> <modifier>*</modifier></type><name>cur_rr</name> <init>= <expr><name>base_rrs</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_dnssec_rrs</name> <modifier>*</modifier></type><name>prev_rr</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_dnssec_rrs</name> <modifier>*</modifier></type><name>next_rr</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>uint16_t</name></type> <name>keytag</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>i</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>cur_rr</name></expr>)</condition> <block>{<block_content>
+<switch>switch<condition>(<expr><call><name>func</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>arg</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>LDNS_SIGNATURE_LEAVE_ADD_NEW</name></expr>:</case>
+<case>case <expr><name>LDNS_SIGNATURE_REMOVE_ADD_NEW</name></expr>:</case>
+<break>break;</break>
+<case>case <expr><name>LDNS_SIGNATURE_LEAVE_NO_ADD</name></expr>:</case>
+<case>case <expr><name>LDNS_SIGNATURE_REMOVE_NO_ADD</name></expr>:</case>
+<expr_stmt><expr><call><name>ldns_key_list_set_use</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>, <argument><expr><name>false</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<default>default:</default>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>STDERR_MSGS</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"[XX] unknown return value from callback\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<break>break;</break>
+</block_content>}</block></switch>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>func</name><argument_list>(<argument><expr><name><name>cur_rr</name><operator>-&gt;</operator><name>rr</name></name></expr></argument>, <argument><expr><name>arg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<while>while <condition>(<expr><name>cur_rr</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>next_rr</name> <operator>=</operator> <name><name>cur_rr</name><operator>-&gt;</operator><name>next</name></name></expr>;</expr_stmt>
+
+<switch>switch <condition>(<expr><call><name>func</name><argument_list>(<argument><expr><name><name>cur_rr</name><operator>-&gt;</operator><name>rr</name></name></expr></argument>, <argument><expr><name>arg</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>LDNS_SIGNATURE_LEAVE_ADD_NEW</name></expr>:</case>
+<expr_stmt><expr><name>prev_rr</name> <operator>=</operator> <name>cur_rr</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>LDNS_SIGNATURE_LEAVE_NO_ADD</name></expr>:</case>
+<expr_stmt><expr><name>keytag</name> <operator>=</operator> <call><name>ldns_rdf2native_int16</name><argument_list>(
+<argument><expr><call><name>ldns_rr_rrsig_keytag</name><argument_list>(<argument><expr><name><name>cur_rr</name><operator>-&gt;</operator><name>rr</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>ldns_key_list_key_count</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>ldns_key_keytag</name><argument_list>(<argument><expr><call><name>ldns_key_list_key</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call> <operator>==</operator>
+<name>keytag</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_key_set_use</name><argument_list>(<argument><expr><call><name>ldns_key_list_key</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name>false</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><name>prev_rr</name> <operator>=</operator> <name>cur_rr</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>LDNS_SIGNATURE_REMOVE_NO_ADD</name></expr>:</case>
+<expr_stmt><expr><name>keytag</name> <operator>=</operator> <call><name>ldns_rdf2native_int16</name><argument_list>(
+<argument><expr><call><name>ldns_rr_rrsig_keytag</name><argument_list>(<argument><expr><name><name>cur_rr</name><operator>-&gt;</operator><name>rr</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>ldns_key_list_key_count</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>ldns_key_keytag</name><argument_list>(<argument><expr><call><name>ldns_key_list_key</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>
+<operator>==</operator> <name>keytag</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_key_set_use</name><argument_list>(<argument><expr><call><name>ldns_key_list_key</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name>false</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+<if_stmt><if>if <condition>(<expr><name>prev_rr</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>prev_rr</name><operator>-&gt;</operator><name>next</name></name> <operator>=</operator> <name>next_rr</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>base_rrs</name> <operator>=</operator> <name>next_rr</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><call><name>LDNS_FREE</name><argument_list>(<argument><expr><name>cur_rr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>LDNS_SIGNATURE_REMOVE_ADD_NEW</name></expr>:</case>
+<if_stmt><if>if <condition>(<expr><name>prev_rr</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>prev_rr</name><operator>-&gt;</operator><name>next</name></name> <operator>=</operator> <name>next_rr</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>base_rrs</name> <operator>=</operator> <name>next_rr</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><call><name>LDNS_FREE</name><argument_list>(<argument><expr><name>cur_rr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<default>default:</default>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>STDERR_MSGS</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"[XX] unknown return value from callback\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<break>break;</break>
+</block_content>}</block></switch>
+<expr_stmt><expr><name>cur_rr</name> <operator>=</operator> <name>next_rr</name></expr>;</expr_stmt>
+</block_content>}</block></while>
+
+<return>return <expr><name>base_rrs</name></expr>;</return>
+</block_content>}</block></decl></decl_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_SSL</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<function><type><name>ldns_status</name></type>
+<name>ldns_dnssec_zone_create_rrsigs</name><parameter_list>(<parameter><decl><type><name>ldns_dnssec_zone</name> <modifier>*</modifier></type><name>zone</name></decl></parameter>,
+<parameter><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>new_rrs</name></decl></parameter>,
+<parameter><decl><type><name>ldns_key_list</name> <modifier>*</modifier></type><name>key_list</name></decl></parameter>,
+<parameter><function_decl><type><name>int</name></type> (<modifier>*</modifier><name>func</name>)<parameter_list>(<parameter><decl><type><name>ldns_rr</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>void</name><modifier>*</modifier></type></decl></parameter>)</parameter_list></function_decl></parameter>,
+<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><call><name>ldns_dnssec_zone_create_rrsigs_flg</name><argument_list>(<argument><expr><name>zone</name></expr></argument>, <argument><expr><name>new_rrs</name></expr></argument>, <argument><expr><name>key_list</name></expr></argument>,
+<argument><expr><name>func</name></expr></argument>, <argument><expr><name>arg</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>ldns_key_list_filter_for_dnskey</name><parameter_list>(<parameter><decl><type><name>ldns_key_list</name> <modifier>*</modifier></type><name>key_list</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>flags</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>bool</name></type> <name><name>algos</name><index>[<expr><literal type="number">256</literal></expr>]</index></name>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>S_SPLINT_S</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<init>= <expr><block>{ <expr><name>false</name></expr> }</block></expr></init></decl>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_signing_algorithm</name></type> <name>saw_ksk</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_key</name> <modifier>*</modifier></type><name>key</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>i</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>ldns_key_list_key_count</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>ldns_key_list_key_count</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>key</name> <operator>=</operator> <call><name>ldns_key_list_key</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><call><name>ldns_key_flags</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call> <operator>&amp;</operator> <name>LDNS_KEY_SEP_KEY</name><operator>)</operator> <operator>&amp;&amp;</operator> <operator>!</operator><name>saw_ksk</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>saw_ksk</name> <operator>=</operator> <call><name>ldns_key_algorithm</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>algos</name><index>[<expr><call><name>ldns_key_algorithm</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>]</index></name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+</block_content>}</block></for>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>saw_ksk</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>algos</name><index>[<expr><name>saw_ksk</name></expr>]</index></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator><literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>ldns_key_list_key_count</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>key</name> <operator>=</operator> <call><name>ldns_key_list_key</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><call><name>ldns_key_flags</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call> <operator>&amp;</operator> <name>LDNS_KEY_SEP_KEY</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>flags</name> <operator>&amp;</operator> <name>LDNS_SIGN_WITH_ALL_ALGORITHMS</name><operator>)</operator> <operator>&amp;&amp;</operator>
+<name><name>algos</name><index>[<expr><call><name>ldns_key_algorithm</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>]</index></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>algos</name><index>[<expr><call><name>ldns_key_algorithm</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>]</index></name> <operator>=</operator> <name>false</name></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>ldns_key_set_use</name><argument_list>(<argument><expr><name>key</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>ldns_key_list_filter_for_non_dnskey</name><parameter_list>(<parameter><decl><type><name>ldns_key_list</name> <modifier>*</modifier></type><name>key_list</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>flags</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>bool</name></type> <name><name>algos</name><index>[<expr><literal type="number">256</literal></expr>]</index></name>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>S_SPLINT_S</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<init>= <expr><block>{ <expr><name>false</name></expr> }</block></expr></init></decl>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_signing_algorithm</name></type> <name>saw_zsk</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_key</name> <modifier>*</modifier></type><name>key</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>i</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>ldns_key_list_key_count</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>ldns_key_list_key_count</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>key</name> <operator>=</operator> <call><name>ldns_key_list_key</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><call><name>ldns_key_flags</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call> <operator>&amp;</operator> <name>LDNS_KEY_SEP_KEY</name><operator>)</operator> <operator>&amp;&amp;</operator> <operator>!</operator><name>saw_zsk</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>saw_zsk</name> <operator>=</operator> <call><name>ldns_key_algorithm</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>algos</name><index>[<expr><call><name>ldns_key_algorithm</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>]</index></name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+</block_content>}</block></for>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>saw_zsk</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>algos</name><index>[<expr><name>saw_zsk</name></expr>]</index></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>ldns_key_list_key_count</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>key</name> <operator>=</operator> <call><name>ldns_key_list_key</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if<condition>(<expr><operator>(</operator><call><name>ldns_key_flags</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call> <operator>&amp;</operator> <name>LDNS_KEY_SEP_KEY</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>flags</name> <operator>&amp;</operator> <name>LDNS_SIGN_WITH_ALL_ALGORITHMS</name><operator>)</operator> <operator>&amp;&amp;</operator>
+<name><name>algos</name><index>[<expr><call><name>ldns_key_algorithm</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>]</index></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>algos</name><index>[<expr><call><name>ldns_key_algorithm</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>]</index></name> <operator>=</operator> <name>false</name></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>ldns_key_set_use</name><argument_list>(<argument><expr><name>key</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+<function><type><name>ldns_status</name></type>
+<name>ldns_dnssec_zone_create_rrsigs_flg</name><parameter_list>( <parameter><decl><type><name>ldns_dnssec_zone</name> <modifier>*</modifier></type><name>zone</name></decl></parameter>
+, <parameter><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>new_rrs</name></decl></parameter>
+, <parameter><decl><type><name>ldns_key_list</name> <modifier>*</modifier></type><name>key_list</name></decl></parameter>
+, <parameter><function_decl><type><name>int</name></type> (<modifier>*</modifier><name>func</name>)<parameter_list>(<parameter><decl><type><name>ldns_rr</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>void</name><modifier>*</modifier></type></decl></parameter>)</parameter_list></function_decl></parameter>
+, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>
+, <parameter><decl><type><name>int</name></type> <name>flags</name></decl></parameter>
+)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ldns_status</name></type> <name>result</name> <init>= <expr><name>LDNS_STATUS_OK</name></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>ldns_rbnode_t</name> <modifier>*</modifier></type><name>cur_node</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>rr_list</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>ldns_dnssec_name</name> <modifier>*</modifier></type><name>cur_name</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_dnssec_rrsets</name> <modifier>*</modifier></type><name>cur_rrset</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_dnssec_rrs</name> <modifier>*</modifier></type><name>cur_rr</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>siglist</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>size_t</name></type> <name>i</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>int</name></type> <name>on_delegation_point</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>pubkey_list</name> <init>= <expr><call><name>ldns_rr_list_new</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name><operator>&lt;</operator><call><name>ldns_key_list_key_count</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_rr_list_push_rr</name><argument_list>( <argument><expr><name>pubkey_list</name></expr></argument>
+, <argument><expr><call><name>ldns_key2rr</name><argument_list>(<argument><expr><call><name>ldns_key_list_key</name><argument_list>(
+<argument><expr><name>key_list</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>
+)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+
+<expr_stmt><expr><name>cur_node</name> <operator>=</operator> <call><name>ldns_rbtree_first</name><argument_list>(<argument><expr><name><name>zone</name><operator>-&gt;</operator><name>names</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<while>while <condition>(<expr><name>cur_node</name> <operator>!=</operator> <name>LDNS_RBTREE_NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>cur_name</name> <operator>=</operator> <operator>(</operator><name>ldns_dnssec_name</name> <operator>*</operator><operator>)</operator> <name><name>cur_node</name><operator>-&gt;</operator><name>data</name></name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>cur_name</name><operator>-&gt;</operator><name>is_glue</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>on_delegation_point</name> <operator>=</operator> <call><name>ldns_dnssec_rrsets_contains_type</name><argument_list>(
+<argument><expr><name><name>cur_name</name><operator>-&gt;</operator><name>rrsets</name></name></expr></argument>, <argument><expr><name>LDNS_RR_TYPE_NS</name></expr></argument>)</argument_list></call>
+<operator>&amp;&amp;</operator> <operator>!</operator><call><name>ldns_dnssec_rrsets_contains_type</name><argument_list>(
+<argument><expr><name><name>cur_name</name><operator>-&gt;</operator><name>rrsets</name></name></expr></argument>, <argument><expr><name>LDNS_RR_TYPE_SOA</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>cur_rrset</name> <operator>=</operator> <name><name>cur_name</name><operator>-&gt;</operator><name>rrsets</name></name></expr>;</expr_stmt>
+<while>while <condition>(<expr><name>cur_rrset</name></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><call><name>ldns_key_list_set_use</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>, <argument><expr><name>true</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+<expr_stmt><expr><name><name>cur_rrset</name><operator>-&gt;</operator><name>signatures</name></name> <operator>=</operator>
+<call><name>ldns_dnssec_remove_signatures</name><argument_list>(<argument><expr><name><name>cur_rrset</name><operator>-&gt;</operator><name>signatures</name></name></expr></argument>,
+<argument><expr><name>key_list</name></expr></argument>,
+<argument><expr><name>func</name></expr></argument>,
+<argument><expr><name>arg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if<condition>(<expr><operator>!</operator><operator>(</operator><name>flags</name><operator>&amp;</operator><name>LDNS_SIGN_DNSKEY_WITH_ZSK</name><operator>)</operator> <operator>&amp;&amp;</operator>
+<name><name>cur_rrset</name><operator>-&gt;</operator><name>type</name></name> <operator>==</operator> <name>LDNS_RR_TYPE_DNSKEY</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>ldns_key_list_filter_for_dnskey</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>, <argument><expr><name>flags</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if<condition>(<expr><name><name>cur_rrset</name><operator>-&gt;</operator><name>type</name></name> <operator>!=</operator> <name>LDNS_RR_TYPE_DNSKEY</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>ldns_key_list_filter_for_non_dnskey</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>, <argument><expr><name>flags</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+<expr_stmt><expr><name>rr_list</name> <operator>=</operator> <call><name>ldns_rr_list_new</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>cur_rr</name> <operator>=</operator> <name><name>cur_rrset</name><operator>-&gt;</operator><name>rrs</name></name></expr>;</expr_stmt>
+<while>while <condition>(<expr><name>cur_rr</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_rr_list_push_rr</name><argument_list>(<argument><expr><name>rr_list</name></expr></argument>, <argument><expr><name><name>cur_rr</name><operator>-&gt;</operator><name>rr</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>cur_rr</name> <operator>=</operator> <name><name>cur_rr</name><operator>-&gt;</operator><name>next</name></name></expr>;</expr_stmt>
+</block_content>}</block></while>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>on_delegation_point</name> <operator>||</operator>
+<call><name>ldns_rr_list_type</name><argument_list>(<argument><expr><name>rr_list</name></expr></argument>)</argument_list></call>
+<operator>==</operator> <name>LDNS_RR_TYPE_DS</name> <operator>||</operator>
+<call><name>ldns_rr_list_type</name><argument_list>(<argument><expr><name>rr_list</name></expr></argument>)</argument_list></call>
+<operator>==</operator> <name>LDNS_RR_TYPE_NSEC</name> <operator>||</operator>
+<call><name>ldns_rr_list_type</name><argument_list>(<argument><expr><name>rr_list</name></expr></argument>)</argument_list></call>
+<operator>==</operator> <name>LDNS_RR_TYPE_NSEC3</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>siglist</name> <operator>=</operator> <call><name>ldns_sign_public</name><argument_list>(<argument><expr><name>rr_list</name></expr></argument>, <argument><expr><name>key_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>ldns_rr_list_rr_count</name><argument_list>(<argument><expr><name>siglist</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>cur_rrset</name><operator>-&gt;</operator><name>signatures</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <call><name>ldns_dnssec_rrs_add_rr</name><argument_list>(<argument><expr><name><name>cur_rrset</name><operator>-&gt;</operator><name>signatures</name></name></expr></argument>,
+<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>siglist</name></expr></argument>,
+<argument><expr><name>i</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name><name>cur_rrset</name><operator>-&gt;</operator><name>signatures</name></name> <operator>=</operator> <call><name>ldns_dnssec_rrs_new</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>cur_rrset</name><operator>-&gt;</operator><name>signatures</name><operator>-&gt;</operator><name>rr</name></name> <operator>=</operator>
+<call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>siglist</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>new_rrs</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_rr_list_push_rr</name><argument_list>(<argument><expr><name>new_rrs</name></expr></argument>,
+<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>siglist</name></expr></argument>,
+<argument><expr><name>i</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><call><name>ldns_rr_list_free</name><argument_list>(<argument><expr><name>siglist</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>ldns_rr_list_free</name><argument_list>(<argument><expr><name>rr_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>cur_rrset</name> <operator>=</operator> <name><name>cur_rrset</name><operator>-&gt;</operator><name>next</name></name></expr>;</expr_stmt>
+</block_content>}</block></while>
+
+
+<expr_stmt><expr><call><name>ldns_key_list_set_use</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>, <argument><expr><name>true</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>cur_name</name><operator>-&gt;</operator><name>nsec_signatures</name></name> <operator>=</operator>
+<call><name>ldns_dnssec_remove_signatures</name><argument_list>(<argument><expr><name><name>cur_name</name><operator>-&gt;</operator><name>nsec_signatures</name></name></expr></argument>,
+<argument><expr><name>key_list</name></expr></argument>,
+<argument><expr><name>func</name></expr></argument>,
+<argument><expr><name>arg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_key_list_filter_for_non_dnskey</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>, <argument><expr><name>flags</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>rr_list</name> <operator>=</operator> <call><name>ldns_rr_list_new</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_push_rr</name><argument_list>(<argument><expr><name>rr_list</name></expr></argument>, <argument><expr><name><name>cur_name</name><operator>-&gt;</operator><name>nsec</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>siglist</name> <operator>=</operator> <call><name>ldns_sign_public</name><argument_list>(<argument><expr><name>rr_list</name></expr></argument>, <argument><expr><name>key_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>ldns_rr_list_rr_count</name><argument_list>(<argument><expr><name>siglist</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>cur_name</name><operator>-&gt;</operator><name>nsec_signatures</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <call><name>ldns_dnssec_rrs_add_rr</name><argument_list>(<argument><expr><name><name>cur_name</name><operator>-&gt;</operator><name>nsec_signatures</name></name></expr></argument>,
+<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>siglist</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name><name>cur_name</name><operator>-&gt;</operator><name>nsec_signatures</name></name> <operator>=</operator> <call><name>ldns_dnssec_rrs_new</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>cur_name</name><operator>-&gt;</operator><name>nsec_signatures</name><operator>-&gt;</operator><name>rr</name></name> <operator>=</operator>
+<call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>siglist</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>new_rrs</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_rr_list_push_rr</name><argument_list>(<argument><expr><name>new_rrs</name></expr></argument>,
+<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>siglist</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><call><name>ldns_rr_list_free</name><argument_list>(<argument><expr><name>siglist</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_free</name><argument_list>(<argument><expr><name>rr_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>cur_node</name> <operator>=</operator> <call><name>ldns_rbtree_next</name><argument_list>(<argument><expr><name>cur_node</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></while>
+
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>pubkey_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>ldns_status</name></type>
+<name>ldns_dnssec_zone_sign</name><parameter_list>(<parameter><decl><type><name>ldns_dnssec_zone</name> <modifier>*</modifier></type><name>zone</name></decl></parameter>,
+<parameter><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>new_rrs</name></decl></parameter>,
+<parameter><decl><type><name>ldns_key_list</name> <modifier>*</modifier></type><name>key_list</name></decl></parameter>,
+<parameter><function_decl><type><name>int</name></type> (<modifier>*</modifier><name>func</name>)<parameter_list>(<parameter><decl><type><name>ldns_rr</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type></decl></parameter>)</parameter_list></function_decl></parameter>,
+<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><call><name>ldns_dnssec_zone_sign_flg</name><argument_list>(<argument><expr><name>zone</name></expr></argument>, <argument><expr><name>new_rrs</name></expr></argument>, <argument><expr><name>key_list</name></expr></argument>, <argument><expr><name>func</name></expr></argument>, <argument><expr><name>arg</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>ldns_status</name></type>
+<name>ldns_dnssec_zone_sign_flg</name><parameter_list>(<parameter><decl><type><name>ldns_dnssec_zone</name> <modifier>*</modifier></type><name>zone</name></decl></parameter>,
+<parameter><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>new_rrs</name></decl></parameter>,
+<parameter><decl><type><name>ldns_key_list</name> <modifier>*</modifier></type><name>key_list</name></decl></parameter>,
+<parameter><function_decl><type><name>int</name></type> (<modifier>*</modifier><name>func</name>)<parameter_list>(<parameter><decl><type><name>ldns_rr</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type></decl></parameter>)</parameter_list></function_decl></parameter>,
+<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>,
+<parameter><decl><type><name>int</name></type> <name>flags</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ldns_status</name></type> <name>result</name> <init>= <expr><name>LDNS_STATUS_OK</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>zone</name> <operator>||</operator> <operator>!</operator><name>new_rrs</name> <operator>||</operator> <operator>!</operator><name>key_list</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>LDNS_STATUS_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><name>result</name> <operator>=</operator> <call><name>ldns_dnssec_zone_mark_glue</name><argument_list>(<argument><expr><name>zone</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>result</name> <operator>!=</operator> <name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>zone</name><operator>-&gt;</operator><name>names</name></name> <operator>&amp;&amp;</operator> <operator>!</operator><operator>(</operator><operator>(</operator><name>ldns_dnssec_name</name> <operator>*</operator><operator>)</operator><name><name>zone</name><operator>-&gt;</operator><name>names</name><operator>-&gt;</operator><name>root</name><operator>-&gt;</operator><name>data</name></name><operator>)</operator><operator>-&gt;</operator><name>nsec</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <call><name>ldns_dnssec_zone_create_nsecs</name><argument_list>(<argument><expr><name>zone</name></expr></argument>, <argument><expr><name>new_rrs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>result</name> <operator>!=</operator> <name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>result</name> <operator>=</operator> <call><name>ldns_dnssec_zone_create_rrsigs_flg</name><argument_list>(<argument><expr><name>zone</name></expr></argument>,
+<argument><expr><name>new_rrs</name></expr></argument>,
+<argument><expr><name>key_list</name></expr></argument>,
+<argument><expr><name>func</name></expr></argument>,
+<argument><expr><name>arg</name></expr></argument>,
+<argument><expr><name>flags</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>ldns_status</name></type>
+<name>ldns_dnssec_zone_sign_nsec3</name><parameter_list>(<parameter><decl><type><name>ldns_dnssec_zone</name> <modifier>*</modifier></type><name>zone</name></decl></parameter>,
+<parameter><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>new_rrs</name></decl></parameter>,
+<parameter><decl><type><name>ldns_key_list</name> <modifier>*</modifier></type><name>key_list</name></decl></parameter>,
+<parameter><function_decl><type><name>int</name></type> (<modifier>*</modifier><name>func</name>)<parameter_list>(<parameter><decl><type><name>ldns_rr</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type></decl></parameter>)</parameter_list></function_decl></parameter>,
+<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>,
+<parameter><decl><type><name>uint8_t</name></type> <name>algorithm</name></decl></parameter>,
+<parameter><decl><type><name>uint8_t</name></type> <name>flags</name></decl></parameter>,
+<parameter><decl><type><name>uint16_t</name></type> <name>iterations</name></decl></parameter>,
+<parameter><decl><type><name>uint8_t</name></type> <name>salt_length</name></decl></parameter>,
+<parameter><decl><type><name>uint8_t</name> <modifier>*</modifier></type><name>salt</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><call><name>ldns_dnssec_zone_sign_nsec3_flg_mkmap</name><argument_list>(<argument><expr><name>zone</name></expr></argument>, <argument><expr><name>new_rrs</name></expr></argument>, <argument><expr><name>key_list</name></expr></argument>,
+<argument><expr><name>func</name></expr></argument>, <argument><expr><name>arg</name></expr></argument>, <argument><expr><name>algorithm</name></expr></argument>, <argument><expr><name>flags</name></expr></argument>, <argument><expr><name>iterations</name></expr></argument>, <argument><expr><name>salt_length</name></expr></argument>, <argument><expr><name>salt</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>,
+<argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>ldns_status</name></type>
+<name>ldns_dnssec_zone_sign_nsec3_flg_mkmap</name><parameter_list>(<parameter><decl><type><name>ldns_dnssec_zone</name> <modifier>*</modifier></type><name>zone</name></decl></parameter>,
+<parameter><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>new_rrs</name></decl></parameter>,
+<parameter><decl><type><name>ldns_key_list</name> <modifier>*</modifier></type><name>key_list</name></decl></parameter>,
+<parameter><function_decl><type><name>int</name></type> (<modifier>*</modifier><name>func</name>)<parameter_list>(<parameter><decl><type><name>ldns_rr</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type></decl></parameter>)</parameter_list></function_decl></parameter>,
+<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>,
+<parameter><decl><type><name>uint8_t</name></type> <name>algorithm</name></decl></parameter>,
+<parameter><decl><type><name>uint8_t</name></type> <name>flags</name></decl></parameter>,
+<parameter><decl><type><name>uint16_t</name></type> <name>iterations</name></decl></parameter>,
+<parameter><decl><type><name>uint8_t</name></type> <name>salt_length</name></decl></parameter>,
+<parameter><decl><type><name>uint8_t</name> <modifier>*</modifier></type><name>salt</name></decl></parameter>,
+<parameter><decl><type><name>int</name></type> <name>signflags</name></decl></parameter>,
+<parameter><decl><type><name>ldns_rbtree_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>map</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ldns_rr</name> <modifier>*</modifier></type><name>nsec3</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>nsec3param</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_status</name></type> <name>result</name> <init>= <expr><name>LDNS_STATUS_OK</name></expr></init></decl>;</decl_stmt>
+
+
+<expr_stmt><expr><name>result</name> <operator>=</operator> <call><name>ldns_dnssec_zone_mark_glue</name><argument_list>(<argument><expr><name>zone</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>result</name> <operator>!=</operator> <name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>zone</name><operator>-&gt;</operator><name>names</name></name></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><name>result</name> <operator>=</operator> <call><name>ldns_dnssec_zone_add_empty_nonterminals</name><argument_list>(<argument><expr><name>zone</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>result</name> <operator>!=</operator> <name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>nsec3</name> <operator>=</operator> <operator>(</operator><operator>(</operator><name>ldns_dnssec_name</name> <operator>*</operator><operator>)</operator><name><name>zone</name><operator>-&gt;</operator><name>names</name><operator>-&gt;</operator><name>root</name><operator>-&gt;</operator><name>data</name></name><operator>)</operator><operator>-&gt;</operator><name>nsec</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>nsec3</name> <operator>&amp;&amp;</operator> <call><name>ldns_rr_get_type</name><argument_list>(<argument><expr><name>nsec3</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>LDNS_RR_TYPE_NSEC3</name></expr>)</condition> <block>{<block_content>
+
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>ldns_dnssec_zone_find_rrset</name><argument_list>(<argument><expr><name>zone</name></expr></argument>,
+<argument><expr><name><name>zone</name><operator>-&gt;</operator><name>soa</name><operator>-&gt;</operator><name>name</name></name></expr></argument>,
+<argument><expr><name>LDNS_RR_TYPE_NSEC3PARAM</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><name>nsec3param</name> <operator>=</operator>
+<call><name>ldns_rr_new_frm_type</name><argument_list>(<argument><expr><name>LDNS_RR_TYPE_NSEC3PARAM</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_set_owner</name><argument_list>(<argument><expr><name>nsec3param</name></expr></argument>,
+<argument><expr><call><name>ldns_rdf_clone</name><argument_list>(<argument><expr><name><name>zone</name><operator>-&gt;</operator><name>soa</name><operator>-&gt;</operator><name>name</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_nsec3_add_param_rdfs</name><argument_list>(<argument><expr><name>nsec3param</name></expr></argument>,
+<argument><expr><name>algorithm</name></expr></argument>,
+<argument><expr><name>flags</name></expr></argument>,
+<argument><expr><name>iterations</name></expr></argument>,
+<argument><expr><name>salt_length</name></expr></argument>,
+<argument><expr><name>salt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+<expr_stmt><expr><call><name>ldns_set_bit</name><argument_list>(<argument><expr><call><name>ldns_rdf_data</name><argument_list>(<argument><expr><call><name>ldns_rr_rdf</name><argument_list>(<argument><expr><name>nsec3param</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <call><name>ldns_dnssec_zone_add_rr</name><argument_list>(<argument><expr><name>zone</name></expr></argument>, <argument><expr><name>nsec3param</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>result</name> <operator>!=</operator> <name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_push_rr</name><argument_list>(<argument><expr><name>new_rrs</name></expr></argument>, <argument><expr><name>nsec3param</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <call><name>ldns_dnssec_zone_create_nsec3s_mkmap</name><argument_list>(<argument><expr><name>zone</name></expr></argument>,
+<argument><expr><name>new_rrs</name></expr></argument>,
+<argument><expr><name>algorithm</name></expr></argument>,
+<argument><expr><name>flags</name></expr></argument>,
+<argument><expr><name>iterations</name></expr></argument>,
+<argument><expr><name>salt_length</name></expr></argument>,
+<argument><expr><name>salt</name></expr></argument>,
+<argument><expr><name>map</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>result</name> <operator>!=</operator> <name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+
+<expr_stmt><expr><name>result</name> <operator>=</operator> <call><name>ldns_dnssec_zone_create_rrsigs_flg</name><argument_list>(<argument><expr><name>zone</name></expr></argument>,
+<argument><expr><name>new_rrs</name></expr></argument>,
+<argument><expr><name>key_list</name></expr></argument>,
+<argument><expr><name>func</name></expr></argument>,
+<argument><expr><name>arg</name></expr></argument>,
+<argument><expr><name>signflags</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>ldns_status</name></type>
+<name>ldns_dnssec_zone_sign_nsec3_flg</name><parameter_list>(<parameter><decl><type><name>ldns_dnssec_zone</name> <modifier>*</modifier></type><name>zone</name></decl></parameter>,
+<parameter><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>new_rrs</name></decl></parameter>,
+<parameter><decl><type><name>ldns_key_list</name> <modifier>*</modifier></type><name>key_list</name></decl></parameter>,
+<parameter><function_decl><type><name>int</name></type> (<modifier>*</modifier><name>func</name>)<parameter_list>(<parameter><decl><type><name>ldns_rr</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type></decl></parameter>)</parameter_list></function_decl></parameter>,
+<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>,
+<parameter><decl><type><name>uint8_t</name></type> <name>algorithm</name></decl></parameter>,
+<parameter><decl><type><name>uint8_t</name></type> <name>flags</name></decl></parameter>,
+<parameter><decl><type><name>uint16_t</name></type> <name>iterations</name></decl></parameter>,
+<parameter><decl><type><name>uint8_t</name></type> <name>salt_length</name></decl></parameter>,
+<parameter><decl><type><name>uint8_t</name> <modifier>*</modifier></type><name>salt</name></decl></parameter>,
+<parameter><decl><type><name>int</name></type> <name>signflags</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><call><name>ldns_dnssec_zone_sign_nsec3_flg_mkmap</name><argument_list>(<argument><expr><name>zone</name></expr></argument>, <argument><expr><name>new_rrs</name></expr></argument>, <argument><expr><name>key_list</name></expr></argument>,
+<argument><expr><name>func</name></expr></argument>, <argument><expr><name>arg</name></expr></argument>, <argument><expr><name>algorithm</name></expr></argument>, <argument><expr><name>flags</name></expr></argument>, <argument><expr><name>iterations</name></expr></argument>, <argument><expr><name>salt_length</name></expr></argument>, <argument><expr><name>salt</name></expr></argument>,
+<argument><expr><name>signflags</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>ldns_zone</name> <modifier>*</modifier></type>
+<name>ldns_zone_sign</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>ldns_zone</name> <modifier>*</modifier></type><name>zone</name></decl></parameter>, <parameter><decl><type><name>ldns_key_list</name> <modifier>*</modifier></type><name>key_list</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ldns_dnssec_zone</name> <modifier>*</modifier></type><name>dnssec_zone</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_zone</name> <modifier>*</modifier></type><name>signed_zone</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>new_rrs</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>i</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>signed_zone</name> <operator>=</operator> <call><name>ldns_zone_new</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>dnssec_zone</name> <operator>=</operator> <call><name>ldns_dnssec_zone_new</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>ldns_dnssec_zone_add_rr</name><argument_list>(<argument><expr><name>dnssec_zone</name></expr></argument>, <argument><expr><call><name>ldns_zone_soa</name><argument_list>(<argument><expr><name>zone</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_zone_set_soa</name><argument_list>(<argument><expr><name>signed_zone</name></expr></argument>, <argument><expr><call><name>ldns_rr_clone</name><argument_list>(<argument><expr><call><name>ldns_zone_soa</name><argument_list>(<argument><expr><name>zone</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>ldns_rr_list_rr_count</name><argument_list>(<argument><expr><call><name>ldns_zone_rrs</name><argument_list>(<argument><expr><name>zone</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>ldns_dnssec_zone_add_rr</name><argument_list>(<argument><expr><name>dnssec_zone</name></expr></argument>,
+<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><call><name>ldns_zone_rrs</name><argument_list>(<argument><expr><name>zone</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name>i</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_zone_push_rr</name><argument_list>(<argument><expr><name>signed_zone</name></expr></argument>,
+<argument><expr><call><name>ldns_rr_clone</name><argument_list>(<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><call><name>ldns_zone_rrs</name><argument_list>(<argument><expr><name>zone</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name>i</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><name>new_rrs</name> <operator>=</operator> <call><name>ldns_rr_list_new</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>ldns_dnssec_zone_sign</name><argument_list>(<argument><expr><name>dnssec_zone</name></expr></argument>,
+<argument><expr><name>new_rrs</name></expr></argument>,
+<argument><expr><name>key_list</name></expr></argument>,
+<argument><expr><name>ldns_dnssec_default_replace_signatures</name></expr></argument>,
+<argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>ldns_rr_list_rr_count</name><argument_list>(<argument><expr><name>new_rrs</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_rr_list_push_rr</name><argument_list>(<argument><expr><call><name>ldns_zone_rrs</name><argument_list>(<argument><expr><name>signed_zone</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>ldns_rr_clone</name><argument_list>(<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>new_rrs</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>new_rrs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_dnssec_zone_free</name><argument_list>(<argument><expr><name>dnssec_zone</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><name>signed_zone</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>ldns_zone</name> <modifier>*</modifier></type>
+<name>ldns_zone_sign_nsec3</name><parameter_list>(<parameter><decl><type><name>ldns_zone</name> <modifier>*</modifier></type><name>zone</name></decl></parameter>, <parameter><decl><type><name>ldns_key_list</name> <modifier>*</modifier></type><name>key_list</name></decl></parameter>, <parameter><decl><type><name>uint8_t</name></type> <name>algorithm</name></decl></parameter>, <parameter><decl><type><name>uint8_t</name></type> <name>flags</name></decl></parameter>, <parameter><decl><type><name>uint16_t</name></type> <name>iterations</name></decl></parameter>, <parameter><decl><type><name>uint8_t</name></type> <name>salt_length</name></decl></parameter>, <parameter><decl><type><name>uint8_t</name> <modifier>*</modifier></type><name>salt</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ldns_dnssec_zone</name> <modifier>*</modifier></type><name>dnssec_zone</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_zone</name> <modifier>*</modifier></type><name>signed_zone</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>new_rrs</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>i</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>signed_zone</name> <operator>=</operator> <call><name>ldns_zone_new</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>dnssec_zone</name> <operator>=</operator> <call><name>ldns_dnssec_zone_new</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>ldns_dnssec_zone_add_rr</name><argument_list>(<argument><expr><name>dnssec_zone</name></expr></argument>, <argument><expr><call><name>ldns_zone_soa</name><argument_list>(<argument><expr><name>zone</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_zone_set_soa</name><argument_list>(<argument><expr><name>signed_zone</name></expr></argument>, <argument><expr><call><name>ldns_rr_clone</name><argument_list>(<argument><expr><call><name>ldns_zone_soa</name><argument_list>(<argument><expr><name>zone</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>ldns_rr_list_rr_count</name><argument_list>(<argument><expr><call><name>ldns_zone_rrs</name><argument_list>(<argument><expr><name>zone</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>ldns_dnssec_zone_add_rr</name><argument_list>(<argument><expr><name>dnssec_zone</name></expr></argument>,
+<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><call><name>ldns_zone_rrs</name><argument_list>(<argument><expr><name>zone</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name>i</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_zone_push_rr</name><argument_list>(<argument><expr><name>signed_zone</name></expr></argument>,
+<argument><expr><call><name>ldns_rr_clone</name><argument_list>(<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><call><name>ldns_zone_rrs</name><argument_list>(<argument><expr><name>zone</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name>i</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><name>new_rrs</name> <operator>=</operator> <call><name>ldns_rr_list_new</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>ldns_dnssec_zone_sign_nsec3</name><argument_list>(<argument><expr><name>dnssec_zone</name></expr></argument>,
+<argument><expr><name>new_rrs</name></expr></argument>,
+<argument><expr><name>key_list</name></expr></argument>,
+<argument><expr><name>ldns_dnssec_default_replace_signatures</name></expr></argument>,
+<argument><expr><name>NULL</name></expr></argument>,
+<argument><expr><name>algorithm</name></expr></argument>,
+<argument><expr><name>flags</name></expr></argument>,
+<argument><expr><name>iterations</name></expr></argument>,
+<argument><expr><name>salt_length</name></expr></argument>,
+<argument><expr><name>salt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>ldns_rr_list_rr_count</name><argument_list>(<argument><expr><name>new_rrs</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_rr_list_push_rr</name><argument_list>(<argument><expr><call><name>ldns_zone_rrs</name><argument_list>(<argument><expr><name>signed_zone</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>ldns_rr_clone</name><argument_list>(<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>new_rrs</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>new_rrs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_dnssec_zone_free</name><argument_list>(<argument><expr><name>dnssec_zone</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><name>signed_zone</name></expr>;</return>
+</block_content>}</block></function></block_content></block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+</unit>

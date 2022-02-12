@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/libfido2/src/io.c">
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"fido.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"packed.h"</cpp:file></cpp:include>
+
+<macro><name>PACKED_TYPE</name><argument_list>(<argument>frame_t</argument>,
+<argument>struct frame {
+uint32_t cid;
+union {
+uint8_t type;
+struct {
+uint8_t cmd;
+uint8_t bcnth;
+uint8_t bcntl;
+uint8_t data[CTAP_MAX_REPORT_LEN - CTAP_INIT_HEADER_LEN];
+} init;
+struct {
+uint8_t seq;
+uint8_t data[CTAP_MAX_REPORT_LEN - CTAP_CONT_HEADER_LEN];
+} cont;
+} body;
+}</argument>)</argument_list></macro>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>MIN</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MIN</name><parameter_list>(<parameter><type><name>x</name></type></parameter>, <parameter><type><name>y</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((x) &gt; (y) ? (y) : (x))</cpp:value></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>tx_empty</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>d</name></decl></parameter>, <parameter><decl><type><name>uint8_t</name></type> <name>cmd</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>frame</name></name> <modifier>*</modifier></type><name>fp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>pkt</name><index>[<expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>fp</name></expr></argument>)</argument_list></sizeof> <operator>+</operator> <literal type="number">1</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>size_t</name></type> <name>len</name> <init>= <expr><name><name>d</name><operator>-&gt;</operator><name>tx_len</name></name> <operator>+</operator> <literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>n</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>pkt</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>pkt</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>fp</name> <operator>=</operator> <operator>(</operator>struct <name>frame</name> <operator>*</operator><operator>)</operator><operator>(</operator><name>pkt</name> <operator>+</operator> <literal type="number">1</literal><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>fp</name><operator>-&gt;</operator><name>cid</name></name> <operator>=</operator> <name><name>d</name><operator>-&gt;</operator><name>cid</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>fp</name><operator>-&gt;</operator><name>body</name><operator>.</operator><name>init</name><operator>.</operator><name>cmd</name></name> <operator>=</operator> <name>CTAP_FRAME_INIT</name> <operator>|</operator> <name>cmd</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>len</name> <operator>&gt;</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>pkt</name></expr></argument>)</argument_list></sizeof> <operator>||</operator> <operator>(</operator><name>n</name> <operator>=</operator> <call><name><name>d</name><operator>-&gt;</operator><name>io</name><operator>.</operator><name>write</name></name><argument_list>(<argument><expr><name><name>d</name><operator>-&gt;</operator><name>io_handle</name></name></expr></argument>, <argument><expr><name>pkt</name></expr></argument>,
+<argument><expr><name>len</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator> <operator>(</operator><name>size_t</name><operator>)</operator><name>n</name> <operator>!=</operator> <name>len</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>size_t</name></type>
+<name>tx_preamble</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>d</name></decl></parameter>, <parameter><decl><type><name>uint8_t</name></type> <name>cmd</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>count</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>frame</name></name> <modifier>*</modifier></type><name>fp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>pkt</name><index>[<expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>fp</name></expr></argument>)</argument_list></sizeof> <operator>+</operator> <literal type="number">1</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>size_t</name></type> <name>len</name> <init>= <expr><name><name>d</name><operator>-&gt;</operator><name>tx_len</name></name> <operator>+</operator> <literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>n</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>d</name><operator>-&gt;</operator><name>tx_len</name></name> <operator>-</operator> <name>CTAP_INIT_HEADER_LEN</name> <operator>&gt;</operator> <sizeof>sizeof<argument_list>(<argument><expr><name><name>fp</name><operator>-&gt;</operator><name>body</name><operator>.</operator><name>init</name><operator>.</operator><name>data</name></name></expr></argument>)</argument_list></sizeof></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>pkt</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>pkt</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>fp</name> <operator>=</operator> <operator>(</operator>struct <name>frame</name> <operator>*</operator><operator>)</operator><operator>(</operator><name>pkt</name> <operator>+</operator> <literal type="number">1</literal><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>fp</name><operator>-&gt;</operator><name>cid</name></name> <operator>=</operator> <name><name>d</name><operator>-&gt;</operator><name>cid</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>fp</name><operator>-&gt;</operator><name>body</name><operator>.</operator><name>init</name><operator>.</operator><name>cmd</name></name> <operator>=</operator> <name>CTAP_FRAME_INIT</name> <operator>|</operator> <name>cmd</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>fp</name><operator>-&gt;</operator><name>body</name><operator>.</operator><name>init</name><operator>.</operator><name>bcnth</name></name> <operator>=</operator> <operator>(</operator><name>count</name> <operator>&gt;&gt;</operator> <literal type="number">8</literal><operator>)</operator> <operator>&amp;</operator> <literal type="number">0xff</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>fp</name><operator>-&gt;</operator><name>body</name><operator>.</operator><name>init</name><operator>.</operator><name>bcntl</name></name> <operator>=</operator> <name>count</name> <operator>&amp;</operator> <literal type="number">0xff</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>count</name> <operator>=</operator> <call><name>MIN</name><argument_list>(<argument><expr><name>count</name></expr></argument>, <argument><expr><name><name>d</name><operator>-&gt;</operator><name>tx_len</name></name> <operator>-</operator> <name>CTAP_INIT_HEADER_LEN</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>fp</name><operator>-&gt;</operator><name>body</name><operator>.</operator><name>init</name><operator>.</operator><name>data</name></name></expr></argument>, <argument><expr><name>buf</name></expr></argument>, <argument><expr><name>count</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>len</name> <operator>&gt;</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>pkt</name></expr></argument>)</argument_list></sizeof> <operator>||</operator> <operator>(</operator><name>n</name> <operator>=</operator> <call><name><name>d</name><operator>-&gt;</operator><name>io</name><operator>.</operator><name>write</name></name><argument_list>(<argument><expr><name><name>d</name><operator>-&gt;</operator><name>io_handle</name></name></expr></argument>, <argument><expr><name>pkt</name></expr></argument>,
+<argument><expr><name>len</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator> <operator>(</operator><name>size_t</name><operator>)</operator><name>n</name> <operator>!=</operator> <name>len</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>count</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>size_t</name></type>
+<name>tx_frame</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>d</name></decl></parameter>, <parameter><decl><type><name>uint8_t</name></type> <name>seq</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>count</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>frame</name></name> <modifier>*</modifier></type><name>fp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>pkt</name><index>[<expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>fp</name></expr></argument>)</argument_list></sizeof> <operator>+</operator> <literal type="number">1</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>size_t</name></type> <name>len</name> <init>= <expr><name><name>d</name><operator>-&gt;</operator><name>tx_len</name></name> <operator>+</operator> <literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>n</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>d</name><operator>-&gt;</operator><name>tx_len</name></name> <operator>-</operator> <name>CTAP_CONT_HEADER_LEN</name> <operator>&gt;</operator> <sizeof>sizeof<argument_list>(<argument><expr><name><name>fp</name><operator>-&gt;</operator><name>body</name><operator>.</operator><name>cont</name><operator>.</operator><name>data</name></name></expr></argument>)</argument_list></sizeof></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>pkt</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>pkt</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>fp</name> <operator>=</operator> <operator>(</operator>struct <name>frame</name> <operator>*</operator><operator>)</operator><operator>(</operator><name>pkt</name> <operator>+</operator> <literal type="number">1</literal><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>fp</name><operator>-&gt;</operator><name>cid</name></name> <operator>=</operator> <name><name>d</name><operator>-&gt;</operator><name>cid</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>fp</name><operator>-&gt;</operator><name>body</name><operator>.</operator><name>cont</name><operator>.</operator><name>seq</name></name> <operator>=</operator> <name>seq</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>count</name> <operator>=</operator> <call><name>MIN</name><argument_list>(<argument><expr><name>count</name></expr></argument>, <argument><expr><name><name>d</name><operator>-&gt;</operator><name>tx_len</name></name> <operator>-</operator> <name>CTAP_CONT_HEADER_LEN</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>fp</name><operator>-&gt;</operator><name>body</name><operator>.</operator><name>cont</name><operator>.</operator><name>data</name></name></expr></argument>, <argument><expr><name>buf</name></expr></argument>, <argument><expr><name>count</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>len</name> <operator>&gt;</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>pkt</name></expr></argument>)</argument_list></sizeof> <operator>||</operator> <operator>(</operator><name>n</name> <operator>=</operator> <call><name><name>d</name><operator>-&gt;</operator><name>io</name><operator>.</operator><name>write</name></name><argument_list>(<argument><expr><name><name>d</name><operator>-&gt;</operator><name>io_handle</name></name></expr></argument>, <argument><expr><name>pkt</name></expr></argument>,
+<argument><expr><name>len</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator> <operator>(</operator><name>size_t</name><operator>)</operator><name>n</name> <operator>!=</operator> <name>len</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>count</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>tx</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>d</name></decl></parameter>, <parameter><decl><type><name>uint8_t</name></type> <name>cmd</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>count</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>size_t</name></type> <name>n</name></decl>, <decl><type ref="prev"/><name>sent</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>sent</name> <operator>=</operator> <call><name>tx_preamble</name><argument_list>(<argument><expr><name>d</name></expr></argument>, <argument><expr><name>cmd</name></expr></argument>, <argument><expr><name>buf</name></expr></argument>, <argument><expr><name>count</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: tx_preamble"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<for>for <control>(<init><decl><type><name>uint8_t</name></type> <name>seq</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>sent</name> <operator>&lt;</operator> <name>count</name></expr>;</condition> <incr><expr><name>sent</name> <operator>+=</operator> <name>n</name></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>seq</name> <operator>&amp;</operator> <literal type="number">0x80</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: seq &amp; 0x80"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>n</name> <operator>=</operator> <call><name>tx_frame</name><argument_list>(<argument><expr><name>d</name></expr></argument>, <argument><expr><name>seq</name><operator>++</operator></expr></argument>, <argument><expr><name>buf</name> <operator>+</operator> <name>sent</name></expr></argument>, <argument><expr><name>count</name> <operator>-</operator> <name>sent</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: tx_frame"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>fido_tx</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>d</name></decl></parameter>, <parameter><decl><type><name>uint8_t</name></type> <name>cmd</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>count</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: dev=%p, cmd=0x%02x"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name>d</name></expr></argument>, <argument><expr><name>cmd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fido_log_xxd</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><name>count</name></expr></argument>, <argument><expr><literal type="string">"%s"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>d</name><operator>-&gt;</operator><name>transport</name><operator>.</operator><name>tx</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><call><name><name>d</name><operator>-&gt;</operator><name>transport</name><operator>.</operator><name>tx</name></name><argument_list>(<argument><expr><name>d</name></expr></argument>, <argument><expr><name>cmd</name></expr></argument>, <argument><expr><name>buf</name></expr></argument>, <argument><expr><name>count</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>d</name><operator>-&gt;</operator><name>io_handle</name></name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <name><name>d</name><operator>-&gt;</operator><name>io</name><operator>.</operator><name>write</name></name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <name>count</name> <operator>&gt;</operator> <name>UINT16_MAX</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: invalid argument"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><ternary><condition><expr><name>count</name> <operator>==</operator> <literal type="number">0</literal></expr> ?</condition><then> <expr><call><name>tx_empty</name><argument_list>(<argument><expr><name>d</name></expr></argument>, <argument><expr><name>cmd</name></expr></argument>)</argument_list></call></expr> </then><else>: <expr><call><name>tx</name><argument_list>(<argument><expr><name>d</name></expr></argument>, <argument><expr><name>cmd</name></expr></argument>, <argument><expr><name>buf</name></expr></argument>, <argument><expr><name>count</name></expr></argument>)</argument_list></call></expr></else></ternary><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>rx_frame</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>d</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>frame</name></name> <modifier>*</modifier></type><name>fp</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ms</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>n</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><name>fp</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>fp</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>d</name><operator>-&gt;</operator><name>rx_len</name></name> <operator>&gt;</operator> <sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>fp</name></expr></argument>)</argument_list></sizeof> <operator>||</operator> <operator>(</operator><name>n</name> <operator>=</operator> <call><name><name>d</name><operator>-&gt;</operator><name>io</name><operator>.</operator><name>read</name></name><argument_list>(<argument><expr><name><name>d</name><operator>-&gt;</operator><name>io_handle</name></name></expr></argument>,
+<argument><expr><operator>(</operator><name>unsigned</name> <name>char</name> <operator>*</operator><operator>)</operator><name>fp</name></expr></argument>, <argument><expr><name><name>d</name><operator>-&gt;</operator><name>rx_len</name></name></expr></argument>, <argument><expr><name>ms</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator> <operator>(</operator><name>size_t</name><operator>)</operator><name>n</name> <operator>!=</operator> <name><name>d</name><operator>-&gt;</operator><name>rx_len</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>rx_preamble</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>d</name></decl></parameter>, <parameter><decl><type><name>uint8_t</name></type> <name>cmd</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>frame</name></name> <modifier>*</modifier></type><name>fp</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ms</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<do>do <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>rx_frame</name><argument_list>(<argument><expr><name>d</name></expr></argument>, <argument><expr><name>fp</name></expr></argument>, <argument><expr><name>ms</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>FIDO_FUZZ</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr_stmt><expr><name><name>fp</name><operator>-&gt;</operator><name>cid</name></name> <operator>=</operator> <name><name>d</name><operator>-&gt;</operator><name>cid</name></name></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block> while <condition>(<expr><name><name>fp</name><operator>-&gt;</operator><name>cid</name></name> <operator>!=</operator> <name><name>d</name><operator>-&gt;</operator><name>cid</name></name> <operator>||</operator> <operator>(</operator><name><name>fp</name><operator>-&gt;</operator><name>cid</name></name> <operator>==</operator> <name><name>d</name><operator>-&gt;</operator><name>cid</name></name> <operator>&amp;&amp;</operator>
+<name><name>fp</name><operator>-&gt;</operator><name>body</name><operator>.</operator><name>init</name><operator>.</operator><name>cmd</name></name> <operator>==</operator> <operator>(</operator><name>CTAP_FRAME_INIT</name> <operator>|</operator> <name>CTAP_KEEPALIVE</name><operator>)</operator><operator>)</operator></expr>)</condition>;</do>
+
+<if_stmt><if>if <condition>(<expr><name><name>d</name><operator>-&gt;</operator><name>rx_len</name></name> <operator>&gt;</operator> <sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>fp</name></expr></argument>)</argument_list></sizeof></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>fido_log_xxd</name><argument_list>(<argument><expr><name>fp</name></expr></argument>, <argument><expr><name><name>d</name><operator>-&gt;</operator><name>rx_len</name></name></expr></argument>, <argument><expr><literal type="string">"%s"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>FIDO_FUZZ</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr_stmt><expr><name><name>fp</name><operator>-&gt;</operator><name>body</name><operator>.</operator><name>init</name><operator>.</operator><name>cmd</name></name> <operator>=</operator> <operator>(</operator><name>CTAP_FRAME_INIT</name> <operator>|</operator> <name>cmd</name><operator>)</operator></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<if_stmt><if>if <condition>(<expr><name><name>fp</name><operator>-&gt;</operator><name>cid</name></name> <operator>!=</operator> <name><name>d</name><operator>-&gt;</operator><name>cid</name></name> <operator>||</operator> <name><name>fp</name><operator>-&gt;</operator><name>body</name><operator>.</operator><name>init</name><operator>.</operator><name>cmd</name></name> <operator>!=</operator> <operator>(</operator><name>CTAP_FRAME_INIT</name> <operator>|</operator> <name>cmd</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: cid (0x%x, 0x%x), cmd (0x%02x, 0x%02x)"</literal></expr></argument>,
+<argument><expr><name>__func__</name></expr></argument>, <argument><expr><name><name>fp</name><operator>-&gt;</operator><name>cid</name></name></expr></argument>, <argument><expr><name><name>d</name><operator>-&gt;</operator><name>cid</name></name></expr></argument>, <argument><expr><name><name>fp</name><operator>-&gt;</operator><name>body</name><operator>.</operator><name>init</name><operator>.</operator><name>cmd</name></name></expr></argument>, <argument><expr><name>cmd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>rx</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>d</name></decl></parameter>, <parameter><decl><type><name>uint8_t</name></type> <name>cmd</name></decl></parameter>, <parameter><decl><type><name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>count</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ms</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>frame</name></name></type> <name>f</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>r</name></decl>, <decl><type ref="prev"/><name>payload_len</name></decl>, <decl><type ref="prev"/><name>init_data_len</name></decl>, <decl><type ref="prev"/><name>cont_data_len</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>d</name><operator>-&gt;</operator><name>rx_len</name></name> <operator>&lt;=</operator> <name>CTAP_INIT_HEADER_LEN</name> <operator>||</operator>
+<name><name>d</name><operator>-&gt;</operator><name>rx_len</name></name> <operator>&lt;=</operator> <name>CTAP_CONT_HEADER_LEN</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>init_data_len</name> <operator>=</operator> <name><name>d</name><operator>-&gt;</operator><name>rx_len</name></name> <operator>-</operator> <name>CTAP_INIT_HEADER_LEN</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>cont_data_len</name> <operator>=</operator> <name><name>d</name><operator>-&gt;</operator><name>rx_len</name></name> <operator>-</operator> <name>CTAP_CONT_HEADER_LEN</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>init_data_len</name> <operator>&gt;</operator> <sizeof>sizeof<argument_list>(<argument><expr><name><name>f</name><operator>.</operator><name>body</name><operator>.</operator><name>init</name><operator>.</operator><name>data</name></name></expr></argument>)</argument_list></sizeof> <operator>||</operator>
+<name>cont_data_len</name> <operator>&gt;</operator> <sizeof>sizeof<argument_list>(<argument><expr><name><name>f</name><operator>.</operator><name>body</name><operator>.</operator><name>cont</name><operator>.</operator><name>data</name></name></expr></argument>)</argument_list></sizeof></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>rx_preamble</name><argument_list>(<argument><expr><name>d</name></expr></argument>, <argument><expr><name>cmd</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>f</name></expr></argument>, <argument><expr><name>ms</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: rx_preamble"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>payload_len</name> <operator>=</operator> <operator>(</operator><name>size_t</name><operator>)</operator><operator>(</operator><operator>(</operator><name><name>f</name><operator>.</operator><name>body</name><operator>.</operator><name>init</name><operator>.</operator><name>bcnth</name></name> <operator>&lt;&lt;</operator> <literal type="number">8</literal><operator>)</operator> <operator>|</operator> <name><name>f</name><operator>.</operator><name>body</name><operator>.</operator><name>init</name><operator>.</operator><name>bcntl</name></name><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: payload_len=%zu"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>, <argument><expr><name>payload_len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>count</name> <operator>&lt;</operator> <name>payload_len</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: count &lt; payload_len"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>payload_len</name> <operator>&lt;</operator> <name>init_data_len</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><name><name>f</name><operator>.</operator><name>body</name><operator>.</operator><name>init</name><operator>.</operator><name>data</name></name></expr></argument>, <argument><expr><name>payload_len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>(</operator><name>int</name><operator>)</operator><name>payload_len</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><name><name>f</name><operator>.</operator><name>body</name><operator>.</operator><name>init</name><operator>.</operator><name>data</name></name></expr></argument>, <argument><expr><name>init_data_len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>init_data_len</name></expr>;</expr_stmt>
+
+<for>for <control>(<init><decl><type><name>int</name></type> <name>seq</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>r</name> <operator>&lt;</operator> <name>payload_len</name></expr>;</condition> <incr><expr><name>seq</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>rx_frame</name><argument_list>(<argument><expr><name>d</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>f</name></expr></argument>, <argument><expr><name>ms</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: rx_frame"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>fido_log_xxd</name><argument_list>(<argument><expr><operator>&amp;</operator><name>f</name></expr></argument>, <argument><expr><name><name>d</name><operator>-&gt;</operator><name>rx_len</name></name></expr></argument>, <argument><expr><literal type="string">"%s"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>FIDO_FUZZ</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr_stmt><expr><name><name>f</name><operator>.</operator><name>cid</name></name> <operator>=</operator> <name><name>d</name><operator>-&gt;</operator><name>cid</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>f</name><operator>.</operator><name>body</name><operator>.</operator><name>cont</name><operator>.</operator><name>seq</name></name> <operator>=</operator> <operator>(</operator><name>uint8_t</name><operator>)</operator><name>seq</name></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<if_stmt><if>if <condition>(<expr><name><name>f</name><operator>.</operator><name>cid</name></name> <operator>!=</operator> <name><name>d</name><operator>-&gt;</operator><name>cid</name></name> <operator>||</operator> <name><name>f</name><operator>.</operator><name>body</name><operator>.</operator><name>cont</name><operator>.</operator><name>seq</name></name> <operator>!=</operator> <name>seq</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: cid (0x%x, 0x%x), seq (%d, %d)"</literal></expr></argument>,
+<argument><expr><name>__func__</name></expr></argument>, <argument><expr><name><name>f</name><operator>.</operator><name>cid</name></name></expr></argument>, <argument><expr><name><name>d</name><operator>-&gt;</operator><name>cid</name></name></expr></argument>, <argument><expr><name><name>f</name><operator>.</operator><name>body</name><operator>.</operator><name>cont</name><operator>.</operator><name>seq</name></name></expr></argument>, <argument><expr><name>seq</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>payload_len</name> <operator>-</operator> <name>r</name> <operator>&gt;</operator> <name>cont_data_len</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>buf</name> <operator>+</operator> <name>r</name></expr></argument>, <argument><expr><name><name>f</name><operator>.</operator><name>body</name><operator>.</operator><name>cont</name><operator>.</operator><name>data</name></name></expr></argument>, <argument><expr><name>cont_data_len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>+=</operator> <name>cont_data_len</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>buf</name> <operator>+</operator> <name>r</name></expr></argument>, <argument><expr><name><name>f</name><operator>.</operator><name>body</name><operator>.</operator><name>cont</name><operator>.</operator><name>data</name></name></expr></argument>, <argument><expr><name>payload_len</name> <operator>-</operator> <name>r</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>+=</operator> <name>payload_len</name> <operator>-</operator> <name>r</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></for>
+
+<return>return <expr><operator>(</operator><operator>(</operator><name>int</name><operator>)</operator><name>r</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>fido_rx</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>d</name></decl></parameter>, <parameter><decl><type><name>uint8_t</name></type> <name>cmd</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>count</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ms</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>n</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: dev=%p, cmd=0x%02x, ms=%d"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name>d</name></expr></argument>,
+<argument><expr><name>cmd</name></expr></argument>, <argument><expr><name>ms</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>d</name><operator>-&gt;</operator><name>transport</name><operator>.</operator><name>rx</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><call><name><name>d</name><operator>-&gt;</operator><name>transport</name><operator>.</operator><name>rx</name></name><argument_list>(<argument><expr><name>d</name></expr></argument>, <argument><expr><name>cmd</name></expr></argument>, <argument><expr><name>buf</name></expr></argument>, <argument><expr><name>count</name></expr></argument>, <argument><expr><name>ms</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>d</name><operator>-&gt;</operator><name>io_handle</name></name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <name><name>d</name><operator>-&gt;</operator><name>io</name><operator>.</operator><name>read</name></name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <name>count</name> <operator>&gt;</operator> <name>UINT16_MAX</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: invalid argument"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>n</name> <operator>=</operator> <call><name>rx</name><argument_list>(<argument><expr><name>d</name></expr></argument>, <argument><expr><name>cmd</name></expr></argument>, <argument><expr><name>buf</name></expr></argument>, <argument><expr><name>count</name></expr></argument>, <argument><expr><name>ms</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&gt;=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>fido_log_xxd</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><operator>(</operator><name>size_t</name><operator>)</operator><name>n</name></expr></argument>, <argument><expr><literal type="string">"%s"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>n</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>fido_rx_cbor_status</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>d</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ms</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>reply</name><index>[<expr><name>FIDO_MAXMSG</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>reply_len</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>reply_len</name> <operator>=</operator> <call><name>fido_rx</name><argument_list>(<argument><expr><name>d</name></expr></argument>, <argument><expr><name>CTAP_CMD_CBOR</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>reply</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>reply</name></expr></argument>)</argument_list></sizeof></expr></argument>,
+<argument><expr><name>ms</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator> <operator>(</operator><name>size_t</name><operator>)</operator><name>reply_len</name> <operator>&lt;</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_rx"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FIDO_ERR_RX</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name><name>reply</name><index>[<expr><literal type="number">0</literal></expr>]</index></name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+</unit>

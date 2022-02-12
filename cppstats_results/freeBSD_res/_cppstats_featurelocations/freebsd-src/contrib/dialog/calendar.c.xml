@@ -1,0 +1,1018 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/dialog/calendar.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;dlg_internals.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;dlg_keys.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;time.h&gt;</cpp:file></cpp:include>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_STDINT_H</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdint.h&gt;</cpp:file></cpp:include>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>intptr_t</name></cpp:macro> <cpp:value>long</cpp:value></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ONE_DAY</name></cpp:macro> <cpp:value>(60 * 60 * 24)</cpp:value></cpp:define>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MON_WIDE</name></cpp:macro> <cpp:value>4</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>DAY_HIGH</name></cpp:macro> <cpp:value>6</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>DAY_WIDE</name></cpp:macro> <cpp:value>(8 * MON_WIDE)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>HDR_HIGH</name></cpp:macro> <cpp:value>1</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>BTN_HIGH</name></cpp:macro> <cpp:value>1</cpp:value></cpp:define>
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MIN_HIGH</name></cpp:macro> <cpp:value>(DAY_HIGH + 2 + HDR_HIGH + BTN_HIGH + (MAX_DAYS * MARGIN))</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MIN_WIDE</name></cpp:macro> <cpp:value>(DAY_WIDE + (4 * MARGIN))</cpp:value></cpp:define>
+
+<typedef>typedef <type><enum>enum <block>{
+<decl><name>sMONTH</name> <init>= <expr><operator>-</operator><literal type="number">3</literal></expr></init></decl>
+,<decl><name>sYEAR</name> <init>= <expr><operator>-</operator><literal type="number">2</literal></expr></init></decl>
+,<decl><name>sDAY</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>
+}</block></enum></type> <name>STATES</name>;</typedef>
+
+<struct_decl>struct <name>_box</name>;</struct_decl>
+
+<typedef>typedef <function_decl><type><name>int</name></type> (<modifier>*</modifier><name>BOX_DRAW</name>) <parameter_list>(<parameter><decl><type><name><name>struct</name> <name>_box</name></name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>tm</name></name> <modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl></typedef>
+
+<typedef>typedef <type><struct>struct <name>_box</name> <block>{
+<decl_stmt><decl><type><name>WINDOW</name> <modifier>*</modifier></type><name>parent</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>WINDOW</name> <modifier>*</modifier></type><name>window</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>x</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>y</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>width</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>height</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>BOX_DRAW</name></type> <name>box_draw</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>week_start</name></decl>;</decl_stmt>
+}</block></struct></type> <name>BOX</name>;</typedef>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MAX_DAYS</name></cpp:macro> <cpp:value>7</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MAX_MONTHS</name></cpp:macro> <cpp:value>12</cpp:value></cpp:define>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type><name><name>cached_days</name><index>[<expr><name>MAX_DAYS</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type><name><name>cached_months</name><index>[<expr><name>MAX_MONTHS</name></expr>]</index></name></decl>;</decl_stmt>
+
+<function><type><specifier>static</specifier> <specifier>const</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>nameOfDayOfWeek</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>n</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>static</specifier> <name>bool</name></type> <name><name>shown</name><index>[<expr><name>MAX_DAYS</name></expr>]</index></name></decl>;</decl_stmt>
+
+<while>while <condition>(<expr><name>n</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>n</name> <operator>+=</operator> <name>MAX_DAYS</name></expr>;</expr_stmt>
+</block_content>}</block></while>
+<expr_stmt><expr><name>n</name> <operator>%=</operator> <name>MAX_DAYS</name></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ENABLE_NLS</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name><name>cached_days</name><index>[<expr><name>n</name></expr>]</index></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>nl_item</name></type> <name><name>items</name><index>[<expr><name>MAX_DAYS</name></expr>]</index></name> <init>=
+<expr><block>{
+<expr><name>ABDAY_1</name></expr>, <expr><name>ABDAY_2</name></expr>, <expr><name>ABDAY_3</name></expr>, <expr><name>ABDAY_4</name></expr>, <expr><name>ABDAY_5</name></expr>, <expr><name>ABDAY_6</name></expr>, <expr><name>ABDAY_7</name></expr>
+}</block></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>cached_days</name><index>[<expr><name>n</name></expr>]</index></name> <operator>=</operator> <call><name>dlg_strclone</name><argument_list>(<argument><expr><call><name>nl_langinfo</name><argument_list>(<argument><expr><name><name>items</name><index>[<expr><name>n</name></expr>]</index></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><name>shown</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>shown</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<if_stmt><if>if <condition>(<expr><name><name>cached_days</name><index>[<expr><name>n</name></expr>]</index></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name><name>posix_days</name><index>[<expr><name>MAX_DAYS</name></expr>]</index></name> <init>=
+<expr><block>{
+<expr><literal type="string">"Sunday"</literal></expr>,
+<expr><literal type="string">"Monday"</literal></expr>,
+<expr><literal type="string">"Tuesday"</literal></expr>,
+<expr><literal type="string">"Wednesday"</literal></expr>,
+<expr><literal type="string">"Thursday"</literal></expr>,
+<expr><literal type="string">"Friday"</literal></expr>,
+<expr><literal type="string">"Saturday"</literal></expr>
+}</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>limit</name> <init>= <expr><name>MON_WIDE</name> <operator>-</operator> <literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>value</name> <init>= <expr><call><name>dlg_strclone</name><argument_list>(<argument><expr><name><name>posix_days</name><index>[<expr><name>n</name></expr>]</index></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>strlen</name><argument_list>(<argument><expr><name>value</name></expr></argument>)</argument_list></call> <operator>&gt;</operator> <name>limit</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>value</name><index>[<expr><name>limit</name></expr>]</index></name> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>cached_days</name><index>[<expr><name>n</name></expr>]</index></name> <operator>=</operator> <name>value</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>shown</name><index>[<expr><name>n</name></expr>]</index></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>DLG_TRACE</name><argument_list>(<argument><expr><operator>(</operator><literal type="string">"#DAY(%d) = '%s'\n"</literal><operator>,</operator> <name>n</name><operator>,</operator> <name><name>cached_days</name><index>[<expr><name>n</name></expr>]</index></name><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>shown</name><index>[<expr><name>n</name></expr>]</index></name> <operator>=</operator> <name>TRUE</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name><name>cached_days</name><index>[<expr><name>n</name></expr>]</index></name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <specifier>const</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>nameOfMonth</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>n</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>static</specifier> <name>bool</name></type> <name><name>shown</name><index>[<expr><name>MAX_MONTHS</name></expr>]</index></name></decl>;</decl_stmt>
+
+<while>while <condition>(<expr><name>n</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>n</name> <operator>+=</operator> <name>MAX_MONTHS</name></expr>;</expr_stmt>
+</block_content>}</block></while>
+<expr_stmt><expr><name>n</name> <operator>%=</operator> <name>MAX_MONTHS</name></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ENABLE_NLS</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name><name>cached_months</name><index>[<expr><name>n</name></expr>]</index></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>nl_item</name></type> <name><name>items</name><index>[<expr><name>MAX_MONTHS</name></expr>]</index></name> <init>=
+<expr><block>{
+<expr><name>MON_1</name></expr>, <expr><name>MON_2</name></expr>, <expr><name>MON_3</name></expr>, <expr><name>MON_4</name></expr>, <expr><name>MON_5</name></expr>, <expr><name>MON_6</name></expr>,
+<expr><name>MON_7</name></expr>, <expr><name>MON_8</name></expr>, <expr><name>MON_9</name></expr>, <expr><name>MON_10</name></expr>, <expr><name>MON_11</name></expr>, <expr><name>MON_12</name></expr>
+}</block></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>cached_months</name><index>[<expr><name>n</name></expr>]</index></name> <operator>=</operator> <call><name>dlg_strclone</name><argument_list>(<argument><expr><call><name>nl_langinfo</name><argument_list>(<argument><expr><name><name>items</name><index>[<expr><name>n</name></expr>]</index></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><name>shown</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>shown</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<if_stmt><if>if <condition>(<expr><name><name>cached_months</name><index>[<expr><name>n</name></expr>]</index></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name><name>posix_mons</name><index>[<expr><name>MAX_MONTHS</name></expr>]</index></name> <init>=
+<expr><block>{
+<expr><literal type="string">"January"</literal></expr>,
+<expr><literal type="string">"February"</literal></expr>,
+<expr><literal type="string">"March"</literal></expr>,
+<expr><literal type="string">"April"</literal></expr>,
+<expr><literal type="string">"May"</literal></expr>,
+<expr><literal type="string">"June"</literal></expr>,
+<expr><literal type="string">"July"</literal></expr>,
+<expr><literal type="string">"August"</literal></expr>,
+<expr><literal type="string">"September"</literal></expr>,
+<expr><literal type="string">"October"</literal></expr>,
+<expr><literal type="string">"November"</literal></expr>,
+<expr><literal type="string">"December"</literal></expr>
+}</block></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>cached_months</name><index>[<expr><name>n</name></expr>]</index></name> <operator>=</operator> <call><name>dlg_strclone</name><argument_list>(<argument><expr><name><name>posix_mons</name><index>[<expr><name>n</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>shown</name><index>[<expr><name>n</name></expr>]</index></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>DLG_TRACE</name><argument_list>(<argument><expr><operator>(</operator><literal type="string">"#MON(%d) = '%s'\n"</literal><operator>,</operator> <name>n</name><operator>,</operator> <name><name>cached_months</name><index>[<expr><name>n</name></expr>]</index></name><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>shown</name><index>[<expr><name>n</name></expr>]</index></name> <operator>=</operator> <name>TRUE</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name><name>cached_months</name><index>[<expr><name>n</name></expr>]</index></name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>isleap</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>y</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><ternary><condition><expr><operator>(</operator><operator>(</operator><name>y</name> <operator>%</operator> <literal type="number">4</literal> <operator>==</operator> <literal type="number">0</literal><operator>)</operator> <operator>&amp;&amp;</operator>
+<operator>(</operator><operator>(</operator><name>y</name> <operator>%</operator> <literal type="number">100</literal> <operator>!=</operator> <literal type="number">0</literal><operator>)</operator> <operator>||</operator>
+<operator>(</operator><name>y</name> <operator>%</operator> <literal type="number">400</literal> <operator>==</operator> <literal type="number">0</literal><operator>)</operator><operator>)</operator><operator>)</operator></expr> ?</condition><then> <expr><literal type="number">1</literal></expr> </then><else>: <expr><literal type="number">0</literal></expr></else></ternary></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>adjust_year_month</name><parameter_list>(<parameter><decl><type><name>int</name> <modifier>*</modifier></type><name>year</name></decl></parameter>, <parameter><decl><type><name>int</name> <modifier>*</modifier></type><name>month</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<while>while <condition>(<expr><operator>*</operator><name>month</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>month</name> <operator>+=</operator> <name>MAX_MONTHS</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>year</name> <operator>-=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></while>
+<while>while <condition>(<expr><operator>*</operator><name>month</name> <operator>&gt;=</operator> <name>MAX_MONTHS</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>month</name> <operator>-=</operator> <name>MAX_MONTHS</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>year</name> <operator>+=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></while>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>days_per_month</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>year</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>month</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>int</name></type> <name><name>nominal</name><index>[]</index></name> <init>=
+<expr><block>{
+<expr><literal type="number">31</literal></expr>, <expr><literal type="number">28</literal></expr>, <expr><literal type="number">31</literal></expr>, <expr><literal type="number">30</literal></expr>, <expr><literal type="number">31</literal></expr>, <expr><literal type="number">30</literal></expr>,
+<expr><literal type="number">31</literal></expr>, <expr><literal type="number">31</literal></expr>, <expr><literal type="number">30</literal></expr>, <expr><literal type="number">31</literal></expr>, <expr><literal type="number">30</literal></expr>, <expr><literal type="number">31</literal></expr>
+}</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>result</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>adjust_year_month</name><argument_list>(<argument><expr><operator>&amp;</operator><name>year</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>month</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <name><name>nominal</name><index>[<expr><name>month</name></expr>]</index></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>month</name> <operator>==</operator> <literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>result</name> <operator>+=</operator> <call><name>isleap</name><argument_list>(<argument><expr><name>year</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>days_in_month</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>tm</name></name> <modifier>*</modifier></type><name>current</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>offset</name></decl></parameter> )</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>year</name> <init>= <expr><name><name>current</name><operator>-&gt;</operator><name>tm_year</name></name> <operator>+</operator> <literal type="number">1900</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>month</name> <init>= <expr><name><name>current</name><operator>-&gt;</operator><name>tm_mon</name></name> <operator>+</operator> <name>offset</name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>adjust_year_month</name><argument_list>(<argument><expr><operator>&amp;</operator><name>year</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>month</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><call><name>days_per_month</name><argument_list>(<argument><expr><name>year</name></expr></argument>, <argument><expr><name>month</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>days_per_year</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>year</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><ternary><condition><expr><call><name>isleap</name><argument_list>(<argument><expr><name>year</name></expr></argument>)</argument_list></call></expr> ?</condition><then> <expr><literal type="number">366</literal></expr> </then><else>: <expr><literal type="number">365</literal></expr></else></ternary><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>days_in_year</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>tm</name></name> <modifier>*</modifier></type><name>current</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>offset</name></decl></parameter> )</parameter_list>
+<block>{<block_content>
+<return>return <expr><call><name>days_per_year</name><argument_list>(<argument><expr><name><name>current</name><operator>-&gt;</operator><name>tm_year</name></name> <operator>+</operator> <literal type="number">1900</literal> <operator>+</operator> <name>offset</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>day_of_week</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>y</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>m</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>d</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name><name>t</name><index>[]</index></name> <init>=
+<expr><block>{
+<expr><literal type="number">0</literal></expr>, <expr><literal type="number">3</literal></expr>, <expr><literal type="number">2</literal></expr>, <expr><literal type="number">5</literal></expr>, <expr><literal type="number">0</literal></expr>, <expr><literal type="number">3</literal></expr>, <expr><literal type="number">5</literal></expr>, <expr><literal type="number">1</literal></expr>, <expr><literal type="number">4</literal></expr>, <expr><literal type="number">6</literal></expr>, <expr><literal type="number">2</literal></expr>, <expr><literal type="number">4</literal></expr>
+}</block></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>y</name> <operator>-=</operator> <operator>(</operator><name>m</name> <operator>&lt;</operator> <literal type="number">3</literal><operator>)</operator></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">6</literal> <operator>+</operator> <operator>(</operator><name>y</name> <operator>+</operator> <operator>(</operator><name>y</name> <operator>/</operator> <literal type="number">4</literal><operator>)</operator> <operator>-</operator> <operator>(</operator><name>y</name> <operator>/</operator> <literal type="number">100</literal><operator>)</operator> <operator>+</operator> <operator>(</operator><name>y</name> <operator>/</operator> <literal type="number">400</literal><operator>)</operator> <operator>+</operator> <name><name>t</name><index>[<expr><name>m</name> <operator>-</operator> <literal type="number">1</literal></expr>]</index></name> <operator>+</operator> <name>d</name><operator>)</operator><operator>)</operator> <operator>%</operator> <name>MAX_DAYS</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>day_in_year</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>year</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>month</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>day</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>result</name> <init>= <expr><name>day</name></expr></init></decl>;</decl_stmt>
+<while>while <condition>(<expr><operator>--</operator><name>month</name> <operator>&gt;=</operator> <literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>result</name> <operator>+=</operator> <call><name>days_per_month</name><argument_list>(<argument><expr><name>year</name></expr></argument>, <argument><expr><name>month</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></while>
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>iso_week</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>year</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>month</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>day</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>week</name> <init>= <expr><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>dow</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>new_year_dow</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>diy</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>new_years_eve_dow</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>int</name></type> <name>thursday</name> <init>= <expr><literal type="number">3</literal></expr></init></decl>;</decl_stmt>
+
+
+<expr_stmt><expr><name>diy</name> <operator>=</operator> <call><name>day_in_year</name><argument_list>(<argument><expr><name>year</name></expr></argument>, <argument><expr><name>month</name></expr></argument>, <argument><expr><name>day</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>week</name> <operator>+=</operator> <operator>(</operator><name>diy</name> <operator>-</operator> <literal type="number">1</literal><operator>)</operator> <operator>/</operator> <name>MAX_DAYS</name></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><name>dow</name> <operator>=</operator> <call><name>day_of_week</name><argument_list>(<argument><expr><name>year</name></expr></argument>, <argument><expr><name>month</name></expr></argument>, <argument><expr><name>day</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>new_year_dow</name> <operator>=</operator> <call><name>day_of_week</name><argument_list>(<argument><expr><name>year</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>new_year_dow</name> <operator>&gt;</operator> <name>thursday</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>--</operator><name>week</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>dow</name> <operator>-</operator> <name>new_year_dow</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>++</operator><name>week</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>week</name> <operator>&lt;</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>week</name> <operator>=</operator> <call><name>iso_week</name><argument_list>(<argument><expr><operator>--</operator><name>year</name></expr></argument>, <argument><expr><literal type="number">12</literal></expr></argument>, <argument><expr><literal type="number">31</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<expr_stmt><expr><name>new_years_eve_dow</name> <operator>=</operator> <operator>(</operator><name>new_year_dow</name> <operator>+</operator> <literal type="number">364</literal> <operator>+</operator> <call><name>isleap</name><argument_list>(<argument><expr><name>year</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>%</operator> <name>MAX_DAYS</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><literal type="number">365</literal> <operator>+</operator> <call><name>isleap</name><argument_list>(<argument><expr><name>year</name></expr></argument>)</argument_list></call> <operator>-</operator> <name>diy</name> <operator>&lt;</operator> <name>MAX_DAYS</name>
+<operator>&amp;&amp;</operator> <name>new_years_eve_dow</name> <operator>&gt;=</operator> <name>dow</name>
+<operator>&amp;&amp;</operator> <name>new_years_eve_dow</name> <operator>&lt;</operator> <name>thursday</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>week</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name>week</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name> <modifier>*</modifier></type>
+<name>getisoweeks</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>year</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>month</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name><name>result</name><index>[<expr><literal type="number">10</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>windx</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>day</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>dpm</name> <init>= <expr><call><name>days_per_month</name><argument_list>(<argument><expr><name>year</name></expr></argument>, <argument><expr><name>month</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>day</name> <operator>=</operator> <literal type="number">1</literal></expr>;</init> <condition><expr><name>day</name> <operator>&lt;=</operator> <name>dpm</name></expr>;</condition> <incr><expr><name>day</name> <operator>+=</operator> <name>MAX_DAYS</name></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>result</name><index>[<expr><name>windx</name><operator>++</operator></expr>]</index></name> <operator>=</operator> <call><name>iso_week</name><argument_list>(<argument><expr><name>year</name></expr></argument>, <argument><expr><name>month</name></expr></argument>, <argument><expr><name>day</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+
+
+
+
+
+
+<expr_stmt><expr><name><name>result</name><index>[<expr><name>windx</name></expr>]</index></name> <operator>=</operator> <call><name>iso_week</name><argument_list>(<argument><expr><name>year</name></expr></argument>, <argument><expr><name>month</name></expr></argument>, <argument><expr><name>dpm</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>day_cell_number</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>tm</name></name> <modifier>*</modifier></type><name>current</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>cell</name></decl>;</decl_stmt>
+<expr_stmt><expr><name>cell</name> <operator>=</operator> <name><name>current</name><operator>-&gt;</operator><name>tm_mday</name></name> <operator>-</operator> <operator>(</operator><operator>(</operator><literal type="number">6</literal> <operator>+</operator> <name><name>current</name><operator>-&gt;</operator><name>tm_mday</name></name> <operator>-</operator> <name><name>current</name><operator>-&gt;</operator><name>tm_wday</name></name><operator>)</operator> <operator>%</operator> <name>MAX_DAYS</name><operator>)</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>current</name><operator>-&gt;</operator><name>tm_mday</name></name> <operator>-</operator> <literal type="number">1</literal><operator>)</operator> <operator>%</operator> <name>MAX_DAYS</name> <operator>!=</operator> <name><name>current</name><operator>-&gt;</operator><name>tm_wday</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>cell</name> <operator>+=</operator> <literal type="number">6</literal></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>cell</name><operator>--</operator></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<return>return <expr><name>cell</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>next_or_previous</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>key</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>two_d</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>result</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<switch>switch <condition>(<expr><name>key</name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>DLGK_GRID_UP</name></expr>:</case>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <ternary><condition><expr><name>two_d</name></expr> ?</condition><then> <expr><operator>-</operator><name>MAX_DAYS</name></expr> </then><else>: <expr><operator>-</operator><literal type="number">1</literal></expr></else></ternary></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>DLGK_GRID_LEFT</name></expr>:</case>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>DLGK_GRID_DOWN</name></expr>:</case>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <ternary><condition><expr><name>two_d</name></expr> ?</condition><then> <expr><name>MAX_DAYS</name></expr> </then><else>: <expr><literal type="number">1</literal></expr></else></ternary></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>DLGK_GRID_RIGHT</name></expr>:</case>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<break>break;</break>
+<default>default:</default>
+<expr_stmt><expr><call><name>beep</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></switch>
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>draw_day</name><parameter_list>(<parameter><decl><type><name>BOX</name> <modifier>*</modifier></type> <name>data</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>tm</name></name> <modifier>*</modifier></type><name>current</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>cell_wide</name> <init>= <expr><name>MON_WIDE</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>y</name></decl>, <decl><type ref="prev"/><name>x</name></decl>, <decl><type ref="prev"/><name>this_x</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>save_y</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>, <decl><type ref="prev"/><name>save_x</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>day</name> <init>= <expr><name><name>current</name><operator>-&gt;</operator><name>tm_mday</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>mday</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>week</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>windx</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name> <modifier>*</modifier></type><name>weeks</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>last</name> <init>= <expr><call><name>days_in_month</name><argument_list>(<argument><expr><name>current</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>prev</name> <init>= <expr><call><name>days_in_month</name><argument_list>(<argument><expr><name>current</name></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>werase</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>window</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_draw_box2</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>parent</name></name></expr></argument>,
+<argument><expr><name><name>data</name><operator>-&gt;</operator><name>y</name></name> <operator>-</operator> <name>MARGIN</name></expr></argument>, <argument><expr><name><name>data</name><operator>-&gt;</operator><name>x</name></name> <operator>-</operator> <name>MARGIN</name></expr></argument>,
+<argument><expr><name><name>data</name><operator>-&gt;</operator><name>height</name></name> <operator>+</operator> <operator>(</operator><literal type="number">2</literal> <operator>*</operator> <name>MARGIN</name><operator>)</operator></expr></argument>, <argument><expr><name><name>data</name><operator>-&gt;</operator><name>width</name></name> <operator>+</operator> <operator>(</operator><literal type="number">2</literal> <operator>*</operator> <name>MARGIN</name><operator>)</operator></expr></argument>,
+<argument><expr><name>menubox_attr</name></expr></argument>,
+<argument><expr><name>menubox_border_attr</name></expr></argument>,
+<argument><expr><name>menubox_border2_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>dlg_attrset</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>window</name></name></expr></argument>, <argument><expr><name>menubox_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>x</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>x</name> <operator>&lt;</operator> <name>MAX_DAYS</name></expr>;</condition> <incr><expr><name>x</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>mvwprintw</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>window</name></name></expr></argument>,
+<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><operator>(</operator><name>x</name> <operator>+</operator> <literal type="number">1</literal><operator>)</operator> <operator>*</operator> <name>cell_wide</name></expr></argument>, <argument><expr><literal type="string">"%*.*s "</literal></expr></argument>,
+<argument><expr><name>cell_wide</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>,
+<argument><expr><name>cell_wide</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>,
+<argument><expr><call><name>nameOfDayOfWeek</name><argument_list>(<argument><expr><name>x</name> <operator>+</operator> <name><name>data</name><operator>-&gt;</operator><name>week_start</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><name>mday</name> <operator>=</operator> <operator>(</operator><operator>(</operator><literal type="number">6</literal> <operator>+</operator> <name><name>current</name><operator>-&gt;</operator><name>tm_mday</name></name> <operator>-</operator>
+<name><name>current</name><operator>-&gt;</operator><name>tm_wday</name></name> <operator>+</operator>
+<name><name>data</name><operator>-&gt;</operator><name>week_start</name></name><operator>)</operator> <operator>%</operator> <name>MAX_DAYS</name><operator>)</operator> <operator>-</operator> <name>MAX_DAYS</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>mday</name> <operator>&lt;=</operator> <operator>-</operator><name>MAX_DAYS</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>mday</name> <operator>+=</operator> <name>MAX_DAYS</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>dialog_vars</name><operator>.</operator><name>iso_week</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>weeks</name> <operator>=</operator> <call><name>getisoweeks</name><argument_list>(<argument><expr><name><name>current</name><operator>-&gt;</operator><name>tm_year</name></name> <operator>+</operator> <literal type="number">1900</literal></expr></argument>, <argument><expr><name><name>current</name><operator>-&gt;</operator><name>tm_mon</name></name> <operator>+</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+<expr_stmt><expr><name>week</name> <operator>=</operator> <operator>(</operator><name><name>current</name><operator>-&gt;</operator><name>tm_yday</name></name> <operator>+</operator> <literal type="number">6</literal> <operator>+</operator> <name>mday</name> <operator>-</operator> <name><name>current</name><operator>-&gt;</operator><name>tm_mday</name></name><operator>)</operator> <operator>/</operator> <name>MAX_DAYS</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<for>for <control>(<init><expr><name>y</name> <operator>=</operator> <literal type="number">1</literal></expr>;</init> <condition><expr><name>mday</name> <operator>&lt;</operator> <name>last</name></expr>;</condition> <incr><expr><name>y</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>dlg_attrset</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>window</name></name></expr></argument>, <argument><expr><name>menubox_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>mvwprintw</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>window</name></name></expr></argument>,
+<argument><expr><name>y</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>,
+<argument><expr><literal type="string">"%*d "</literal></expr></argument>,
+<argument><expr><name>cell_wide</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>,
+<argument><expr><ternary><condition><expr><name>weeks</name></expr> ?</condition><then> <expr><name><name>weeks</name><index>[<expr><name>windx</name><operator>++</operator></expr>]</index></name></expr> </then><else>: <expr><operator>++</operator><name>week</name></expr></else></ternary></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>x</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>x</name> <operator>&lt;</operator> <name>MAX_DAYS</name></expr>;</condition> <incr><expr><name>x</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>this_x</name> <operator>=</operator> <literal type="number">1</literal> <operator>+</operator> <operator>(</operator><name>x</name> <operator>+</operator> <literal type="number">1</literal><operator>)</operator> <operator>*</operator> <name>cell_wide</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>++</operator><name>mday</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>wmove</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>window</name></name></expr></argument>, <argument><expr><name>y</name></expr></argument>, <argument><expr><name>this_x</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>ERR</name></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>dlg_attrset</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>window</name></name></expr></argument>, <argument><expr><name>item_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>mday</name> <operator>==</operator> <name>day</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>dlg_attrset</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>window</name></name></expr></argument>, <argument><expr><name>item_selected_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>save_y</name> <operator>=</operator> <name>y</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>save_x</name> <operator>=</operator> <name>this_x</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>mday</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>mday</name> <operator>&lt;=</operator> <name>last</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>wprintw</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>window</name></name></expr></argument>, <argument><expr><literal type="string">"%*d"</literal></expr></argument>, <argument><expr><name>cell_wide</name> <operator>-</operator> <literal type="number">2</literal></expr></argument>, <argument><expr><name>mday</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>mday</name> <operator>==</operator> <name>day</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>wprintw</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>window</name></name></expr></argument>, <argument><expr><literal type="string">"%*d"</literal></expr></argument>, <argument><expr><name>cell_wide</name> <operator>-</operator> <literal type="number">2</literal></expr></argument>, <argument><expr><name>mday</name> <operator>-</operator> <name>last</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>mday</name> <operator>==</operator> <name>day</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>wprintw</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>window</name></name></expr></argument>, <argument><expr><literal type="string">"%*d"</literal></expr></argument>, <argument><expr><name>cell_wide</name> <operator>-</operator> <literal type="number">2</literal></expr></argument>, <argument><expr><name>mday</name> <operator>+</operator> <name>prev</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><call><name>wmove</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>window</name></name></expr></argument>, <argument><expr><name>save_y</name></expr></argument>, <argument><expr><name>save_x</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><call><name>dlg_draw_arrows</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>parent</name></name></expr></argument>, <argument><expr><name>TRUE</name></expr></argument>, <argument><expr><name>TRUE</name></expr></argument>,
+<argument><expr><name><name>data</name><operator>-&gt;</operator><name>x</name></name> <operator>+</operator> <name>ARROWS_COL</name></expr></argument>,
+<argument><expr><name><name>data</name><operator>-&gt;</operator><name>y</name></name> <operator>-</operator> <literal type="number">1</literal></expr></argument>,
+<argument><expr><name><name>data</name><operator>-&gt;</operator><name>y</name></name> <operator>+</operator> <name><name>data</name><operator>-&gt;</operator><name>height</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>draw_month</name><parameter_list>(<parameter><decl><type><name>BOX</name> <modifier>*</modifier></type> <name>data</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>tm</name></name> <modifier>*</modifier></type><name>current</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>month</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>month</name> <operator>=</operator> <name><name>current</name><operator>-&gt;</operator><name>tm_mon</name></name> <operator>+</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>dlg_attrset</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>parent</name></name></expr></argument>, <argument><expr><name>dialog_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>mvwprintw</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>parent</name></name></expr></argument>, <argument><expr><name><name>data</name><operator>-&gt;</operator><name>y</name></name> <operator>-</operator> <literal type="number">2</literal></expr></argument>, <argument><expr><name><name>data</name><operator>-&gt;</operator><name>x</name></name> <operator>-</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><call><name>_</name><argument_list>(<argument><expr><literal type="string">"Month"</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_draw_box2</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>parent</name></name></expr></argument>,
+<argument><expr><name><name>data</name><operator>-&gt;</operator><name>y</name></name> <operator>-</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><name><name>data</name><operator>-&gt;</operator><name>x</name></name> <operator>-</operator> <literal type="number">1</literal></expr></argument>,
+<argument><expr><name><name>data</name><operator>-&gt;</operator><name>height</name></name> <operator>+</operator> <literal type="number">2</literal></expr></argument>, <argument><expr><name><name>data</name><operator>-&gt;</operator><name>width</name></name> <operator>+</operator> <literal type="number">2</literal></expr></argument>,
+<argument><expr><name>menubox_attr</name></expr></argument>,
+<argument><expr><name>menubox_border_attr</name></expr></argument>,
+<argument><expr><name>menubox_border2_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_attrset</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>window</name></name></expr></argument>, <argument><expr><name>item_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>mvwprintw</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>window</name></name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="string">"%s"</literal></expr></argument>, <argument><expr><call><name>nameOfMonth</name><argument_list>(<argument><expr><name>month</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>wmove</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>window</name></name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>draw_year</name><parameter_list>(<parameter><decl><type><name>BOX</name> <modifier>*</modifier></type> <name>data</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>tm</name></name> <modifier>*</modifier></type><name>current</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>year</name> <init>= <expr><name><name>current</name><operator>-&gt;</operator><name>tm_year</name></name> <operator>+</operator> <literal type="number">1900</literal></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>dlg_attrset</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>parent</name></name></expr></argument>, <argument><expr><name>dialog_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>mvwprintw</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>parent</name></name></expr></argument>, <argument><expr><name><name>data</name><operator>-&gt;</operator><name>y</name></name> <operator>-</operator> <literal type="number">2</literal></expr></argument>, <argument><expr><name><name>data</name><operator>-&gt;</operator><name>x</name></name> <operator>-</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><call><name>_</name><argument_list>(<argument><expr><literal type="string">"Year"</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_draw_box2</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>parent</name></name></expr></argument>,
+<argument><expr><name><name>data</name><operator>-&gt;</operator><name>y</name></name> <operator>-</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><name><name>data</name><operator>-&gt;</operator><name>x</name></name> <operator>-</operator> <literal type="number">1</literal></expr></argument>,
+<argument><expr><name><name>data</name><operator>-&gt;</operator><name>height</name></name> <operator>+</operator> <literal type="number">2</literal></expr></argument>, <argument><expr><name><name>data</name><operator>-&gt;</operator><name>width</name></name> <operator>+</operator> <literal type="number">2</literal></expr></argument>,
+<argument><expr><name>menubox_attr</name></expr></argument>,
+<argument><expr><name>menubox_border_attr</name></expr></argument>,
+<argument><expr><name>menubox_border2_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_attrset</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>window</name></name></expr></argument>, <argument><expr><name>item_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>mvwprintw</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>window</name></name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="string">"%4d"</literal></expr></argument>, <argument><expr><name>year</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>wmove</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>window</name></name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>init_object</name><parameter_list>(<parameter><decl><type><name>BOX</name> <modifier>*</modifier></type> <name>data</name></decl></parameter>,
+<parameter><decl><type><name>WINDOW</name> <modifier>*</modifier></type><name>parent</name></decl></parameter>,
+<parameter><decl><type><name>int</name></type> <name>x</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>y</name></decl></parameter>,
+<parameter><decl><type><name>int</name></type> <name>width</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>height</name></decl></parameter>,
+<parameter><decl><type><name>BOX_DRAW</name></type> <name>box_draw</name></decl></parameter>,
+<parameter><decl><type><name>int</name></type> <name>key_offset</name></decl></parameter>,
+<parameter><decl><type><name>int</name></type> <name>code</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><name><name>data</name><operator>-&gt;</operator><name>parent</name></name> <operator>=</operator> <name>parent</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>data</name><operator>-&gt;</operator><name>x</name></name> <operator>=</operator> <name>x</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>data</name><operator>-&gt;</operator><name>y</name></name> <operator>=</operator> <name>y</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>data</name><operator>-&gt;</operator><name>width</name></name> <operator>=</operator> <name>width</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>data</name><operator>-&gt;</operator><name>height</name></name> <operator>=</operator> <name>height</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>data</name><operator>-&gt;</operator><name>box_draw</name></name> <operator>=</operator> <name>box_draw</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>data</name><operator>-&gt;</operator><name>week_start</name></name> <operator>=</operator> <name>key_offset</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>data</name><operator>-&gt;</operator><name>window</name></name> <operator>=</operator> <call><name>dlg_der_window</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>parent</name></name></expr></argument>,
+<argument><expr><name><name>data</name><operator>-&gt;</operator><name>height</name></name></expr></argument>, <argument><expr><name><name>data</name><operator>-&gt;</operator><name>width</name></name></expr></argument>,
+<argument><expr><name><name>data</name><operator>-&gt;</operator><name>y</name></name></expr></argument>, <argument><expr><name><name>data</name><operator>-&gt;</operator><name>x</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>data</name><operator>-&gt;</operator><name>window</name></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>dlg_mouse_setbase</name><argument_list>(<argument><expr><call><name>getbegx</name><argument_list>(<argument><expr><name>parent</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><call><name>getbegy</name><argument_list>(<argument><expr><name>parent</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>code</name> <operator>==</operator> <literal type="char">'D'</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>dlg_mouse_mkbigregion</name><argument_list>(<argument><expr><name>y</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><name>x</name> <operator>+</operator> <name>MON_WIDE</name></expr></argument>, <argument><expr><name>height</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><name>width</name> <operator>-</operator> <name>MON_WIDE</name></expr></argument>,
+<argument><expr><name>KEY_MAX</name> <operator>+</operator> <name>key_offset</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>MON_WIDE</name></expr></argument>, <argument><expr><literal type="number">3</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>dlg_mouse_mkregion</name><argument_list>(<argument><expr><name>y</name></expr></argument>, <argument><expr><name>x</name></expr></argument>, <argument><expr><name>height</name></expr></argument>, <argument><expr><name>width</name></expr></argument>, <argument><expr><name>code</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ENABLE_NLS</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <call><name>defined</name><argument_list>(<argument><expr><name>HAVE_NL_LANGINFO_1STDAY</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_DLG_GAUGE</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>read_locale_setting</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>name</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>which</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>FILE</name> <modifier>*</modifier></type><name>fp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name><name>command</name><index>[<expr><literal type="number">80</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>result</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>sprintf</name><argument_list>(<argument><expr><name>command</name></expr></argument>, <argument><expr><literal type="string">"locale %s"</literal></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>fp</name> <operator>=</operator> <call><name>dlg_popen</name><argument_list>(<argument><expr><name>command</name></expr></argument>, <argument><expr><literal type="string">"r"</literal></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>count</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name><name>buf</name><index>[<expr><literal type="number">80</literal></expr>]</index></name></decl>;</decl_stmt>
+
+<while>while <condition>(<expr><call><name>fgets</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><operator>(</operator><name>int</name><operator>)</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></sizeof> <operator>-</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><name>fp</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>++</operator><name>count</name> <operator>&gt;</operator> <name>which</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>next</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>long</name></type> <name>check</name> <init>= <expr><call><name>strtol</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>next</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>next</name> <operator>!=</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator>
+<name>next</name> <operator>!=</operator> <name>buf</name> <operator>&amp;&amp;</operator>
+<operator>*</operator><name>next</name> <operator>==</operator> <literal type="char">'\n'</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <operator>(</operator><name>int</name><operator>)</operator> <name>check</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></while>
+<expr_stmt><expr><call><name>pclose</name><argument_list>(<argument><expr><name>fp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>WeekStart</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>result</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>option</name> <init>= <expr><name><name>dialog_vars</name><operator>.</operator><name>week_start</name></name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>option</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>option</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>next</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>long</name></type> <name>check</name> <init>= <expr><call><name>strtol</name><argument_list>(<argument><expr><name>option</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>next</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>next</name> <operator>==</operator> <literal type="number">0</literal> <operator>||</operator>
+<name>next</name> <operator>==</operator> <name>option</name> <operator>||</operator>
+<operator>*</operator><name>next</name> <operator>!=</operator> <literal type="char">'\0'</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>strcmp</name><argument_list>(<argument><expr><name>option</name></expr></argument>, <argument><expr><literal type="string">"locale"</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ENABLE_NLS</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <call><name>defined</name><argument_list>(<argument><expr><name>HAVE_NL_LANGINFO_1STDAY</name></expr></argument>)</argument_list></call></expr></cpp:if>
+
+
+
+<decl_stmt><decl><type><name>int</name></type> <name>first_day</name> <init>= <expr><call><name>nl_langinfo</name><argument_list>(<argument><expr><name>_NL_TIME_FIRST_WEEKDAY</name></expr></argument>)</argument_list></call><index>[<expr><literal type="number">0</literal></expr>]</index></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>basis_ptr</name> <init>= <expr><call><name>nl_langinfo</name><argument_list>(<argument><expr><name>_NL_TIME_WEEK_1STDAY</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>basis_day</name> <init>= <expr><operator>(</operator><name>int</name><operator>)</operator> <operator>(</operator><name>intptr_t</name><operator>)</operator> <name>basis_ptr</name></expr></init></decl>;</decl_stmt>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_DLG_GAUGE</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+
+
+
+
+<decl_stmt><decl><type><name>int</name></type> <name>first_day</name> <init>= <expr><call><name>read_locale_setting</name><argument_list>(<argument><expr><literal type="string">"first_weekday"</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>basis_day</name> <init>= <expr><call><name>read_locale_setting</name><argument_list>(<argument><expr><literal type="string">"week-1stday"</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>(</operator><call><name>defined</name><argument_list>(<argument><expr><name>ENABLE_NLS</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <call><name>defined</name><argument_list>(<argument><expr><name>HAVE_NL_LANGINFO_1STDAY</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>||</operator> <call><name>defined</name><argument_list>(<argument><expr><name>HAVE_DLG_GAUGE</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<decl_stmt><decl><type><name>int</name></type> <name>week_1stday</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>basis_day</name> <operator>==</operator> <literal type="number">19971130</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>week_1stday</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name>basis_day</name> <operator>==</operator> <literal type="number">19971201</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>week_1stday</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>week_1stday</name> <operator>&gt;=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <name>first_day</name> <operator>-</operator> <name>week_1stday</name> <operator>-</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>day</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>eql</name> <init>= <expr><call><name>strlen</name><argument_list>(<argument><expr><name>option</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<for>for <control>(<init><expr><name>day</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>day</name> <operator>&lt;</operator> <name>MAX_DAYS</name></expr>;</condition> <incr><expr><operator>++</operator><name>day</name></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>strncmp</name><argument_list>(<argument><expr><call><name>nameOfDayOfWeek</name><argument_list>(<argument><expr><name>day</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>option</name></expr></argument>, <argument><expr><name>eql</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <name>day</name></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>check</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <operator>(</operator><name>int</name><operator>)</operator> <operator>(</operator><name>check</name> <operator>%</operator> <name>MAX_DAYS</name><operator>)</operator></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>CleanupResult</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>code</name></decl></parameter>, <parameter><decl><type><name>WINDOW</name> <modifier>*</modifier></type><name>dialog</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>prompt</name></decl></parameter>, <parameter><decl><type><name>DIALOG_VARS</name> <modifier>*</modifier></type> <name>save_vars</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>n</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>dialog</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>dlg_del_window</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>dlg_mouse_free_regions</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>prompt</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>prompt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>dlg_restore_vars</name><argument_list>(<argument><expr><name>save_vars</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<for>for <control>(<init><expr><name>n</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>n</name> <operator>&lt;</operator> <name>MAX_DAYS</name></expr>;</condition> <incr><expr><operator>++</operator><name>n</name></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>cached_days</name><index>[<expr><name>n</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>cached_days</name><index>[<expr><name>n</name></expr>]</index></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></for>
+<for>for <control>(<init><expr><name>n</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>n</name> <operator>&lt;</operator> <name>MAX_MONTHS</name></expr>;</condition> <incr><expr><operator>++</operator><name>n</name></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>cached_months</name><index>[<expr><name>n</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>cached_months</name><index>[<expr><name>n</name></expr>]</index></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<return>return <expr><name>code</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>trace_date</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>tm</name></name> <modifier>*</modifier></type><name>current</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>tm</name></name> <modifier>*</modifier></type><name>old</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>bool</name></type> <name>changed</name> <init>= <expr><operator>(</operator><name>old</name> <operator>==</operator> <literal type="number">0</literal> <operator>||</operator>
+<name><name>current</name><operator>-&gt;</operator><name>tm_mday</name></name> <operator>!=</operator> <name><name>old</name><operator>-&gt;</operator><name>tm_mday</name></name> <operator>||</operator>
+<name><name>current</name><operator>-&gt;</operator><name>tm_mon</name></name> <operator>!=</operator> <name><name>old</name><operator>-&gt;</operator><name>tm_mon</name></name> <operator>||</operator>
+<name><name>current</name><operator>-&gt;</operator><name>tm_year</name></name> <operator>!=</operator> <name><name>old</name><operator>-&gt;</operator><name>tm_year</name></name><operator>)</operator></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>changed</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>DLG_TRACE</name><argument_list>(<argument><expr><operator>(</operator><literal type="string">"#current %04d/%02d/%02d\n"</literal><operator>,</operator>
+<name><name>current</name><operator>-&gt;</operator><name>tm_year</name></name> <operator>+</operator> <literal type="number">1900</literal><operator>,</operator>
+<name><name>current</name><operator>-&gt;</operator><name>tm_mon</name></name> <operator>+</operator> <literal type="number">1</literal><operator>,</operator>
+<name><name>current</name><operator>-&gt;</operator><name>tm_mday</name></name><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>DLG_TRACE</name><argument_list>(<argument><expr><operator>(</operator><literal type="string">"#current (unchanged)\n"</literal><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></function>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>DrawObject</name><parameter_list>(<parameter><type><name>data</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>(data)-&gt;box_draw(data, &amp;current)</cpp:value></cpp:define>
+
+
+
+
+<function><type><name>int</name></type>
+<name>dialog_calendar</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>title</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>subtitle</name></decl></parameter>,
+<parameter><decl><type><name>int</name></type> <name>height</name></decl></parameter>,
+<parameter><decl><type><name>int</name></type> <name>width</name></decl></parameter>,
+<parameter><decl><type><name>int</name></type> <name>day</name></decl></parameter>,
+<parameter><decl><type><name>int</name></type> <name>month</name></decl></parameter>,
+<parameter><decl><type><name>int</name></type> <name>year</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>DLG_KEYS_BINDING</name></type> <name><name>binding</name><index>[]</index></name> <init>= <expr><block>{
+<expr><name>HELPKEY_BINDINGS</name></expr>,
+<expr><name>ENTERKEY_BINDINGS</name></expr>,
+<expr><name>TOGGLEKEY_BINDINGS</name></expr>,
+<expr><call><name>DLG_KEYS_DATA</name><argument_list>( <argument><expr><name>DLGK_FIELD_NEXT</name></expr></argument>, <argument><expr><name>TAB</name></expr></argument> )</argument_list></call></expr>,
+<expr><call><name>DLG_KEYS_DATA</name><argument_list>( <argument><expr><name>DLGK_FIELD_PREV</name></expr></argument>, <argument><expr><name>KEY_BTAB</name></expr></argument> )</argument_list></call></expr>,
+<expr><call><name>DLG_KEYS_DATA</name><argument_list>( <argument><expr><name>DLGK_GRID_DOWN</name></expr></argument>, <argument><expr><literal type="char">'j'</literal></expr></argument> )</argument_list></call></expr>,
+<expr><call><name>DLG_KEYS_DATA</name><argument_list>( <argument><expr><name>DLGK_GRID_DOWN</name></expr></argument>, <argument><expr><call><name>DLGK_MOUSE</name><argument_list>(<argument><expr><name>KEY_NPAGE</name></expr></argument>)</argument_list></call></expr></argument> )</argument_list></call></expr>,
+<expr><call><name>DLG_KEYS_DATA</name><argument_list>( <argument><expr><name>DLGK_GRID_DOWN</name></expr></argument>, <argument><expr><name>KEY_DOWN</name></expr></argument> )</argument_list></call></expr>,
+<expr><call><name>DLG_KEYS_DATA</name><argument_list>( <argument><expr><name>DLGK_GRID_DOWN</name></expr></argument>, <argument><expr><name>KEY_NPAGE</name></expr></argument> )</argument_list></call></expr>,
+<expr><call><name>DLG_KEYS_DATA</name><argument_list>( <argument><expr><name>DLGK_GRID_LEFT</name></expr></argument>, <argument><expr><literal type="char">'-'</literal></expr></argument> )</argument_list></call></expr>,
+<expr><call><name>DLG_KEYS_DATA</name><argument_list>( <argument><expr><name>DLGK_GRID_LEFT</name></expr></argument>, <argument><expr><literal type="char">'h'</literal></expr></argument> )</argument_list></call></expr>,
+<expr><call><name>DLG_KEYS_DATA</name><argument_list>( <argument><expr><name>DLGK_GRID_LEFT</name></expr></argument>, <argument><expr><name>CHR_BACKSPACE</name></expr></argument> )</argument_list></call></expr>,
+<expr><call><name>DLG_KEYS_DATA</name><argument_list>( <argument><expr><name>DLGK_GRID_LEFT</name></expr></argument>, <argument><expr><name>CHR_PREVIOUS</name></expr></argument> )</argument_list></call></expr>,
+<expr><call><name>DLG_KEYS_DATA</name><argument_list>( <argument><expr><name>DLGK_GRID_LEFT</name></expr></argument>, <argument><expr><name>KEY_LEFT</name></expr></argument> )</argument_list></call></expr>,
+<expr><call><name>DLG_KEYS_DATA</name><argument_list>( <argument><expr><name>DLGK_GRID_RIGHT</name></expr></argument>, <argument><expr><literal type="char">'+'</literal></expr></argument> )</argument_list></call></expr>,
+<expr><call><name>DLG_KEYS_DATA</name><argument_list>( <argument><expr><name>DLGK_GRID_RIGHT</name></expr></argument>, <argument><expr><literal type="char">'l'</literal></expr></argument> )</argument_list></call></expr>,
+<expr><call><name>DLG_KEYS_DATA</name><argument_list>( <argument><expr><name>DLGK_GRID_RIGHT</name></expr></argument>, <argument><expr><name>CHR_NEXT</name></expr></argument> )</argument_list></call></expr>,
+<expr><call><name>DLG_KEYS_DATA</name><argument_list>( <argument><expr><name>DLGK_GRID_RIGHT</name></expr></argument>, <argument><expr><name>KEY_NEXT</name></expr></argument> )</argument_list></call></expr>,
+<expr><call><name>DLG_KEYS_DATA</name><argument_list>( <argument><expr><name>DLGK_GRID_RIGHT</name></expr></argument>, <argument><expr><name>KEY_RIGHT</name></expr></argument> )</argument_list></call></expr>,
+<expr><call><name>DLG_KEYS_DATA</name><argument_list>( <argument><expr><name>DLGK_GRID_UP</name></expr></argument>, <argument><expr><literal type="char">'k'</literal></expr></argument> )</argument_list></call></expr>,
+<expr><call><name>DLG_KEYS_DATA</name><argument_list>( <argument><expr><name>DLGK_GRID_UP</name></expr></argument>, <argument><expr><name>KEY_PPAGE</name></expr></argument> )</argument_list></call></expr>,
+<expr><call><name>DLG_KEYS_DATA</name><argument_list>( <argument><expr><name>DLGK_GRID_UP</name></expr></argument>, <argument><expr><name>KEY_PREVIOUS</name></expr></argument> )</argument_list></call></expr>,
+<expr><call><name>DLG_KEYS_DATA</name><argument_list>( <argument><expr><name>DLGK_GRID_UP</name></expr></argument>, <argument><expr><name>KEY_UP</name></expr></argument> )</argument_list></call></expr>,
+<expr><call><name>DLG_KEYS_DATA</name><argument_list>( <argument><expr><name>DLGK_GRID_UP</name></expr></argument>, <argument><expr><call><name>DLGK_MOUSE</name><argument_list>(<argument><expr><name>KEY_PPAGE</name></expr></argument>)</argument_list></call></expr></argument> )</argument_list></call></expr>,
+<expr><name>END_KEYS_BINDING</name></expr>
+}</block></expr></init></decl>;</decl_stmt>
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>KEY_RESIZE</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<decl_stmt><decl><type><name>int</name></type> <name>old_height</name> <init>= <expr><name>height</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>old_width</name> <init>= <expr><name>width</name></expr></init></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<decl_stmt><decl><type><name>BOX</name></type> <name>dy_box</name></decl>, <decl><type ref="prev"/><name>mn_box</name></decl>, <decl><type ref="prev"/><name>yr_box</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>fkey</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>key</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>step</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>button</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>result</name> <init>= <expr><name>DLG_EXIT_UNKNOWN</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>week_start</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>WINDOW</name> <modifier>*</modifier></type><name>dialog</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>time_t</name></type> <name>now_time</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>tm</name></name></type> <name>current</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>state</name> <init>= <expr><call><name>dlg_default_button</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>buttons</name> <init>= <expr><call><name>dlg_ok_labels</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>prompt</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>mincols</name> <init>= <expr><name>MIN_WIDE</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name><name>buffer</name><index>[<expr><name>MAX_LEN</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DIALOG_VARS</name></type> <name>save_vars</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>DLG_TRACE</name><argument_list>(<argument><expr><operator>(</operator><literal type="string">"#calendar args:\n"</literal><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DLG_TRACE2S</name><argument_list>(<argument><expr><literal type="string">"title"</literal></expr></argument>, <argument><expr><name>title</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DLG_TRACE2S</name><argument_list>(<argument><expr><literal type="string">"message"</literal></expr></argument>, <argument><expr><name>subtitle</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DLG_TRACE2N</name><argument_list>(<argument><expr><literal type="string">"height"</literal></expr></argument>, <argument><expr><name>height</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DLG_TRACE2N</name><argument_list>(<argument><expr><literal type="string">"width"</literal></expr></argument>, <argument><expr><name>width</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DLG_TRACE2N</name><argument_list>(<argument><expr><literal type="string">"day"</literal></expr></argument>, <argument><expr><name>day</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DLG_TRACE2N</name><argument_list>(<argument><expr><literal type="string">"month"</literal></expr></argument>, <argument><expr><name>month</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DLG_TRACE2N</name><argument_list>(<argument><expr><literal type="string">"year"</literal></expr></argument>, <argument><expr><name>year</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>dlg_save_vars</name><argument_list>(<argument><expr><operator>&amp;</operator><name>save_vars</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>dialog_vars</name><operator>.</operator><name>separate_output</name></name> <operator>=</operator> <name>TRUE</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>dlg_does_output</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+<expr_stmt><expr><name>now_time</name> <operator>=</operator> <call><name>time</name><argument_list>(<argument><expr><operator>(</operator><name>time_t</name> <operator>*</operator><operator>)</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>current</name> <operator>=</operator> <operator>*</operator><call><name>localtime</name><argument_list>(<argument><expr><operator>&amp;</operator><name>now_time</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HAVE_MKTIME</name></expr></cpp:if>
+<expr_stmt><expr><name><name>current</name><operator>.</operator><name>tm_isdst</name></name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>year</name> <operator>&gt;=</operator> <literal type="number">1900</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>current</name><operator>.</operator><name>tm_year</name></name> <operator>=</operator> <name>year</name> <operator>-</operator> <literal type="number">1900</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>month</name> <operator>&gt;=</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>current</name><operator>.</operator><name>tm_mon</name></name> <operator>=</operator> <name>month</name> <operator>-</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>day</name> <operator>&gt;</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name>day</name> <operator>&lt;=</operator> <call><name>days_per_month</name><argument_list>(<argument><expr><name><name>current</name><operator>.</operator><name>tm_year</name></name> <operator>+</operator> <literal type="number">1900</literal></expr></argument>,
+<argument><expr><name><name>current</name><operator>.</operator><name>tm_mon</name></name> <operator>+</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>current</name><operator>.</operator><name>tm_mday</name></name> <operator>=</operator> <name>day</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>now_time</name> <operator>=</operator> <call><name>mktime</name><argument_list>(<argument><expr><operator>&amp;</operator><name>current</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<if_stmt><if>if <condition>(<expr><name>day</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>day</name> <operator>=</operator> <name><name>current</name><operator>.</operator><name>tm_mday</name></name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>month</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>month</name> <operator>=</operator> <name><name>current</name><operator>.</operator><name>tm_mon</name></name> <operator>+</operator> <literal type="number">1</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>year</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>year</name> <operator>=</operator> <name><name>current</name><operator>.</operator><name>tm_year</name></name> <operator>+</operator> <literal type="number">1900</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><operator>(</operator><name>year</name> <operator>-=</operator> <literal type="number">1900</literal><operator>)</operator> <operator>&gt;</operator> <literal type="number">0</literal><operator>)</operator> <operator>&amp;&amp;</operator> <operator>(</operator><name>year</name> <operator>&lt;</operator> <literal type="number">200</literal><operator>)</operator></expr>)</condition> <block>{<block_content>
+
+<for>for <control>(<init>;</init><condition>;</condition><incr/>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>year</name> <operator>&gt;</operator> <name><name>current</name><operator>.</operator><name>tm_year</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>now_time</name> <operator>+=</operator> <name>ONE_DAY</name> <operator>*</operator> <call><name>days_in_year</name><argument_list>(<argument><expr><operator>&amp;</operator><name>current</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>year</name> <operator>&lt;</operator> <name><name>current</name><operator>.</operator><name>tm_year</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>now_time</name> <operator>-=</operator> <name>ONE_DAY</name> <operator>*</operator> <call><name>days_in_year</name><argument_list>(<argument><expr><operator>&amp;</operator><name>current</name></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>month</name> <operator>&gt;</operator> <name><name>current</name><operator>.</operator><name>tm_mon</name></name> <operator>+</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>now_time</name> <operator>+=</operator> <name>ONE_DAY</name> <operator>*</operator> <call><name>days_in_month</name><argument_list>(<argument><expr><operator>&amp;</operator><name>current</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>month</name> <operator>&lt;</operator> <name><name>current</name><operator>.</operator><name>tm_mon</name></name> <operator>+</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>now_time</name> <operator>-=</operator> <name>ONE_DAY</name> <operator>*</operator> <call><name>days_in_month</name><argument_list>(<argument><expr><operator>&amp;</operator><name>current</name></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>day</name> <operator>&gt;</operator> <name><name>current</name><operator>.</operator><name>tm_mday</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>now_time</name> <operator>+=</operator> <name>ONE_DAY</name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>day</name> <operator>&lt;</operator> <name><name>current</name><operator>.</operator><name>tm_mday</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>now_time</name> <operator>-=</operator> <name>ONE_DAY</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<break>break;</break>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><name>current</name> <operator>=</operator> <operator>*</operator><call><name>localtime</name><argument_list>(<argument><expr><operator>&amp;</operator><name>now_time</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<expr_stmt><expr><call><name>dlg_button_layout</name><argument_list>(<argument><expr><name>buttons</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>mincols</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>KEY_RESIZE</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<label><name>retry</name>:</label>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<expr_stmt><expr><name>prompt</name> <operator>=</operator> <call><name>dlg_strclone</name><argument_list>(<argument><expr><name>subtitle</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_auto_size</name><argument_list>(<argument><expr><name>title</name></expr></argument>, <argument><expr><name>prompt</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>height</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>width</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>mincols</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>height</name> <operator>+=</operator> <name>MIN_HIGH</name> <operator>-</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_print_size</name><argument_list>(<argument><expr><name>height</name></expr></argument>, <argument><expr><name>width</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_ctl_size</name><argument_list>(<argument><expr><name>height</name></expr></argument>, <argument><expr><name>width</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>dialog</name> <operator>=</operator> <call><name>dlg_new_window</name><argument_list>(<argument><expr><name>height</name></expr></argument>, <argument><expr><name>width</name></expr></argument>,
+<argument><expr><call><name>dlg_box_y_ordinate</name><argument_list>(<argument><expr><name>height</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>dlg_box_x_ordinate</name><argument_list>(<argument><expr><name>width</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_register_window</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><literal type="string">"calendar"</literal></expr></argument>, <argument><expr><name>binding</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_register_buttons</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><literal type="string">"calendar"</literal></expr></argument>, <argument><expr><name>buttons</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><call><name>dlg_draw_box2</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>height</name></expr></argument>, <argument><expr><name>width</name></expr></argument>, <argument><expr><name>dialog_attr</name></expr></argument>, <argument><expr><name>border_attr</name></expr></argument>, <argument><expr><name>border2_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_draw_bottom_box2</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>border_attr</name></expr></argument>, <argument><expr><name>border2_attr</name></expr></argument>, <argument><expr><name>dialog_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_draw_title</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>title</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>dlg_attrset</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>dialog_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_print_autowrap</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>prompt</name></expr></argument>, <argument><expr><name>height</name></expr></argument>, <argument><expr><name>width</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>dy_box</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>dy_box</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>mn_box</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>mn_box</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>yr_box</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>yr_box</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>week_start</name> <operator>=</operator> <call><name>WeekStart</name><argument_list>()</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>init_object</name><argument_list>(<argument><expr><operator>&amp;</operator><name>dy_box</name></expr></argument>,
+<argument><expr><name>dialog</name></expr></argument>,
+<argument><expr><operator>(</operator><name>width</name> <operator>-</operator> <name>DAY_WIDE</name><operator>)</operator> <operator>/</operator> <literal type="number">2</literal></expr></argument>,
+<argument><expr><literal type="number">1</literal> <operator>+</operator> <operator>(</operator><name>height</name> <operator>-</operator> <operator>(</operator><name>DAY_HIGH</name> <operator>+</operator> <name>BTN_HIGH</name> <operator>+</operator> <operator>(</operator><literal type="number">5</literal> <operator>*</operator> <name>MARGIN</name><operator>)</operator><operator>)</operator><operator>)</operator></expr></argument>,
+<argument><expr><name>DAY_WIDE</name></expr></argument>,
+<argument><expr><name>DAY_HIGH</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>,
+<argument><expr><name>draw_day</name></expr></argument>,
+<argument><expr><name>week_start</name></expr></argument>,
+<argument><expr><literal type="char">'D'</literal></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<operator>(</operator><operator>(</operator><name><name>dy_box</name><operator>.</operator><name>week_start</name></name> <operator>=</operator> <call><name>WeekStart</name><argument_list>()</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal><operator>)</operator> <operator>||</operator>
+<call><name>DrawObject</name><argument_list>(<argument><expr><operator>&amp;</operator><name>dy_box</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<return>return <expr><call><name>CleanupResult</name><argument_list>(<argument><expr><name>DLG_EXIT_ERROR</name></expr></argument>, <argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>prompt</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>save_vars</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>init_object</name><argument_list>(<argument><expr><operator>&amp;</operator><name>mn_box</name></expr></argument>,
+<argument><expr><name>dialog</name></expr></argument>,
+<argument><expr><name><name>dy_box</name><operator>.</operator><name>x</name></name></expr></argument>,
+<argument><expr><name><name>dy_box</name><operator>.</operator><name>y</name></name> <operator>-</operator> <operator>(</operator><name>HDR_HIGH</name> <operator>+</operator> <literal type="number">2</literal> <operator>*</operator> <name>MARGIN</name><operator>)</operator></expr></argument>,
+<argument><expr><operator>(</operator><name>DAY_WIDE</name> <operator>/</operator> <literal type="number">2</literal><operator>)</operator> <operator>-</operator> <name>MARGIN</name></expr></argument>,
+<argument><expr><name>HDR_HIGH</name></expr></argument>,
+<argument><expr><name>draw_month</name></expr></argument>,
+<argument><expr><literal type="number">0</literal></expr></argument>,
+<argument><expr><literal type="char">'M'</literal></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal>
+<operator>||</operator> <call><name>DrawObject</name><argument_list>(<argument><expr><operator>&amp;</operator><name>mn_box</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<return>return <expr><call><name>CleanupResult</name><argument_list>(<argument><expr><name>DLG_EXIT_ERROR</name></expr></argument>, <argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>prompt</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>save_vars</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>init_object</name><argument_list>(<argument><expr><operator>&amp;</operator><name>yr_box</name></expr></argument>,
+<argument><expr><name>dialog</name></expr></argument>,
+<argument><expr><name><name>dy_box</name><operator>.</operator><name>x</name></name> <operator>+</operator> <name><name>mn_box</name><operator>.</operator><name>width</name></name> <operator>+</operator> <literal type="number">2</literal></expr></argument>,
+<argument><expr><name><name>mn_box</name><operator>.</operator><name>y</name></name></expr></argument>,
+<argument><expr><name><name>mn_box</name><operator>.</operator><name>width</name></name></expr></argument>,
+<argument><expr><name><name>mn_box</name><operator>.</operator><name>height</name></name></expr></argument>,
+<argument><expr><name>draw_year</name></expr></argument>,
+<argument><expr><literal type="number">0</literal></expr></argument>,
+<argument><expr><literal type="char">'Y'</literal></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal>
+<operator>||</operator> <call><name>DrawObject</name><argument_list>(<argument><expr><operator>&amp;</operator><name>yr_box</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<return>return <expr><call><name>CleanupResult</name><argument_list>(<argument><expr><name>DLG_EXIT_ERROR</name></expr></argument>, <argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>prompt</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>save_vars</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>dlg_trace_win</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<while>while <condition>(<expr><name>result</name> <operator>==</operator> <name>DLG_EXIT_UNKNOWN</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>key2</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>BOX</name> <modifier>*</modifier></type><name>obj</name> <init>= <expr><operator>(</operator><ternary><condition><expr><name>state</name> <operator>==</operator> <name>sDAY</name></expr> ?</condition><then> <expr><operator>&amp;</operator><name>dy_box</name></expr>
+</then><else>: <expr><operator>(</operator><ternary><condition><expr><name>state</name> <operator>==</operator> <name>sMONTH</name></expr> ?</condition><then> <expr><operator>&amp;</operator><name>mn_box</name></expr> </then><else>:
+<expr><operator>(</operator><ternary><condition><expr><name>state</name> <operator>==</operator> <name>sYEAR</name></expr> ?</condition><then> <expr><operator>&amp;</operator><name>yr_box</name></expr> </then><else>: <expr><literal type="number">0</literal></expr></else></ternary><operator>)</operator></expr></else></ternary><operator>)</operator></expr></else></ternary><operator>)</operator></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>button</name> <operator>=</operator> <ternary><condition><expr><operator>(</operator><name>state</name> <operator>&lt;</operator> <literal type="number">0</literal><operator>)</operator></expr> ?</condition><then> <expr><literal type="number">0</literal></expr> </then><else>: <expr><name>state</name></expr></else></ternary></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_draw_buttons</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>height</name> <operator>-</operator> <literal type="number">2</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>buttons</name></expr></argument>, <argument><expr><name>button</name></expr></argument>, <argument><expr><name>FALSE</name></expr></argument>, <argument><expr><name>width</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>obj</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>dlg_set_focus</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name><name>obj</name><operator>-&gt;</operator><name>window</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>key</name> <operator>=</operator> <call><name>dlg_mouse_wgetch</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>fkey</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>dlg_result_key</name><argument_list>(<argument><expr><name>key</name></expr></argument>, <argument><expr><name>fkey</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>result</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>dlg_button_key</name><argument_list>(<argument><expr><name>result</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>button</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>key</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>fkey</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>Mouse2Key</name><parameter_list>(<parameter><type><name>key</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>(key - M_EVENT)</cpp:value></cpp:define>
+<if_stmt><if>if <condition>(<expr><name>fkey</name> <operator>&amp;&amp;</operator> <operator>(</operator><name>key</name> <operator>&gt;=</operator> <call><name>DLGK_MOUSE</name><argument_list>(<argument><expr><name>KEY_MIN</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <name>key</name> <operator>&lt;=</operator> <call><name>DLGK_MOUSE</name><argument_list>(<argument><expr><name>KEY_MAX</name></expr></argument>)</argument_list></call><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>key</name> <operator>=</operator> <call><name>dlg_lookup_key</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><call><name>Mouse2Key</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><operator>&amp;</operator><name>fkey</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>key2</name> <operator>=</operator> <call><name>dlg_char_to_button</name><argument_list>(<argument><expr><name>key</name></expr></argument>, <argument><expr><name>buttons</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&gt;=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <name>key2</name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>fkey</name></expr>)</condition> <block>{<block_content>
+
+<switch>switch <condition>(<expr><name>key</name></expr>)</condition> <block>{<block_content>
+<case>case <expr><call><name>DLGK_MOUSE</name><argument_list>(<argument><expr><literal type="char">'D'</literal></expr></argument>)</argument_list></call></expr>:</case>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <name>sDAY</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><call><name>DLGK_MOUSE</name><argument_list>(<argument><expr><literal type="char">'M'</literal></expr></argument>)</argument_list></call></expr>:</case>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <name>sMONTH</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><call><name>DLGK_MOUSE</name><argument_list>(<argument><expr><literal type="char">'Y'</literal></expr></argument>)</argument_list></call></expr>:</case>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <name>sYEAR</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>DLGK_TOGGLE</name></expr>:</case>
+<case>case <expr><name>DLGK_ENTER</name></expr>:</case>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <call><name>dlg_enter_buttoncode</name><argument_list>(<argument><expr><name>button</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>DLGK_LEAVE</name></expr>:</case>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <call><name>dlg_ok_buttoncode</name><argument_list>(<argument><expr><name>button</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>DLGK_FIELD_PREV</name></expr>:</case>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <call><name>dlg_prev_ok_buttonindex</name><argument_list>(<argument><expr><name>state</name></expr></argument>, <argument><expr><name>sMONTH</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>DLGK_FIELD_NEXT</name></expr>:</case>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <call><name>dlg_next_ok_buttonindex</name><argument_list>(<argument><expr><name>state</name></expr></argument>, <argument><expr><name>sMONTH</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>KEY_RESIZE</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<case>case <expr><name>KEY_RESIZE</name></expr>:</case>
+<expr_stmt><expr><call><name>dlg_will_resize</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>height</name> <operator>=</operator> <name>old_height</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>width</name> <operator>=</operator> <name>old_width</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>prompt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>_dlg_resize_cleanup</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<goto>goto <name>retry</name>;</goto>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<default>default:</default>
+<expr_stmt><expr><name>step</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>key2</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>is_DLGK_MOUSE</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>key2</name> <operator>=</operator> <call><name>dlg_ok_buttoncode</name><argument_list>(<argument><expr><call><name>Mouse2Key</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call><operator>)</operator> <operator>&gt;=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <name>key2</name></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>key</name> <operator>&gt;=</operator> <call><name>DLGK_MOUSE</name><argument_list>(<argument><expr><name>KEY_MAX</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <name>sDAY</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>obj</name> <operator>=</operator> <operator>&amp;</operator><name>dy_box</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>key2</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>step</name> <operator>=</operator> <operator>(</operator><name>key</name>
+<operator>-</operator> <call><name>DLGK_MOUSE</name><argument_list>(<argument><expr><name>KEY_MAX</name></expr></argument>)</argument_list></call>
+<operator>-</operator> <call><name>day_cell_number</name><argument_list>(<argument><expr><operator>&amp;</operator><name>current</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DLG_TRACE</name><argument_list>(<argument><expr><operator>(</operator><literal type="string">"#mouseclick decoded %d\n"</literal><operator>,</operator> <name>step</name><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>obj</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>key2</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>step</name> <operator>=</operator> <call><name>next_or_previous</name><argument_list>(<argument><expr><name>key</name></expr></argument>, <argument><expr><operator>(</operator><name>obj</name> <operator>==</operator> <operator>&amp;</operator><name>dy_box</name><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>step</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>tm</name></name></type> <name>old</name> <init>= <expr><name>current</name></expr></init></decl>;</decl_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>obj</name> <operator>==</operator> <operator>&amp;</operator><name>dy_box</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>now_time</name> <operator>+=</operator> <name>ONE_DAY</name> <operator>*</operator> <name>step</name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>obj</name> <operator>==</operator> <operator>&amp;</operator><name>mn_box</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>step</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>now_time</name> <operator>+=</operator> <name>ONE_DAY</name> <operator>*</operator>
+<call><name>days_in_month</name><argument_list>(<argument><expr><operator>&amp;</operator><name>current</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>now_time</name> <operator>-=</operator> <name>ONE_DAY</name> <operator>*</operator>
+<call><name>days_in_month</name><argument_list>(<argument><expr><operator>&amp;</operator><name>current</name></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>obj</name> <operator>==</operator> <operator>&amp;</operator><name>yr_box</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>step</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>now_time</name> <operator>+=</operator> <operator>(</operator><name>ONE_DAY</name>
+<operator>*</operator> <call><name>days_in_year</name><argument_list>(<argument><expr><operator>&amp;</operator><name>current</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call><operator>)</operator></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>now_time</name> <operator>-=</operator> <operator>(</operator><name>ONE_DAY</name>
+<operator>*</operator> <call><name>days_in_year</name><argument_list>(<argument><expr><operator>&amp;</operator><name>current</name></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call><operator>)</operator></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>current</name> <operator>=</operator> <operator>*</operator><call><name>localtime</name><argument_list>(<argument><expr><operator>&amp;</operator><name>now_time</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>trace_date</name><argument_list>(<argument><expr><operator>&amp;</operator><name>current</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>old</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>obj</name> <operator>!=</operator> <operator>&amp;</operator><name>dy_box</name>
+<operator>&amp;&amp;</operator> <operator>(</operator><name><name>current</name><operator>.</operator><name>tm_mday</name></name> <operator>!=</operator> <name><name>old</name><operator>.</operator><name>tm_mday</name></name>
+<operator>||</operator> <name><name>current</name><operator>.</operator><name>tm_mon</name></name> <operator>!=</operator> <name><name>old</name><operator>.</operator><name>tm_mon</name></name>
+<operator>||</operator> <name><name>current</name><operator>.</operator><name>tm_year</name></name> <operator>!=</operator> <name><name>old</name><operator>.</operator><name>tm_year</name></name><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>DrawObject</name><argument_list>(<argument><expr><operator>&amp;</operator><name>dy_box</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>obj</name> <operator>!=</operator> <operator>&amp;</operator><name>mn_box</name> <operator>&amp;&amp;</operator> <name><name>current</name><operator>.</operator><name>tm_mon</name></name> <operator>!=</operator> <name><name>old</name><operator>.</operator><name>tm_mon</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>DrawObject</name><argument_list>(<argument><expr><operator>&amp;</operator><name>mn_box</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>obj</name> <operator>!=</operator> <operator>&amp;</operator><name>yr_box</name> <operator>&amp;&amp;</operator> <name><name>current</name><operator>.</operator><name>tm_year</name></name> <operator>!=</operator> <name><name>old</name><operator>.</operator><name>tm_year</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>DrawObject</name><argument_list>(<argument><expr><operator>&amp;</operator><name>yr_box</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>DrawObject</name><argument_list>(<argument><expr><name>obj</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>state</name> <operator>&gt;=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>next_or_previous</name><argument_list>(<argument><expr><name>key</name></expr></argument>, <argument><expr><name>FALSE</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <call><name>dlg_prev_ok_buttonindex</name><argument_list>(<argument><expr><name>state</name></expr></argument>, <argument><expr><name>sMONTH</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><call><name>next_or_previous</name><argument_list>(<argument><expr><name>key</name></expr></argument>, <argument><expr><name>FALSE</name></expr></argument>)</argument_list></call> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <call><name>dlg_next_ok_buttonindex</name><argument_list>(<argument><expr><name>state</name></expr></argument>, <argument><expr><name>sMONTH</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<break>break;</break>
+</block_content>}</block></switch>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></while>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>DefaultFormat</name><parameter_list>(<parameter><type><name>dst</name></type></parameter>, <parameter><type><name>src</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>sprintf(dst, "%02d/%02d/%0d", src.tm_mday, src.tm_mon + 1, src.tm_year + 1900)</cpp:value></cpp:define>
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_STRFTIME</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name><name>dialog_vars</name><operator>.</operator><name>date_format</name></name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>size_t</name></type> <name>used</name> <init>= <expr><call><name>strftime</name><argument_list>(<argument><expr><name>buffer</name></expr></argument>,
+<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>buffer</name></expr></argument>)</argument_list></sizeof> <operator>-</operator> <literal type="number">1</literal></expr></argument>,
+<argument><expr><name><name>dialog_vars</name><operator>.</operator><name>date_format</name></name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>current</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>used</name> <operator>==</operator> <literal type="number">0</literal> <operator>||</operator> <operator>*</operator><name>buffer</name> <operator>==</operator> <literal type="char">'\0'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>DefaultFormat</name><argument_list>(<argument><expr><name>buffer</name></expr></argument>, <argument><expr><name>current</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<expr_stmt><expr><call><name>DefaultFormat</name><argument_list>(<argument><expr><name>buffer</name></expr></argument>, <argument><expr><name>current</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<expr_stmt><expr><call><name>dlg_add_result</name><argument_list>(<argument><expr><name>buffer</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>AddLastKey</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><call><name>CleanupResult</name><argument_list>(<argument><expr><name>result</name></expr></argument>, <argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>prompt</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>save_vars</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+</unit>

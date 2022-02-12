@@ -1,0 +1,509 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/bin/setfacl/setfacl.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/cdefs.h&gt;</cpp:file></cpp:include>
+<expr_stmt><expr><call><name>__FBSDID</name><argument_list>(<argument><expr><literal type="string">"$FreeBSD$"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/param.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/acl.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/queue.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;err.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;errno.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;fts.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdbool.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdint.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdio.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;string.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;unistd.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"setfacl.h"</cpp:file></cpp:include>
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>OP_MERGE_ACL</name></cpp:macro> <cpp:value>0x00</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>OP_REMOVE_DEF</name></cpp:macro> <cpp:value>0x01</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>OP_REMOVE_EXT</name></cpp:macro> <cpp:value>0x02</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>OP_REMOVE_ACL</name></cpp:macro> <cpp:value>0x03</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>OP_REMOVE_BY_NUMBER</name></cpp:macro> <cpp:value>0x04</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>OP_ADD_ACL</name></cpp:macro> <cpp:value>0x05</cpp:value></cpp:define>
+
+
+<struct>struct <name>sf_entry</name> <block>{
+<decl_stmt><decl><type><name>uint</name></type> <name>op</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>acl_t</name></type> <name>acl</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint</name></type> <name>entry_number</name></decl>;</decl_stmt>
+<macro><name>TAILQ_ENTRY</name><argument_list>(<argument>sf_entry</argument>)</argument_list></macro> <expr_stmt><expr><name>next</name></expr>;</expr_stmt>
+}</block>;</struct>
+<expr_stmt><expr><specifier>static</specifier> <macro><name>TAILQ_HEAD</name><argument_list>(<argument/>, <argument>sf_entry</argument>)</argument_list></macro> <name>entrylist</name></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>bool</name></type> <name>have_mask</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>have_stdin</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>n_flag</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>bool</name></type> <name>h_flag</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>bool</name></type> <name>H_flag</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>bool</name></type> <name>L_flag</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>bool</name></type> <name>R_flag</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>bool</name></type> <name>need_mask</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>acl_type_t</name></type> <name>acl_type</name> <init>= <expr><name>ACL_TYPE_ACCESS</name></expr></init></decl>;</decl_stmt>
+
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>handle_file</name><parameter_list>(<parameter><decl><type><name>FTS</name> <modifier>*</modifier></type><name>ftsp</name></decl></parameter>, <parameter><decl><type><name>FTSENT</name> <modifier>*</modifier></type><name>file</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>acl_t</name></type> <name>clear_inheritance_flags</name><parameter_list>(<parameter><decl><type><name>acl_t</name></type> <name>acl</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>stdin_files</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>void</name></type> <name>usage</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>;</function_decl>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>usage</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"usage: setfacl [-R [-H | -L | -P]] [-bdhkn] "</literal>
+<literal type="string">"[-a position entries] [-m entries] [-M file] "</literal>
+<literal type="string">"[-x entries] [-X file] [file ...]\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier><modifier>*</modifier></type>
+<name>stdin_files</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>files_list</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name><name>filename</name><index>[<expr><name>PATH_MAX</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>fl_count</name></decl>, <decl><type ref="prev"/><name>i</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>have_stdin</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="string">"cannot have more than one stdin"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>have_stdin</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>bzero</name><argument_list>(<argument><expr><operator>&amp;</operator><name>filename</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>filename</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>fl_count</name> <operator>=</operator> <literal type="number">1024</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>files_list</name> <operator>=</operator> <call><name>zmalloc</name><argument_list>(<argument><expr><name>fl_count</name> <operator>*</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>char</name> <operator>*</operator></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<while>while <condition>(<expr><call><name>fgets</name><argument_list>(<argument><expr><name>filename</name></expr></argument>, <argument><expr><operator>(</operator><name>int</name><operator>)</operator><sizeof>sizeof<argument_list>(<argument><expr><name>filename</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><name>stdin</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><name><name>filename</name><index>[<expr><call><name>strlen</name><argument_list>(<argument><expr><name>filename</name></expr></argument>)</argument_list></call> <operator>-</operator> <literal type="number">1</literal></expr>]</index></name> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>files_list</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <call><name>strdup</name><argument_list>(<argument><expr><name>filename</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>files_list</name><index>[<expr><name>i</name></expr>]</index></name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="string">"strdup() failed"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>++</operator><name>i</name> <operator>==</operator> <name>fl_count</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>fl_count</name> <operator>&lt;&lt;=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>fl_count</name> <operator>&gt;</operator> <name>SIZE_MAX</name> <operator>/</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>char</name> <operator>*</operator></expr></argument>)</argument_list></sizeof></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="string">"Too many input files"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>files_list</name> <operator>=</operator> <call><name>zrealloc</name><argument_list>(<argument><expr><name>files_list</name></expr></argument>,
+<argument><expr><name>fl_count</name> <operator>*</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>char</name> <operator>*</operator></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></while>
+
+
+<expr_stmt><expr><name><name>files_list</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>files_list</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>acl_t</name></type>
+<name>clear_inheritance_flags</name><parameter_list>(<parameter><decl><type><name>acl_t</name></type> <name>acl</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>acl_t</name></type> <name>nacl</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>acl_entry_t</name></type> <name>acl_entry</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>acl_flagset_t</name></type> <name>acl_flagset</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>acl_brand</name></decl>, <decl><type ref="prev"/><name>entry_id</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>acl_get_brand_np</name><argument_list>(<argument><expr><name>acl</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>acl_brand</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>acl_brand</name> <operator>!=</operator> <name>ACL_BRAND_NFS4</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>acl</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>nacl</name> <operator>=</operator> <call><name>acl_dup</name><argument_list>(<argument><expr><name>acl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>nacl</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warn</name><argument_list>(<argument><expr><literal type="string">"acl_dup() failed"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>acl</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>entry_id</name> <operator>=</operator> <name>ACL_FIRST_ENTRY</name></expr>;</expr_stmt>
+<while>while <condition>(<expr><call><name>acl_get_entry</name><argument_list>(<argument><expr><name>nacl</name></expr></argument>, <argument><expr><name>entry_id</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>acl_entry</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>entry_id</name> <operator>=</operator> <name>ACL_NEXT_ENTRY</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>acl_get_flagset_np</name><argument_list>(<argument><expr><name>acl_entry</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>acl_flagset</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warn</name><argument_list>(<argument><expr><literal type="string">"acl_get_flagset_np() failed"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>acl_get_flag_np</name><argument_list>(<argument><expr><name>acl_flagset</name></expr></argument>, <argument><expr><name>ACL_ENTRY_INHERIT_ONLY</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>acl_delete_entry</name><argument_list>(<argument><expr><name>nacl</name></expr></argument>, <argument><expr><name>acl_entry</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>warn</name><argument_list>(<argument><expr><literal type="string">"acl_delete_entry() failed"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>acl_delete_flag_np</name><argument_list>(<argument><expr><name>acl_flagset</name></expr></argument>,
+<argument><expr><name>ACL_ENTRY_FILE_INHERIT</name> <operator>|</operator>
+<name>ACL_ENTRY_DIRECTORY_INHERIT</name> <operator>|</operator>
+<name>ACL_ENTRY_NO_PROPAGATE_INHERIT</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>warn</name><argument_list>(<argument><expr><literal type="string">"acl_delete_flag_np() failed"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></while>
+
+<return>return <expr><operator>(</operator><name>nacl</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>handle_file</name><parameter_list>(<parameter><decl><type><name>FTS</name> <modifier>*</modifier></type><name>ftsp</name></decl></parameter>, <parameter><decl><type><name>FTSENT</name> <modifier>*</modifier></type><name>file</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>acl_t</name></type> <name>acl</name></decl>, <decl><type ref="prev"/><name>nacl</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>acl_entry_t</name></type> <name>unused_entry</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>local_error</name></decl>, <decl><type ref="prev"/><name>ret</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>sf_entry</name></name> <modifier>*</modifier></type><name>entry</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>follow_symlink</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>local_error</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<switch>switch <condition>(<expr><name><name>file</name><operator>-&gt;</operator><name>fts_info</name></name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>FTS_D</name></expr>:</case>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>R_flag</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>fts_set</name><argument_list>(<argument><expr><name>ftsp</name></expr></argument>, <argument><expr><name>file</name></expr></argument>, <argument><expr><name>FTS_SKIP</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<break>break;</break>
+<case>case <expr><name>FTS_DP</name></expr>:</case>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+<case>case <expr><name>FTS_DNR</name></expr>:</case>
+<case>case <expr><name>FTS_ERR</name></expr>:</case>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"%s: %s"</literal></expr></argument>, <argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_path</name></name></expr></argument>, <argument><expr><call><name>strerror</name><argument_list>(<argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_errno</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+<default>default:</default>
+<break>break;</break>
+</block_content>}</block></switch>
+
+<if_stmt><if>if <condition>(<expr><name>acl_type</name> <operator>==</operator> <name>ACL_TYPE_DEFAULT</name> <operator>&amp;&amp;</operator> <name><name>file</name><operator>-&gt;</operator><name>fts_info</name></name> <operator>!=</operator> <name>FTS_D</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"%s: default ACL may only be set on a directory"</literal></expr></argument>,
+<argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_path</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>follow_symlink</name> <operator>=</operator> <operator>(</operator><operator>!</operator><name>R_flag</name> <operator>&amp;&amp;</operator> <operator>!</operator><name>h_flag</name><operator>)</operator> <operator>||</operator> <operator>(</operator><name>R_flag</name> <operator>&amp;&amp;</operator> <name>L_flag</name><operator>)</operator> <operator>||</operator>
+<operator>(</operator><name>R_flag</name> <operator>&amp;&amp;</operator> <name>H_flag</name> <operator>&amp;&amp;</operator> <name><name>file</name><operator>-&gt;</operator><name>fts_level</name></name> <operator>==</operator> <name>FTS_ROOTLEVEL</name><operator>)</operator></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>follow_symlink</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <call><name>pathconf</name><argument_list>(<argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_accpath</name></name></expr></argument>, <argument><expr><name>_PC_ACL_NFS4</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <call><name>lpathconf</name><argument_list>(<argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_accpath</name></name></expr></argument>, <argument><expr><name>_PC_ACL_NFS4</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>ret</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>acl_type</name> <operator>==</operator> <name>ACL_TYPE_DEFAULT</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"%s: there are no default entries in NFSv4 ACLs"</literal></expr></argument>,
+<argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_path</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>acl_type</name> <operator>=</operator> <name>ACL_TYPE_NFS4</name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>ret</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>acl_type</name> <operator>==</operator> <name>ACL_TYPE_NFS4</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>acl_type</name> <operator>=</operator> <name>ACL_TYPE_ACCESS</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>ret</name> <operator>&lt;</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name>errno</name> <operator>!=</operator> <name>EINVAL</name> <operator>&amp;&amp;</operator> <name>errno</name> <operator>!=</operator> <name>ENOENT</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warn</name><argument_list>(<argument><expr><literal type="string">"%s: pathconf(_PC_ACL_NFS4) failed"</literal></expr></argument>,
+<argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_path</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>follow_symlink</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>acl</name> <operator>=</operator> <call><name>acl_get_file</name><argument_list>(<argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_accpath</name></name></expr></argument>, <argument><expr><name>acl_type</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>acl</name> <operator>=</operator> <call><name>acl_get_link_np</name><argument_list>(<argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_accpath</name></name></expr></argument>, <argument><expr><name>acl_type</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>acl</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>follow_symlink</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>warn</name><argument_list>(<argument><expr><literal type="string">"%s: acl_get_file() failed"</literal></expr></argument>, <argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_path</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>warn</name><argument_list>(<argument><expr><literal type="string">"%s: acl_get_link_np() failed"</literal></expr></argument>, <argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_path</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<macro><name>TAILQ_FOREACH</name><argument_list>(<argument>entry</argument>, <argument>&amp;entrylist</argument>, <argument>next</argument>)</argument_list></macro> <block>{<block_content>
+<expr_stmt><expr><name>nacl</name> <operator>=</operator> <name><name>entry</name><operator>-&gt;</operator><name>acl</name></name></expr>;</expr_stmt>
+<switch>switch <condition>(<expr><name><name>entry</name><operator>-&gt;</operator><name>op</name></name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>OP_ADD_ACL</name></expr>:</case>
+<if_stmt><if>if <condition>(<expr><name>R_flag</name> <operator>&amp;&amp;</operator> <name><name>file</name><operator>-&gt;</operator><name>fts_info</name></name> <operator>!=</operator> <name>FTS_D</name> <operator>&amp;&amp;</operator>
+<name>acl_type</name> <operator>==</operator> <name>ACL_TYPE_NFS4</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>nacl</name> <operator>=</operator> <call><name>clear_inheritance_flags</name><argument_list>(<argument><expr><name>nacl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>local_error</name> <operator>+=</operator> <call><name>add_acl</name><argument_list>(<argument><expr><name>nacl</name></expr></argument>, <argument><expr><name><name>entry</name><operator>-&gt;</operator><name>entry_number</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>acl</name></expr></argument>,
+<argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_path</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>OP_MERGE_ACL</name></expr>:</case>
+<if_stmt><if>if <condition>(<expr><name>R_flag</name> <operator>&amp;&amp;</operator> <name><name>file</name><operator>-&gt;</operator><name>fts_info</name></name> <operator>!=</operator> <name>FTS_D</name> <operator>&amp;&amp;</operator>
+<name>acl_type</name> <operator>==</operator> <name>ACL_TYPE_NFS4</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>nacl</name> <operator>=</operator> <call><name>clear_inheritance_flags</name><argument_list>(<argument><expr><name>nacl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>local_error</name> <operator>+=</operator> <call><name>merge_acl</name><argument_list>(<argument><expr><name>nacl</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>acl</name></expr></argument>, <argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_path</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>need_mask</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>OP_REMOVE_EXT</name></expr>:</case>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>acl_type</name> <operator>==</operator> <name>ACL_TYPE_DEFAULT</name> <operator>&amp;&amp;</operator>
+<call><name>acl_get_entry</name><argument_list>(<argument><expr><name>acl</name></expr></argument>, <argument><expr><name>ACL_FIRST_ENTRY</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>unused_entry</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>local_error</name> <operator>+=</operator> <call><name>remove_default</name><argument_list>(<argument><expr><operator>&amp;</operator><name>acl</name></expr></argument>,
+<argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_path</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>remove_ext</name><argument_list>(<argument><expr><operator>&amp;</operator><name>acl</name></expr></argument>, <argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_path</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>need_mask</name> <operator>=</operator> <name>false</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>OP_REMOVE_DEF</name></expr>:</case>
+<if_stmt><if>if <condition>(<expr><name>acl_type</name> <operator>==</operator> <name>ACL_TYPE_NFS4</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"%s: there are no default entries in "</literal>
+<literal type="string">"NFSv4 ACLs; cannot remove"</literal></expr></argument>,
+<argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_path</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>local_error</name><operator>++</operator></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>acl_delete_def_file</name><argument_list>(<argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_accpath</name></name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warn</name><argument_list>(<argument><expr><literal type="string">"%s: acl_delete_def_file() failed"</literal></expr></argument>,
+<argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_path</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>local_error</name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>acl_type</name> <operator>==</operator> <name>ACL_TYPE_DEFAULT</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>local_error</name> <operator>+=</operator> <call><name>remove_default</name><argument_list>(<argument><expr><operator>&amp;</operator><name>acl</name></expr></argument>,
+<argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_path</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>need_mask</name> <operator>=</operator> <name>false</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>OP_REMOVE_ACL</name></expr>:</case>
+<expr_stmt><expr><name>local_error</name> <operator>+=</operator> <call><name>remove_acl</name><argument_list>(<argument><expr><name>nacl</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>acl</name></expr></argument>, <argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_path</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>need_mask</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>OP_REMOVE_BY_NUMBER</name></expr>:</case>
+<expr_stmt><expr><name>local_error</name> <operator>+=</operator> <call><name>remove_by_number</name><argument_list>(<argument><expr><name><name>entry</name><operator>-&gt;</operator><name>entry_number</name></name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>acl</name></expr></argument>, <argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_path</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>need_mask</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></switch>
+
+<if_stmt><if>if <condition>(<expr><name>nacl</name> <operator>!=</operator> <name><name>entry</name><operator>-&gt;</operator><name>acl</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>acl_free</name><argument_list>(<argument><expr><name>nacl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>nacl</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>local_error</name></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+</block_content>}</block>
+
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>acl_type</name> <operator>==</operator> <name>ACL_TYPE_DEFAULT</name> <operator>&amp;&amp;</operator>
+<call><name>acl_get_entry</name><argument_list>(<argument><expr><name>acl</name></expr></argument>, <argument><expr><name>ACL_FIRST_ENTRY</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>unused_entry</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>acl_delete_def_file</name><argument_list>(<argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_accpath</name></name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warn</name><argument_list>(<argument><expr><literal type="string">"%s: acl_delete_def_file() failed"</literal></expr></argument>,
+<argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_path</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>local_error</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>acl_type</name> <operator>!=</operator> <name>ACL_TYPE_NFS4</name> <operator>&amp;&amp;</operator> <name>need_mask</name> <operator>&amp;&amp;</operator>
+<call><name>set_acl_mask</name><argument_list>(<argument><expr><operator>&amp;</operator><name>acl</name></expr></argument>, <argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_path</name></name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"%s: failed to set ACL mask"</literal></expr></argument>, <argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_path</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>follow_symlink</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>acl_set_file</name><argument_list>(<argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_accpath</name></name></expr></argument>, <argument><expr><name>acl_type</name></expr></argument>, <argument><expr><name>acl</name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warn</name><argument_list>(<argument><expr><literal type="string">"%s: acl_set_file() failed"</literal></expr></argument>, <argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_path</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>acl_set_link_np</name><argument_list>(<argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_accpath</name></name></expr></argument>, <argument><expr><name>acl_type</name></expr></argument>, <argument><expr><name>acl</name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warn</name><argument_list>(<argument><expr><literal type="string">"%s: acl_set_link_np() failed"</literal></expr></argument>, <argument><expr><name><name>file</name><operator>-&gt;</operator><name>fts_path</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+
+<label><name>out</name>:</label>
+<expr_stmt><expr><call><name>acl_free</name><argument_list>(<argument><expr><name>acl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ret</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>main</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>argc</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier></type><name><name>argv</name><index>[]</index></name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>carried_error</name></decl>, <decl><type ref="prev"/><name>ch</name></decl>, <decl><type ref="prev"/><name>entry_number</name></decl>, <decl><type ref="prev"/><name>fts_options</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>FTS</name> <modifier>*</modifier></type><name>ftsp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>FTSENT</name> <modifier>*</modifier></type><name>file</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>files_list</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>sf_entry</name></name> <modifier>*</modifier></type><name>entry</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>end</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>acl_type</name> <operator>=</operator> <name>ACL_TYPE_ACCESS</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>carried_error</name> <operator>=</operator> <name>fts_options</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>have_mask</name> <operator>=</operator> <name>have_stdin</name> <operator>=</operator> <name>n_flag</name> <operator>=</operator> <name>false</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>TAILQ_INIT</name><argument_list>(<argument><expr><operator>&amp;</operator><name>entrylist</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<while>while <condition>(<expr><operator>(</operator><name>ch</name> <operator>=</operator> <call><name>getopt</name><argument_list>(<argument><expr><name>argc</name></expr></argument>, <argument><expr><name>argv</name></expr></argument>, <argument><expr><literal type="string">"HLM:PRX:a:bdhkm:nx:"</literal></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<switch>switch<condition>(<expr><name>ch</name></expr>)</condition> <block>{<block_content>
+<case>case <expr><literal type="char">'H'</literal></expr>:</case>
+<expr_stmt><expr><name>H_flag</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>L_flag</name> <operator>=</operator> <name>false</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'L'</literal></expr>:</case>
+<expr_stmt><expr><name>L_flag</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>H_flag</name> <operator>=</operator> <name>false</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'M'</literal></expr>:</case>
+<expr_stmt><expr><name>entry</name> <operator>=</operator> <call><name>zmalloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr>struct <name>sf_entry</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>entry</name><operator>-&gt;</operator><name>acl</name></name> <operator>=</operator> <call><name>get_acl_from_file</name><argument_list>(<argument><expr><name>optarg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>entry</name><operator>-&gt;</operator><name>acl</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="string">"%s: get_acl_from_file() failed"</literal></expr></argument>,
+<argument><expr><name>optarg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>entry</name><operator>-&gt;</operator><name>op</name></name> <operator>=</operator> <name>OP_MERGE_ACL</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>TAILQ_INSERT_TAIL</name><argument_list>(<argument><expr><operator>&amp;</operator><name>entrylist</name></expr></argument>, <argument><expr><name>entry</name></expr></argument>, <argument><expr><name>next</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'P'</literal></expr>:</case>
+<expr_stmt><expr><name>H_flag</name> <operator>=</operator> <name>L_flag</name> <operator>=</operator> <name>false</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'R'</literal></expr>:</case>
+<expr_stmt><expr><name>R_flag</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'X'</literal></expr>:</case>
+<expr_stmt><expr><name>entry</name> <operator>=</operator> <call><name>zmalloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr>struct <name>sf_entry</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>entry</name><operator>-&gt;</operator><name>acl</name></name> <operator>=</operator> <call><name>get_acl_from_file</name><argument_list>(<argument><expr><name>optarg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>entry</name><operator>-&gt;</operator><name>op</name></name> <operator>=</operator> <name>OP_REMOVE_ACL</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>TAILQ_INSERT_TAIL</name><argument_list>(<argument><expr><operator>&amp;</operator><name>entrylist</name></expr></argument>, <argument><expr><name>entry</name></expr></argument>, <argument><expr><name>next</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'a'</literal></expr>:</case>
+<expr_stmt><expr><name>entry</name> <operator>=</operator> <call><name>zmalloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr>struct <name>sf_entry</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>entry_number</name> <operator>=</operator> <call><name>strtol</name><argument_list>(<argument><expr><name>optarg</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>end</name></expr></argument>, <argument><expr><literal type="number">10</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>end</name> <operator>-</operator> <name>optarg</name> <operator>!=</operator> <operator>(</operator><name>int</name><operator>)</operator><call><name>strlen</name><argument_list>(<argument><expr><name>optarg</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="string">"%s: invalid entry number"</literal></expr></argument>, <argument><expr><name>optarg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>entry_number</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>,
+<argument><expr><literal type="string">"%s: entry number cannot be less than zero"</literal></expr></argument>,
+<argument><expr><name>optarg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>entry</name><operator>-&gt;</operator><name>entry_number</name></name> <operator>=</operator> <name>entry_number</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>argv</name><index>[<expr><name>optind</name></expr>]</index></name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="string">"missing ACL"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>entry</name><operator>-&gt;</operator><name>acl</name></name> <operator>=</operator> <call><name>acl_from_text</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr><name>optind</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>entry</name><operator>-&gt;</operator><name>acl</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="string">"%s"</literal></expr></argument>, <argument><expr><name><name>argv</name><index>[<expr><name>optind</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>optind</name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>entry</name><operator>-&gt;</operator><name>op</name></name> <operator>=</operator> <name>OP_ADD_ACL</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>TAILQ_INSERT_TAIL</name><argument_list>(<argument><expr><operator>&amp;</operator><name>entrylist</name></expr></argument>, <argument><expr><name>entry</name></expr></argument>, <argument><expr><name>next</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'b'</literal></expr>:</case>
+<expr_stmt><expr><name>entry</name> <operator>=</operator> <call><name>zmalloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr>struct <name>sf_entry</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>entry</name><operator>-&gt;</operator><name>op</name></name> <operator>=</operator> <name>OP_REMOVE_EXT</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>TAILQ_INSERT_TAIL</name><argument_list>(<argument><expr><operator>&amp;</operator><name>entrylist</name></expr></argument>, <argument><expr><name>entry</name></expr></argument>, <argument><expr><name>next</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'d'</literal></expr>:</case>
+<expr_stmt><expr><name>acl_type</name> <operator>=</operator> <name>ACL_TYPE_DEFAULT</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'h'</literal></expr>:</case>
+<expr_stmt><expr><name>h_flag</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'k'</literal></expr>:</case>
+<expr_stmt><expr><name>entry</name> <operator>=</operator> <call><name>zmalloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr>struct <name>sf_entry</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>entry</name><operator>-&gt;</operator><name>op</name></name> <operator>=</operator> <name>OP_REMOVE_DEF</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>TAILQ_INSERT_TAIL</name><argument_list>(<argument><expr><operator>&amp;</operator><name>entrylist</name></expr></argument>, <argument><expr><name>entry</name></expr></argument>, <argument><expr><name>next</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'m'</literal></expr>:</case>
+<expr_stmt><expr><name>entry</name> <operator>=</operator> <call><name>zmalloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr>struct <name>sf_entry</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>entry</name><operator>-&gt;</operator><name>acl</name></name> <operator>=</operator> <call><name>acl_from_text</name><argument_list>(<argument><expr><name>optarg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>entry</name><operator>-&gt;</operator><name>acl</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="string">"%s"</literal></expr></argument>, <argument><expr><name>optarg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>entry</name><operator>-&gt;</operator><name>op</name></name> <operator>=</operator> <name>OP_MERGE_ACL</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>TAILQ_INSERT_TAIL</name><argument_list>(<argument><expr><operator>&amp;</operator><name>entrylist</name></expr></argument>, <argument><expr><name>entry</name></expr></argument>, <argument><expr><name>next</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'n'</literal></expr>:</case>
+<expr_stmt><expr><name>n_flag</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'x'</literal></expr>:</case>
+<expr_stmt><expr><name>entry</name> <operator>=</operator> <call><name>zmalloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr>struct <name>sf_entry</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>entry_number</name> <operator>=</operator> <call><name>strtol</name><argument_list>(<argument><expr><name>optarg</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>end</name></expr></argument>, <argument><expr><literal type="number">10</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>end</name> <operator>-</operator> <name>optarg</name> <operator>==</operator> <operator>(</operator><name>int</name><operator>)</operator><call><name>strlen</name><argument_list>(<argument><expr><name>optarg</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>entry_number</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>,
+<argument><expr><literal type="string">"%s: entry number cannot be less than zero"</literal></expr></argument>,
+<argument><expr><name>optarg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>entry</name><operator>-&gt;</operator><name>entry_number</name></name> <operator>=</operator> <name>entry_number</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>entry</name><operator>-&gt;</operator><name>op</name></name> <operator>=</operator> <name>OP_REMOVE_BY_NUMBER</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name><name>entry</name><operator>-&gt;</operator><name>acl</name></name> <operator>=</operator> <call><name>acl_from_text</name><argument_list>(<argument><expr><name>optarg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>entry</name><operator>-&gt;</operator><name>acl</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="string">"%s"</literal></expr></argument>, <argument><expr><name>optarg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>entry</name><operator>-&gt;</operator><name>op</name></name> <operator>=</operator> <name>OP_REMOVE_ACL</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><call><name>TAILQ_INSERT_TAIL</name><argument_list>(<argument><expr><operator>&amp;</operator><name>entrylist</name></expr></argument>, <argument><expr><name>entry</name></expr></argument>, <argument><expr><name>next</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<default>default:</default>
+<expr_stmt><expr><call><name>usage</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></switch></block_content></block></while>
+<expr_stmt><expr><name>argc</name> <operator>-=</operator> <name>optind</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>argv</name> <operator>+=</operator> <name>optind</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>n_flag</name> <operator>&amp;&amp;</operator> <call><name>TAILQ_EMPTY</name><argument_list>(<argument><expr><operator>&amp;</operator><name>entrylist</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>usage</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>argc</name> <operator>==</operator> <literal type="number">0</literal> <operator>||</operator> <call><name>strcmp</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>, <argument><expr><literal type="string">"-"</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>files_list</name> <operator>=</operator> <call><name>stdin_files</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>files_list</name> <operator>=</operator> <name>argv</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>R_flag</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>h_flag</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="string">"the -R and -h options may not be "</literal>
+<literal type="string">"specified together."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>L_flag</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>fts_options</name> <operator>=</operator> <name>FTS_LOGICAL</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>fts_options</name> <operator>=</operator> <name>FTS_PHYSICAL</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>H_flag</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>fts_options</name> <operator>|=</operator> <name>FTS_COMFOLLOW</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>h_flag</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>fts_options</name> <operator>=</operator> <name>FTS_PHYSICAL</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>fts_options</name> <operator>=</operator> <name>FTS_LOGICAL</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>ftsp</name> <operator>=</operator> <call><name>fts_open</name><argument_list>(<argument><expr><name>files_list</name></expr></argument>, <argument><expr><name>fts_options</name> <operator>|</operator> <name>FTS_NOSTAT</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="string">"fts_open"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<while>while <condition>(<expr><name>errno</name> <operator>=</operator> <literal type="number">0</literal></expr><operator>,</operator> <expr><operator>(</operator><name>file</name> <operator>=</operator> <call><name>fts_read</name><argument_list>(<argument><expr><name>ftsp</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>carried_error</name> <operator>+=</operator> <call><name>handle_file</name><argument_list>(<argument><expr><name>ftsp</name></expr></argument>, <argument><expr><name>file</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></while>
+<if_stmt><if>if <condition>(<expr><name>errno</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="string">"fts_read"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>carried_error</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+</unit>

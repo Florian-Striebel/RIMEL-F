@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/llvm-project/compiler-rt/lib/profile/InstrProfilingPlatformFuchsia.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__Fuchsia__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;inttypes.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdarg.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdbool.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;zircon/process.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;zircon/sanitizer.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;zircon/status.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;zircon/syscalls.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"InstrProfiling.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"InstrProfilingInternal.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"InstrProfilingUtil.h"</cpp:file></cpp:include>
+
+
+<decl_stmt><decl><type><name>COMPILER_RT_VISIBILITY</name> <specifier>extern</specifier> <name>intptr_t</name></type> <name>INSTR_PROF_PROFILE_COUNTER_BIAS_VAR</name></decl>;</decl_stmt>
+
+<function><type><name>COMPILER_RT_VISIBILITY</name> <name>unsigned</name></type> <name>lprofProfileDumped</name><parameter_list>()</parameter_list> <block>{<block_content>
+<return>return <expr><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>COMPILER_RT_VISIBILITY</name> <name>void</name></type> <name>lprofSetProfileDumped</name><parameter_list>(<parameter><decl><type><name>unsigned</name></type> <name>Value</name></decl></parameter>)</parameter_list> <block>{<block_content/>}</block></function>
+
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>char</name></type> <name><name>ProfileSinkName</name><index>[]</index></name> <init>= <expr><literal type="string">"llvm-profile"</literal></expr></init></decl>;</decl_stmt>
+
+<function><type><specifier>static</specifier> <specifier>inline</specifier> <name>void</name></type> <name>lprofWrite</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>fmt</name></decl></parameter>, <parameter><decl><type><modifier>...</modifier></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>char</name></type> <name><name>s</name><index>[<expr><literal type="number">256</literal></expr>]</index></name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>va_list</name></type> <name>ap</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>va_start</name><argument_list>(<argument><expr><name>ap</name></expr></argument>, <argument><expr><name>fmt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ret</name> <init>= <expr><call><name>vsnprintf</name><argument_list>(<argument><expr><name>s</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>s</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><name>fmt</name></expr></argument>, <argument><expr><name>ap</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>va_end</name><argument_list>(<argument><expr><name>ap</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>__sanitizer_log_write</name><argument_list>(<argument><expr><name>s</name></expr></argument>, <argument><expr><name>ret</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<struct>struct <name>lprofVMOWriterCtx</name> <block>{
+
+<decl_stmt><decl><type><name>zx_handle_t</name></type> <name>Vmo</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>Offset</name></decl>;</decl_stmt>
+}</block>;</struct>
+
+<function><type><specifier>static</specifier> <name>uint32_t</name></type> <name>lprofVMOWriter</name><parameter_list>(<parameter><decl><type><name>ProfDataWriter</name> <modifier>*</modifier></type><name>This</name></decl></parameter>, <parameter><decl><type><name>ProfDataIOVec</name> <modifier>*</modifier></type><name>IOVecs</name></decl></parameter>,
+<parameter><decl><type><name>uint32_t</name></type> <name>NumIOVecs</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>lprofVMOWriterCtx</name></name> <modifier>*</modifier></type><name>Ctx</name> <init>= <expr><operator>(</operator>struct <name>lprofVMOWriterCtx</name> <operator>*</operator><operator>)</operator><name><name>This</name><operator>-&gt;</operator><name>WriterCtx</name></name></expr></init></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><name>size_t</name></type> <name>Length</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<for>for <control>(<init><decl><type><name>uint32_t</name></type> <name>I</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>I</name> <operator>&lt;</operator> <name>NumIOVecs</name></expr>;</condition> <incr><expr><name>I</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><name>Length</name> <operator>+=</operator> <name><name>IOVecs</name><index>[<expr><name>I</name></expr>]</index></name><operator>.</operator><name>ElmSize</name> <operator>*</operator> <name><name>IOVecs</name><index>[<expr><name>I</name></expr>]</index></name><operator>.</operator><name>NumElm</name></expr>;</expr_stmt></block_content></block></for>
+
+
+<decl_stmt><decl><type><name>zx_status_t</name></type> <name>Status</name> <init>= <expr><call><name>_zx_vmo_set_size</name><argument_list>(<argument><expr><name><name>Ctx</name><operator>-&gt;</operator><name>Vmo</name></name></expr></argument>, <argument><expr><name><name>Ctx</name><operator>-&gt;</operator><name>Offset</name></name> <operator>+</operator> <name>Length</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>Status</name> <operator>!=</operator> <name>ZX_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+
+
+<for>for <control>(<init><decl><type><name>uint32_t</name></type> <name>I</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>I</name> <operator>&lt;</operator> <name>NumIOVecs</name></expr>;</condition> <incr><expr><name>I</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>size_t</name></type> <name>Length</name> <init>= <expr><name><name>IOVecs</name><index>[<expr><name>I</name></expr>]</index></name><operator>.</operator><name>ElmSize</name> <operator>*</operator> <name><name>IOVecs</name><index>[<expr><name>I</name></expr>]</index></name><operator>.</operator><name>NumElm</name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>IOVecs</name><index>[<expr><name>I</name></expr>]</index></name><operator>.</operator><name>Data</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>Status</name> <operator>=</operator> <call><name>_zx_vmo_write</name><argument_list>(<argument><expr><name><name>Ctx</name><operator>-&gt;</operator><name>Vmo</name></name></expr></argument>, <argument><expr><name><name>IOVecs</name><index>[<expr><name>I</name></expr>]</index></name><operator>.</operator><name>Data</name></expr></argument>, <argument><expr><name><name>Ctx</name><operator>-&gt;</operator><name>Offset</name></name></expr></argument>, <argument><expr><name>Length</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>Status</name> <operator>!=</operator> <name>ZX_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>IOVecs</name><index>[<expr><name>I</name></expr>]</index></name><operator>.</operator><name>UseZeroPadding</name></expr>)</condition> <block>{<block_content>
+
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>Ctx</name><operator>-&gt;</operator><name>Offset</name></name> <operator>+=</operator> <name>Length</name></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+
+<expr_stmt><expr><call><name>_zx_object_set_property</name><argument_list>(<argument><expr><name><name>Ctx</name><operator>-&gt;</operator><name>Vmo</name></name></expr></argument>, <argument><expr><name>ZX_PROP_VMO_CONTENT_SIZE</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>Ctx</name><operator>-&gt;</operator><name>Offset</name></name></expr></argument>,
+<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name><name>Ctx</name><operator>-&gt;</operator><name>Offset</name></name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type> <name>initVMOWriter</name><parameter_list>(<parameter><decl><type><name>ProfDataWriter</name> <modifier>*</modifier></type><name>This</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>lprofVMOWriterCtx</name></name> <modifier>*</modifier></type><name>Ctx</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><name><name>This</name><operator>-&gt;</operator><name>Write</name></name> <operator>=</operator> <name>lprofVMOWriter</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>This</name><operator>-&gt;</operator><name>WriterCtx</name></name> <operator>=</operator> <name>Ctx</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+<function><type><name>COMPILER_RT_VISIBILITY</name>
+<name>void</name></type> <name>__llvm_profile_initialize</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><call><name>GET_VERSION</name><argument_list>(<argument><expr><call><name>__llvm_profile_get_version</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call> <operator>!=</operator> <name>INSTR_PROF_RAW_VERSION</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>lprofWrite</name><argument_list>(<argument><expr><literal type="string">"LLVM Profile: runtime and instrumentation version mismatch: "</literal>
+<literal type="string">"expected %d, but got %d\n"</literal></expr></argument>,
+<argument><expr><name>INSTR_PROF_RAW_VERSION</name></expr></argument>,
+<argument><expr><operator>(</operator><name>int</name><operator>)</operator><call><name>GET_VERSION</name><argument_list>(<argument><expr><call><name>__llvm_profile_get_version</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+<decl_stmt><decl><type><specifier>const</specifier> <name>__llvm_profile_data</name> <modifier>*</modifier></type><name>DataBegin</name> <init>= <expr><call><name>__llvm_profile_begin_data</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>__llvm_profile_data</name> <modifier>*</modifier></type><name>DataEnd</name> <init>= <expr><call><name>__llvm_profile_end_data</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uint64_t</name> <modifier>*</modifier></type><name>CountersBegin</name> <init>= <expr><call><name>__llvm_profile_begin_counters</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uint64_t</name> <modifier>*</modifier></type><name>CountersEnd</name> <init>= <expr><call><name>__llvm_profile_end_counters</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uint64_t</name></type> <name>DataSize</name> <init>= <expr><call><name>__llvm_profile_get_data_size</name><argument_list>(<argument><expr><name>DataBegin</name></expr></argument>, <argument><expr><name>DataEnd</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uint64_t</name></type> <name>CountersOffset</name> <init>= <expr><sizeof>sizeof<argument_list>(<argument><expr><name>__llvm_profile_header</name></expr></argument>)</argument_list></sizeof> <operator>+</operator>
+<call><name>__llvm_write_binary_ids</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>)</argument_list></call> <operator>+</operator>
+<operator>(</operator><name>DataSize</name> <operator>*</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>__llvm_profile_data</name></expr></argument>)</argument_list></sizeof><operator>)</operator></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>CountersSize</name> <init>= <expr><name>CountersEnd</name> <operator>-</operator> <name>CountersBegin</name></expr></init></decl>;</decl_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>CountersSize</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+<decl_stmt><decl><type><name>zx_status_t</name></type> <name>Status</name></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><name>zx_handle_t</name></type> <name>Vmo</name> <init>= <expr><name>ZX_HANDLE_INVALID</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>Status</name> <operator>=</operator> <call><name>_zx_vmo_create</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>ZX_VMO_RESIZABLE</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>Vmo</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>Status</name> <operator>!=</operator> <name>ZX_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>lprofWrite</name><argument_list>(<argument><expr><literal type="string">"LLVM Profile: cannot create VMO: %s\n"</literal></expr></argument>,
+<argument><expr><call><name>_zx_status_get_string</name><argument_list>(<argument><expr><name>Status</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<decl_stmt><decl><type><name>char</name></type> <name><name>VmoName</name><index>[<expr><name>ZX_MAX_NAME_LEN</name></expr>]</index></name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>snprintf</name><argument_list>(<argument><expr><name>VmoName</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>VmoName</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><literal type="string">"%"</literal> <name>PRIu64</name> <literal type="string">".profraw"</literal></expr></argument>,
+<argument><expr><call><name>lprofGetLoadModuleSignature</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>_zx_object_set_property</name><argument_list>(<argument><expr><name>Vmo</name></expr></argument>, <argument><expr><name>ZX_PROP_NAME</name></expr></argument>, <argument><expr><name>VmoName</name></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name>VmoName</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<decl_stmt><decl><type><name>ProfDataWriter</name></type> <name>VMOWriter</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>lprofVMOWriterCtx</name></name></type> <name>Ctx</name> <init>= <expr><block>{<expr><operator>.</operator><name>Vmo</name> <operator>=</operator> <name>Vmo</name></expr>, <expr><operator>.</operator><name>Offset</name> <operator>=</operator> <literal type="number">0</literal></expr>}</block></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>initVMOWriter</name><argument_list>(<argument><expr><operator>&amp;</operator><name>VMOWriter</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>Ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>lprofWriteData</name><argument_list>(<argument><expr><operator>&amp;</operator><name>VMOWriter</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>lprofWrite</name><argument_list>(<argument><expr><literal type="string">"LLVM Profile: failed to write data\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>_zx_handle_close</name><argument_list>(<argument><expr><name>Vmo</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>Len</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>Status</name> <operator>=</operator> <call><name>_zx_vmo_get_size</name><argument_list>(<argument><expr><name>Vmo</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>Len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>Status</name> <operator>!=</operator> <name>ZX_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>lprofWrite</name><argument_list>(<argument><expr><literal type="string">"LLVM Profile: failed to get the VMO size: %s\n"</literal></expr></argument>,
+<argument><expr><call><name>_zx_status_get_string</name><argument_list>(<argument><expr><name>Status</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>_zx_handle_close</name><argument_list>(<argument><expr><name>Vmo</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>Mapping</name></decl>;</decl_stmt>
+<expr_stmt><expr><name>Status</name> <operator>=</operator>
+<call><name>_zx_vmar_map</name><argument_list>(<argument><expr><call><name>_zx_vmar_root_self</name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><name>ZX_VM_PERM_READ</name> <operator>|</operator> <name>ZX_VM_PERM_WRITE</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>,
+<argument><expr><name>Vmo</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>Len</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>Mapping</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>Status</name> <operator>!=</operator> <name>ZX_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>lprofWrite</name><argument_list>(<argument><expr><literal type="string">"LLVM Profile: failed to map the VMO: %s\n"</literal></expr></argument>,
+<argument><expr><call><name>_zx_status_get_string</name><argument_list>(<argument><expr><name>Status</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>_zx_handle_close</name><argument_list>(<argument><expr><name>Vmo</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+<expr_stmt><expr><call><name>__sanitizer_publish_data</name><argument_list>(<argument><expr><name>ProfileSinkName</name></expr></argument>, <argument><expr><name>Vmo</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><call><name>lprofWrite</name><argument_list>(<argument><expr><literal type="string">"LLVM Profile: {{{dumpfile:%s:%s}}}\n"</literal></expr></argument>, <argument><expr><name>ProfileSinkName</name></expr></argument>, <argument><expr><name>VmoName</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><name>INSTR_PROF_PROFILE_COUNTER_BIAS_VAR</name> <operator>=</operator>
+<operator>(</operator><name>intptr_t</name><operator>)</operator><name>Mapping</name> <operator>-</operator> <operator>(</operator><name>uintptr_t</name><operator>)</operator><name>CountersBegin</name> <operator>+</operator> <name>CountersOffset</name></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><call><name>lprofReleaseMemoryPagesToOS</name><argument_list>(<argument><expr><operator>(</operator><name>uintptr_t</name><operator>)</operator><name>CountersBegin</name></expr></argument>, <argument><expr><operator>(</operator><name>uintptr_t</name><operator>)</operator><name>CountersEnd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

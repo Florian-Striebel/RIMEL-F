@@ -1,0 +1,1249 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/elftoolchain/libelf/elf_update.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/param.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/stat.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;assert.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;errno.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;gelf.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;libelf.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;string.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;unistd.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"_libelf.h"</cpp:file></cpp:include>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>ELFTC_HAVE_MMAP</name></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/mman.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<expr_stmt><expr><call><name>ELFTC_VCSID</name><argument_list>(<argument><expr><literal type="string">"$Id: elf_update.c 3763 2019-06-28 21:43:27Z emaste $"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<enum>enum <name>elf_extent</name> <block>{
+<decl><name>ELF_EXTENT_EHDR</name></decl>,
+<decl><name>ELF_EXTENT_PHDR</name></decl>,
+<decl><name>ELF_EXTENT_SECTION</name></decl>,
+<decl><name>ELF_EXTENT_SHDR</name></decl>
+}</block>;</enum>
+
+
+
+
+<struct>struct <name>_Elf_Extent</name> <block>{
+<macro><name>SLIST_ENTRY</name><argument_list>(<argument>_Elf_Extent</argument>)</argument_list></macro> <expr_stmt><expr><name>ex_next</name></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>ex_start</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>ex_size</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>enum</name> <name>elf_extent</name></name></type> <name>ex_type</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>ex_desc</name></decl>;</decl_stmt>
+}</block>;</struct>
+
+<expr_stmt><expr><call><name>SLIST_HEAD</name><argument_list>(<argument><expr><name>_Elf_Extent_List</name></expr></argument>, <argument><expr><name>_Elf_Extent</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>_libelf_compute_section_extents</name><parameter_list>(<parameter><decl><type><name>Elf</name> <modifier>*</modifier></type><name>e</name></decl></parameter>, <parameter><decl><type><name>Elf_Scn</name> <modifier>*</modifier></type><name>s</name></decl></parameter>, <parameter><decl><type><name>off_t</name></type> <name>rc</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>Elf_Data</name> <modifier>*</modifier></type><name>d</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>fsz</name></decl>, <decl><type ref="prev"/><name>msz</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ec</name></decl>, <decl><type ref="prev"/><name>elftype</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>sh_type</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>d_align</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf32_Shdr</name> <modifier>*</modifier></type><name>shdr32</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf64_Shdr</name> <modifier>*</modifier></type><name>shdr64</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>_Libelf_Data</name></name> <modifier>*</modifier></type><name>ld</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>scn_size</name></decl>, <decl><type ref="prev"/><name>scn_alignment</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>sh_align</name></decl>, <decl><type ref="prev"/><name>sh_entsize</name></decl>, <decl><type ref="prev"/><name>sh_offset</name></decl>, <decl><type ref="prev"/><name>sh_size</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>ec</name> <operator>=</operator> <name><name>e</name><operator>-&gt;</operator><name>e_class</name></name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>shdr32</name> <operator>=</operator> <operator>&amp;</operator><name><name>s</name><operator>-&gt;</operator><name>s_shdr</name><operator>.</operator><name>s_shdr32</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>shdr64</name> <operator>=</operator> <operator>&amp;</operator><name><name>s</name><operator>-&gt;</operator><name>s_shdr</name><operator>.</operator><name>s_shdr64</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ec</name> <operator>==</operator> <name>ELFCLASS32</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>sh_type</name> <operator>=</operator> <name><name>shdr32</name><operator>-&gt;</operator><name>sh_type</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>sh_align</name> <operator>=</operator> <operator>(</operator><name>uint64_t</name><operator>)</operator> <name><name>shdr32</name><operator>-&gt;</operator><name>sh_addralign</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>sh_entsize</name> <operator>=</operator> <operator>(</operator><name>uint64_t</name><operator>)</operator> <name><name>shdr32</name><operator>-&gt;</operator><name>sh_entsize</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>sh_offset</name> <operator>=</operator> <operator>(</operator><name>uint64_t</name><operator>)</operator> <name><name>shdr32</name><operator>-&gt;</operator><name>sh_offset</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>sh_size</name> <operator>=</operator> <operator>(</operator><name>uint64_t</name><operator>)</operator> <name><name>shdr32</name><operator>-&gt;</operator><name>sh_size</name></name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>sh_type</name> <operator>=</operator> <name><name>shdr64</name><operator>-&gt;</operator><name>sh_type</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>sh_align</name> <operator>=</operator> <name><name>shdr64</name><operator>-&gt;</operator><name>sh_addralign</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>sh_entsize</name> <operator>=</operator> <name><name>shdr64</name><operator>-&gt;</operator><name>sh_entsize</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>sh_offset</name> <operator>=</operator> <name><name>shdr64</name><operator>-&gt;</operator><name>sh_offset</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>sh_size</name> <operator>=</operator> <name><name>shdr64</name><operator>-&gt;</operator><name>sh_size</name></name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>sh_type</name> <operator>!=</operator> <name>SHT_NULL</name> <operator>&amp;&amp;</operator> <name>sh_type</name> <operator>!=</operator> <name>SHT_NOBITS</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>elftype</name> <operator>=</operator> <call><name>_libelf_xlate_shtype</name><argument_list>(<argument><expr><name>sh_type</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>elftype</name> <argument_list type="generic">&lt; <argument><expr><name>ELF_T_FIRST</name> <operator>||</operator> <name>elftype</name></expr></argument> &gt;</argument_list></name> <name>ELF_T_LAST</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LIBELF_SET_ERROR</name><argument_list>(<argument><expr><name>SECTION</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>sh_align</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>sh_align</name> <operator>=</operator> <call><name>_libelf_falign</name><argument_list>(<argument><expr><name>elftype</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>STAILQ_EMPTY</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>s</name><operator>-&gt;</operator><name>s_data</name></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>s</name><operator>-&gt;</operator><name>s_flags</name></name> <operator>&amp;</operator> <name>ELF_F_DIRTY</name><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+
+
+
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>e</name><operator>-&gt;</operator><name>e_flags</name></name> <operator>&amp;</operator> <name>ELF_F_LAYOUT</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>updatedescriptor</name>;</goto></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<goto>goto <name>computeoffset</name>;</goto></block_content></block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>e</name><operator>-&gt;</operator><name>e_cmd</name></name> <operator>!=</operator> <name>ELF_C_WRITE</name> <operator>&amp;&amp;</operator> <call><name>elf_getdata</name><argument_list>(<argument><expr><name>s</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+<expr_stmt><expr><name>scn_size</name> <operator>=</operator> <literal type="number">0L</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>scn_alignment</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<macro><name>STAILQ_FOREACH</name><argument_list>(<argument>ld</argument>, <argument>&amp;s-&gt;s_data</argument>, <argument>d_next</argument>)</argument_list></macro> <block>{<block_content>
+
+<expr_stmt><expr><name>d</name> <operator>=</operator> <operator>&amp;</operator><name><name>ld</name><operator>-&gt;</operator><name>d_data</name></name></expr>;</expr_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>d</name><operator>-&gt;</operator><name>d_type</name></name> <operator>&gt;=</operator> <name>ELF_T_NUM</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LIBELF_SET_ERROR</name><argument_list>(<argument><expr><name>DATA</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>d</name><operator>-&gt;</operator><name>d_version</name></name> <operator>!=</operator> <name><name>e</name><operator>-&gt;</operator><name>e_version</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LIBELF_SET_ERROR</name><argument_list>(<argument><expr><name>VERSION</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>d_align</name> <operator>=</operator> <name><name>d</name><operator>-&gt;</operator><name>d_align</name></name><operator>)</operator> <operator>==</operator> <literal type="number">0</literal> <operator>||</operator>
+<operator>(</operator><name>d_align</name> <operator>&amp;</operator> <operator>(</operator><name>d_align</name> <operator>-</operator> <literal type="number">1</literal><operator>)</operator><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LIBELF_SET_ERROR</name><argument_list>(<argument><expr><name>DATA</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>msz</name> <operator>=</operator> <call><name>_libelf_msize</name><argument_list>(<argument><expr><name><name>d</name><operator>-&gt;</operator><name>d_type</name></name></expr></argument>, <argument><expr><name>ec</name></expr></argument>, <argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_version</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>d</name><operator>-&gt;</operator><name>d_size</name></name> <operator>%</operator> <name>msz</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LIBELF_SET_ERROR</name><argument_list>(<argument><expr><name>DATA</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>e</name><operator>-&gt;</operator><name>e_flags</name></name> <operator>&amp;</operator> <name>ELF_F_LAYOUT</name><operator>)</operator> <operator>&amp;&amp;</operator>
+<operator>(</operator><name><name>d</name><operator>-&gt;</operator><name>d_off</name></name> <operator>&amp;</operator> <operator>(</operator><name>d_align</name> <operator>-</operator> <literal type="number">1</literal><operator>)</operator><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LIBELF_SET_ERROR</name><argument_list>(<argument><expr><name>LAYOUT</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>e</name><operator>-&gt;</operator><name>e_flags</name></name> <operator>&amp;</operator> <name>ELF_F_LAYOUT</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>uint64_t</name><operator>)</operator> <name><name>d</name><operator>-&gt;</operator><name>d_off</name></name> <operator>+</operator> <name><name>d</name><operator>-&gt;</operator><name>d_size</name></name> <operator>&gt;</operator> <name>scn_size</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>scn_size</name> <operator>=</operator> <name><name>d</name><operator>-&gt;</operator><name>d_off</name></name> <operator>+</operator> <name><name>d</name><operator>-&gt;</operator><name>d_size</name></name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>scn_size</name> <operator>=</operator> <call><name>roundup2</name><argument_list>(<argument><expr><name>scn_size</name></expr></argument>, <argument><expr><name><name>d</name><operator>-&gt;</operator><name>d_align</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>d</name><operator>-&gt;</operator><name>d_off</name></name> <operator>=</operator> <name>scn_size</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>fsz</name> <operator>=</operator> <call><name>_libelf_fsize</name><argument_list>(<argument><expr><name><name>d</name><operator>-&gt;</operator><name>d_type</name></name></expr></argument>, <argument><expr><name>ec</name></expr></argument>, <argument><expr><name><name>d</name><operator>-&gt;</operator><name>d_version</name></name></expr></argument>,
+<argument><expr><operator>(</operator><name>size_t</name><operator>)</operator> <name><name>d</name><operator>-&gt;</operator><name>d_size</name></name> <operator>/</operator> <name>msz</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>scn_size</name> <operator>+=</operator> <name>fsz</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>d_align</name> <operator>&gt;</operator> <name>scn_alignment</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>scn_alignment</name> <operator>=</operator> <name>d_align</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block>
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>e</name><operator>-&gt;</operator><name>e_flags</name></name> <operator>&amp;</operator> <name>ELF_F_LAYOUT</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>scn_alignment</name> <operator>&gt;</operator> <name>sh_align</name> <operator>||</operator>
+<name>sh_offset</name> <operator>%</operator> <name>sh_align</name> <operator>||</operator>
+<name>sh_size</name> <operator>&lt;</operator> <name>scn_size</name> <operator>||</operator>
+<name>sh_offset</name> <operator>%</operator> <call><name>_libelf_falign</name><argument_list>(<argument><expr><name>elftype</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LIBELF_SET_ERROR</name><argument_list>(<argument><expr><name>LAYOUT</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<goto>goto <name>updatedescriptor</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>scn_alignment</name> <operator>&gt;</operator> <name>sh_align</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>sh_align</name> <operator>=</operator> <name>scn_alignment</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>sh_entsize</name> <operator>==</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator>
+<operator>(</operator><name>sh_entsize</name> <operator>=</operator> <call><name>_libelf_fsize</name><argument_list>(<argument><expr><name>elftype</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>, <argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_version</name></name></expr></argument>,
+<argument><expr><operator>(</operator><name>size_t</name><operator>)</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>sh_entsize</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>sh_size</name> <operator>=</operator> <name>scn_size</name></expr>;</expr_stmt>
+
+<label><name>computeoffset</name>:</label>
+
+
+
+
+<expr_stmt><expr><name>sh_offset</name> <operator>=</operator> <call><name>roundup</name><argument_list>(<argument><expr><operator>(</operator><name>uint64_t</name><operator>)</operator> <name>rc</name></expr></argument>, <argument><expr><name>sh_align</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>ec</name> <operator>==</operator> <name>ELFCLASS32</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>shdr32</name><operator>-&gt;</operator><name>sh_addralign</name></name> <operator>=</operator> <operator>(</operator><name>uint32_t</name><operator>)</operator> <name>sh_align</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>shdr32</name><operator>-&gt;</operator><name>sh_entsize</name></name> <operator>=</operator> <operator>(</operator><name>uint32_t</name><operator>)</operator> <name>sh_entsize</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>shdr32</name><operator>-&gt;</operator><name>sh_offset</name></name> <operator>=</operator> <operator>(</operator><name>uint32_t</name><operator>)</operator> <name>sh_offset</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>shdr32</name><operator>-&gt;</operator><name>sh_size</name></name> <operator>=</operator> <operator>(</operator><name>uint32_t</name><operator>)</operator> <name>sh_size</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name><name>shdr64</name><operator>-&gt;</operator><name>sh_addralign</name></name> <operator>=</operator> <name>sh_align</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>shdr64</name><operator>-&gt;</operator><name>sh_entsize</name></name> <operator>=</operator> <name>sh_entsize</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>shdr64</name><operator>-&gt;</operator><name>sh_offset</name></name> <operator>=</operator> <name>sh_offset</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>shdr64</name><operator>-&gt;</operator><name>sh_size</name></name> <operator>=</operator> <name>sh_size</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<label><name>updatedescriptor</name>:</label>
+
+
+
+<expr_stmt><expr><name><name>s</name><operator>-&gt;</operator><name>s_size</name></name> <operator>=</operator> <name>sh_size</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>s</name><operator>-&gt;</operator><name>s_offset</name></name> <operator>=</operator> <name>sh_offset</name></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>_libelf_release_extents</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>_Elf_Extent_List</name></name> <modifier>*</modifier></type><name>extents</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>_Elf_Extent</name></name> <modifier>*</modifier></type><name>ex</name></decl>;</decl_stmt>
+
+<while>while <condition>(<expr><operator>(</operator><name>ex</name> <operator>=</operator> <call><name>SLIST_FIRST</name><argument_list>(<argument><expr><name>extents</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>SLIST_REMOVE_HEAD</name><argument_list>(<argument><expr><name>extents</name></expr></argument>, <argument><expr><name>ex_next</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>ex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></while>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>_libelf_extent_is_unused</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>_Elf_Extent_List</name></name> <modifier>*</modifier></type><name>extents</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>uint64_t</name></type> <name>start</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>uint64_t</name></type> <name>size</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>_Elf_Extent</name></name> <modifier>*</modifier><modifier>*</modifier></type><name>prevt</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>tmax</name></decl>, <decl><type ref="prev"/><name>tmin</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>_Elf_Extent</name></name> <modifier>*</modifier></type><name>t</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>pt</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uint64_t</name></type> <name>smax</name> <init>= <expr><name>start</name> <operator>+</operator> <name>size</name></expr></init></decl>;</decl_stmt>
+
+
+<expr_stmt><expr><name>pt</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<macro><name>SLIST_FOREACH</name><argument_list>(<argument>t</argument>, <argument>extents</argument>, <argument>ex_next</argument>)</argument_list></macro> <block>{<block_content>
+<expr_stmt><expr><name>tmin</name> <operator>=</operator> <name><name>t</name><operator>-&gt;</operator><name>ex_start</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>tmax</name> <operator>=</operator> <name>tmin</name> <operator>+</operator> <name><name>t</name><operator>-&gt;</operator><name>ex_size</name></name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>tmax</name> <operator>&lt;=</operator> <name>start</name></expr>)</condition> <block>{<block_content>
+
+
+
+<expr_stmt><expr><name>pt</name> <operator>=</operator> <name>t</name></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>smax</name> <operator>&lt;=</operator> <name>tmin</name></expr>)</condition> <block>{<block_content>
+
+
+
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>pt</name> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<name><name>pt</name><operator>-&gt;</operator><name>ex_start</name></name> <operator>+</operator> <name><name>pt</name><operator>-&gt;</operator><name>ex_size</name></name> <operator>&lt;=</operator> <name>start</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></else></if_stmt>
+</block_content>}</block>
+
+<if_stmt><if>if <condition>(<expr><name>prevt</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>*</operator><name>prevt</name> <operator>=</operator> <name>pt</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>_libelf_insert_extent</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>_Elf_Extent_List</name></name> <modifier>*</modifier></type><name>extents</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>type</name></decl></parameter>,
+<parameter><decl><type><name>uint64_t</name></type> <name>start</name></decl></parameter>, <parameter><decl><type><name>uint64_t</name></type> <name>size</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>desc</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>_Elf_Extent</name></name> <modifier>*</modifier></type><name>ex</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>prevt</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>type</name> <operator>&gt;=</operator> <name>ELF_EXTENT_EHDR</name> <operator>&amp;&amp;</operator> <name>type</name> <operator>&lt;=</operator> <name>ELF_EXTENT_SHDR</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>prevt</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>_libelf_extent_is_unused</name><argument_list>(<argument><expr><name>extents</name></expr></argument>, <argument><expr><name>start</name></expr></argument>, <argument><expr><name>size</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>prevt</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LIBELF_SET_ERROR</name><argument_list>(<argument><expr><name>LAYOUT</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>ex</name> <operator>=</operator> <call><name>malloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr>struct <name>_Elf_Extent</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LIBELF_SET_ERROR</name><argument_list>(<argument><expr><name>RESOURCE</name></expr></argument>, <argument><expr><name>errno</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>ex</name><operator>-&gt;</operator><name>ex_start</name></name> <operator>=</operator> <name>start</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ex</name><operator>-&gt;</operator><name>ex_size</name></name> <operator>=</operator> <name>size</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ex</name><operator>-&gt;</operator><name>ex_desc</name></name> <operator>=</operator> <name>desc</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ex</name><operator>-&gt;</operator><name>ex_type</name></name> <operator>=</operator> <name>type</name></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>prevt</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>SLIST_INSERT_AFTER</name><argument_list>(<argument><expr><name>prevt</name></expr></argument>, <argument><expr><name>ex</name></expr></argument>, <argument><expr><name>ex_next</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>SLIST_INSERT_HEAD</name><argument_list>(<argument><expr><name>extents</name></expr></argument>, <argument><expr><name>ex</name></expr></argument>, <argument><expr><name>ex_next</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>off_t</name></type>
+<name>_libelf_resync_sections</name><parameter_list>(<parameter><decl><type><name>Elf</name> <modifier>*</modifier></type><name>e</name></decl></parameter>, <parameter><decl><type><name>off_t</name></type> <name>rc</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>_Elf_Extent_List</name></name> <modifier>*</modifier></type><name>extents</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>ec</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf_Scn</name> <modifier>*</modifier></type><name>s</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>sh_type</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>ec</name> <operator>=</operator> <name><name>e</name><operator>-&gt;</operator><name>e_class</name></name></expr>;</expr_stmt>
+
+
+
+
+
+<macro><name>RB_FOREACH</name><argument_list>(<argument>s</argument>, <argument>scntree</argument>, <argument>&amp;e-&gt;e_u.e_elf.e_scn</argument>)</argument_list></macro> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>ec</name> <operator>==</operator> <name>ELFCLASS32</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>sh_type</name> <operator>=</operator> <name><name>s</name><operator>-&gt;</operator><name>s_shdr</name><operator>.</operator><name>s_shdr32</name><operator>.</operator><name>sh_type</name></name></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>sh_type</name> <operator>=</operator> <name><name>s</name><operator>-&gt;</operator><name>s_shdr</name><operator>.</operator><name>s_shdr64</name><operator>.</operator><name>sh_type</name></name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>sh_type</name> <operator>==</operator> <name>SHT_NOBITS</name> <operator>||</operator> <name>sh_type</name> <operator>==</operator> <name>SHT_NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>_libelf_compute_section_extents</name><argument_list>(<argument><expr><name>e</name></expr></argument>, <argument><expr><name>s</name></expr></argument>, <argument><expr><name>rc</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>s</name><operator>-&gt;</operator><name>s_size</name></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>_libelf_insert_extent</name><argument_list>(<argument><expr><name>extents</name></expr></argument>, <argument><expr><name>ELF_EXTENT_SECTION</name></expr></argument>,
+<argument><expr><name><name>s</name><operator>-&gt;</operator><name>s_offset</name></name></expr></argument>, <argument><expr><name><name>s</name><operator>-&gt;</operator><name>s_size</name></name></expr></argument>, <argument><expr><name>s</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>size_t</name><operator>)</operator> <name>rc</name> <operator>&lt;</operator> <name><name>s</name><operator>-&gt;</operator><name>s_offset</name></name> <operator>+</operator> <name><name>s</name><operator>-&gt;</operator><name>s_size</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>rc</name> <operator>=</operator> <operator>(</operator><name>off_t</name><operator>)</operator> <operator>(</operator><name><name>s</name><operator>-&gt;</operator><name>s_offset</name></name> <operator>+</operator> <name><name>s</name><operator>-&gt;</operator><name>s_size</name></name><operator>)</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block>
+
+<return>return <expr><operator>(</operator><name>rc</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>off_t</name></type>
+<name>_libelf_resync_elf</name><parameter_list>(<parameter><decl><type><name>Elf</name> <modifier>*</modifier></type><name>e</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>_Elf_Extent_List</name></name> <modifier>*</modifier></type><name>extents</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>ec</name></decl>, <decl><type ref="prev"/><name>eh_class</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>int</name></type> <name>eh_byteorder</name></decl>, <decl><type ref="prev"/><name>eh_version</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>align</name></decl>, <decl><type ref="prev"/><name>fsz</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>phnum</name></decl>, <decl><type ref="prev"/><name>shnum</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>off_t</name></type> <name>rc</name></decl>, <decl><type ref="prev"/><name>phoff</name></decl>, <decl><type ref="prev"/><name>shoff</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>ehdr</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>phdr</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf32_Ehdr</name> <modifier>*</modifier></type><name>eh32</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf64_Ehdr</name> <modifier>*</modifier></type><name>eh64</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>rc</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>ec</name> <operator>=</operator> <name><name>e</name><operator>-&gt;</operator><name>e_class</name></name></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>ec</name> <operator>==</operator> <name>ELFCLASS32</name> <operator>||</operator> <name>ec</name> <operator>==</operator> <name>ELFCLASS64</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>ehdr</name> <operator>=</operator> <call><name>_libelf_ehdr</name><argument_list>(<argument><expr><name>e</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>eh32</name> <operator>=</operator> <name>ehdr</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>eh64</name> <operator>=</operator> <name>ehdr</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ec</name> <operator>==</operator> <name>ELFCLASS32</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>eh_byteorder</name> <operator>=</operator> <name><name>eh32</name><operator>-&gt;</operator><name>e_ident</name><index>[<expr><name>EI_DATA</name></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>eh_class</name> <operator>=</operator> <name><name>eh32</name><operator>-&gt;</operator><name>e_ident</name><index>[<expr><name>EI_CLASS</name></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>phoff</name> <operator>=</operator> <operator>(</operator><name>off_t</name><operator>)</operator> <name><name>eh32</name><operator>-&gt;</operator><name>e_phoff</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>shoff</name> <operator>=</operator> <operator>(</operator><name>off_t</name><operator>)</operator> <name><name>eh32</name><operator>-&gt;</operator><name>e_shoff</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>eh_version</name> <operator>=</operator> <name><name>eh32</name><operator>-&gt;</operator><name>e_version</name></name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>eh_byteorder</name> <operator>=</operator> <name><name>eh64</name><operator>-&gt;</operator><name>e_ident</name><index>[<expr><name>EI_DATA</name></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>eh_class</name> <operator>=</operator> <name><name>eh64</name><operator>-&gt;</operator><name>e_ident</name><index>[<expr><name>EI_CLASS</name></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>phoff</name> <operator>=</operator> <operator>(</operator><name>off_t</name><operator>)</operator> <name><name>eh64</name><operator>-&gt;</operator><name>e_phoff</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>shoff</name> <operator>=</operator> <operator>(</operator><name>off_t</name><operator>)</operator> <name><name>eh64</name><operator>-&gt;</operator><name>e_shoff</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>eh_version</name> <operator>=</operator> <name><name>eh64</name><operator>-&gt;</operator><name>e_version</name></name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>phoff</name> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator> <name>shoff</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LIBELF_SET_ERROR</name><argument_list>(<argument><expr><name>HEADER</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>eh_version</name> <operator>==</operator> <name>EV_NONE</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>eh_version</name> <operator>=</operator> <name>EV_CURRENT</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>eh_version</name> <operator>!=</operator> <name><name>e</name><operator>-&gt;</operator><name>e_version</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LIBELF_SET_ERROR</name><argument_list>(<argument><expr><name>VERSION</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>eh_class</name> <operator>!=</operator> <name><name>e</name><operator>-&gt;</operator><name>e_class</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LIBELF_SET_ERROR</name><argument_list>(<argument><expr><name>CLASS</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>e</name><operator>-&gt;</operator><name>e_cmd</name></name> <operator>!=</operator> <name>ELF_C_WRITE</name> <operator>&amp;&amp;</operator> <name>eh_byteorder</name> <operator>!=</operator> <name><name>e</name><operator>-&gt;</operator><name>e_byteorder</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LIBELF_SET_ERROR</name><argument_list>(<argument><expr><name>HEADER</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>shnum</name> <operator>=</operator> <name><name>e</name><operator>-&gt;</operator><name>e_u</name><operator>.</operator><name>e_elf</name><operator>.</operator><name>e_nscn</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>phnum</name> <operator>=</operator> <name><name>e</name><operator>-&gt;</operator><name>e_u</name><operator>.</operator><name>e_elf</name><operator>.</operator><name>e_nphdr</name></name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>e</name><operator>-&gt;</operator><name>e_byteorder</name></name> <operator>=</operator> <name>eh_byteorder</name></expr>;</expr_stmt>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>INITIALIZE_EHDR</name><parameter_list>(<parameter><type><name>E</name></type></parameter>,<parameter><type><name>EC</name></type></parameter>,<parameter><type><name>V</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>do { unsigned int _version = (unsigned int) (V); (E)-&gt;e_ident[EI_MAG0] = ELFMAG0; (E)-&gt;e_ident[EI_MAG1] = ELFMAG1; (E)-&gt;e_ident[EI_MAG2] = ELFMAG2; (E)-&gt;e_ident[EI_MAG3] = ELFMAG3; (E)-&gt;e_ident[EI_CLASS] = (unsigned char) (EC); (E)-&gt;e_ident[EI_VERSION] = (_version &amp; 0xFFU); (E)-&gt;e_ehsize = (uint16_t) _libelf_fsize(ELF_T_EHDR, (EC), _version, (size_t) 1); (E)-&gt;e_phentsize = (uint16_t) ((phnum == 0) ? 0 : _libelf_fsize(ELF_T_PHDR, (EC), _version, (size_t) 1)); (E)-&gt;e_shentsize = (uint16_t) _libelf_fsize(ELF_T_SHDR, (EC), _version, (size_t) 1); } while (0)</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>ec</name> <operator>==</operator> <name>ELFCLASS32</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>INITIALIZE_EHDR</name><argument_list>(<argument><expr><name>eh32</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>, <argument><expr><name>eh_version</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>INITIALIZE_EHDR</name><argument_list>(<argument><expr><name>eh64</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>, <argument><expr><name>eh_version</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>elf_flagehdr</name><argument_list>(<argument><expr><name>e</name></expr></argument>, <argument><expr><name>ELF_C_SET</name></expr></argument>, <argument><expr><name>ELF_F_DIRTY</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>rc</name> <operator>+=</operator> <operator>(</operator><name>off_t</name><operator>)</operator> <call><name>_libelf_fsize</name><argument_list>(<argument><expr><name>ELF_T_EHDR</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>, <argument><expr><name>eh_version</name></expr></argument>, <argument><expr><operator>(</operator><name>size_t</name><operator>)</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>_libelf_insert_extent</name><argument_list>(<argument><expr><name>extents</name></expr></argument>, <argument><expr><name>ELF_EXTENT_EHDR</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><operator>(</operator><name>uint64_t</name><operator>)</operator> <name>rc</name></expr></argument>,
+<argument><expr><name>ehdr</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>phnum</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>fsz</name> <operator>=</operator> <call><name>_libelf_fsize</name><argument_list>(<argument><expr><name>ELF_T_PHDR</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>, <argument><expr><name>eh_version</name></expr></argument>, <argument><expr><name>phnum</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>align</name> <operator>=</operator> <call><name>_libelf_falign</name><argument_list>(<argument><expr><name>ELF_T_PHDR</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>e</name><operator>-&gt;</operator><name>e_flags</name></name> <operator>&amp;</operator> <name>ELF_F_LAYOUT</name></expr>)</condition> <block>{<block_content>
+
+
+
+<if_stmt><if>if <condition>(<expr><name>rc</name> <operator>&gt;</operator> <name>phoff</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LIBELF_SET_ERROR</name><argument_list>(<argument><expr><name>LAYOUT</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>phoff</name> <operator>%</operator> <operator>(</operator><name>off_t</name><operator>)</operator> <name>align</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LIBELF_SET_ERROR</name><argument_list>(<argument><expr><name>LAYOUT</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>phoff</name> <operator>=</operator> <call><name>roundup</name><argument_list>(<argument><expr><name>rc</name></expr></argument>, <argument><expr><operator>(</operator><name>off_t</name><operator>)</operator> <name>align</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<expr_stmt><expr><name>rc</name> <operator>=</operator> <name>phoff</name> <operator>+</operator> <operator>(</operator><name>off_t</name><operator>)</operator> <name>fsz</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>phdr</name> <operator>=</operator> <call><name>_libelf_getphdr</name><argument_list>(<argument><expr><name>e</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>_libelf_insert_extent</name><argument_list>(<argument><expr><name>extents</name></expr></argument>, <argument><expr><name>ELF_EXTENT_PHDR</name></expr></argument>,
+<argument><expr><operator>(</operator><name>uint64_t</name><operator>)</operator> <name>phoff</name></expr></argument>, <argument><expr><name>fsz</name></expr></argument>, <argument><expr><name>phdr</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>phoff</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>e</name><operator>-&gt;</operator><name>e_cmd</name></name> <operator>!=</operator> <name>ELF_C_WRITE</name> <operator>&amp;&amp;</operator>
+<operator>(</operator><name><name>e</name><operator>-&gt;</operator><name>e_flags</name></name> <operator>&amp;</operator> <name>LIBELF_F_SHDRS_LOADED</name><operator>)</operator> <operator>==</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator>
+<call><name>_libelf_load_section_headers</name><argument_list>(<argument><expr><name>e</name></expr></argument>, <argument><expr><name>ehdr</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>rc</name> <operator>=</operator> <call><name>_libelf_resync_sections</name><argument_list>(<argument><expr><name>e</name></expr></argument>, <argument><expr><name>rc</name></expr></argument>, <argument><expr><name>extents</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>shnum</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>fsz</name> <operator>=</operator> <call><name>_libelf_fsize</name><argument_list>(<argument><expr><name>ELF_T_SHDR</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>, <argument><expr><name>eh_version</name></expr></argument>, <argument><expr><name>shnum</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>align</name> <operator>=</operator> <call><name>_libelf_falign</name><argument_list>(<argument><expr><name>ELF_T_SHDR</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>e</name><operator>-&gt;</operator><name>e_flags</name></name> <operator>&amp;</operator> <name>ELF_F_LAYOUT</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>shoff</name> <operator>%</operator> <operator>(</operator><name>off_t</name><operator>)</operator> <name>align</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LIBELF_SET_ERROR</name><argument_list>(<argument><expr><name>LAYOUT</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>shoff</name> <operator>=</operator> <call><name>roundup</name><argument_list>(<argument><expr><name>rc</name></expr></argument>, <argument><expr><operator>(</operator><name>off_t</name><operator>)</operator> <name>align</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>shoff</name> <operator>+</operator> <operator>(</operator><name>off_t</name><operator>)</operator> <name>fsz</name> <operator>&gt;</operator> <name>rc</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>rc</name> <operator>=</operator> <name>shoff</name> <operator>+</operator> <operator>(</operator><name>off_t</name><operator>)</operator> <name>fsz</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>_libelf_insert_extent</name><argument_list>(<argument><expr><name>extents</name></expr></argument>, <argument><expr><name>ELF_EXTENT_SHDR</name></expr></argument>,
+<argument><expr><operator>(</operator><name>uint64_t</name><operator>)</operator> <name>shoff</name></expr></argument>, <argument><expr><name>fsz</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>shoff</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+
+
+
+
+<expr_stmt><expr><call><name>_libelf_setphnum</name><argument_list>(<argument><expr><name>e</name></expr></argument>, <argument><expr><name>ehdr</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>, <argument><expr><name>phnum</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>_libelf_setshnum</name><argument_list>(<argument><expr><name>e</name></expr></argument>, <argument><expr><name>ehdr</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>, <argument><expr><name>shnum</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>e</name><operator>-&gt;</operator><name>e_flags</name></name> <operator>&amp;</operator> <name>ELF_F_LAYOUT</name><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>ec</name> <operator>==</operator> <name>ELFCLASS32</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>eh32</name><operator>-&gt;</operator><name>e_phoff</name></name> <operator>=</operator> <operator>(</operator><name>uint32_t</name><operator>)</operator> <name>phoff</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>eh32</name><operator>-&gt;</operator><name>e_shoff</name></name> <operator>=</operator> <operator>(</operator><name>uint32_t</name><operator>)</operator> <name>shoff</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name><name>eh64</name><operator>-&gt;</operator><name>e_phoff</name></name> <operator>=</operator> <operator>(</operator><name>uint64_t</name><operator>)</operator> <name>phoff</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>eh64</name><operator>-&gt;</operator><name>e_shoff</name></name> <operator>=</operator> <operator>(</operator><name>uint64_t</name><operator>)</operator> <name>shoff</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>rc</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>off_t</name></type>
+<name>_libelf_write_scn</name><parameter_list>(<parameter><decl><type><name>Elf</name> <modifier>*</modifier></type><name>e</name></decl></parameter>, <parameter><decl><type><name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>nf</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>_Elf_Extent</name></name> <modifier>*</modifier></type><name>ex</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>off_t</name></type> <name>rc</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ec</name></decl>, <decl><type ref="prev"/><name>em</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf_Scn</name> <modifier>*</modifier></type><name>s</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>elftype</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf_Data</name> <modifier>*</modifier></type><name>d</name></decl>, <decl><type ref="prev"/><name>dst</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>sh_type</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>_Libelf_Data</name></name> <modifier>*</modifier></type><name>ld</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>sh_off</name></decl>, <decl><type ref="prev"/><name>sh_size</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>fsz</name></decl>, <decl><type ref="prev"/><name>msz</name></decl>, <decl><type ref="prev"/><name>nobjects</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>ex</name><operator>-&gt;</operator><name>ex_type</name></name> <operator>==</operator> <name>ELF_EXTENT_SECTION</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>s</name> <operator>=</operator> <name><name>ex</name><operator>-&gt;</operator><name>ex_desc</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>rc</name> <operator>=</operator> <operator>(</operator><name>off_t</name><operator>)</operator> <name><name>ex</name><operator>-&gt;</operator><name>ex_start</name></name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>ec</name> <operator>=</operator> <name><name>e</name><operator>-&gt;</operator><name>e_class</name></name><operator>)</operator> <operator>==</operator> <name>ELFCLASS32</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>sh_type</name> <operator>=</operator> <name><name>s</name><operator>-&gt;</operator><name>s_shdr</name><operator>.</operator><name>s_shdr32</name><operator>.</operator><name>sh_type</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>sh_size</name> <operator>=</operator> <operator>(</operator><name>uint64_t</name><operator>)</operator> <name><name>s</name><operator>-&gt;</operator><name>s_shdr</name><operator>.</operator><name>s_shdr32</name><operator>.</operator><name>sh_size</name></name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>sh_type</name> <operator>=</operator> <name><name>s</name><operator>-&gt;</operator><name>s_shdr</name><operator>.</operator><name>s_shdr64</name><operator>.</operator><name>sh_type</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>sh_size</name> <operator>=</operator> <name><name>s</name><operator>-&gt;</operator><name>s_shdr</name><operator>.</operator><name>s_shdr64</name><operator>.</operator><name>sh_size</name></name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>sh_type</name> <operator>==</operator> <name>SHT_NOBITS</name> <operator>||</operator> <name>sh_type</name> <operator>==</operator> <name>SHT_NULL</name> <operator>||</operator> <name>sh_size</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>rc</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>elftype</name> <operator>=</operator> <call><name>_libelf_xlate_shtype</name><argument_list>(<argument><expr><name>sh_type</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>elftype</name> <operator>&gt;=</operator> <name>ELF_T_FIRST</name> <operator>&amp;&amp;</operator> <name>elftype</name> <operator>&lt;=</operator> <name>ELF_T_LAST</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>sh_off</name> <operator>=</operator> <name><name>s</name><operator>-&gt;</operator><name>s_offset</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>sh_off</name> <operator>%</operator> <call><name>_libelf_falign</name><argument_list>(<argument><expr><name>elftype</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>em</name> <operator>=</operator> <call><name>_libelf_elfmachine</name><argument_list>(<argument><expr><name>e</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><literal type="number">0</literal></expr></cpp:if>
+assert(em &gt;= EM_NONE &amp;&amp; em &lt; EM__LAST__);
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>STAILQ_EMPTY</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>s</name><operator>-&gt;</operator><name>s_data</name></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>d</name> <operator>=</operator> <call><name>elf_rawdata</name><argument_list>(<argument><expr><name>s</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<macro><name>STAILQ_FOREACH</name><argument_list>(<argument>ld</argument>, <argument>&amp;s-&gt;s_rawdata</argument>, <argument>d_next</argument>)</argument_list></macro> <block>{<block_content>
+
+<expr_stmt><expr><name>d</name> <operator>=</operator> <operator>&amp;</operator><name><name>ld</name><operator>-&gt;</operator><name>d_data</name></name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>uint64_t</name><operator>)</operator> <name>rc</name> <operator>&lt;</operator> <name>sh_off</name> <operator>+</operator> <name><name>d</name><operator>-&gt;</operator><name>d_off</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>memset</name><argument_list>(<argument><expr><name>nf</name> <operator>+</operator> <name>rc</name></expr></argument>,
+<argument><expr><call><name>LIBELF_PRIVATE</name><argument_list>(<argument><expr><name>fillchar</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><operator>(</operator><name>size_t</name><operator>)</operator> <operator>(</operator><name>sh_off</name> <operator>+</operator> <name><name>d</name><operator>-&gt;</operator><name>d_off</name></name> <operator>-</operator>
+<operator>(</operator><name>uint64_t</name><operator>)</operator> <name>rc</name><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>rc</name> <operator>=</operator> <operator>(</operator><name>off_t</name><operator>)</operator> <operator>(</operator><name>sh_off</name> <operator>+</operator> <name><name>d</name><operator>-&gt;</operator><name>d_off</name></name><operator>)</operator></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>d</name><operator>-&gt;</operator><name>d_buf</name></name> <operator>!=</operator> <name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>d</name><operator>-&gt;</operator><name>d_type</name></name> <operator>==</operator> <name>ELF_T_BYTE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>d</name><operator>-&gt;</operator><name>d_version</name></name> <operator>==</operator> <name><name>e</name><operator>-&gt;</operator><name>e_version</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>memcpy</name><argument_list>(<argument><expr><name>nf</name> <operator>+</operator> <name>rc</name></expr></argument>,
+<argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_rawfile</name></name> <operator>+</operator> <name><name>s</name><operator>-&gt;</operator><name>s_rawoff</name></name> <operator>+</operator> <name><name>d</name><operator>-&gt;</operator><name>d_off</name></name></expr></argument>,
+<argument><expr><operator>(</operator><name>size_t</name><operator>)</operator> <name><name>d</name><operator>-&gt;</operator><name>d_size</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>rc</name> <operator>+=</operator> <operator>(</operator><name>off_t</name><operator>)</operator> <name><name>d</name><operator>-&gt;</operator><name>d_size</name></name></expr>;</expr_stmt>
+</block_content>}</block>
+
+<return>return <expr><operator>(</operator><name>rc</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+
+
+<expr_stmt><expr><name><name>dst</name><operator>.</operator><name>d_version</name></name> <operator>=</operator> <name><name>e</name><operator>-&gt;</operator><name>e_version</name></name></expr>;</expr_stmt>
+
+<macro><name>STAILQ_FOREACH</name><argument_list>(<argument>ld</argument>, <argument>&amp;s-&gt;s_data</argument>, <argument>d_next</argument>)</argument_list></macro> <block>{<block_content>
+
+<expr_stmt><expr><name>d</name> <operator>=</operator> <operator>&amp;</operator><name><name>ld</name><operator>-&gt;</operator><name>d_data</name></name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>msz</name> <operator>=</operator> <call><name>_libelf_msize</name><argument_list>(<argument><expr><name><name>d</name><operator>-&gt;</operator><name>d_type</name></name></expr></argument>, <argument><expr><name>ec</name></expr></argument>, <argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_version</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>uint64_t</name><operator>)</operator> <name>rc</name> <operator>&lt;</operator> <name>sh_off</name> <operator>+</operator> <name><name>d</name><operator>-&gt;</operator><name>d_off</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>memset</name><argument_list>(<argument><expr><name>nf</name> <operator>+</operator> <name>rc</name></expr></argument>,
+<argument><expr><call><name>LIBELF_PRIVATE</name><argument_list>(<argument><expr><name>fillchar</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><operator>(</operator><name>size_t</name><operator>)</operator> <operator>(</operator><name>sh_off</name> <operator>+</operator> <name><name>d</name><operator>-&gt;</operator><name>d_off</name></name> <operator>-</operator> <operator>(</operator><name>uint64_t</name><operator>)</operator> <name>rc</name><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>rc</name> <operator>=</operator> <operator>(</operator><name>off_t</name><operator>)</operator> <operator>(</operator><name>sh_off</name> <operator>+</operator> <name><name>d</name><operator>-&gt;</operator><name>d_off</name></name><operator>)</operator></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>d</name><operator>-&gt;</operator><name>d_buf</name></name> <operator>!=</operator> <name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>d</name><operator>-&gt;</operator><name>d_version</name></name> <operator>==</operator> <name><name>e</name><operator>-&gt;</operator><name>e_version</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>d</name><operator>-&gt;</operator><name>d_size</name></name> <operator>%</operator> <name>msz</name> <operator>==</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>msz</name> <operator>!=</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>nobjects</name> <operator>=</operator> <operator>(</operator><name>size_t</name><operator>)</operator> <operator>(</operator><name><name>d</name><operator>-&gt;</operator><name>d_size</name></name> <operator>/</operator> <name>msz</name><operator>)</operator></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>fsz</name> <operator>=</operator> <call><name>_libelf_fsize</name><argument_list>(<argument><expr><name><name>d</name><operator>-&gt;</operator><name>d_type</name></name></expr></argument>, <argument><expr><name>ec</name></expr></argument>, <argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_version</name></name></expr></argument>, <argument><expr><name>nobjects</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>dst</name><operator>.</operator><name>d_buf</name></name> <operator>=</operator> <name>nf</name> <operator>+</operator> <name>rc</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>dst</name><operator>.</operator><name>d_size</name></name> <operator>=</operator> <name>fsz</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>_libelf_xlate</name><argument_list>(<argument><expr><operator>&amp;</operator><name>dst</name></expr></argument>, <argument><expr><name>d</name></expr></argument>, <argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_byteorder</name></name></expr></argument>, <argument><expr><name>ec</name></expr></argument>, <argument><expr><name>em</name></expr></argument>, <argument><expr><name>ELF_TOFILE</name></expr></argument>)</argument_list></call>
+<operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>rc</name> <operator>+=</operator> <operator>(</operator><name>off_t</name><operator>)</operator> <name>fsz</name></expr>;</expr_stmt>
+</block_content>}</block>
+
+<return>return <expr><operator>(</operator><name>rc</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>off_t</name></type>
+<name>_libelf_write_ehdr</name><parameter_list>(<parameter><decl><type><name>Elf</name> <modifier>*</modifier></type><name>e</name></decl></parameter>, <parameter><decl><type><name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>nf</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>_Elf_Extent</name></name> <modifier>*</modifier></type><name>ex</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>ec</name></decl>, <decl><type ref="prev"/><name>em</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>ehdr</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>fsz</name></decl>, <decl><type ref="prev"/><name>msz</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf_Data</name></type> <name>dst</name></decl>, <decl><type ref="prev"/><name>src</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>ex</name><operator>-&gt;</operator><name>ex_type</name></name> <operator>==</operator> <name>ELF_EXTENT_EHDR</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>ex</name><operator>-&gt;</operator><name>ex_start</name></name> <operator>==</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>ec</name> <operator>=</operator> <name><name>e</name><operator>-&gt;</operator><name>e_class</name></name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>ehdr</name> <operator>=</operator> <call><name>_libelf_ehdr</name><argument_list>(<argument><expr><name>e</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>ehdr</name> <operator>!=</operator> <name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>fsz</name> <operator>=</operator> <call><name>_libelf_fsize</name><argument_list>(<argument><expr><name>ELF_T_EHDR</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>, <argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_version</name></name></expr></argument>, <argument><expr><operator>(</operator><name>size_t</name><operator>)</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>msz</name> <operator>=</operator> <call><name>_libelf_msize</name><argument_list>(<argument><expr><name>ELF_T_EHDR</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>, <argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_version</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>em</name> <operator>=</operator> <call><name>_libelf_elfmachine</name><argument_list>(<argument><expr><name>e</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>dst</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>dst</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>src</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>src</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>src</name><operator>.</operator><name>d_buf</name></name> <operator>=</operator> <name>ehdr</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>src</name><operator>.</operator><name>d_size</name></name> <operator>=</operator> <name>msz</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>src</name><operator>.</operator><name>d_type</name></name> <operator>=</operator> <name>ELF_T_EHDR</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>src</name><operator>.</operator><name>d_version</name></name> <operator>=</operator> <name><name>dst</name><operator>.</operator><name>d_version</name></name> <operator>=</operator> <name><name>e</name><operator>-&gt;</operator><name>e_version</name></name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>dst</name><operator>.</operator><name>d_buf</name></name> <operator>=</operator> <name>nf</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>dst</name><operator>.</operator><name>d_size</name></name> <operator>=</operator> <name>fsz</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>_libelf_xlate</name><argument_list>(<argument><expr><operator>&amp;</operator><name>dst</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>src</name></expr></argument>, <argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_byteorder</name></name></expr></argument>, <argument><expr><name>ec</name></expr></argument>, <argument><expr><name>em</name></expr></argument>, <argument><expr><name>ELF_TOFILE</name></expr></argument>)</argument_list></call> <operator>==</operator>
+<name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <name>fsz</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>off_t</name></type>
+<name>_libelf_write_phdr</name><parameter_list>(<parameter><decl><type><name>Elf</name> <modifier>*</modifier></type><name>e</name></decl></parameter>, <parameter><decl><type><name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>nf</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>_Elf_Extent</name></name> <modifier>*</modifier></type><name>ex</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>ec</name></decl>, <decl><type ref="prev"/><name>em</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>ehdr</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf32_Ehdr</name> <modifier>*</modifier></type><name>eh32</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf64_Ehdr</name> <modifier>*</modifier></type><name>eh64</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf_Data</name></type> <name>dst</name></decl>, <decl><type ref="prev"/><name>src</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>fsz</name></decl>, <decl><type ref="prev"/><name>msz</name></decl>, <decl><type ref="prev"/><name>phnum</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>phoff</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>ex</name><operator>-&gt;</operator><name>ex_type</name></name> <operator>==</operator> <name>ELF_EXTENT_PHDR</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>ec</name> <operator>=</operator> <name><name>e</name><operator>-&gt;</operator><name>e_class</name></name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>ehdr</name> <operator>=</operator> <call><name>_libelf_ehdr</name><argument_list>(<argument><expr><name>e</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>ehdr</name> <operator>!=</operator> <name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>phnum</name> <operator>=</operator> <name><name>e</name><operator>-&gt;</operator><name>e_u</name><operator>.</operator><name>e_elf</name><operator>.</operator><name>e_nphdr</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>phnum</name> <operator>&gt;</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ec</name> <operator>==</operator> <name>ELFCLASS32</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>eh32</name> <operator>=</operator> <operator>(</operator><name>Elf32_Ehdr</name> <operator>*</operator><operator>)</operator> <name>ehdr</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>phoff</name> <operator>=</operator> <operator>(</operator><name>uint64_t</name><operator>)</operator> <name><name>eh32</name><operator>-&gt;</operator><name>e_phoff</name></name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>eh64</name> <operator>=</operator> <operator>(</operator><name>Elf64_Ehdr</name> <operator>*</operator><operator>)</operator> <name>ehdr</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>phoff</name> <operator>=</operator> <name><name>eh64</name><operator>-&gt;</operator><name>e_phoff</name></name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<expr_stmt><expr><name>em</name> <operator>=</operator> <call><name>_libelf_elfmachine</name><argument_list>(<argument><expr><name>e</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>phoff</name> <operator>&gt;</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>ex</name><operator>-&gt;</operator><name>ex_start</name></name> <operator>==</operator> <name>phoff</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>phoff</name> <operator>%</operator> <call><name>_libelf_falign</name><argument_list>(<argument><expr><name>ELF_T_PHDR</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>dst</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>dst</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>src</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>src</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>msz</name> <operator>=</operator> <call><name>_libelf_msize</name><argument_list>(<argument><expr><name>ELF_T_PHDR</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>, <argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_version</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>fsz</name> <operator>=</operator> <call><name>_libelf_fsize</name><argument_list>(<argument><expr><name>ELF_T_PHDR</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>, <argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_version</name></name></expr></argument>, <argument><expr><name>phnum</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>fsz</name> <operator>&gt;</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>src</name><operator>.</operator><name>d_buf</name></name> <operator>=</operator> <call><name>_libelf_getphdr</name><argument_list>(<argument><expr><name>e</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>src</name><operator>.</operator><name>d_version</name></name> <operator>=</operator> <name><name>dst</name><operator>.</operator><name>d_version</name></name> <operator>=</operator> <name><name>e</name><operator>-&gt;</operator><name>e_version</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>src</name><operator>.</operator><name>d_type</name></name> <operator>=</operator> <name>ELF_T_PHDR</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>src</name><operator>.</operator><name>d_size</name></name> <operator>=</operator> <name>phnum</name> <operator>*</operator> <name>msz</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>dst</name><operator>.</operator><name>d_size</name></name> <operator>=</operator> <name>fsz</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>dst</name><operator>.</operator><name>d_buf</name></name> <operator>=</operator> <name>nf</name> <operator>+</operator> <name><name>ex</name><operator>-&gt;</operator><name>ex_start</name></name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>_libelf_xlate</name><argument_list>(<argument><expr><operator>&amp;</operator><name>dst</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>src</name></expr></argument>, <argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_byteorder</name></name></expr></argument>, <argument><expr><name>ec</name></expr></argument>, <argument><expr><name>em</name></expr></argument>, <argument><expr><name>ELF_TOFILE</name></expr></argument>)</argument_list></call> <operator>==</operator>
+<name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>(</operator><name>phoff</name> <operator>+</operator> <name>fsz</name><operator>)</operator><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>off_t</name></type>
+<name>_libelf_write_shdr</name><parameter_list>(<parameter><decl><type><name>Elf</name> <modifier>*</modifier></type><name>e</name></decl></parameter>, <parameter><decl><type><name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>nf</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>_Elf_Extent</name></name> <modifier>*</modifier></type><name>ex</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>ec</name></decl>, <decl><type ref="prev"/><name>em</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>ehdr</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf_Scn</name> <modifier>*</modifier></type><name>scn</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>shoff</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf32_Ehdr</name> <modifier>*</modifier></type><name>eh32</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf64_Ehdr</name> <modifier>*</modifier></type><name>eh64</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>fsz</name></decl>, <decl><type ref="prev"/><name>msz</name></decl>, <decl><type ref="prev"/><name>nscn</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf_Data</name></type> <name>dst</name></decl>, <decl><type ref="prev"/><name>src</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>ex</name><operator>-&gt;</operator><name>ex_type</name></name> <operator>==</operator> <name>ELF_EXTENT_SHDR</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>ec</name> <operator>=</operator> <name><name>e</name><operator>-&gt;</operator><name>e_class</name></name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>ehdr</name> <operator>=</operator> <call><name>_libelf_ehdr</name><argument_list>(<argument><expr><name>e</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>ehdr</name> <operator>!=</operator> <name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>nscn</name> <operator>=</operator> <name><name>e</name><operator>-&gt;</operator><name>e_u</name><operator>.</operator><name>e_elf</name><operator>.</operator><name>e_nscn</name></name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ec</name> <operator>==</operator> <name>ELFCLASS32</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>eh32</name> <operator>=</operator> <operator>(</operator><name>Elf32_Ehdr</name> <operator>*</operator><operator>)</operator> <name>ehdr</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>shoff</name> <operator>=</operator> <operator>(</operator><name>uint64_t</name><operator>)</operator> <name><name>eh32</name><operator>-&gt;</operator><name>e_shoff</name></name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>eh64</name> <operator>=</operator> <operator>(</operator><name>Elf64_Ehdr</name> <operator>*</operator><operator>)</operator> <name>ehdr</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>shoff</name> <operator>=</operator> <name><name>eh64</name><operator>-&gt;</operator><name>e_shoff</name></name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<expr_stmt><expr><name>em</name> <operator>=</operator> <call><name>_libelf_elfmachine</name><argument_list>(<argument><expr><name>e</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>nscn</name> <operator>&gt;</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>shoff</name> <operator>%</operator> <call><name>_libelf_falign</name><argument_list>(<argument><expr><name>ELF_T_SHDR</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>ex</name><operator>-&gt;</operator><name>ex_start</name></name> <operator>==</operator> <name>shoff</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>dst</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>dst</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>src</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>src</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>msz</name> <operator>=</operator> <call><name>_libelf_msize</name><argument_list>(<argument><expr><name>ELF_T_SHDR</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>, <argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_version</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name><name>src</name><operator>.</operator><name>d_type</name></name> <operator>=</operator> <name>ELF_T_SHDR</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>src</name><operator>.</operator><name>d_size</name></name> <operator>=</operator> <name>msz</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>src</name><operator>.</operator><name>d_version</name></name> <operator>=</operator> <name><name>dst</name><operator>.</operator><name>d_version</name></name> <operator>=</operator> <name><name>e</name><operator>-&gt;</operator><name>e_version</name></name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>fsz</name> <operator>=</operator> <call><name>_libelf_fsize</name><argument_list>(<argument><expr><name>ELF_T_SHDR</name></expr></argument>, <argument><expr><name>ec</name></expr></argument>, <argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_version</name></name></expr></argument>, <argument><expr><operator>(</operator><name>size_t</name><operator>)</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<macro><name>RB_FOREACH</name><argument_list>(<argument>scn</argument>, <argument>scntree</argument>, <argument>&amp;e-&gt;e_u.e_elf.e_scn</argument>)</argument_list></macro> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>ec</name> <operator>==</operator> <name>ELFCLASS32</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>src</name><operator>.</operator><name>d_buf</name></name> <operator>=</operator> <operator>&amp;</operator><name><name>scn</name><operator>-&gt;</operator><name>s_shdr</name><operator>.</operator><name>s_shdr32</name></name></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>src</name><operator>.</operator><name>d_buf</name></name> <operator>=</operator> <operator>&amp;</operator><name><name>scn</name><operator>-&gt;</operator><name>s_shdr</name><operator>.</operator><name>s_shdr64</name></name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<expr_stmt><expr><name><name>dst</name><operator>.</operator><name>d_size</name></name> <operator>=</operator> <name>fsz</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>dst</name><operator>.</operator><name>d_buf</name></name> <operator>=</operator> <name>nf</name> <operator>+</operator> <name><name>ex</name><operator>-&gt;</operator><name>ex_start</name></name> <operator>+</operator> <name><name>scn</name><operator>-&gt;</operator><name>s_ndx</name></name> <operator>*</operator> <name>fsz</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>_libelf_xlate</name><argument_list>(<argument><expr><operator>&amp;</operator><name>dst</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>src</name></expr></argument>, <argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_byteorder</name></name></expr></argument>, <argument><expr><name>ec</name></expr></argument>, <argument><expr><name>em</name></expr></argument>,
+<argument><expr><name>ELF_TOFILE</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block>
+
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>(</operator><name><name>ex</name><operator>-&gt;</operator><name>ex_start</name></name> <operator>+</operator> <name>nscn</name> <operator>*</operator> <name>fsz</name><operator>)</operator><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>off_t</name></type>
+<name>_libelf_write_elf</name><parameter_list>(<parameter><decl><type><name>Elf</name> <modifier>*</modifier></type><name>e</name></decl></parameter>, <parameter><decl><type><name>off_t</name></type> <name>newsize</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>_Elf_Extent_List</name></name> <modifier>*</modifier></type><name>extents</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>off_t</name></type> <name>nrc</name></decl>, <decl><type ref="prev"/><name>rc</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf_Scn</name> <modifier>*</modifier></type><name>scn</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>tscn</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>_Elf_Extent</name></name> <modifier>*</modifier></type><name>ex</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>newfile</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_kind</name></name> <operator>==</operator> <name>ELF_K_ELF</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_cmd</name></name> <operator>==</operator> <name>ELF_C_RDWR</name> <operator>||</operator> <name><name>e</name><operator>-&gt;</operator><name>e_cmd</name></name> <operator>==</operator> <name>ELF_C_WRITE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_fd</name></name> <operator>&gt;=</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>newfile</name> <operator>=</operator> <call><name>malloc</name><argument_list>(<argument><expr><operator>(</operator><name>size_t</name><operator>)</operator> <name>newsize</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LIBELF_SET_ERROR</name><argument_list>(<argument><expr><name>RESOURCE</name></expr></argument>, <argument><expr><name>errno</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>nrc</name> <operator>=</operator> <name>rc</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<macro><name>SLIST_FOREACH</name><argument_list>(<argument>ex</argument>, <argument>extents</argument>, <argument>ex_next</argument>)</argument_list></macro> <block>{<block_content>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>ex</name><operator>-&gt;</operator><name>ex_start</name></name> <operator>&gt;</operator> <operator>(</operator><name>size_t</name><operator>)</operator> <name>rc</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>memset</name><argument_list>(<argument><expr><name>newfile</name> <operator>+</operator> <name>rc</name></expr></argument>, <argument><expr><call><name>LIBELF_PRIVATE</name><argument_list>(<argument><expr><name>fillchar</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><operator>(</operator><name>size_t</name><operator>)</operator> <operator>(</operator><name><name>ex</name><operator>-&gt;</operator><name>ex_start</name></name> <operator>-</operator> <operator>(</operator><name>uint64_t</name><operator>)</operator> <name>rc</name><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<switch>switch <condition>(<expr><name><name>ex</name><operator>-&gt;</operator><name>ex_type</name></name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>ELF_EXTENT_EHDR</name></expr>:</case>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>nrc</name> <operator>=</operator> <call><name>_libelf_write_ehdr</name><argument_list>(<argument><expr><name>e</name></expr></argument>, <argument><expr><name>newfile</name></expr></argument>, <argument><expr><name>ex</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>error</name>;</goto></block_content></block></if></if_stmt>
+<break>break;</break>
+
+<case>case <expr><name>ELF_EXTENT_PHDR</name></expr>:</case>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>nrc</name> <operator>=</operator> <call><name>_libelf_write_phdr</name><argument_list>(<argument><expr><name>e</name></expr></argument>, <argument><expr><name>newfile</name></expr></argument>, <argument><expr><name>ex</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>error</name>;</goto></block_content></block></if></if_stmt>
+<break>break;</break>
+
+<case>case <expr><name>ELF_EXTENT_SECTION</name></expr>:</case>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>nrc</name> <operator>=</operator> <call><name>_libelf_write_scn</name><argument_list>(<argument><expr><name>e</name></expr></argument>, <argument><expr><name>newfile</name></expr></argument>, <argument><expr><name>ex</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>error</name>;</goto></block_content></block></if></if_stmt>
+<break>break;</break>
+
+<case>case <expr><name>ELF_EXTENT_SHDR</name></expr>:</case>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>nrc</name> <operator>=</operator> <call><name>_libelf_write_shdr</name><argument_list>(<argument><expr><name>e</name></expr></argument>, <argument><expr><name>newfile</name></expr></argument>, <argument><expr><name>ex</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>error</name>;</goto></block_content></block></if></if_stmt>
+<break>break;</break>
+
+<default>default:</default>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></switch>
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>ex</name><operator>-&gt;</operator><name>ex_start</name></name> <operator>+</operator> <name><name>ex</name><operator>-&gt;</operator><name>ex_size</name></name> <operator>==</operator> <operator>(</operator><name>size_t</name><operator>)</operator> <name>nrc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>rc</name> <operator>&lt;</operator> <name>nrc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>rc</name> <operator>=</operator> <name>nrc</name></expr>;</expr_stmt>
+</block_content>}</block>
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>rc</name> <operator>==</operator> <name>newsize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>e</name><operator>-&gt;</operator><name>e_flags</name></name> <operator>&amp;</operator> <name>LIBELF_F_SPECIAL_FILE</name><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>ftruncate</name><argument_list>(<argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_fd</name></name></expr></argument>, <argument><expr><operator>(</operator><name>off_t</name><operator>)</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>lseek</name><argument_list>(<argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_fd</name></name></expr></argument>, <argument><expr><operator>(</operator><name>off_t</name><operator>)</operator> <literal type="number">0</literal></expr></argument>, <argument><expr><name>SEEK_SET</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LIBELF_SET_ERROR</name><argument_list>(<argument><expr><name>IO</name></expr></argument>, <argument><expr><name>errno</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>error</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>ELFTC_HAVE_MMAP</name></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name><name>e</name><operator>-&gt;</operator><name>e_flags</name></name> <operator>&amp;</operator> <name>LIBELF_F_RAWFILE_MMAP</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_rawfile</name></name> <operator>!=</operator> <name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_cmd</name></name> <operator>==</operator> <name>ELF_C_RDWR</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>munmap</name><argument_list>(<argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_rawfile</name></name></expr></argument>, <argument><expr><operator>(</operator><name>size_t</name><operator>)</operator> <name><name>e</name><operator>-&gt;</operator><name>e_rawsize</name></name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LIBELF_SET_ERROR</name><argument_list>(<argument><expr><name>IO</name></expr></argument>, <argument><expr><name>errno</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>error</name>;</goto>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>write</name><argument_list>(<argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_fd</name></name></expr></argument>, <argument><expr><name>newfile</name></expr></argument>, <argument><expr><operator>(</operator><name>size_t</name><operator>)</operator> <name>newsize</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>newsize</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LIBELF_SET_ERROR</name><argument_list>(<argument><expr><name>IO</name></expr></argument>, <argument><expr><name>errno</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>error</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>e</name><operator>-&gt;</operator><name>e_cmd</name></name> <operator>==</operator> <name>ELF_C_RDWR</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_rawfile</name></name> <operator>!=</operator> <name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><operator>(</operator><name><name>e</name><operator>-&gt;</operator><name>e_flags</name></name> <operator>&amp;</operator> <name>LIBELF_F_RAWFILE_MALLOC</name><operator>)</operator> <operator>||</operator>
+<operator>(</operator><name><name>e</name><operator>-&gt;</operator><name>e_flags</name></name> <operator>&amp;</operator> <name>LIBELF_F_RAWFILE_MMAP</name><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>e</name><operator>-&gt;</operator><name>e_flags</name></name> <operator>&amp;</operator> <name>LIBELF_F_RAWFILE_MALLOC</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><operator>(</operator><name><name>e</name><operator>-&gt;</operator><name>e_flags</name></name> <operator>&amp;</operator> <name>LIBELF_F_RAWFILE_MMAP</name><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_rawfile</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>e</name><operator>-&gt;</operator><name>e_rawfile</name></name> <operator>=</operator> <name>newfile</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>newfile</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>ELFTC_HAVE_MMAP</name></expr></cpp:if>
+<if type="elseif">else if <condition>(<expr><name><name>e</name><operator>-&gt;</operator><name>e_flags</name></name> <operator>&amp;</operator> <name>LIBELF_F_RAWFILE_MMAP</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><operator>(</operator><name><name>e</name><operator>-&gt;</operator><name>e_flags</name></name> <operator>&amp;</operator> <name>LIBELF_F_RAWFILE_MALLOC</name><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>e</name><operator>-&gt;</operator><name>e_rawfile</name></name> <operator>=</operator> <call><name>mmap</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>, <argument><expr><operator>(</operator><name>size_t</name><operator>)</operator> <name>newsize</name></expr></argument>,
+<argument><expr><name>PROT_READ</name></expr></argument>, <argument><expr><name>MAP_PRIVATE</name></expr></argument>, <argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_fd</name></name></expr></argument>, <argument><expr><operator>(</operator><name>off_t</name><operator>)</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator>
+<name>MAP_FAILED</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LIBELF_SET_ERROR</name><argument_list>(<argument><expr><name>IO</name></expr></argument>, <argument><expr><name>errno</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>error</name>;</goto>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+<expr_stmt><expr><name><name>e</name><operator>-&gt;</operator><name>e_rawsize</name></name> <operator>=</operator> <name>newsize</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_rawfile</name></name> <operator>==</operator> <name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+
+
+
+
+
+
+<expr_stmt><expr><name><name>e</name><operator>-&gt;</operator><name>e_flags</name></name> <operator>&amp;=</operator> <operator>~</operator><name>ELF_F_DIRTY</name></expr>;</expr_stmt>
+
+<macro><name>RB_FOREACH_SAFE</name><argument_list>(<argument>scn</argument>, <argument>scntree</argument>, <argument>&amp;e-&gt;e_u.e_elf.e_scn</argument>, <argument>tscn</argument>)</argument_list></macro>
+<expr_stmt><expr><call><name>_libelf_release_scn</name><argument_list>(<argument><expr><name>scn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>e</name><operator>-&gt;</operator><name>e_class</name></name> <operator>==</operator> <name>ELFCLASS32</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_u</name><operator>.</operator><name>e_elf</name><operator>.</operator><name>e_ehdr</name><operator>.</operator><name>e_ehdr32</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>e</name><operator>-&gt;</operator><name>e_u</name><operator>.</operator><name>e_elf</name><operator>.</operator><name>e_phdr</name><operator>.</operator><name>e_phdr32</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_u</name><operator>.</operator><name>e_elf</name><operator>.</operator><name>e_phdr</name><operator>.</operator><name>e_phdr32</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name><name>e</name><operator>-&gt;</operator><name>e_u</name><operator>.</operator><name>e_elf</name><operator>.</operator><name>e_ehdr</name><operator>.</operator><name>e_ehdr32</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>e</name><operator>-&gt;</operator><name>e_u</name><operator>.</operator><name>e_elf</name><operator>.</operator><name>e_phdr</name><operator>.</operator><name>e_phdr32</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_u</name><operator>.</operator><name>e_elf</name><operator>.</operator><name>e_ehdr</name><operator>.</operator><name>e_ehdr64</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>e</name><operator>-&gt;</operator><name>e_u</name><operator>.</operator><name>e_elf</name><operator>.</operator><name>e_phdr</name><operator>.</operator><name>e_phdr64</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>e</name><operator>-&gt;</operator><name>e_u</name><operator>.</operator><name>e_elf</name><operator>.</operator><name>e_phdr</name><operator>.</operator><name>e_phdr64</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name><name>e</name><operator>-&gt;</operator><name>e_u</name><operator>.</operator><name>e_elf</name><operator>.</operator><name>e_ehdr</name><operator>.</operator><name>e_ehdr64</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>e</name><operator>-&gt;</operator><name>e_u</name><operator>.</operator><name>e_elf</name><operator>.</operator><name>e_phdr</name><operator>.</operator><name>e_phdr64</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>newfile</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>newfile</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>rc</name><operator>)</operator></expr>;</return>
+
+<label><name>error</name>:</label>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>newfile</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><name>off_t</name></type>
+<name>elf_update</name><parameter_list>(<parameter><decl><type><name>Elf</name> <modifier>*</modifier></type><name>e</name></decl></parameter>, <parameter><decl><type><name>Elf_Cmd</name></type> <name>c</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>ec</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>off_t</name></type> <name>rc</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>_Elf_Extent_List</name></name></type> <name>extents</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>rc</name> <operator>=</operator> <operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>e</name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <name><name>e</name><operator>-&gt;</operator><name>e_kind</name></name> <operator>!=</operator> <name>ELF_K_ELF</name> <operator>||</operator>
+<operator>(</operator><name>c</name> <operator>!=</operator> <name>ELF_C_NULL</name> <operator>&amp;&amp;</operator> <name>c</name> <operator>!=</operator> <name>ELF_C_WRITE</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LIBELF_SET_ERROR</name><argument_list>(<argument><expr><name>ARGUMENT</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>rc</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>ec</name> <operator>=</operator> <name><name>e</name><operator>-&gt;</operator><name>e_class</name></name><operator>)</operator> <operator>!=</operator> <name>ELFCLASS32</name> <operator>&amp;&amp;</operator> <name>ec</name> <operator>!=</operator> <name>ELFCLASS64</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LIBELF_SET_ERROR</name><argument_list>(<argument><expr><name>CLASS</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>rc</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>e</name><operator>-&gt;</operator><name>e_version</name></name> <operator>==</operator> <name>EV_NONE</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>e</name><operator>-&gt;</operator><name>e_version</name></name> <operator>=</operator> <name>EV_CURRENT</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>c</name> <operator>==</operator> <name>ELF_C_WRITE</name> <operator>&amp;&amp;</operator> <name><name>e</name><operator>-&gt;</operator><name>e_cmd</name></name> <operator>==</operator> <name>ELF_C_READ</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LIBELF_SET_ERROR</name><argument_list>(<argument><expr><name>MODE</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>rc</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>SLIST_INIT</name><argument_list>(<argument><expr><operator>&amp;</operator><name>extents</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>rc</name> <operator>=</operator> <call><name>_libelf_resync_elf</name><argument_list>(<argument><expr><name>e</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>extents</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>done</name>;</goto></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>c</name> <operator>==</operator> <name>ELF_C_NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>done</name>;</goto></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>e</name><operator>-&gt;</operator><name>e_fd</name></name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>rc</name> <operator>=</operator> <operator>(</operator><name>off_t</name><operator>)</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>LIBELF_SET_ERROR</name><argument_list>(<argument><expr><name>SEQUENCE</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>done</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>rc</name> <operator>=</operator> <call><name>_libelf_write_elf</name><argument_list>(<argument><expr><name>e</name></expr></argument>, <argument><expr><name>rc</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>extents</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<label><name>done</name>:</label>
+<expr_stmt><expr><call><name>_libelf_release_extents</name><argument_list>(<argument><expr><operator>&amp;</operator><name>extents</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>e</name><operator>-&gt;</operator><name>e_flags</name></name> <operator>&amp;=</operator> <operator>~</operator><name>LIBELF_F_SHDRS_LOADED</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>rc</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+</unit>

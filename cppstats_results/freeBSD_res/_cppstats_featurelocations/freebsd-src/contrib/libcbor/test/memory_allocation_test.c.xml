@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/libcbor/test/memory_allocation_test.c">
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;setjmp.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdarg.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stddef.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;cmocka.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"cbor.h"</cpp:file></cpp:include>
+
+
+
+
+
+
+
+<typedef>typedef <type><enum>enum <name>call_expectation</name> <block>{
+<decl><name>MALLOC</name></decl>,
+<decl><name>MALLOC_FAIL</name></decl>,
+<decl><name>REALLOC</name></decl>,
+<decl><name>REALLOC_FAIL</name></decl>
+}</block></enum></type> <name>call_expectation</name>;</typedef>
+
+
+<decl_stmt><decl><type><name>int</name></type> <name>alloc_calls_expected</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>int</name></type> <name>alloc_calls</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>call_expectation</name> <modifier>*</modifier></type><name>expectations</name></decl>;</decl_stmt>
+
+<function><type><name>void</name></type> <name>set_mock_malloc</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>calls</name></decl></parameter>, <parameter><decl><type><modifier>...</modifier></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>va_list</name></type> <name>args</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>va_start</name><argument_list>(<argument><expr><name>args</name></expr></argument>, <argument><expr><name>calls</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>alloc_calls_expected</name> <operator>=</operator> <name>calls</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>alloc_calls</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>expectations</name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><name>calls</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>expectations</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><decl><type><name>int</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>calls</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+
+<expr_stmt><expr><name><name>expectations</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <call><name>va_arg</name><argument_list>(<argument><expr><name>args</name></expr></argument>, <argument><expr><name>call_expectation</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><call><name>va_end</name><argument_list>(<argument><expr><name>args</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type> <name>finalize_mock_malloc</name><parameter_list>()</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>assert_int_equal</name><argument_list>(<argument><expr><name>alloc_calls</name></expr></argument>, <argument><expr><name>alloc_calls_expected</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>expectations</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>void</name> <modifier>*</modifier></type><name>instrumented_malloc</name><parameter_list>(<parameter><decl><type><name>size_t</name></type> <name>size</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>alloc_calls</name> <operator>&gt;=</operator> <name>alloc_calls_expected</name></expr>)</condition> <block>{<block_content>
+<goto>goto <name>error</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>expectations</name><index>[<expr><name>alloc_calls</name></expr>]</index></name> <operator>==</operator> <name>MALLOC</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>alloc_calls</name><operator>++</operator></expr>;</expr_stmt>
+<return>return <expr><call><name>malloc</name><argument_list>(<argument><expr><name>size</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>expectations</name><index>[<expr><name>alloc_calls</name></expr>]</index></name> <operator>==</operator> <name>MALLOC_FAIL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>alloc_calls</name><operator>++</operator></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<label><name>error</name>:</label>
+<expr_stmt><expr><call><name>print_error</name><argument_list>(<argument><expr><literal type="string">"Unexpected call to malloc"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fail</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>void</name> <modifier>*</modifier></type><name>instrumented_realloc</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>ptr</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>size</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>alloc_calls</name> <operator>&gt;=</operator> <name>alloc_calls_expected</name></expr>)</condition> <block>{<block_content>
+<goto>goto <name>error</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>expectations</name><index>[<expr><name>alloc_calls</name></expr>]</index></name> <operator>==</operator> <name>REALLOC</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>alloc_calls</name><operator>++</operator></expr>;</expr_stmt>
+<return>return <expr><call><name>realloc</name><argument_list>(<argument><expr><name>ptr</name></expr></argument>, <argument><expr><name>size</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>expectations</name><index>[<expr><name>alloc_calls</name></expr>]</index></name> <operator>==</operator> <name>REALLOC_FAIL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>alloc_calls</name><operator>++</operator></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<label><name>error</name>:</label>
+<expr_stmt><expr><call><name>print_error</name><argument_list>(<argument><expr><literal type="string">"Unexpected call to realloc"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fail</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>WITH_MOCK_MALLOC</name><parameter_list>(<parameter><type><name>block</name></type></parameter>, <parameter><type><name>malloc_calls</name></type></parameter>, <parameter><type><modifier>...</modifier></type></parameter>)</parameter_list></cpp:macro> <cpp:value>do { set_mock_malloc(malloc_calls, __VA_ARGS__); block; finalize_mock_malloc(); } while (0)</cpp:value></cpp:define>
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>WITH_FAILING_MALLOC</name><parameter_list>(<parameter><type><name>block</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>WITH_MOCK_MALLOC(block, 1, MALLOC_FAIL)</cpp:value></cpp:define>
+
+<function><type><specifier>static</specifier> <name>void</name></type> <name>test_int_creation</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier><modifier>*</modifier></type><name>state</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_new_int8()); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_new_int16()); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_new_int32()); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_new_int64()); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_build_uint8(<literal type="number">0xFF</literal>)); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_build_uint16(<literal type="number">0xFF</literal>)); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_build_uint32(<literal type="number">0xFF</literal>)); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_build_uint64(<literal type="number">0xFF</literal>)); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_build_negint8(<literal type="number">0xFF</literal>)); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_build_negint16(<literal type="number">0xFF</literal>)); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_build_negint32(<literal type="number">0xFF</literal>)); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_build_negint64(<literal type="number">0xFF</literal>)); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type> <name>test_bytestring_creation</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier><modifier>*</modifier></type><name>state</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_new_definite_bytestring()); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_new_indefinite_bytestring()); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<macro><name>WITH_MOCK_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_new_indefinite_bytestring()); }</argument>, <argument><literal type="number">2</literal></argument>,
+<argument>MALLOC</argument>, <argument>MALLOC_FAIL</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>bytes</name><index>[]</index></name> <init>= <expr><block>{<expr><literal type="number">0</literal></expr>, <expr><literal type="number">0</literal></expr>, <expr><literal type="number">0xFF</literal></expr>, <expr><literal type="number">0xAB</literal></expr>}</block></expr></init></decl>;</decl_stmt>
+
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_build_bytestring(bytes, <literal type="number">4</literal>)); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<macro><name>WITH_MOCK_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_build_bytestring(bytes, <literal type="number">4</literal>)); }</argument>, <argument><literal type="number">2</literal></argument>, <argument>MALLOC</argument>,
+<argument>MALLOC_FAIL</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type> <name>test_string_creation</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier><modifier>*</modifier></type><name>state</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_new_definite_string()); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_new_indefinite_string()); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<macro><name>WITH_MOCK_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_new_indefinite_string()); }</argument>, <argument><literal type="number">2</literal></argument>, <argument>MALLOC</argument>,
+<argument>MALLOC_FAIL</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_build_string(<literal type="string">"Test"</literal>)); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<macro><name>WITH_MOCK_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_build_string(<literal type="string">"Test"</literal>)); }</argument>, <argument><literal type="number">2</literal></argument>, <argument>MALLOC</argument>,
+<argument>MALLOC_FAIL</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_build_stringn(<literal type="string">"Test"</literal>, <literal type="number">4</literal>)); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<macro><name>WITH_MOCK_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_build_stringn(<literal type="string">"Test"</literal>, <literal type="number">4</literal>)); }</argument>, <argument><literal type="number">2</literal></argument>, <argument>MALLOC</argument>,
+<argument>MALLOC_FAIL</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type> <name>test_array_creation</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier><modifier>*</modifier></type><name>state</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_new_definite_array(<literal type="number">42</literal>)); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<macro><name>WITH_MOCK_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_new_definite_array(<literal type="number">42</literal>)); }</argument>, <argument><literal type="number">2</literal></argument>, <argument>MALLOC</argument>,
+<argument>MALLOC_FAIL</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_new_indefinite_array()); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type> <name>test_map_creation</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier><modifier>*</modifier></type><name>state</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_new_definite_map(<literal type="number">42</literal>)); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<macro><name>WITH_MOCK_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_new_definite_map(<literal type="number">42</literal>)); }</argument>, <argument><literal type="number">2</literal></argument>, <argument>MALLOC</argument>,
+<argument>MALLOC_FAIL</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_new_indefinite_map()); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type> <name>test_tag_creation</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier><modifier>*</modifier></type><name>state</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_new_tag(<literal type="number">42</literal>)); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type> <name>test_float_ctrl_creation</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier><modifier>*</modifier></type><name>state</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_new_ctrl()); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_new_float2()); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_new_float4()); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_new_float8()); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_new_null()); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_new_undef()); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_build_bool(false)); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_build_float2(<literal type="number">3.14</literal>)); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_build_float4(<literal type="number">3.14</literal>)); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_build_float8(<literal type="number">3.14</literal>)); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<macro><name>WITH_FAILING_MALLOC</name><argument_list>(<argument>{ assert_null(cbor_build_ctrl(<literal type="number">0xAF</literal>)); }</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type> <name>test_bytestring_add_chunk</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier><modifier>*</modifier></type><name>state</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>bytes</name><index>[]</index></name> <init>= <expr><block>{<expr><literal type="number">0</literal></expr>, <expr><literal type="number">0</literal></expr>, <expr><literal type="number">0xFF</literal></expr>, <expr><literal type="number">0xAB</literal></expr>}</block></expr></init></decl>;</decl_stmt>
+<macro><name>WITH_MOCK_MALLOC</name><argument_list>(
+<argument>{
+cbor_item_t *bytestring = cbor_new_indefinite_bytestring();
+cbor_item_t *chunk = cbor_build_bytestring(bytes, <literal type="number">4</literal>);
+
+assert_false(cbor_bytestring_add_chunk(bytestring, chunk));
+assert_int_equal(cbor_bytestring_chunk_count(bytestring), <literal type="number">0</literal>);
+assert_int_equal(
+((struct cbor_indefinite_string_data *)bytestring-&gt;data)
+-&gt;chunk_capacity,
+<literal type="number">0</literal>);
+
+cbor_decref(&amp;chunk);
+cbor_decref(&amp;bytestring);
+}</argument>,
+<argument><literal type="number">5</literal></argument>, <argument>MALLOC</argument>, <argument>MALLOC</argument>, <argument>MALLOC</argument>, <argument>MALLOC</argument>, <argument>REALLOC_FAIL</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type> <name>test_string_add_chunk</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier><modifier>*</modifier></type><name>state</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<macro><name>WITH_MOCK_MALLOC</name><argument_list>(
+<argument>{
+cbor_item_t *string = cbor_new_indefinite_string();
+cbor_item_t *chunk = cbor_build_string(<literal type="string">"Hello!"</literal>);
+
+assert_false(cbor_string_add_chunk(string, chunk));
+assert_int_equal(cbor_string_chunk_count(string), <literal type="number">0</literal>);
+assert_int_equal(((struct cbor_indefinite_string_data *)string-&gt;data)
+-&gt;chunk_capacity,
+<literal type="number">0</literal>);
+
+cbor_decref(&amp;chunk);
+cbor_decref(&amp;string);
+}</argument>,
+<argument><literal type="number">5</literal></argument>, <argument>MALLOC</argument>, <argument>MALLOC</argument>, <argument>MALLOC</argument>, <argument>MALLOC</argument>, <argument>REALLOC_FAIL</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type> <name>test_array_push</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier><modifier>*</modifier></type><name>state</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<macro><name>WITH_MOCK_MALLOC</name><argument_list>(
+<argument>{
+cbor_item_t *array = cbor_new_indefinite_array();
+cbor_item_t *string = cbor_build_string(<literal type="string">"Hello!"</literal>);
+
+assert_false(cbor_array_push(array, string));
+assert_int_equal(cbor_array_allocated(array), <literal type="number">0</literal>);
+assert_null(array-&gt;data);
+assert_int_equal(array-&gt;metadata.array_metadata.end_ptr, <literal type="number">0</literal>);
+
+cbor_decref(&amp;string);
+cbor_decref(&amp;array);
+}</argument>,
+<argument><literal type="number">4</literal></argument>, <argument>MALLOC</argument>, <argument>MALLOC</argument>, <argument>MALLOC</argument>, <argument>REALLOC_FAIL</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type> <name>test_map_add</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier><modifier>*</modifier></type><name>state</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<macro><name>WITH_MOCK_MALLOC</name><argument_list>(
+<argument>{
+cbor_item_t *map = cbor_new_indefinite_map();
+cbor_item_t *key = cbor_build_uint8(<literal type="number">0</literal>);
+cbor_item_t *value = cbor_build_bool(true);
+
+assert_false(
+cbor_map_add(map, (struct cbor_pair){.key = key, .value = value}));
+assert_int_equal(cbor_map_allocated(map), <literal type="number">0</literal>);
+assert_null(map-&gt;data);
+
+cbor_decref(&amp;map);
+cbor_decref(&amp;key);
+cbor_decref(&amp;value);
+}</argument>,
+<argument><literal type="number">4</literal></argument>, <argument>MALLOC</argument>, <argument>MALLOC</argument>, <argument>MALLOC</argument>, <argument>REALLOC_FAIL</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type> <name>main</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>cbor_set_allocs</name><argument_list>(<argument><expr><name>instrumented_malloc</name></expr></argument>, <argument><expr><name>instrumented_realloc</name></expr></argument>, <argument><expr><name>free</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<decl_stmt><decl><type><specifier>const</specifier> <name><name>struct</name> <name>CMUnitTest</name></name></type> <name><name>tests</name><index>[]</index></name> <init>= <expr><block>{
+<expr><call><name>cmocka_unit_test</name><argument_list>(<argument><expr><name>test_int_creation</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>cmocka_unit_test</name><argument_list>(<argument><expr><name>test_bytestring_creation</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>cmocka_unit_test</name><argument_list>(<argument><expr><name>test_string_creation</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>cmocka_unit_test</name><argument_list>(<argument><expr><name>test_array_creation</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>cmocka_unit_test</name><argument_list>(<argument><expr><name>test_map_creation</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>cmocka_unit_test</name><argument_list>(<argument><expr><name>test_tag_creation</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>cmocka_unit_test</name><argument_list>(<argument><expr><name>test_float_ctrl_creation</name></expr></argument>)</argument_list></call></expr>,
+
+<expr><call><name>cmocka_unit_test</name><argument_list>(<argument><expr><name>test_bytestring_add_chunk</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>cmocka_unit_test</name><argument_list>(<argument><expr><name>test_string_add_chunk</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>cmocka_unit_test</name><argument_list>(<argument><expr><name>test_array_push</name></expr></argument>)</argument_list></call></expr>,
+<expr><call><name>cmocka_unit_test</name><argument_list>(<argument><expr><name>test_map_add</name></expr></argument>)</argument_list></call></expr>,
+}</block></expr></init></decl>;</decl_stmt>
+
+<return>return <expr><call><name>cmocka_run_group_tests</name><argument_list>(<argument><expr><name>tests</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+</unit>

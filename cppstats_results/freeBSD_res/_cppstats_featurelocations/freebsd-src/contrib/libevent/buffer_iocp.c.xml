@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/libevent/buffer_iocp.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"event2/event-config.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"evconfig-private.h"</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"event2/buffer.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"event2/buffer_compat.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"event2/util.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"event2/thread.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"util-internal.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"evthread-internal.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"evbuffer-internal.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"iocp-internal.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"mm-internal.h"</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;winsock2.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;windows.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdio.h&gt;</cpp:file></cpp:include>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MAX_WSABUFS</name></cpp:macro> <cpp:value>16</cpp:value></cpp:define>
+
+
+<struct>struct <name>evbuffer_overlapped</name> <block>{
+<decl_stmt><decl><type><name><name>struct</name> <name>evbuffer</name></name></type> <name>buffer</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>evutil_socket_t</name></type> <name>fd</name></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><name>unsigned</name></type> <name>read_in_progress</name> <range>: <expr><literal type="number">1</literal></expr></range></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name></type> <name>write_in_progress</name> <range>: <expr><literal type="number">1</literal></expr></range></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><name><name>struct</name> <name>evbuffer_chain</name></name> <modifier>*</modifier></type><name>first_pinned</name></decl>;</decl_stmt>
+
+
+
+<decl_stmt><decl><type><name>int</name></type> <name>n_buffers</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>WSABUF</name></type> <name><name>buffers</name><index>[<expr><name>MAX_WSABUFS</name></expr>]</index></name></decl>;</decl_stmt>
+}</block>;</struct>
+
+
+
+<function><type><specifier>static</specifier> <specifier>inline</specifier> <name><name>struct</name> <name>evbuffer_overlapped</name></name> <modifier>*</modifier></type>
+<name>upcast_evbuffer</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>evbuffer</name></name> <modifier>*</modifier></type><name>buf</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>buf</name> <operator>||</operator> <operator>!</operator><name><name>buf</name><operator>-&gt;</operator><name>is_overlapped</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>NULL</name></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><call><name>EVUTIL_UPCAST</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr>struct <name>evbuffer_overlapped</name></expr></argument>, <argument><expr><name>buffer</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>pin_release</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>evbuffer_overlapped</name></name> <modifier>*</modifier></type><name>eo</name></decl></parameter>, <parameter><decl><type><name>unsigned</name></type> <name>flag</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>evbuffer_chain</name></name> <modifier>*</modifier></type><name>next</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>chain</name> <init>= <expr><name><name>eo</name><operator>-&gt;</operator><name>first_pinned</name></name></expr></init></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name><name>eo</name><operator>-&gt;</operator><name>n_buffers</name></name></expr>;</condition> <incr><expr><operator>++</operator><name>i</name></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>EVUTIL_ASSERT</name><argument_list>(<argument><expr><name>chain</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>next</name> <operator>=</operator> <name><name>chain</name><operator>-&gt;</operator><name>next</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>evbuffer_chain_unpin_</name><argument_list>(<argument><expr><name>chain</name></expr></argument>, <argument><expr><name>flag</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>chain</name> <operator>=</operator> <name>next</name></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type>
+<name>evbuffer_commit_read_</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>evbuffer</name></name> <modifier>*</modifier></type><name>evbuf</name></decl></parameter>, <parameter><decl><type><name>ev_ssize_t</name></type> <name>nBytes</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>evbuffer_overlapped</name></name> <modifier>*</modifier></type><name>buf</name> <init>= <expr><call><name>upcast_evbuffer</name><argument_list>(<argument><expr><name>evbuf</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>evbuffer_chain</name></name> <modifier>*</modifier><modifier>*</modifier></type><name>chainp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>remaining</name></decl>, <decl><type ref="prev"/><name>len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name></type> <name>i</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>EVBUFFER_LOCK</name><argument_list>(<argument><expr><name>evbuf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>EVUTIL_ASSERT</name><argument_list>(<argument><expr><name><name>buf</name><operator>-&gt;</operator><name>read_in_progress</name></name> <operator>&amp;&amp;</operator> <operator>!</operator><name><name>buf</name><operator>-&gt;</operator><name>write_in_progress</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>EVUTIL_ASSERT</name><argument_list>(<argument><expr><name>nBytes</name> <operator>&gt;=</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>evbuffer_unfreeze</name><argument_list>(<argument><expr><name>evbuf</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>chainp</name> <operator>=</operator> <name><name>evbuf</name><operator>-&gt;</operator><name>last_with_datap</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name><operator>(</operator><operator>*</operator><name>chainp</name><operator>)</operator><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>EVBUFFER_MEM_PINNED_R</name><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>chainp</name> <operator>=</operator> <operator>&amp;</operator><name><operator>(</operator><operator>*</operator><name>chainp</name><operator>)</operator><operator>-&gt;</operator><name>next</name></name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>remaining</name> <operator>=</operator> <name>nBytes</name></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>remaining</name> <operator>&gt;</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name>i</name> <operator>&lt;</operator> <operator>(</operator><name>unsigned</name><operator>)</operator><name><name>buf</name><operator>-&gt;</operator><name>n_buffers</name></name></expr>;</condition> <incr><expr><operator>++</operator><name>i</name></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>EVUTIL_ASSERT</name><argument_list>(<argument><expr><operator>*</operator><name>chainp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>len</name> <operator>=</operator> <name><name>buf</name><operator>-&gt;</operator><name>buffers</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>len</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>remaining</name> <operator>&lt;</operator> <name>len</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>len</name> <operator>=</operator> <name>remaining</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>chainp</name><operator>)</operator><operator>-&gt;</operator><name>off</name></name> <operator>+=</operator> <name>len</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>evbuf</name><operator>-&gt;</operator><name>last_with_datap</name></name> <operator>=</operator> <name>chainp</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>remaining</name> <operator>-=</operator> <name>len</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>chainp</name> <operator>=</operator> <operator>&amp;</operator><name><operator>(</operator><operator>*</operator><name>chainp</name><operator>)</operator><operator>-&gt;</operator><name>next</name></name></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><call><name>pin_release</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><name>EVBUFFER_MEM_PINNED_R</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>buf</name><operator>-&gt;</operator><name>read_in_progress</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>evbuf</name><operator>-&gt;</operator><name>total_len</name></name> <operator>+=</operator> <name>nBytes</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>evbuf</name><operator>-&gt;</operator><name>n_add_for_cb</name></name> <operator>+=</operator> <name>nBytes</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>evbuffer_invoke_callbacks_</name><argument_list>(<argument><expr><name>evbuf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>evbuffer_decref_and_unlock_</name><argument_list>(<argument><expr><name>evbuf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type>
+<name>evbuffer_commit_write_</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>evbuffer</name></name> <modifier>*</modifier></type><name>evbuf</name></decl></parameter>, <parameter><decl><type><name>ev_ssize_t</name></type> <name>nBytes</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>evbuffer_overlapped</name></name> <modifier>*</modifier></type><name>buf</name> <init>= <expr><call><name>upcast_evbuffer</name><argument_list>(<argument><expr><name>evbuf</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>EVBUFFER_LOCK</name><argument_list>(<argument><expr><name>evbuf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>EVUTIL_ASSERT</name><argument_list>(<argument><expr><name><name>buf</name><operator>-&gt;</operator><name>write_in_progress</name></name> <operator>&amp;&amp;</operator> <operator>!</operator><name><name>buf</name><operator>-&gt;</operator><name>read_in_progress</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>evbuffer_unfreeze</name><argument_list>(<argument><expr><name>evbuf</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>evbuffer_drain</name><argument_list>(<argument><expr><name>evbuf</name></expr></argument>, <argument><expr><name>nBytes</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pin_release</name><argument_list>(<argument><expr><name>buf</name></expr></argument>,<argument><expr><name>EVBUFFER_MEM_PINNED_W</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>buf</name><operator>-&gt;</operator><name>write_in_progress</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>evbuffer_decref_and_unlock_</name><argument_list>(<argument><expr><name>evbuf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name><name>struct</name> <name>evbuffer</name></name> <modifier>*</modifier></type>
+<name>evbuffer_overlapped_new_</name><parameter_list>(<parameter><decl><type><name>evutil_socket_t</name></type> <name>fd</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>evbuffer_overlapped</name></name> <modifier>*</modifier></type><name>evo</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>evo</name> <operator>=</operator> <call><name>mm_calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr>struct <name>evbuffer_overlapped</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>evo</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>NULL</name></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>LIST_INIT</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>evo</name><operator>-&gt;</operator><name>buffer</name><operator>.</operator><name>callbacks</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>evo</name><operator>-&gt;</operator><name>buffer</name><operator>.</operator><name>refcnt</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>evo</name><operator>-&gt;</operator><name>buffer</name><operator>.</operator><name>last_with_datap</name></name> <operator>=</operator> <operator>&amp;</operator><name><name>evo</name><operator>-&gt;</operator><name>buffer</name><operator>.</operator><name>first</name></name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>evo</name><operator>-&gt;</operator><name>buffer</name><operator>.</operator><name>is_overlapped</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>evo</name><operator>-&gt;</operator><name>fd</name></name> <operator>=</operator> <name>fd</name></expr>;</expr_stmt>
+
+<return>return <expr><operator>&amp;</operator><name><name>evo</name><operator>-&gt;</operator><name>buffer</name></name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>evbuffer_launch_write_</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>evbuffer</name></name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>ev_ssize_t</name></type> <name>at_most</name></decl></parameter>,
+<parameter><decl><type><name><name>struct</name> <name>event_overlapped</name></name> <modifier>*</modifier></type><name>ol</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>evbuffer_overlapped</name></name> <modifier>*</modifier></type><name>buf_o</name> <init>= <expr><call><name>upcast_evbuffer</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>evbuffer_chain</name></name> <modifier>*</modifier></type><name>chain</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DWORD</name></type> <name>bytesSent</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>buf</name></expr>)</condition> <block>{<block_content>
+
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>EVBUFFER_LOCK</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>EVUTIL_ASSERT</name><argument_list>(<argument><expr><operator>!</operator><name><name>buf_o</name><operator>-&gt;</operator><name>read_in_progress</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>buf</name><operator>-&gt;</operator><name>freeze_start</name></name> <operator>||</operator> <name><name>buf_o</name><operator>-&gt;</operator><name>write_in_progress</name></name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>done</name>;</goto></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>buf</name><operator>-&gt;</operator><name>total_len</name></name></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><name>r</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<goto>goto <name>done</name>;</goto>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>at_most</name> <argument_list type="generic">&lt; <argument><expr><literal type="number">0</literal> <operator>||</operator> <operator>(</operator><name>size_t</name><operator>)</operator><name>at_most</name></expr></argument> &gt;</argument_list></name> <name><name>buf</name><operator>-&gt;</operator><name>total_len</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>at_most</name> <operator>=</operator> <name><name>buf</name><operator>-&gt;</operator><name>total_len</name></name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>evbuffer_freeze</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>buf_o</name><operator>-&gt;</operator><name>first_pinned</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>buf_o</name><operator>-&gt;</operator><name>n_buffers</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><name><name>buf_o</name><operator>-&gt;</operator><name>buffers</name></name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name><name>buf_o</name><operator>-&gt;</operator><name>buffers</name></name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>chain</name> <operator>=</operator> <name><name>buf_o</name><operator>-&gt;</operator><name>first_pinned</name></name> <operator>=</operator> <name><name>buf</name><operator>-&gt;</operator><name>first</name></name></expr>;</expr_stmt>
+
+<for>for <control>(<init><expr><name>i</name><operator>=</operator><literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>MAX_WSABUFS</name> <operator>&amp;&amp;</operator> <name>chain</name></expr>;</condition> <incr><expr><operator>++</operator><name>i</name></expr><operator>,</operator> <expr><name>chain</name><operator>=</operator><name><name>chain</name><operator>-&gt;</operator><name>next</name></name></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>WSABUF</name> <modifier>*</modifier></type><name>b</name> <init>= <expr><operator>&amp;</operator><name><name>buf_o</name><operator>-&gt;</operator><name>buffers</name><index>[<expr><name>i</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>b</name><operator>-&gt;</operator><name>buf</name></name> <operator>=</operator> <operator>(</operator><name>char</name><operator>*</operator><operator>)</operator><operator>(</operator> <name><name>chain</name><operator>-&gt;</operator><name>buffer</name></name> <operator>+</operator> <name><name>chain</name><operator>-&gt;</operator><name>misalign</name></name> <operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>evbuffer_chain_pin_</name><argument_list>(<argument><expr><name>chain</name></expr></argument>, <argument><expr><name>EVBUFFER_MEM_PINNED_W</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>size_t</name><operator>)</operator><name>at_most</name> <operator>&gt;</operator> <name><name>chain</name><operator>-&gt;</operator><name>off</name></name></expr>)</condition> <block>{<block_content>
+
+
+
+
+<expr_stmt><expr><name><name>b</name><operator>-&gt;</operator><name>len</name></name> <operator>=</operator> <operator>(</operator><name>unsigned</name> <name>long</name><operator>)</operator><name><name>chain</name><operator>-&gt;</operator><name>off</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>at_most</name> <operator>-=</operator> <name><name>chain</name><operator>-&gt;</operator><name>off</name></name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name><name>b</name><operator>-&gt;</operator><name>len</name></name> <operator>=</operator> <operator>(</operator><name>unsigned</name> <name>long</name><operator>)</operator><name>at_most</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>++</operator><name>i</name></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><name><name>buf_o</name><operator>-&gt;</operator><name>n_buffers</name></name> <operator>=</operator> <name>i</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>evbuffer_incref_</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>WSASend</name><argument_list>(<argument><expr><name><name>buf_o</name><operator>-&gt;</operator><name>fd</name></name></expr></argument>, <argument><expr><name><name>buf_o</name><operator>-&gt;</operator><name>buffers</name></name></expr></argument>, <argument><expr><name>i</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>bytesSent</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>,
+<argument><expr><operator>&amp;</operator><name><name>ol</name><operator>-&gt;</operator><name>overlapped</name></name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>error</name> <init>= <expr><call><name>WSAGetLastError</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>error</name> <operator>!=</operator> <name>WSA_IO_PENDING</name></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><call><name>pin_release</name><argument_list>(<argument><expr><name>buf_o</name></expr></argument>, <argument><expr><name>EVBUFFER_MEM_PINNED_W</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>evbuffer_unfreeze</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>evbuffer_free</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>done</name>;</goto>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>buf_o</name><operator>-&gt;</operator><name>write_in_progress</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<label><name>done</name>:</label>
+<expr_stmt><expr><call><name>EVBUFFER_UNLOCK</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>r</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>evbuffer_launch_read_</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>evbuffer</name></name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>at_most</name></decl></parameter>,
+<parameter><decl><type><name><name>struct</name> <name>event_overlapped</name></name> <modifier>*</modifier></type><name>ol</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>evbuffer_overlapped</name></name> <modifier>*</modifier></type><name>buf_o</name> <init>= <expr><call><name>upcast_evbuffer</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>, <decl><type ref="prev"/><name>i</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>nvecs</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>npin</name><init>=<expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>evbuffer_chain</name></name> <modifier>*</modifier></type><name>chain</name><init>=<expr><name>NULL</name></expr></init></decl>, <decl><type ref="prev"><modifier>*</modifier><modifier>*</modifier></type><name>chainp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DWORD</name></type> <name>bytesRead</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DWORD</name></type> <name>flags</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>evbuffer_iovec</name></name></type> <name><name>vecs</name><index>[<expr><name>MAX_WSABUFS</name></expr>]</index></name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>buf_o</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>EVBUFFER_LOCK</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>EVUTIL_ASSERT</name><argument_list>(<argument><expr><operator>!</operator><name><name>buf_o</name><operator>-&gt;</operator><name>write_in_progress</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>buf</name><operator>-&gt;</operator><name>freeze_end</name></name> <operator>||</operator> <name><name>buf_o</name><operator>-&gt;</operator><name>read_in_progress</name></name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>done</name>;</goto></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name><name>buf_o</name><operator>-&gt;</operator><name>first_pinned</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>buf_o</name><operator>-&gt;</operator><name>n_buffers</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><name><name>buf_o</name><operator>-&gt;</operator><name>buffers</name></name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name><name>buf_o</name><operator>-&gt;</operator><name>buffers</name></name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>evbuffer_expand_fast_</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><name>at_most</name></expr></argument>, <argument><expr><name>MAX_WSABUFS</name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>done</name>;</goto></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>evbuffer_freeze</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>nvecs</name> <operator>=</operator> <call><name>evbuffer_read_setup_vecs_</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><name>at_most</name></expr></argument>,
+<argument><expr><name>vecs</name></expr></argument>, <argument><expr><name>MAX_WSABUFS</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>chainp</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>i</name><operator>=</operator><literal type="number">0</literal></expr>;</init><condition><expr><name>i</name><operator>&lt;</operator><name>nvecs</name></expr>;</condition><incr><expr><operator>++</operator><name>i</name></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>WSABUF_FROM_EVBUFFER_IOV</name><argument_list>(
+<argument><expr><operator>&amp;</operator><name><name>buf_o</name><operator>-&gt;</operator><name>buffers</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name><name>vecs</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><name><name>buf_o</name><operator>-&gt;</operator><name>n_buffers</name></name> <operator>=</operator> <name>nvecs</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>buf_o</name><operator>-&gt;</operator><name>first_pinned</name></name> <operator>=</operator> <name>chain</name> <operator>=</operator> <operator>*</operator><name>chainp</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>npin</name><operator>=</operator><literal type="number">0</literal></expr>;</expr_stmt>
+<for>for <control>( <init>;</init> <condition><expr><name>chain</name></expr>;</condition> <incr><expr><name>chain</name> <operator>=</operator> <name><name>chain</name><operator>-&gt;</operator><name>next</name></name></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>evbuffer_chain_pin_</name><argument_list>(<argument><expr><name>chain</name></expr></argument>, <argument><expr><name>EVBUFFER_MEM_PINNED_R</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>++</operator><name>npin</name></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><call><name>EVUTIL_ASSERT</name><argument_list>(<argument><expr><name>npin</name> <operator>==</operator> <name>nvecs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>evbuffer_incref_</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>WSARecv</name><argument_list>(<argument><expr><name><name>buf_o</name><operator>-&gt;</operator><name>fd</name></name></expr></argument>, <argument><expr><name><name>buf_o</name><operator>-&gt;</operator><name>buffers</name></name></expr></argument>, <argument><expr><name>nvecs</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>bytesRead</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>flags</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name><name>ol</name><operator>-&gt;</operator><name>overlapped</name></name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>error</name> <init>= <expr><call><name>WSAGetLastError</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>error</name> <operator>!=</operator> <name>WSA_IO_PENDING</name></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><call><name>pin_release</name><argument_list>(<argument><expr><name>buf_o</name></expr></argument>, <argument><expr><name>EVBUFFER_MEM_PINNED_R</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>evbuffer_unfreeze</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>evbuffer_free</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>done</name>;</goto>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>buf_o</name><operator>-&gt;</operator><name>read_in_progress</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<label><name>done</name>:</label>
+<expr_stmt><expr><call><name>EVBUFFER_UNLOCK</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>r</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>evutil_socket_t</name></type>
+<name>evbuffer_overlapped_get_fd_</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>evbuffer</name></name> <modifier>*</modifier></type><name>buf</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>evbuffer_overlapped</name></name> <modifier>*</modifier></type><name>buf_o</name> <init>= <expr><call><name>upcast_evbuffer</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<return>return <expr><ternary><condition><expr><name>buf_o</name></expr> ?</condition><then> <expr><name><name>buf_o</name><operator>-&gt;</operator><name>fd</name></name></expr> </then><else>: <expr><operator>-</operator><literal type="number">1</literal></expr></else></ternary></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type>
+<name>evbuffer_overlapped_set_fd_</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>evbuffer</name></name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>evutil_socket_t</name></type> <name>fd</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>evbuffer_overlapped</name></name> <modifier>*</modifier></type><name>buf_o</name> <init>= <expr><call><name>upcast_evbuffer</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>EVBUFFER_LOCK</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>buf_o</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>buf_o</name><operator>-&gt;</operator><name>fd</name></name> <operator>=</operator> <name>fd</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>EVBUFFER_UNLOCK</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+</unit>

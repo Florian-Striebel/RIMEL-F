@@ -1,0 +1,1216 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/cddl/contrib/opensolaris/tools/ctf/cvt/st_parse.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;limits.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdarg.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdio.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;assert.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;strings.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;setjmp.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;ctype.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;uts/common/sys/ctf.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"ctftools.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"memory.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"list.h"</cpp:file></cpp:include>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>HASH</name><parameter_list>(<parameter><type><name>NUM</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((int)(NUM &amp; (BUCKETS - 1)))</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>BUCKETS</name></cpp:macro> <cpp:value>128</cpp:value></cpp:define>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>TYPEPAIRMULT</name></cpp:macro> <cpp:value>10000</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MAKETYPEID</name><parameter_list>(<parameter><type><name>file</name></type></parameter>, <parameter><type><name>num</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((file) * TYPEPAIRMULT + num)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>TYPEFILE</name><parameter_list>(<parameter><type><name>tid</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((tid) / TYPEPAIRMULT)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>TYPENUM</name><parameter_list>(<parameter><type><name>tid</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((tid) % TYPEPAIRMULT)</cpp:value></cpp:define>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>expected</name><parameter_list>(<parameter><type><name>a</name></type></parameter>, <parameter><type><name>b</name></type></parameter>, <parameter><type><name>c</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>_expected(a, b, c, __LINE__)</cpp:value></cpp:define>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>faketypenumber</name> <init>= <expr><literal type="number">100000000</literal></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>tdesc_t</name> <modifier>*</modifier></type><name><name>hash_table</name><index>[<expr><name>BUCKETS</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>tdesc_t</name> <modifier>*</modifier></type><name><name>name_table</name><index>[<expr><name>BUCKETS</name></expr>]</index></name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>list_t</name> <modifier>*</modifier></type><name>typedbitfldmems</name></decl>;</decl_stmt>
+
+<function_decl><type><specifier>static</specifier> <name>void</name></type> <name>reset</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>;</function_decl>
+<decl_stmt><decl><type><specifier>static</specifier> <name>jmp_buf</name></type> <name>resetbuf</name></decl>;</decl_stmt>
+
+<function_decl><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type><name>soudef</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl></parameter>, <parameter><decl><type><name>stabtype_t</name></type> <name>type</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>rtdp</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>void</name></type> <name>enumdef</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>rtdp</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>compute_sum</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>w</name></decl></parameter>)</parameter_list>;</function_decl>
+
+<function_decl><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type><name>number</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl></parameter>, <parameter><decl><type><name>int</name> <modifier>*</modifier></type><name>n</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type><name>name</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>w</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type><name>id</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl></parameter>, <parameter><decl><type><name>int</name> <modifier>*</modifier></type><name>h</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type><name>whitesp</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>void</name></type> <name>addhash</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>tdp</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>num</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>tagadd</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>w</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>h</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>tdp</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type><name>tdefdecl</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>h</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>rtdp</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type><name>intrinsic</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>rtdp</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type><name>arraydef</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>rtdp</name></decl></parameter>)</parameter_list>;</function_decl>
+
+<decl_stmt><decl><type><name>int</name></type> <name>debug_parse</name> <init>= <expr><name>DEBUG_PARSE</name></expr></init></decl>;</decl_stmt>
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>parse_debug</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>level</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>fmt</name></decl></parameter>, <parameter><decl><type><modifier>...</modifier></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>va_list</name></type> <name>ap</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name><name>buf</name><index>[<expr><literal type="number">1024</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name><name>tmp</name><index>[<expr><literal type="number">32</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>level</name> <operator>&gt;</operator> <name>debug_level</name> <operator>||</operator> <operator>!</operator><name>debug_parse</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>cp</name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <literal type="number">30</literal></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>cp</name><index>[<expr><name>i</name></expr>]</index></name> <operator>==</operator> <literal type="char">'\0'</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>iscntrl</name><argument_list>(<argument><expr><name><name>cp</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>tmp</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <name><name>cp</name><index>[<expr><name>i</name></expr>]</index></name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><name><name>tmp</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>snprintf</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><literal type="string">"%s [cp='%s']\n"</literal></expr></argument>, <argument><expr><name>fmt</name></expr></argument>, <argument><expr><name>tmp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>strcpy</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><name>fmt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>strcat</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><literal type="string">"\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<expr_stmt><expr><call><name>va_start</name><argument_list>(<argument><expr><name>ap</name></expr></argument>, <argument><expr><name>fmt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>vadebug</name><argument_list>(<argument><expr><name>level</name></expr></argument>, <argument><expr><name>buf</name></expr></argument>, <argument><expr><name>ap</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>va_end</name><argument_list>(<argument><expr><name>ap</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>_expected</name><parameter_list>(
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>who</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>what</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>where</name></decl></parameter>,
+<parameter><decl><type><name>int</name></type> <name>line</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"%s, expecting \"%s\" at \"%s\"\n"</literal></expr></argument>, <argument><expr><name>who</name></expr></argument>, <argument><expr><name>what</name></expr></argument>, <argument><expr><name>where</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"code line: %d, file %s\n"</literal></expr></argument>, <argument><expr><name>line</name></expr></argument>,
+<argument><expr><operator>(</operator><ternary><condition><expr><name>curhdr</name></expr> ?</condition><then> <expr><name>curhdr</name></expr> </then><else>: <expr><literal type="string">"NO FILE"</literal></expr></else></ternary><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>reset</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+<function><type><name>void</name></type>
+<name>parse_init</name><parameter_list>(<parameter><decl><type><name>tdata_t</name> <modifier>*</modifier><name>td</name></type> <name>__unused</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>BUCKETS</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name><name>hash_table</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>name_table</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<if_stmt><if>if <condition>(<expr><name>typedbitfldmems</name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>list_free</name><argument_list>(<argument><expr><name>typedbitfldmems</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>typedbitfldmems</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type>
+<name>parse_finish</name><parameter_list>(<parameter><decl><type><name>tdata_t</name> <modifier>*</modifier></type><name>td</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><name><name>td</name><operator>-&gt;</operator><name>td_nextid</name></name> <operator>=</operator> <operator>++</operator><name>faketypenumber</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>tdesc_t</name> <modifier>*</modifier></type>
+<name>unres_new</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>tid</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>tdp</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>tdp</name> <operator>=</operator> <call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><operator>*</operator><name>tdp</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>TYPEDEF_UNRES</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_id</name></name> <operator>=</operator> <name>tid</name></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>tdp</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>read_tid</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>tdpp</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>tdp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>tid</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>id</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>tid</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>tid</name> <operator>!=</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name> <operator>==</operator> <literal type="char">'='</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name>cp</name> <operator>=</operator> <call><name>tdefdecl</name><argument_list>(<argument><expr><name>cp</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><name>tid</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>tdp</name></expr></argument>)</argument_list></call><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>tdp</name><operator>-&gt;</operator><name>t_id</name></name> <operator>&amp;&amp;</operator> <name><name>tdp</name><operator>-&gt;</operator><name>t_id</name></name> <operator>!=</operator> <name>tid</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>ntdp</name> <init>= <expr><call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><operator>*</operator><name>ntdp</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>ntdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>TYPEDEF</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ntdp</name><operator>-&gt;</operator><name>t_tdesc</name></name> <operator>=</operator> <name>tdp</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>tdp</name> <operator>=</operator> <name>ntdp</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>addhash</name><argument_list>(<argument><expr><name>tdp</name></expr></argument>, <argument><expr><name>tid</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>(</operator><name>tdp</name> <operator>=</operator> <call><name>lookup</name><argument_list>(<argument><expr><name>tid</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>tdp</name> <operator>=</operator> <call><name>unres_new</name><argument_list>(<argument><expr><name>tid</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>tdpp</name> <operator>=</operator> <name>tdp</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>cp</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>iitype_t</name></type>
+<name>parse_fun</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl></parameter>, <parameter><decl><type><name>iidesc_t</name> <modifier>*</modifier></type><name>ii</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>iitype_t</name></type> <name>iitype</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>tdp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>args</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>nargs</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>va</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+
+
+
+
+
+<switch>switch <condition>(<expr><operator>*</operator><name>cp</name><operator>++</operator></expr>)</condition> <block>{<block_content>
+<case>case <expr><literal type="char">'P'</literal></expr>:</case>
+<expr_stmt><expr><name>iitype</name> <operator>=</operator> <name>II_NOT</name></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><literal type="char">'F'</literal></expr>:</case>
+<expr_stmt><expr><name>iitype</name> <operator>=</operator> <name>II_GFUN</name></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><literal type="char">'f'</literal></expr>:</case>
+<expr_stmt><expr><name>iitype</name> <operator>=</operator> <name>II_SFUN</name></expr>;</expr_stmt>
+<break>break;</break>
+
+<default>default:</default>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"parse_nfun"</literal></expr></argument>, <argument><expr><literal type="string">"[PfF]"</literal></expr></argument>, <argument><expr><name>cp</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></switch>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name>cp</name> <operator>=</operator> <call><name>read_tid</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>tdp</name></expr></argument>)</argument_list></call><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>args</name> <operator>=</operator> <call><name>xmalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>tdesc_t</name> <operator>*</operator></expr></argument>)</argument_list></sizeof> <operator>*</operator> <name>FUNCARG_DEF</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<while>while <condition>(<expr><operator>*</operator><name>cp</name> <operator>&amp;&amp;</operator> <operator>*</operator><operator>++</operator><name>cp</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name> <operator>==</operator> <literal type="char">'0'</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>va</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>nargs</name><operator>++</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>nargs</name> <operator>&gt;</operator> <name>FUNCARG_DEF</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>args</name> <operator>=</operator> <call><name>xrealloc</name><argument_list>(<argument><expr><name>args</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>tdesc_t</name> <operator>*</operator></expr></argument>)</argument_list></sizeof> <operator>*</operator> <name>nargs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name>cp</name> <operator>=</operator> <call><name>read_tid</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>args</name><index>[<expr><name>nargs</name> <operator>-</operator> <literal type="number">1</literal></expr>]</index></name></expr></argument>)</argument_list></call><operator>)</operator></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>==</operator> <name>TYPEDEF_UNRES</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>tdp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>args</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></while>
+
+<expr_stmt><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_type</name></name> <operator>=</operator> <name>iitype</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_dtype</name></name> <operator>=</operator> <name>tdp</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_nargs</name></name> <operator>=</operator> <name>nargs</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_args</name></name> <operator>=</operator> <name>args</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_vargs</name></name> <operator>=</operator> <name>va</name></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>iitype</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>iitype_t</name></type>
+<name>parse_sym</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl></parameter>, <parameter><decl><type><name>iidesc_t</name> <modifier>*</modifier></type><name>ii</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>tdp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>iitype_t</name></type> <name>iitype</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+
+
+
+
+<switch>switch <condition>(<expr><operator>*</operator><name>cp</name><operator>++</operator></expr>)</condition> <block>{<block_content>
+<case>case <expr><literal type="char">'G'</literal></expr>:</case>
+<expr_stmt><expr><name>iitype</name> <operator>=</operator> <name>II_GVAR</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'S'</literal></expr>:</case>
+<expr_stmt><expr><name>iitype</name> <operator>=</operator> <name>II_SVAR</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'p'</literal></expr>:</case>
+<expr_stmt><expr><name>iitype</name> <operator>=</operator> <name>II_PSYM</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'('</literal></expr>:</case>
+<expr_stmt><expr><name>cp</name><operator>--</operator></expr>;</expr_stmt>
+
+<case>case <expr><literal type="char">'r'</literal></expr>:</case>
+<case>case <expr><literal type="char">'V'</literal></expr>:</case>
+<expr_stmt><expr><name>iitype</name> <operator>=</operator> <name>II_NOT</name></expr>;</expr_stmt>
+<break>break;</break>
+<default>default:</default>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"parse_sym"</literal></expr></argument>, <argument><expr><literal type="string">"[GprSV(]"</literal></expr></argument>, <argument><expr><name>cp</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></switch>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name>cp</name> <operator>=</operator> <call><name>read_tid</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>tdp</name></expr></argument>)</argument_list></call><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_type</name></name> <operator>=</operator> <name>iitype</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_dtype</name></name> <operator>=</operator> <name>tdp</name></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>iitype</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>iitype_t</name></type>
+<name>parse_type</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl></parameter>, <parameter><decl><type><name>iidesc_t</name> <modifier>*</modifier></type><name>ii</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>tdp</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>ntdp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>tid</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name><operator>++</operator> <operator>!=</operator> <literal type="char">'t'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"parse_type"</literal></expr></argument>, <argument><expr><literal type="string">"t (type)"</literal></expr></argument>, <argument><expr><name>cp</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>id</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>tid</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>tdp</name> <operator>=</operator> <call><name>lookup</name><argument_list>(<argument><expr><name>tid</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name><operator>++</operator> <operator>!=</operator> <literal type="char">'='</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"parse_type"</literal></expr></argument>, <argument><expr><literal type="string">"= (definition)"</literal></expr></argument>, <argument><expr><name>cp</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>tdefdecl</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><name>tid</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>tdp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>tdp</name><operator>-&gt;</operator><name>t_id</name></name> <operator>==</operator> <name>tid</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>!=</operator> <name>TYPEDEF</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><operator>!</operator><call><name>lookup</name><argument_list>(<argument><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>streq</name><argument_list>(<argument><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_name</name></name></expr></argument>, <argument><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_name</name></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>ntdp</name> <operator>=</operator> <call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><operator>*</operator><name>ntdp</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ntdp</name><operator>-&gt;</operator><name>t_name</name></name> <operator>=</operator> <call><name>xstrdup</name><argument_list>(<argument><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ntdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>TYPEDEF</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ntdp</name><operator>-&gt;</operator><name>t_tdesc</name></name> <operator>=</operator> <name>tdp</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_id</name></name> <operator>=</operator> <name>faketypenumber</name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name>tdp</name> <operator>=</operator> <name>ntdp</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>tdp</name><operator>-&gt;</operator><name>t_id</name></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>==</operator> <name>FORWARD</name> <operator>||</operator>
+<name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>==</operator> <name>INTRINSIC</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>tdp</name><operator>-&gt;</operator><name>t_name</name></name> <operator>&amp;&amp;</operator> <operator>!</operator><call><name>streq</name><argument_list>(<argument><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_name</name></name></expr></argument>, <argument><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_name</name></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>ntdp</name> <operator>=</operator> <call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><operator>*</operator><name>ntdp</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ntdp</name><operator>-&gt;</operator><name>t_name</name></name> <operator>=</operator> <call><name>xstrdup</name><argument_list>(<argument><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ntdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>TYPEDEF</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ntdp</name><operator>-&gt;</operator><name>t_tdesc</name></name> <operator>=</operator> <name>tdp</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_id</name></name> <operator>=</operator> <name>faketypenumber</name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name>tdp</name> <operator>=</operator> <name>ntdp</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>tdp</name><operator>-&gt;</operator><name>t_id</name></name> <operator>!=</operator> <name>tid</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>ntdp</name> <operator>=</operator> <call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><operator>*</operator><name>ntdp</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ntdp</name><operator>-&gt;</operator><name>t_name</name></name> <operator>=</operator> <call><name>xstrdup</name><argument_list>(<argument><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ntdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>TYPEDEF</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ntdp</name><operator>-&gt;</operator><name>t_tdesc</name></name> <operator>=</operator> <name>tdp</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>tdp</name> <operator>=</operator> <name>ntdp</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>tagadd</name><argument_list>(<argument><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_name</name></name></expr></argument>, <argument><expr><name>tid</name></expr></argument>, <argument><expr><name>tdp</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_type</name></name> <operator>=</operator> <name>II_TYPE</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_dtype</name></name> <operator>=</operator> <name>tdp</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>II_TYPE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>iitype_t</name></type>
+<name>parse_sou</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl></parameter>, <parameter><decl><type><name>iidesc_t</name> <modifier>*</modifier></type><name>idp</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>rtdp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>tid</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name><operator>++</operator> <operator>!=</operator> <literal type="char">'T'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"parse_sou"</literal></expr></argument>, <argument><expr><literal type="string">"T (sou)"</literal></expr></argument>, <argument><expr><name>cp</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>id</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>tid</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name><operator>++</operator> <operator>!=</operator> <literal type="char">'='</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"parse_sou"</literal></expr></argument>, <argument><expr><literal type="string">"= (definition)"</literal></expr></argument>, <argument><expr><name>cp</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>parse_debug</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="string">"parse_sou: declaring '%s'"</literal></expr></argument>, <argument><expr><ternary><condition><expr><name><name>idp</name><operator>-&gt;</operator><name>ii_name</name></name></expr> ?</condition><then>
+<expr><name><name>idp</name><operator>-&gt;</operator><name>ii_name</name></name></expr> </then><else>: <expr><literal type="string">"(anon)"</literal></expr></else></ternary></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>rtdp</name> <operator>=</operator> <call><name>lookup</name><argument_list>(<argument><expr><name>tid</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>idp</name><operator>-&gt;</operator><name>ii_name</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>rtdp</name><operator>-&gt;</operator><name>t_name</name></name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator>
+<call><name>strcmp</name><argument_list>(<argument><expr><name><name>rtdp</name><operator>-&gt;</operator><name>t_name</name></name></expr></argument>, <argument><expr><name><name>idp</name><operator>-&gt;</operator><name>ii_name</name></name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>tdp</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>tdp</name> <operator>=</operator> <call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><operator>*</operator><name>tdp</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_name</name></name> <operator>=</operator> <call><name>xstrdup</name><argument_list>(<argument><expr><name><name>idp</name><operator>-&gt;</operator><name>ii_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>TYPEDEF</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_tdesc</name></name> <operator>=</operator> <name>rtdp</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>addhash</name><argument_list>(<argument><expr><name>tdp</name></expr></argument>, <argument><expr><name>tid</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>parse_debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="string">" %s defined as %s(%d)"</literal></expr></argument>,
+<argument><expr><name><name>idp</name><operator>-&gt;</operator><name>ii_name</name></name></expr></argument>, <argument><expr><call><name>tdesc_name</name><argument_list>(<argument><expr><name>rtdp</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>tid</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>rtdp</name><operator>-&gt;</operator><name>t_name</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>rtdp</name><operator>-&gt;</operator><name>t_name</name></name> <operator>=</operator> <call><name>xstrdup</name><argument_list>(<argument><expr><name><name>idp</name><operator>-&gt;</operator><name>ii_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>addhash</name><argument_list>(<argument><expr><name>rtdp</name></expr></argument>, <argument><expr><name>tid</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>rtdp</name> <operator>=</operator> <call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><operator>*</operator><name>rtdp</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>rtdp</name><operator>-&gt;</operator><name>t_name</name></name> <operator>=</operator> <ternary><condition><expr><name><name>idp</name><operator>-&gt;</operator><name>ii_name</name></name></expr> ?</condition><then> <expr><call><name>xstrdup</name><argument_list>(<argument><expr><name><name>idp</name><operator>-&gt;</operator><name>ii_name</name></name></expr></argument>)</argument_list></call></expr> </then><else>: <expr><name>NULL</name></expr></else></ternary></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>addhash</name><argument_list>(<argument><expr><name>rtdp</name></expr></argument>, <argument><expr><name>tid</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<switch>switch <condition>(<expr><operator>*</operator><name>cp</name><operator>++</operator></expr>)</condition> <block>{<block_content>
+<case>case <expr><literal type="char">'s'</literal></expr>:</case>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>soudef</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><name>STRUCT</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>rtdp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'u'</literal></expr>:</case>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>soudef</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><name>UNION</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>rtdp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'e'</literal></expr>:</case>
+<expr_stmt><expr><call><name>enumdef</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>rtdp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<default>default:</default>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"parse_sou"</literal></expr></argument>, <argument><expr><literal type="string">"&lt;tag type s/u/e&gt;"</literal></expr></argument>, <argument><expr><name>cp</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></switch>
+
+<expr_stmt><expr><name><name>idp</name><operator>-&gt;</operator><name>ii_type</name></name> <operator>=</operator> <name>II_SOU</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>idp</name><operator>-&gt;</operator><name>ii_dtype</name></name> <operator>=</operator> <name>rtdp</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>II_SOU</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>parse_stab</name><parameter_list>(<parameter><decl><type><name>stab_t</name> <modifier>*</modifier></type><name>stab</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl></parameter>, <parameter><decl><type><name>iidesc_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>iidescp</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>iidesc_t</name> <modifier>*</modifier></type><name>ii</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<function_decl><type><name>iitype_t</name></type> (<modifier>*</modifier><name>parse</name>)<parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>iidesc_t</name> <modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl>
+<decl_stmt><decl><type><name>int</name></type> <name>rc</name></decl>;</decl_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>setjmp</name><argument_list>(<argument><expr><name>resetbuf</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>whitesp</name><argument_list>(<argument><expr><name>cp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>ii</name> <operator>=</operator> <call><name>iidesc_new</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>name</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>ii</name><operator>-&gt;</operator><name>ii_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<switch>switch <condition>(<expr><name><name>stab</name><operator>-&gt;</operator><name>n_type</name></name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>N_FUN</name></expr>:</case>
+<expr_stmt><expr><name>parse</name> <operator>=</operator> <name>parse_fun</name></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>N_LSYM</name></expr>:</case>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name> <operator>==</operator> <literal type="char">'t'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>parse</name> <operator>=</operator> <name>parse_type</name></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><operator>*</operator><name>cp</name> <operator>==</operator> <literal type="char">'T'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>parse</name> <operator>=</operator> <name>parse_sou</name></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>parse</name> <operator>=</operator> <name>parse_sym</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<break>break;</break>
+
+<case>case <expr><name>N_GSYM</name></expr>:</case>
+<case>case <expr><name>N_LCSYM</name></expr>:</case>
+<case>case <expr><name>N_PSYM</name></expr>:</case>
+<case>case <expr><name>N_ROSYM</name></expr>:</case>
+<case>case <expr><name>N_RSYM</name></expr>:</case>
+<case>case <expr><name>N_STSYM</name></expr>:</case>
+<expr_stmt><expr><name>parse</name> <operator>=</operator> <name>parse_sym</name></expr>;</expr_stmt>
+<break>break;</break>
+<default>default:</default>
+<expr_stmt><expr><call><name>parse_debug</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>cp</name></expr></argument>, <argument><expr><literal type="string">"Unknown stab type %#x"</literal></expr></argument>, <argument><expr><name><name>stab</name><operator>-&gt;</operator><name>n_type</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>bzero</name><argument_list>(<argument><expr><operator>&amp;</operator><name>resetbuf</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>resetbuf</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></switch>
+
+<expr_stmt><expr><name>rc</name> <operator>=</operator> <call><name>parse</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><name>ii</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>bzero</name><argument_list>(<argument><expr><operator>&amp;</operator><name>resetbuf</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>resetbuf</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>rc</name> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator> <name><name>ii</name><operator>-&gt;</operator><name>ii_type</name></name> <operator>==</operator> <name>II_NOT</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>iidesc_free</name><argument_list>(<argument><expr><name>ii</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>rc</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>iidescp</name> <operator>=</operator> <name>ii</name></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>tdesc_t</name> <modifier>*</modifier></type>
+<name>lookup</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>h</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>bucket</name> <init>= <expr><call><name>HASH</name><argument_list>(<argument><expr><name>h</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>tdp</name> <init>= <expr><name><name>hash_table</name><index>[<expr><name>bucket</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+
+<while>while <condition>(<expr><name>tdp</name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>tdp</name><operator>-&gt;</operator><name>t_id</name></name> <operator>==</operator> <name>h</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>tdp</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>tdp</name> <operator>=</operator> <name><name>tdp</name><operator>-&gt;</operator><name>t_hash</name></name></expr>;</expr_stmt>
+</block_content>}</block></while>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>whitesp</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name></type> <name>c</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>c</name> <operator>=</operator> <operator>*</operator><name>cp</name><operator>++</operator></expr>;</init> <condition><expr><call><name>isspace</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>c</name> <operator>=</operator> <operator>*</operator><name>cp</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<empty_stmt>;</empty_stmt></block_content></block></for>
+<expr_stmt><expr><operator>--</operator><name>cp</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>cp</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>name</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>w</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>new</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>orig</name></decl>, <decl><type ref="prev"/><name>c</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>len</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>orig</name> <operator>=</operator> <name>cp</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>c</name> <operator>=</operator> <operator>*</operator><name>cp</name><operator>++</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>c</name> <operator>==</operator> <literal type="char">':'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>*</operator><name>w</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><call><name>isalpha</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call> <operator>||</operator> <call><name>strchr</name><argument_list>(<argument><expr><literal type="string">"_.$#"</literal></expr></argument>, <argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<for>for <control>(<init><expr><name>c</name> <operator>=</operator> <operator>*</operator><name>cp</name><operator>++</operator></expr>;</init> <condition><expr><call><name>isalnum</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call> <operator>||</operator> <call><name>strchr</name><argument_list>(<argument><expr><literal type="string">" _.$#"</literal></expr></argument>, <argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>c</name> <operator>=</operator> <operator>*</operator><name>cp</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<empty_stmt>;</empty_stmt></block_content></block></for>
+<if_stmt><if>if <condition>(<expr><name>c</name> <operator>!=</operator> <literal type="char">':'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>reset</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>len</name> <operator>=</operator> <name>cp</name> <operator>-</operator> <name>orig</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>new</name> <operator>=</operator> <call><name>xmalloc</name><argument_list>(<argument><expr><name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<while>while <condition>(<expr><name>orig</name> <operator>&lt;</operator> <name>cp</name> <operator>-</operator> <literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>*</operator><name>new</name><operator>++</operator> <operator>=</operator> <operator>*</operator><name>orig</name><operator>++</operator></expr>;</expr_stmt></block_content></block></while>
+<expr_stmt><expr><operator>*</operator><name>new</name> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>w</name> <operator>=</operator> <name>new</name> <operator>-</operator> <operator>(</operator><name>len</name> <operator>-</operator> <literal type="number">1</literal><operator>)</operator></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>reset</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<return>return <expr><operator>(</operator><name>cp</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>number</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl></parameter>, <parameter><decl><type><name>int</name> <modifier>*</modifier></type><name>n</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>next</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>n</name> <operator>=</operator> <operator>(</operator><name>int</name><operator>)</operator><call><name>strtol</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>next</name></expr></argument>, <argument><expr><literal type="number">10</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>next</name> <operator>==</operator> <name>cp</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"number"</literal></expr></argument>, <argument><expr><literal type="string">"&lt;number&gt;"</literal></expr></argument>, <argument><expr><name>cp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>next</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>id</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl></parameter>, <parameter><decl><type><name>int</name> <modifier>*</modifier></type><name>h</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>n1</name></decl>, <decl><type ref="prev"/><name>n2</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name> <operator>==</operator> <literal type="char">'('</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>cp</name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>number</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>n1</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name><operator>++</operator> <operator>!=</operator> <literal type="char">','</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"id"</literal></expr></argument>, <argument><expr><literal type="string">","</literal></expr></argument>, <argument><expr><name>cp</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>number</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>n2</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name><operator>++</operator> <operator>!=</operator> <literal type="char">')'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"id"</literal></expr></argument>, <argument><expr><literal type="string">")"</literal></expr></argument>, <argument><expr><name>cp</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><operator>*</operator><name>h</name> <operator>=</operator> <call><name>MAKETYPEID</name><argument_list>(<argument><expr><name>n1</name></expr></argument>, <argument><expr><name>n2</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><call><name>isdigit</name><argument_list>(<argument><expr><operator>*</operator><name>cp</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>number</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>n1</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>h</name> <operator>=</operator> <name>n1</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"id"</literal></expr></argument>, <argument><expr><literal type="string">"(/0-9"</literal></expr></argument>, <argument><expr><name>cp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<return>return <expr><operator>(</operator><name>cp</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>tagadd</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>w</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>h</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>tdp</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>otdp</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_name</name></name> <operator>=</operator> <name>w</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name>otdp</name> <operator>=</operator> <call><name>lookup</name><argument_list>(<argument><expr><name>h</name></expr></argument>)</argument_list></call><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>addhash</name><argument_list>(<argument><expr><name>tdp</name></expr></argument>, <argument><expr><name>h</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name>otdp</name> <operator>!=</operator> <name>tdp</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warning</name><argument_list>(<argument><expr><literal type="string">"duplicate entry\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>warning</name><argument_list>(<argument><expr><literal type="string">" old: %s %d (%d,%d)\n"</literal></expr></argument>, <argument><expr><call><name>tdesc_name</name><argument_list>(<argument><expr><name>otdp</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name><name>otdp</name><operator>-&gt;</operator><name>t_type</name></name></expr></argument>, <argument><expr><call><name>TYPEFILE</name><argument_list>(<argument><expr><name><name>otdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><call><name>TYPENUM</name><argument_list>(<argument><expr><name><name>otdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>warning</name><argument_list>(<argument><expr><literal type="string">" new: %s %d (%d,%d)\n"</literal></expr></argument>, <argument><expr><call><name>tdesc_name</name><argument_list>(<argument><expr><name>tdp</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name></expr></argument>, <argument><expr><call><name>TYPEFILE</name><argument_list>(<argument><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><call><name>TYPENUM</name><argument_list>(<argument><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>tdefdecl</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>h</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>rtdp</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>ntdp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>w</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>c</name></decl>, <decl><type ref="prev"/><name>h2</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name>type</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>parse_debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><name>cp</name></expr></argument>, <argument><expr><literal type="string">"tdefdecl h=%d"</literal></expr></argument>, <argument><expr><name>h</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<switch>switch <condition>(<expr><name>type</name> <operator>=</operator> <operator>*</operator><name>cp</name></expr>)</condition> <block>{<block_content>
+<case>case <expr><literal type="char">'b'</literal></expr>:</case>
+<case>case <expr><literal type="char">'R'</literal></expr>:</case>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>intrinsic</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><name>rtdp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'('</literal></expr>:</case>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>id</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>h2</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>ntdp</name> <operator>=</operator> <call><name>lookup</name><argument_list>(<argument><expr><name>h2</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ntdp</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <operator>*</operator><name>cp</name> <operator>==</operator> <literal type="char">'='</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>ntdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>==</operator> <name>FORWARD</name> <operator>&amp;&amp;</operator> <operator>*</operator><operator>(</operator><name>cp</name> <operator>+</operator> <literal type="number">1</literal><operator>)</operator> <operator>==</operator> <literal type="char">'x'</literal></expr>)</condition> <block>{<block_content>
+
+
+
+
+
+
+
+
+
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>c2</name> <init>= <expr><name>cp</name> <operator>+</operator> <literal type="number">2</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>nm</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>strchr</name><argument_list>(<argument><expr><literal type="string">"sue"</literal></expr></argument>, <argument><expr><operator>*</operator><name>c2</name><operator>++</operator></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"tdefdecl/x-redefine"</literal></expr></argument>, <argument><expr><literal type="string">"[sue]"</literal></expr></argument>,
+<argument><expr><name>c2</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>c2</name> <operator>=</operator> <call><name>name</name><argument_list>(<argument><expr><name>c2</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>nm</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>strcmp</name><argument_list>(<argument><expr><name>nm</name></expr></argument>, <argument><expr><name><name>ntdp</name><operator>-&gt;</operator><name>t_name</name></name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>terminate</name><argument_list>(<argument><expr><literal type="string">"Stabs error: Attempt to "</literal>
+<literal type="string">"redefine type (%d,%d) as "</literal>
+<literal type="string">"something else: %s\n"</literal></expr></argument>,
+<argument><expr><call><name>TYPEFILE</name><argument_list>(<argument><expr><name>h2</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><call><name>TYPENUM</name><argument_list>(<argument><expr><name>h2</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name>c2</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>nm</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>h2</name> <operator>=</operator> <name>faketypenumber</name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name>ntdp</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>terminate</name><argument_list>(<argument><expr><literal type="string">"Stabs error: Attempting to "</literal>
+<literal type="string">"redefine type (%d,%d)\n"</literal></expr></argument>, <argument><expr><call><name>TYPEFILE</name><argument_list>(<argument><expr><name>h2</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>TYPENUM</name><argument_list>(<argument><expr><name>h2</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ntdp</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name> <operator>!=</operator> <literal type="char">'='</literal></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><call><name>parse_debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="string">"tdefdecl unres type %d"</literal></expr></argument>,
+<argument><expr><name>h2</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>rtdp</name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><operator>*</operator><operator>*</operator><name>rtdp</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>TYPEDEF_UNRES</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_id</name></name> <operator>=</operator> <name>h2</name></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>cp</name><operator>++</operator></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>tdefdecl</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><name>h2</name></expr></argument>, <argument><expr><name>rtdp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_id</name></name> <operator>&amp;&amp;</operator> <name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_id</name></name> <operator>!=</operator> <name>h2</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>ntdp</name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><operator>*</operator><name>ntdp</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ntdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>TYPEDEF</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ntdp</name><operator>-&gt;</operator><name>t_tdesc</name></name> <operator>=</operator> <operator>*</operator><name>rtdp</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>rtdp</name> <operator>=</operator> <name>ntdp</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>addhash</name><argument_list>(<argument><expr><operator>*</operator><name>rtdp</name></expr></argument>, <argument><expr><name>h2</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>ntdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>!=</operator> <name>TYPEDEF</name> <operator>||</operator> <name><name>ntdp</name><operator>-&gt;</operator><name>t_name</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>rtdp</name> <operator>=</operator> <name>ntdp</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>parse_debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>,
+<argument><expr><literal type="string">"No duplicate typedef anon for ref"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>rtdp</name> <operator>=</operator> <name>ntdp</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></else></if_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'*'</literal></expr>:</case>
+<expr_stmt><expr><name>ntdp</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>tdefdecl</name><argument_list>(<argument><expr><name>cp</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><name>h</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ntdp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ntdp</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"tdefdecl/*"</literal></expr></argument>, <argument><expr><literal type="string">"id"</literal></expr></argument>, <argument><expr><name>cp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>ntdp</name><operator>-&gt;</operator><name>t_id</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>ntdp</name><operator>-&gt;</operator><name>t_id</name></name> <operator>=</operator> <name>faketypenumber</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>rtdp</name> <operator>=</operator> <call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><operator>*</operator><operator>*</operator><name>rtdp</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>POINTER</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_size</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_id</name></name> <operator>=</operator> <name>h</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_tdesc</name></name> <operator>=</operator> <name>ntdp</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'f'</literal></expr>:</case>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>tdefdecl</name><argument_list>(<argument><expr><name>cp</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><name>h</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ntdp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>rtdp</name> <operator>=</operator> <call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><operator>*</operator><operator>*</operator><name>rtdp</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>FUNCTION</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_size</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_id</name></name> <operator>=</operator> <name>h</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_fndef</name></name> <operator>=</operator> <call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>fndef_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+
+
+
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name><name>t_fndef</name><operator>-&gt;</operator><name>fn_ret</name></name></name> <operator>=</operator> <call><name>lookupname</name><argument_list>(<argument><expr><literal type="string">"int"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'a'</literal></expr>:</case>
+<case>case <expr><literal type="char">'z'</literal></expr>:</case>
+<expr_stmt><expr><name>cp</name><operator>++</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name><operator>++</operator> <operator>!=</operator> <literal type="char">'r'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"tdefdecl/[az]"</literal></expr></argument>, <argument><expr><literal type="string">"r"</literal></expr></argument>, <argument><expr><name>cp</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><operator>*</operator><name>rtdp</name> <operator>=</operator> <call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><operator>*</operator><operator>*</operator><name>rtdp</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>ARRAY</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_id</name></name> <operator>=</operator> <name>h</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>arraydef</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><name>rtdp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'x'</literal></expr>:</case>
+<expr_stmt><expr><name>c</name> <operator>=</operator> <operator>*</operator><operator>++</operator><name>cp</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>c</name> <operator>!=</operator> <literal type="char">'s'</literal> <operator>&amp;&amp;</operator> <name>c</name> <operator>!=</operator> <literal type="char">'u'</literal> <operator>&amp;&amp;</operator> <name>c</name> <operator>!=</operator> <literal type="char">'e'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"tdefdecl/x"</literal></expr></argument>, <argument><expr><literal type="string">"[sue]"</literal></expr></argument>, <argument><expr><name>cp</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>name</name><argument_list>(<argument><expr><name>cp</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>w</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>ntdp</name> <operator>=</operator> <call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><operator>*</operator><name>ntdp</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ntdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>FORWARD</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ntdp</name><operator>-&gt;</operator><name>t_name</name></name> <operator>=</operator> <name>w</name></expr>;</expr_stmt>
+
+
+
+
+
+
+<expr_stmt><expr><operator>*</operator><name>rtdp</name> <operator>=</operator> <name>ntdp</name></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><literal type="char">'B'</literal></expr>:</case>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>tdefdecl</name><argument_list>(<argument><expr><name>cp</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><name>h</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ntdp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>ntdp</name><operator>-&gt;</operator><name>t_id</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>ntdp</name><operator>-&gt;</operator><name>t_id</name></name> <operator>=</operator> <name>faketypenumber</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>rtdp</name> <operator>=</operator> <call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><operator>*</operator><operator>*</operator><name>rtdp</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>VOLATILE</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_size</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_tdesc</name></name> <operator>=</operator> <name>ntdp</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_id</name></name> <operator>=</operator> <name>h</name></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><literal type="char">'k'</literal></expr>:</case>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>tdefdecl</name><argument_list>(<argument><expr><name>cp</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><name>h</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ntdp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>ntdp</name><operator>-&gt;</operator><name>t_id</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>ntdp</name><operator>-&gt;</operator><name>t_id</name></name> <operator>=</operator> <name>faketypenumber</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>rtdp</name> <operator>=</operator> <call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><operator>*</operator><operator>*</operator><name>rtdp</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>CONST</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_size</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_tdesc</name></name> <operator>=</operator> <name>ntdp</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_id</name></name> <operator>=</operator> <name>h</name></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><literal type="char">'K'</literal></expr>:</case>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>tdefdecl</name><argument_list>(<argument><expr><name>cp</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><name>h</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ntdp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>ntdp</name><operator>-&gt;</operator><name>t_id</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>ntdp</name><operator>-&gt;</operator><name>t_id</name></name> <operator>=</operator> <name>faketypenumber</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>rtdp</name> <operator>=</operator> <call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><operator>*</operator><operator>*</operator><name>rtdp</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>RESTRICT</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_size</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_tdesc</name></name> <operator>=</operator> <name>ntdp</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_id</name></name> <operator>=</operator> <name>h</name></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><literal type="char">'u'</literal></expr>:</case>
+<case>case <expr><literal type="char">'s'</literal></expr>:</case>
+<expr_stmt><expr><name>cp</name><operator>++</operator></expr>;</expr_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>rtdp</name> <operator>=</operator> <call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><operator>*</operator><operator>*</operator><name>rtdp</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_name</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>soudef</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><ternary><condition><expr><operator>(</operator><name>type</name> <operator>==</operator> <literal type="char">'u'</literal><operator>)</operator></expr> ?</condition><then> <expr><name>UNION</name></expr> </then><else>: <expr><name>STRUCT</name></expr></else></ternary></expr></argument>, <argument><expr><name>rtdp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<default>default:</default>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"tdefdecl"</literal></expr></argument>, <argument><expr><literal type="string">"&lt;type code&gt;"</literal></expr></argument>, <argument><expr><name>cp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></switch>
+<return>return <expr><operator>(</operator><name>cp</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>intrinsic</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>rtdp</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>intr_t</name> <modifier>*</modifier></type><name>intr</name> <init>= <expr><call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>intr_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>tdp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>width</name></decl>, <decl><type ref="prev"/><name>fmt</name></decl>, <decl><type ref="prev"/><name>i</name></decl>;</decl_stmt>
+
+<switch>switch <condition>(<expr><operator>*</operator><name>cp</name><operator>++</operator></expr>)</condition> <block>{<block_content>
+<case>case <expr><literal type="char">'b'</literal></expr>:</case>
+<expr_stmt><expr><name><name>intr</name><operator>-&gt;</operator><name>intr_type</name></name> <operator>=</operator> <name>INTR_INT</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name> <operator>==</operator> <literal type="char">'s'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>intr</name><operator>-&gt;</operator><name>intr_signed</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><operator>*</operator><name>cp</name> <operator>!=</operator> <literal type="char">'u'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"intrinsic/b"</literal></expr></argument>, <argument><expr><literal type="string">"[su]"</literal></expr></argument>, <argument><expr><name>cp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>cp</name><operator>++</operator></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>strchr</name><argument_list>(<argument><expr><literal type="string">"cbv"</literal></expr></argument>, <argument><expr><operator>*</operator><name>cp</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>intr</name><operator>-&gt;</operator><name>intr_iformat</name></name> <operator>=</operator> <operator>*</operator><name>cp</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>number</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>width</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name><operator>++</operator> <operator>!=</operator> <literal type="char">';'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"intrinsic/b"</literal></expr></argument>, <argument><expr><literal type="string">"; (post-width)"</literal></expr></argument>, <argument><expr><name>cp</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>number</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>intr</name><operator>-&gt;</operator><name>intr_offset</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name><operator>++</operator> <operator>!=</operator> <literal type="char">';'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"intrinsic/b"</literal></expr></argument>, <argument><expr><literal type="string">"; (post-offset)"</literal></expr></argument>, <argument><expr><name>cp</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>number</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>intr</name><operator>-&gt;</operator><name>intr_nbits</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><literal type="char">'R'</literal></expr>:</case>
+<expr_stmt><expr><name><name>intr</name><operator>-&gt;</operator><name>intr_type</name></name> <operator>=</operator> <name>INTR_REAL</name></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>fmt</name> <operator>=</operator> <literal type="number">0</literal></expr><operator>,</operator> <expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><call><name>isdigit</name><argument_list>(<argument><expr><operator>*</operator><operator>(</operator><name>cp</name> <operator>+</operator> <name>i</name><operator>)</operator></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><name>fmt</name> <operator>=</operator> <name>fmt</name> <operator>*</operator> <literal type="number">10</literal> <operator>+</operator> <operator>(</operator><operator>*</operator><operator>(</operator><name>cp</name> <operator>+</operator> <name>i</name><operator>)</operator> <operator>-</operator> <literal type="char">'0'</literal><operator>)</operator></expr>;</expr_stmt></block_content></block></for>
+
+<if_stmt><if>if <condition>(<expr><name><name>fmt</name> <argument_list type="generic">&lt; <argument><expr><literal type="number">1</literal> <operator>||</operator> <name>fmt</name></expr></argument> &gt;</argument_list></name> <name>CTF_FP_MAX</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"intrinsic/R"</literal></expr></argument>, <argument><expr><literal type="string">"number &lt;= CTF_FP_MAX"</literal></expr></argument>, <argument><expr><name>cp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name><name>intr</name><operator>-&gt;</operator><name>intr_fformat</name></name> <operator>=</operator> <name>fmt</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>cp</name> <operator>+=</operator> <name>i</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name><operator>++</operator> <operator>!=</operator> <literal type="char">';'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"intrinsic/R"</literal></expr></argument>, <argument><expr><literal type="string">";"</literal></expr></argument>, <argument><expr><name>cp</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>number</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>width</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>intr</name><operator>-&gt;</operator><name>intr_nbits</name></name> <operator>=</operator> <name>width</name> <operator>*</operator> <literal type="number">8</literal></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></switch>
+
+<expr_stmt><expr><name>tdp</name> <operator>=</operator> <call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><operator>*</operator><name>tdp</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>INTRINSIC</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_size</name></name> <operator>=</operator> <name>width</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_name</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_intr</name></name> <operator>=</operator> <name>intr</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>parse_debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="string">"intrinsic: size=%d"</literal></expr></argument>, <argument><expr><name>width</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>rtdp</name> <operator>=</operator> <name>tdp</name></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>cp</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>tdesc_t</name> <modifier>*</modifier></type>
+<name>bitintrinsic</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>template</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>nbits</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>newtdp</name> <init>= <expr><call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>tdesc_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>newtdp</name><operator>-&gt;</operator><name>t_name</name></name> <operator>=</operator> <call><name>xstrdup</name><argument_list>(<argument><expr><name><name>template</name><operator>-&gt;</operator><name>t_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>newtdp</name><operator>-&gt;</operator><name>t_id</name></name> <operator>=</operator> <name>faketypenumber</name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>newtdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>INTRINSIC</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>newtdp</name><operator>-&gt;</operator><name>t_size</name></name> <operator>=</operator> <name><name>template</name><operator>-&gt;</operator><name>t_size</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>newtdp</name><operator>-&gt;</operator><name>t_intr</name></name> <operator>=</operator> <call><name>xmalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>intr_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>bcopy</name><argument_list>(<argument><expr><name><name>template</name><operator>-&gt;</operator><name>t_intr</name></name></expr></argument>, <argument><expr><name><name>newtdp</name><operator>-&gt;</operator><name>t_intr</name></name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>intr_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>newtdp</name><operator>-&gt;</operator><name>t_intr</name><operator>-&gt;</operator><name>intr_nbits</name></name> <operator>=</operator> <name>nbits</name></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>newtdp</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>offsize</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl></parameter>, <parameter><decl><type><name>mlist_t</name> <modifier>*</modifier></type><name>mlp</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>offset</name></decl>, <decl><type ref="prev"/><name>size</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name> <operator>==</operator> <literal type="char">','</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>cp</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>number</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>offset</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name><operator>++</operator> <operator>!=</operator> <literal type="char">','</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"offsize/2"</literal></expr></argument>, <argument><expr><literal type="string">","</literal></expr></argument>, <argument><expr><name>cp</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>number</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>size</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name><operator>++</operator> <operator>!=</operator> <literal type="char">';'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"offsize/3"</literal></expr></argument>, <argument><expr><literal type="string">";"</literal></expr></argument>, <argument><expr><name>cp</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>mlp</name><operator>-&gt;</operator><name>ml_offset</name></name> <operator>=</operator> <name>offset</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>mlp</name><operator>-&gt;</operator><name>ml_size</name></name> <operator>=</operator> <name>size</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>cp</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>tdesc_t</name> <modifier>*</modifier></type>
+<name>find_intrinsic</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>tdp</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<for>for <control>(<init>;</init><condition>;</condition><incr/>)</control> <block>{<block_content>
+<switch>switch <condition>(<expr><name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>TYPEDEF</name></expr>:</case>
+<case>case <expr><name>VOLATILE</name></expr>:</case>
+<case>case <expr><name>CONST</name></expr>:</case>
+<case>case <expr><name>RESTRICT</name></expr>:</case>
+<expr_stmt><expr><name>tdp</name> <operator>=</operator> <name><name>tdp</name><operator>-&gt;</operator><name>t_tdesc</name></name></expr>;</expr_stmt>
+<break>break;</break>
+
+<default>default:</default>
+<return>return <expr><operator>(</operator><name>tdp</name><operator>)</operator></expr>;</return>
+</block_content>}</block></switch>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>soudef</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl></parameter>, <parameter><decl><type><name>stabtype_t</name></type> <name>type</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>rtdp</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>mlist_t</name> <modifier>*</modifier></type><name>mlp</name></decl>, <decl><type ref="prev"><modifier>*</modifier><modifier>*</modifier></type><name>prev</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>w</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>h</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>size</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>tdp</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>itdp</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>number</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>size</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_size</name></name> <operator>=</operator> <name>size</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>type</name></expr>;</expr_stmt>
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>cp</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'@'</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>cp</name> <operator>+=</operator> <literal type="number">3</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>parse_debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><name>cp</name></expr></argument>, <argument><expr><literal type="string">"soudef: %s size=%d"</literal></expr></argument>, <argument><expr><call><name>tdesc_name</name><argument_list>(<argument><expr><operator>*</operator><name>rtdp</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_size</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>prev</name> <operator>=</operator> <operator>&amp;</operator><operator>(</operator><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_members</name></name><operator>)</operator></expr>;</expr_stmt>
+
+<while>while <condition>(<expr><operator>(</operator><operator>*</operator><name>cp</name> <operator>!=</operator> <literal type="char">'\0'</literal><operator>)</operator> <operator>&amp;&amp;</operator> <operator>(</operator><operator>*</operator><name>cp</name> <operator>!=</operator> <literal type="char">';'</literal><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>mlp</name> <operator>=</operator> <call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><operator>*</operator><name>mlp</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>prev</name> <operator>=</operator> <name>mlp</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>name</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>w</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>mlp</name><operator>-&gt;</operator><name>ml_name</name></name> <operator>=</operator> <name>w</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>id</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>h</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+<expr_stmt><expr><name>tdp</name> <operator>=</operator> <call><name>lookup</name><argument_list>(<argument><expr><name>h</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>tdp</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>parse_debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="string">" defines %s (%d)"</literal></expr></argument>, <argument><expr><name>w</name></expr></argument>, <argument><expr><name>h</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name><operator>++</operator> <operator>!=</operator> <literal type="char">'='</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>tdp</name> <operator>=</operator> <call><name>unres_new</name><argument_list>(<argument><expr><name>h</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>parse_debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>,
+<argument><expr><literal type="string">" refers to %s (unresolved %d)"</literal></expr></argument>,
+<argument><expr><operator>(</operator><ternary><condition><expr><name>w</name></expr> ?</condition><then> <expr><name>w</name></expr> </then><else>: <expr><literal type="string">"anon"</literal></expr></else></ternary><operator>)</operator></expr></argument>, <argument><expr><name>h</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>tdefdecl</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><name>h</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>tdp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>tdp</name><operator>-&gt;</operator><name>t_id</name></name> <operator>&amp;&amp;</operator> <name><name>tdp</name><operator>-&gt;</operator><name>t_id</name></name> <operator>!=</operator> <name>h</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>ntdp</name> <init>= <expr><call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><operator>*</operator><name>ntdp</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>ntdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>TYPEDEF</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ntdp</name><operator>-&gt;</operator><name>t_tdesc</name></name> <operator>=</operator> <name>tdp</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>tdp</name> <operator>=</operator> <name>ntdp</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>addhash</name><argument_list>(<argument><expr><name>tdp</name></expr></argument>, <argument><expr><name>h</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>parse_debug</name><argument_list>(<argument><expr><literal type="number">4</literal></expr></argument>, <argument><expr><name>cp</name></expr></argument>,
+<argument><expr><literal type="string">" soudef now looking at "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>cp</name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>parse_debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="string">" refers to %s (%d, %s)"</literal></expr></argument>,
+<argument><expr><ternary><condition><expr><name>w</name></expr> ?</condition><then> <expr><name>w</name></expr> </then><else>: <expr><literal type="string">"anon"</literal></expr></else></ternary></expr></argument>, <argument><expr><name>h</name></expr></argument>, <argument><expr><call><name>tdesc_name</name><argument_list>(<argument><expr><name>tdp</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>offsize</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><name>mlp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>itdp</name> <operator>=</operator> <call><name>find_intrinsic</name><argument_list>(<argument><expr><name>tdp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>itdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>==</operator> <name>INTRINSIC</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>mlp</name><operator>-&gt;</operator><name>ml_size</name></name> <operator>!=</operator> <name><name>itdp</name><operator>-&gt;</operator><name>t_intr</name><operator>-&gt;</operator><name>intr_nbits</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>parse_debug</name><argument_list>(<argument><expr><literal type="number">4</literal></expr></argument>, <argument><expr><name>cp</name></expr></argument>, <argument><expr><literal type="string">"making %d bit intrinsic "</literal>
+<literal type="string">"from %s"</literal></expr></argument>, <argument><expr><name><name>mlp</name><operator>-&gt;</operator><name>ml_size</name></name></expr></argument>, <argument><expr><call><name>tdesc_name</name><argument_list>(<argument><expr><name>itdp</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>mlp</name><operator>-&gt;</operator><name>ml_type</name></name> <operator>=</operator> <call><name>bitintrinsic</name><argument_list>(<argument><expr><name>itdp</name></expr></argument>, <argument><expr><name><name>mlp</name><operator>-&gt;</operator><name>ml_size</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>mlp</name><operator>-&gt;</operator><name>ml_type</name></name> <operator>=</operator> <name>tdp</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>itdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>==</operator> <name>TYPEDEF_UNRES</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>list_add</name><argument_list>(<argument><expr><operator>&amp;</operator><name>typedbitfldmems</name></expr></argument>, <argument><expr><name>mlp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>mlp</name><operator>-&gt;</operator><name>ml_type</name></name> <operator>=</operator> <name>tdp</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name><name>mlp</name><operator>-&gt;</operator><name>ml_type</name></name> <operator>=</operator> <name>tdp</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+
+<expr_stmt><expr><name>prev</name> <operator>=</operator> <operator>&amp;</operator><name><name>mlp</name><operator>-&gt;</operator><name>ml_next</name></name></expr>;</expr_stmt>
+</block_content>}</block></while>
+<return>return <expr><operator>(</operator><name>cp</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>arraydef</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>rtdp</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>start</name></decl>, <decl><type ref="prev"/><name>end</name></decl>, <decl><type ref="prev"/><name>h</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>id</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>h</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name><operator>++</operator> <operator>!=</operator> <literal type="char">';'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"arraydef/1"</literal></expr></argument>, <argument><expr><literal type="string">";"</literal></expr></argument>, <argument><expr><name>cp</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_ardef</name></name> <operator>=</operator> <call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>ardef_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name><name>t_ardef</name><operator>-&gt;</operator><name>ad_idxtype</name></name></name> <operator>=</operator> <call><name>lookup</name><argument_list>(<argument><expr><name>h</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>number</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>start</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name><operator>++</operator> <operator>!=</operator> <literal type="char">';'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"arraydef/2"</literal></expr></argument>, <argument><expr><literal type="string">";"</literal></expr></argument>, <argument><expr><name>cp</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name> <operator>==</operator> <literal type="char">'S'</literal></expr>)</condition> <block>{<block_content>
+
+
+
+
+
+
+
+
+
+
+
+<expr_stmt><expr><name>cp</name><operator>++</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name> <operator>==</operator> <literal type="char">'-'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>cp</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>number</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>end</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>end</name> <operator>=</operator> <name>start</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+
+
+
+
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>number</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>end</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name><operator>++</operator> <operator>!=</operator> <literal type="char">';'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"arraydef/3"</literal></expr></argument>, <argument><expr><literal type="string">";"</literal></expr></argument>, <argument><expr><name>cp</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name><name>t_ardef</name><operator>-&gt;</operator><name>ad_nelems</name></name></name> <operator>=</operator> <name>end</name> <operator>-</operator> <name>start</name> <operator>+</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>tdefdecl</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><name>h</name></expr></argument>, <argument><expr><operator>&amp;</operator><operator>(</operator><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name><name>t_ardef</name><operator>-&gt;</operator><name>ad_contents</name></name></name><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>parse_debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><name>cp</name></expr></argument>, <argument><expr><literal type="string">"defined array idx type %d %d-%d next "</literal></expr></argument>,
+<argument><expr><name>h</name></expr></argument>, <argument><expr><name>start</name></expr></argument>, <argument><expr><name>end</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>cp</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>enumdef</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>rtdp</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>elist_t</name> <modifier>*</modifier></type><name>elp</name></decl>, <decl><type ref="prev"><modifier>*</modifier><modifier>*</modifier></type><name>prev</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>w</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>ENUM</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_emem</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>prev</name> <operator>=</operator> <operator>&amp;</operator><operator>(</operator><name><operator>(</operator><operator>*</operator><name>rtdp</name><operator>)</operator><operator>-&gt;</operator><name>t_emem</name></name><operator>)</operator></expr>;</expr_stmt>
+<while>while <condition>(<expr><operator>*</operator><name>cp</name> <operator>!=</operator> <literal type="char">';'</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>elp</name> <operator>=</operator> <call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><operator>*</operator><name>elp</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>elp</name><operator>-&gt;</operator><name>el_next</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>prev</name> <operator>=</operator> <name>elp</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>name</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>w</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>elp</name><operator>-&gt;</operator><name>el_name</name></name> <operator>=</operator> <name>w</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>cp</name> <operator>=</operator> <call><name>number</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>elp</name><operator>-&gt;</operator><name>el_number</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>parse_debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="string">"enum %s: %s=%d"</literal></expr></argument>, <argument><expr><call><name>tdesc_name</name><argument_list>(<argument><expr><operator>*</operator><name>rtdp</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name><name>elp</name><operator>-&gt;</operator><name>el_name</name></name></expr></argument>, <argument><expr><name><name>elp</name><operator>-&gt;</operator><name>el_number</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>prev</name> <operator>=</operator> <operator>&amp;</operator><name><name>elp</name><operator>-&gt;</operator><name>el_next</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name><operator>++</operator> <operator>!=</operator> <literal type="char">','</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>expected</name><argument_list>(<argument><expr><literal type="string">"enumdef"</literal></expr></argument>, <argument><expr><literal type="string">","</literal></expr></argument>, <argument><expr><name>cp</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></while>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>tdesc_t</name> <modifier>*</modifier></type>
+<name>lookup_name</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>hash</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>name1</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>bucket</name> <init>= <expr><call><name>compute_sum</name><argument_list>(<argument><expr><name>name1</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>tdp</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>ttdp</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>tdp</name> <operator>=</operator> <name><name>hash</name><index>[<expr><name>bucket</name></expr>]</index></name></expr>;</init> <condition><expr><name>tdp</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>tdp</name> <operator>=</operator> <name><name>tdp</name><operator>-&gt;</operator><name>t_next</name></name></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>tdp</name><operator>-&gt;</operator><name>t_name</name></name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <call><name>strcmp</name><argument_list>(<argument><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_name</name></name></expr></argument>, <argument><expr><name>name1</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>==</operator> <name>STRUCT</name> <operator>||</operator> <name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>==</operator> <name>UNION</name> <operator>||</operator>
+<name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>==</operator> <name>ENUM</name> <operator>||</operator> <name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>==</operator> <name>INTRINSIC</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>tdp</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>==</operator> <name>TYPEDEF</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>ttdp</name> <operator>=</operator> <name>tdp</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+<return>return <expr><operator>(</operator><name>ttdp</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>tdesc_t</name> <modifier>*</modifier></type>
+<name>lookupname</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>name1</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><call><name>lookup_name</name><argument_list>(<argument><expr><name>name_table</name></expr></argument>, <argument><expr><name>name1</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>addhash</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>tdp</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>num</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>hash</name> <init>= <expr><call><name>HASH</name><argument_list>(<argument><expr><name>num</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>ttdp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name>added_num</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>, <decl><type ref="prev"/><name>added_name</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+
+
+
+
+<expr_stmt><expr><name>ttdp</name> <operator>=</operator> <call><name>lookup</name><argument_list>(<argument><expr><name>num</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ttdp</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_id</name></name> <operator>=</operator> <name>num</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_hash</name></name> <operator>=</operator> <name><name>hash_table</name><index>[<expr><name>hash</name></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>hash_table</name><index>[<expr><name>hash</name></expr>]</index></name> <operator>=</operator> <name>tdp</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>added_num</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>tdp</name><operator>-&gt;</operator><name>t_name</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>ttdp</name> <operator>=</operator> <call><name>lookupname</name><argument_list>(<argument><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ttdp</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>hash</name> <operator>=</operator> <call><name>compute_sum</name><argument_list>(<argument><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_next</name></name> <operator>=</operator> <name><name>name_table</name><index>[<expr><name>hash</name></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>name_table</name><index>[<expr><name>hash</name></expr>]</index></name> <operator>=</operator> <name>tdp</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>added_name</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>added_num</name> <operator>&amp;&amp;</operator> <operator>!</operator><name>added_name</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>terminate</name><argument_list>(<argument><expr><literal type="string">"stabs: broken hash\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>compute_sum</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>w</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name></type> <name>c</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>sum</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>sum</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><operator>(</operator><name>c</name> <operator>=</operator> <operator>*</operator><name>w</name><operator>)</operator> <operator>!=</operator> <literal type="char">'\0'</literal></expr>;</condition> <incr><expr><name>sum</name> <operator>+=</operator> <name>c</name></expr><operator>,</operator> <expr><name>w</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<empty_stmt>;</empty_stmt></block_content></block></for>
+<return>return <expr><operator>(</operator><call><name>HASH</name><argument_list>(<argument><expr><name>sum</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>reset</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>longjmp</name><argument_list>(<argument><expr><name>resetbuf</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type>
+<name>check_hash</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>tdp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"checking hash\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>BUCKETS</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>hash_table</name><index>[<expr><name>i</name></expr>]</index></name></expr>)</condition> <block>{<block_content>
+<for>for <control>(<init><expr><name>tdp</name> <operator>=</operator> <name><name>hash_table</name><index>[<expr><name>i</name></expr>]</index></name><operator>-&gt;</operator><name>t_hash</name></expr>;</init>
+<condition><expr><name>tdp</name> <operator>&amp;&amp;</operator> <name>tdp</name> <operator>!=</operator> <name><name>hash_table</name><index>[<expr><name>i</name></expr>]</index></name></expr>;</condition>
+<incr><expr><name>tdp</name> <operator>=</operator> <name><name>tdp</name><operator>-&gt;</operator><name>t_hash</name></name></expr></incr>)</control><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></for>
+<if_stmt><if>if <condition>(<expr><name>tdp</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>terminate</name><argument_list>(<argument><expr><literal type="string">"cycle in hash bucket %d\n"</literal></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>name_table</name><index>[<expr><name>i</name></expr>]</index></name></expr>)</condition> <block>{<block_content>
+<for>for <control>(<init><expr><name>tdp</name> <operator>=</operator> <name><name>name_table</name><index>[<expr><name>i</name></expr>]</index></name><operator>-&gt;</operator><name>t_next</name></expr>;</init>
+<condition><expr><name>tdp</name> <operator>&amp;&amp;</operator> <name>tdp</name> <operator>!=</operator> <name><name>name_table</name><index>[<expr><name>i</name></expr>]</index></name></expr>;</condition>
+<incr><expr><name>tdp</name> <operator>=</operator> <name><name>tdp</name><operator>-&gt;</operator><name>t_next</name></name></expr></incr>)</control><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></for>
+<if_stmt><if>if <condition>(<expr><name>tdp</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>terminate</name><argument_list>(<argument><expr><literal type="string">"cycle in name bucket %d\n"</literal></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"done\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>resolve_typed_bitfields_cb</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier><name>private</name></type> <name>__unused</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>mlist_t</name> <modifier>*</modifier></type><name>ml</name> <init>= <expr><name>arg</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>tdp</name> <init>= <expr><name><name>ml</name><operator>-&gt;</operator><name>ml_type</name></name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"Resolving typed bitfields (member %s)\n"</literal></expr></argument>,
+<argument><expr><operator>(</operator><ternary><condition><expr><name><name>ml</name><operator>-&gt;</operator><name>ml_name</name></name></expr> ?</condition><then> <expr><name><name>ml</name><operator>-&gt;</operator><name>ml_name</name></name></expr> </then><else>: <expr><literal type="string">"(anon)"</literal></expr></else></ternary><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<while>while <condition>(<expr><name>tdp</name></expr>)</condition> <block>{<block_content>
+<switch>switch <condition>(<expr><name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>INTRINSIC</name></expr>:</case>
+<if_stmt><if>if <condition>(<expr><name><name>ml</name><operator>-&gt;</operator><name>ml_size</name></name> <operator>!=</operator> <name><name>tdp</name><operator>-&gt;</operator><name>t_intr</name><operator>-&gt;</operator><name>intr_nbits</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"making %d bit intrinsic from %s"</literal></expr></argument>,
+<argument><expr><name><name>ml</name><operator>-&gt;</operator><name>ml_size</name></name></expr></argument>, <argument><expr><call><name>tdesc_name</name><argument_list>(<argument><expr><name>tdp</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ml</name><operator>-&gt;</operator><name>ml_type</name></name> <operator>=</operator> <call><name>bitintrinsic</name><argument_list>(<argument><expr><name>tdp</name></expr></argument>, <argument><expr><name><name>ml</name><operator>-&gt;</operator><name>ml_size</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"using existing %d bit %s intrinsic"</literal></expr></argument>,
+<argument><expr><name><name>ml</name><operator>-&gt;</operator><name>ml_size</name></name></expr></argument>, <argument><expr><call><name>tdesc_name</name><argument_list>(<argument><expr><name>tdp</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ml</name><operator>-&gt;</operator><name>ml_type</name></name> <operator>=</operator> <name>tdp</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+
+<case>case <expr><name>POINTER</name></expr>:</case>
+<case>case <expr><name>TYPEDEF</name></expr>:</case>
+<case>case <expr><name>VOLATILE</name></expr>:</case>
+<case>case <expr><name>CONST</name></expr>:</case>
+<case>case <expr><name>RESTRICT</name></expr>:</case>
+<expr_stmt><expr><name>tdp</name> <operator>=</operator> <name><name>tdp</name><operator>-&gt;</operator><name>t_tdesc</name></name></expr>;</expr_stmt>
+<break>break;</break>
+
+<default>default:</default>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></switch>
+</block_content>}</block></while>
+
+<expr_stmt><expr><call><name>terminate</name><argument_list>(<argument><expr><literal type="string">"type chain for bitfield member %s has a NULL"</literal></expr></argument>, <argument><expr><name><name>ml</name><operator>-&gt;</operator><name>ml_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type>
+<name>resolve_typed_bitfields</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>list_iter</name><argument_list>(<argument><expr><name>typedbitfldmems</name></expr></argument>,
+<argument><expr><name>resolve_typed_bitfields_cb</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+</unit>

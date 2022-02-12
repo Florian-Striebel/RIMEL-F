@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/results/redis_res/_cppstats_featurelocations/redis/tests/modules/datatype.c">
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>_BSD_SOURCE</name></cpp:macro></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>_DEFAULT_SOURCE</name></cpp:macro></cpp:define>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;unistd.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"redismodule.h"</cpp:file></cpp:include>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>RedisModuleType</name> <modifier>*</modifier></type><name>datatype</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>load_encver</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>volatile</specifier> <name>int</name></type> <name>slow_loading</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>volatile</specifier> <name>int</name></type> <name>is_in_slow_loading</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>DATATYPE_ENC_VER</name></cpp:macro> <cpp:value>1</cpp:value></cpp:define>
+
+<typedef>typedef <type><struct>struct <block>{
+<decl_stmt><decl><type><name>long</name> <name>long</name></type> <name>intval</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>RedisModuleString</name> <modifier>*</modifier></type><name>strval</name></decl>;</decl_stmt>
+}</block></struct></type> <name>DataType</name>;</typedef>
+
+<function><type><specifier>static</specifier> <name>void</name> <modifier>*</modifier></type><name>datatype_load</name><parameter_list>(<parameter><decl><type><name>RedisModuleIO</name> <modifier>*</modifier></type><name>io</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>encver</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><name>load_encver</name> <operator>=</operator> <name>encver</name></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>intval</name> <init>= <expr><call><name>RedisModule_LoadSigned</name><argument_list>(<argument><expr><name>io</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_IsIOError</name><argument_list>(<argument><expr><name>io</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><name>NULL</name></expr>;</return></block_content></block></if></if_stmt>
+
+<decl_stmt><decl><type><name>RedisModuleString</name> <modifier>*</modifier></type><name>strval</name> <init>= <expr><call><name>RedisModule_LoadString</name><argument_list>(<argument><expr><name>io</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_IsIOError</name><argument_list>(<argument><expr><name>io</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><name>NULL</name></expr>;</return></block_content></block></if></if_stmt>
+
+<decl_stmt><decl><type><name>DataType</name> <modifier>*</modifier></type><name>dt</name> <init>= <expr><operator>(</operator><name>DataType</name> <operator>*</operator><operator>)</operator> <call><name>RedisModule_Alloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>DataType</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>dt</name><operator>-&gt;</operator><name>intval</name></name> <operator>=</operator> <name>intval</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>dt</name><operator>-&gt;</operator><name>strval</name></name> <operator>=</operator> <name>strval</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>slow_loading</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>RedisModuleCtx</name> <modifier>*</modifier></type><name>ctx</name> <init>= <expr><call><name>RedisModule_GetContextFromIO</name><argument_list>(<argument><expr><name>io</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>is_in_slow_loading</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<while>while <condition>(<expr><name>slow_loading</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>RedisModule_Yield</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>REDISMODULE_YIELD_FLAG_CLIENTS</name></expr></argument>, <argument><expr><literal type="string">"Slow module operation"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>usleep</name><argument_list>(<argument><expr><literal type="number">1000</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></while>
+<expr_stmt><expr><name>is_in_slow_loading</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><name>dt</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type> <name>datatype_save</name><parameter_list>(<parameter><decl><type><name>RedisModuleIO</name> <modifier>*</modifier></type><name>io</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>value</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>DataType</name> <modifier>*</modifier></type><name>dt</name> <init>= <expr><operator>(</operator><name>DataType</name> <operator>*</operator><operator>)</operator> <name>value</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>RedisModule_SaveSigned</name><argument_list>(<argument><expr><name>io</name></expr></argument>, <argument><expr><name><name>dt</name><operator>-&gt;</operator><name>intval</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_SaveString</name><argument_list>(<argument><expr><name>io</name></expr></argument>, <argument><expr><name><name>dt</name><operator>-&gt;</operator><name>strval</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type> <name>datatype_free</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>value</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>value</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>DataType</name> <modifier>*</modifier></type><name>dt</name> <init>= <expr><operator>(</operator><name>DataType</name> <operator>*</operator><operator>)</operator> <name>value</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>dt</name><operator>-&gt;</operator><name>strval</name></name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><call><name>RedisModule_FreeString</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>, <argument><expr><name><name>dt</name><operator>-&gt;</operator><name>strval</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>RedisModule_Free</name><argument_list>(<argument><expr><name>dt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name> <modifier>*</modifier></type><name>datatype_copy</name><parameter_list>(<parameter><decl><type><name>RedisModuleString</name> <modifier>*</modifier></type><name>fromkey</name></decl></parameter>, <parameter><decl><type><name>RedisModuleString</name> <modifier>*</modifier></type><name>tokey</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>value</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>DataType</name> <modifier>*</modifier></type><name>old</name> <init>= <expr><name>value</name></expr></init></decl>;</decl_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>old</name><operator>-&gt;</operator><name>intval</name></name> <operator>==</operator> <literal type="number">42</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>NULL</name></expr>;</return></block_content></block></if></if_stmt>
+
+<decl_stmt><decl><type><name>DataType</name> <modifier>*</modifier></type><name>new</name> <init>= <expr><operator>(</operator><name>DataType</name> <operator>*</operator><operator>)</operator> <call><name>RedisModule_Alloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>DataType</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>new</name><operator>-&gt;</operator><name>intval</name></name> <operator>=</operator> <name><name>old</name><operator>-&gt;</operator><name>intval</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>new</name><operator>-&gt;</operator><name>strval</name></name> <operator>=</operator> <call><name>RedisModule_CreateStringFromString</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>, <argument><expr><name><name>old</name><operator>-&gt;</operator><name>strval</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+<decl_stmt><decl><type><name>size_t</name></type> <name>len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>str</name> <init>= <expr><call><name>RedisModule_StringPtrLen</name><argument_list>(<argument><expr><name>fromkey</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>len</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>RedisModule_StringAppendBuffer</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>, <argument><expr><name><name>new</name><operator>-&gt;</operator><name>strval</name></name></expr></argument>, <argument><expr><literal type="string">"/"</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_StringAppendBuffer</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>, <argument><expr><name><name>new</name><operator>-&gt;</operator><name>strval</name></name></expr></argument>, <argument><expr><name>str</name></expr></argument>, <argument><expr><name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_StringAppendBuffer</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>, <argument><expr><name><name>new</name><operator>-&gt;</operator><name>strval</name></name></expr></argument>, <argument><expr><literal type="string">"/"</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>str</name> <operator>=</operator> <call><name>RedisModule_StringPtrLen</name><argument_list>(<argument><expr><name>tokey</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_StringAppendBuffer</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>, <argument><expr><name><name>new</name><operator>-&gt;</operator><name>strval</name></name></expr></argument>, <argument><expr><name>str</name></expr></argument>, <argument><expr><name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><name>new</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type> <name>datatype_set</name><parameter_list>(<parameter><decl><type><name>RedisModuleCtx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>RedisModuleString</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>argc</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>argc</name> <operator>!=</operator> <literal type="number">4</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>RedisModule_WrongArity</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<decl_stmt><decl><type><name>long</name> <name>long</name></type> <name>intval</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_StringToLongLong</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr><literal type="number">2</literal></expr>]</index></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>intval</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>REDISMODULE_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>RedisModule_ReplyWithError</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"Invalid integer value"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<decl_stmt><decl><type><name>RedisModuleKey</name> <modifier>*</modifier></type><name>key</name> <init>= <expr><call><name>RedisModule_OpenKey</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name><name>argv</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>, <argument><expr><name>REDISMODULE_WRITE</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DataType</name> <modifier>*</modifier></type><name>dt</name> <init>= <expr><call><name>RedisModule_Calloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>DataType</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>dt</name><operator>-&gt;</operator><name>intval</name></name> <operator>=</operator> <name>intval</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>dt</name><operator>-&gt;</operator><name>strval</name></name> <operator>=</operator> <name><name>argv</name><index>[<expr><literal type="number">3</literal></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_RetainString</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name><name>dt</name><operator>-&gt;</operator><name>strval</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>RedisModule_ModuleTypeSetValue</name><argument_list>(<argument><expr><name>key</name></expr></argument>, <argument><expr><name>datatype</name></expr></argument>, <argument><expr><name>dt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_CloseKey</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_ReplyWithSimpleString</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"OK"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type> <name>datatype_restore</name><parameter_list>(<parameter><decl><type><name>RedisModuleCtx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>RedisModuleString</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>argc</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>argc</name> <operator>!=</operator> <literal type="number">4</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>RedisModule_WrongArity</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<decl_stmt><decl><type><name>long</name> <name>long</name></type> <name>encver</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_StringToLongLong</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr><literal type="number">3</literal></expr>]</index></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>encver</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>REDISMODULE_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>RedisModule_ReplyWithError</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"Invalid integer value"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<decl_stmt><decl><type><name>DataType</name> <modifier>*</modifier></type><name>dt</name> <init>= <expr><call><name>RedisModule_LoadDataTypeFromStringEncver</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr><literal type="number">2</literal></expr>]</index></name></expr></argument>, <argument><expr><name>datatype</name></expr></argument>, <argument><expr><name>encver</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>dt</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>RedisModule_ReplyWithError</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"Invalid data"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<decl_stmt><decl><type><name>RedisModuleKey</name> <modifier>*</modifier></type><name>key</name> <init>= <expr><call><name>RedisModule_OpenKey</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name><name>argv</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>, <argument><expr><name>REDISMODULE_WRITE</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>RedisModule_ModuleTypeSetValue</name><argument_list>(<argument><expr><name>key</name></expr></argument>, <argument><expr><name>datatype</name></expr></argument>, <argument><expr><name>dt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_CloseKey</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_ReplyWithLongLong</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>load_encver</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type> <name>datatype_get</name><parameter_list>(<parameter><decl><type><name>RedisModuleCtx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>RedisModuleString</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>argc</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>argc</name> <operator>!=</operator> <literal type="number">2</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>RedisModule_WrongArity</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<decl_stmt><decl><type><name>RedisModuleKey</name> <modifier>*</modifier></type><name>key</name> <init>= <expr><call><name>RedisModule_OpenKey</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name><name>argv</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>, <argument><expr><name>REDISMODULE_READ</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DataType</name> <modifier>*</modifier></type><name>dt</name> <init>= <expr><call><name>RedisModule_ModuleTypeGetValue</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>RedisModule_CloseKey</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>dt</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>RedisModule_ReplyWithNullArray</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>RedisModule_ReplyWithArray</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="number">2</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_ReplyWithLongLong</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name><name>dt</name><operator>-&gt;</operator><name>intval</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_ReplyWithString</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name><name>dt</name><operator>-&gt;</operator><name>strval</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type> <name>datatype_dump</name><parameter_list>(<parameter><decl><type><name>RedisModuleCtx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>RedisModuleString</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>argc</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>argc</name> <operator>!=</operator> <literal type="number">2</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>RedisModule_WrongArity</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<decl_stmt><decl><type><name>RedisModuleKey</name> <modifier>*</modifier></type><name>key</name> <init>= <expr><call><name>RedisModule_OpenKey</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name><name>argv</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>, <argument><expr><name>REDISMODULE_READ</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DataType</name> <modifier>*</modifier></type><name>dt</name> <init>= <expr><call><name>RedisModule_ModuleTypeGetValue</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>RedisModule_CloseKey</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>RedisModuleString</name> <modifier>*</modifier></type><name>reply</name> <init>= <expr><call><name>RedisModule_SaveDataTypeToString</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>dt</name></expr></argument>, <argument><expr><name>datatype</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>reply</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>RedisModule_ReplyWithError</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"Failed to save"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>RedisModule_ReplyWithString</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>reply</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_FreeString</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>reply</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type> <name>datatype_swap</name><parameter_list>(<parameter><decl><type><name>RedisModuleCtx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>RedisModuleString</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>argc</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>argc</name> <operator>!=</operator> <literal type="number">3</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>RedisModule_WrongArity</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<decl_stmt><decl><type><name>RedisModuleKey</name> <modifier>*</modifier></type><name>a</name> <init>= <expr><call><name>RedisModule_OpenKey</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name><name>argv</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>, <argument><expr><name>REDISMODULE_WRITE</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>RedisModuleKey</name> <modifier>*</modifier></type><name>b</name> <init>= <expr><call><name>RedisModule_OpenKey</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name><name>argv</name><index>[<expr><literal type="number">2</literal></expr>]</index></name></expr></argument>, <argument><expr><name>REDISMODULE_WRITE</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>val</name> <init>= <expr><call><name>RedisModule_ModuleTypeGetValue</name><argument_list>(<argument><expr><name>a</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>int</name></type> <name>error</name> <init>= <expr><operator>(</operator><call><name>RedisModule_ModuleTypeReplaceValue</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><name>datatype</name></expr></argument>, <argument><expr><name>val</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>val</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>REDISMODULE_ERR</name> <operator>||</operator>
+<call><name>RedisModule_ModuleTypeReplaceValue</name><argument_list>(<argument><expr><name>a</name></expr></argument>, <argument><expr><name>datatype</name></expr></argument>, <argument><expr><name>val</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>REDISMODULE_ERR</name><operator>)</operator></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>error</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>RedisModule_ReplyWithSimpleString</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"OK"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>RedisModule_ReplyWithError</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"ERR failed"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<expr_stmt><expr><call><name>RedisModule_CloseKey</name><argument_list>(<argument><expr><name>a</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_CloseKey</name><argument_list>(<argument><expr><name>b</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>int</name></type> <name>datatype_slow_loading</name><parameter_list>(<parameter><decl><type><name>RedisModuleCtx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>RedisModuleString</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>argc</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>argc</name> <operator>!=</operator> <literal type="number">2</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>RedisModule_WrongArity</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<decl_stmt><decl><type><name>long</name> <name>long</name></type> <name>ll</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_StringToLongLong</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ll</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>REDISMODULE_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>RedisModule_ReplyWithError</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"Invalid integer value"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>slow_loading</name> <operator>=</operator> <name>ll</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_ReplyWithSimpleString</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"OK"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>int</name></type> <name>datatype_is_in_slow_loading</name><parameter_list>(<parameter><decl><type><name>RedisModuleCtx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>RedisModuleString</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>argc</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>REDISMODULE_NOT_USED</name><argument_list>(<argument><expr><name>argv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>argc</name> <operator>!=</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>RedisModule_WrongArity</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>RedisModule_ReplyWithLongLong</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>is_in_slow_loading</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type> <name>RedisModule_OnLoad</name><parameter_list>(<parameter><decl><type><name>RedisModuleCtx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>RedisModuleString</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>argc</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>REDISMODULE_NOT_USED</name><argument_list>(<argument><expr><name>argv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>REDISMODULE_NOT_USED</name><argument_list>(<argument><expr><name>argc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_Init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>,<argument><expr><literal type="string">"datatype"</literal></expr></argument>,<argument><expr><name>DATATYPE_ENC_VER</name></expr></argument>,<argument><expr><name>REDISMODULE_APIVER_1</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>REDISMODULE_ERR</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>REDISMODULE_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>RedisModule_SetModuleOptions</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>REDISMODULE_OPTIONS_HANDLE_IO_ERRORS</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>RedisModuleTypeMethods</name></type> <name>datatype_methods</name> <init>= <expr><block>{
+<expr><operator>.</operator><name>version</name> <operator>=</operator> <name>REDISMODULE_TYPE_METHOD_VERSION</name></expr>,
+<expr><operator>.</operator><name>rdb_load</name> <operator>=</operator> <name>datatype_load</name></expr>,
+<expr><operator>.</operator><name>rdb_save</name> <operator>=</operator> <name>datatype_save</name></expr>,
+<expr><operator>.</operator><name>free</name> <operator>=</operator> <name>datatype_free</name></expr>,
+<expr><operator>.</operator><name>copy</name> <operator>=</operator> <name>datatype_copy</name></expr>
+}</block></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>datatype</name> <operator>=</operator> <call><name>RedisModule_CreateDataType</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"test___dt"</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>datatype_methods</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>datatype</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>REDISMODULE_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_CreateCommand</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>,<argument><expr><literal type="string">"datatype.set"</literal></expr></argument>, <argument><expr><name>datatype_set</name></expr></argument>,
+<argument><expr><literal type="string">"write deny-oom"</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call> <operator>==</operator> <name>REDISMODULE_ERR</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>REDISMODULE_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_CreateCommand</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>,<argument><expr><literal type="string">"datatype.get"</literal></expr></argument>, <argument><expr><name>datatype_get</name></expr></argument>,<argument><expr><literal type="string">""</literal></expr></argument>,<argument><expr><literal type="number">1</literal></expr></argument>,<argument><expr><literal type="number">1</literal></expr></argument>,<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call> <operator>==</operator> <name>REDISMODULE_ERR</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>REDISMODULE_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_CreateCommand</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>,<argument><expr><literal type="string">"datatype.restore"</literal></expr></argument>, <argument><expr><name>datatype_restore</name></expr></argument>,
+<argument><expr><literal type="string">"write deny-oom"</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call> <operator>==</operator> <name>REDISMODULE_ERR</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>REDISMODULE_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_CreateCommand</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>,<argument><expr><literal type="string">"datatype.dump"</literal></expr></argument>, <argument><expr><name>datatype_dump</name></expr></argument>,<argument><expr><literal type="string">""</literal></expr></argument>,<argument><expr><literal type="number">1</literal></expr></argument>,<argument><expr><literal type="number">1</literal></expr></argument>,<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call> <operator>==</operator> <name>REDISMODULE_ERR</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>REDISMODULE_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_CreateCommand</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"datatype.swap"</literal></expr></argument>, <argument><expr><name>datatype_swap</name></expr></argument>,
+<argument><expr><literal type="string">"write"</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call> <operator>==</operator> <name>REDISMODULE_ERR</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>REDISMODULE_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_CreateCommand</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"datatype.slow_loading"</literal></expr></argument>, <argument><expr><name>datatype_slow_loading</name></expr></argument>,
+<argument><expr><literal type="string">"allow-loading"</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call> <operator>==</operator> <name>REDISMODULE_ERR</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>REDISMODULE_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_CreateCommand</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"datatype.is_in_slow_loading"</literal></expr></argument>, <argument><expr><name>datatype_is_in_slow_loading</name></expr></argument>,
+<argument><expr><literal type="string">"allow-loading"</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call> <operator>==</operator> <name>REDISMODULE_ERR</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>REDISMODULE_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></function>
+</unit>

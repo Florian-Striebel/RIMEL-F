@@ -1,0 +1,546 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/cddl/contrib/opensolaris/lib/pyzfs/common/ioctl.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;Python.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/zfs_ioctl.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/fs/zfs.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;strings.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;unistd.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;libnvpair.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;libintl.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;libzfs.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;libzfs_impl.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"zfs_prop.h"</cpp:file></cpp:include>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>PyObject</name> <modifier>*</modifier></type><name>ZFSError</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>zfsdevfd</name></decl>;</decl_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__lint</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>dgettext</name><parameter_list>(<parameter><type><name>x</name></type></parameter>, <parameter><type><name>y</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>y</cpp:value></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>_</name><parameter_list>(<parameter><type><name>s</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>dgettext(TEXT_DOMAIN, s)</cpp:value></cpp:define>
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>seterr</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>fmt</name></decl></parameter>, <parameter><decl><type><modifier>...</modifier></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name></type> <name><name>errstr</name><index>[<expr><literal type="number">1024</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>va_list</name></type> <name>v</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>va_start</name><argument_list>(<argument><expr><name>v</name></expr></argument>, <argument><expr><name>fmt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>vsnprintf</name><argument_list>(<argument><expr><name>errstr</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>errstr</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><name>fmt</name></expr></argument>, <argument><expr><name>v</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>va_end</name><argument_list>(<argument><expr><name>v</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>PyErr_SetObject</name><argument_list>(<argument><expr><name>ZFSError</name></expr></argument>, <argument><expr><call><name>Py_BuildValue</name><argument_list>(<argument><expr><literal type="string">"is"</literal></expr></argument>, <argument><expr><name>errno</name></expr></argument>, <argument><expr><name>errstr</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>char</name></type> <name><name>cmdstr</name><index>[<expr><name>HIS_MAX_RECORD_LEN</name></expr>]</index></name></decl>;</decl_stmt>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>ioctl_with_cmdstr</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>ioc</name></decl></parameter>, <parameter><decl><type><name>zfs_cmd_t</name> <modifier>*</modifier></type><name>zc</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>err</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>cmdstr</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>zc</name><operator>-&gt;</operator><name>zc_history</name></name> <operator>=</operator> <operator>(</operator><name>uint64_t</name><operator>)</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><name>cmdstr</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>ioctl</name><argument_list>(<argument><expr><name>zfsdevfd</name></expr></argument>, <argument><expr><name>ioc</name></expr></argument>, <argument><expr><name>zc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>cmdstr</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>err</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>PyObject</name> <modifier>*</modifier></type>
+<name>nvl2py</name><parameter_list>(<parameter><decl><type><name>nvlist_t</name> <modifier>*</modifier></type><name>nvl</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>pyo</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>nvpair_t</name> <modifier>*</modifier></type><name>nvp</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>pyo</name> <operator>=</operator> <call><name>PyDict_New</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+<for>for <control>(<init><expr><name>nvp</name> <operator>=</operator> <call><name>nvlist_next_nvpair</name><argument_list>(<argument><expr><name>nvl</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</init> <condition><expr><name>nvp</name></expr>;</condition>
+<incr><expr><name>nvp</name> <operator>=</operator> <call><name>nvlist_next_nvpair</name><argument_list>(<argument><expr><name>nvl</name></expr></argument>, <argument><expr><name>nvp</name></expr></argument>)</argument_list></call></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>pyval</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>sval</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>ival</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>boolean_t</name></type> <name>bval</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>nvlist_t</name> <modifier>*</modifier></type><name>nval</name></decl>;</decl_stmt>
+
+<switch>switch <condition>(<expr><call><name>nvpair_type</name><argument_list>(<argument><expr><name>nvp</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>DATA_TYPE_STRING</name></expr>:</case>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>nvpair_value_string</name><argument_list>(<argument><expr><name>nvp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>sval</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>pyval</name> <operator>=</operator> <call><name>Py_BuildValue</name><argument_list>(<argument><expr><literal type="string">"s"</literal></expr></argument>, <argument><expr><name>sval</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>DATA_TYPE_UINT64</name></expr>:</case>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>nvpair_value_uint64</name><argument_list>(<argument><expr><name>nvp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ival</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>pyval</name> <operator>=</operator> <call><name>Py_BuildValue</name><argument_list>(<argument><expr><literal type="string">"K"</literal></expr></argument>, <argument><expr><name>ival</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>DATA_TYPE_NVLIST</name></expr>:</case>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>nvpair_value_nvlist</name><argument_list>(<argument><expr><name>nvp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>nval</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>pyval</name> <operator>=</operator> <call><name>nvl2py</name><argument_list>(<argument><expr><name>nval</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>DATA_TYPE_BOOLEAN</name></expr>:</case>
+<expr_stmt><expr><call><name>Py_INCREF</name><argument_list>(<argument><expr><name>Py_None</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>pyval</name> <operator>=</operator> <name>Py_None</name></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>DATA_TYPE_BOOLEAN_VALUE</name></expr>:</case>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>nvpair_value_boolean_value</name><argument_list>(<argument><expr><name>nvp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>bval</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>pyval</name> <operator>=</operator> <call><name>Py_BuildValue</name><argument_list>(<argument><expr><literal type="string">"i"</literal></expr></argument>, <argument><expr><name>bval</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+
+<default>default:</default>
+<expr_stmt><expr><call><name>PyErr_SetNone</name><argument_list>(<argument><expr><name>PyExc_ValueError</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Py_DECREF</name><argument_list>(<argument><expr><name>pyo</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></switch>
+
+<expr_stmt><expr><call><name>PyDict_SetItemString</name><argument_list>(<argument><expr><name>pyo</name></expr></argument>, <argument><expr><call><name>nvpair_name</name><argument_list>(<argument><expr><name>nvp</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>pyval</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Py_DECREF</name><argument_list>(<argument><expr><name>pyval</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<return>return <expr><operator>(</operator><name>pyo</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>nvlist_t</name> <modifier>*</modifier></type>
+<name>dict2nvl</name><parameter_list>(<parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>d</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>nvlist_t</name> <modifier>*</modifier></type><name>nvl</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>err</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>key</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>value</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>pos</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PyDict_Check</name><argument_list>(<argument><expr><name>d</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PyErr_SetObject</name><argument_list>(<argument><expr><name>PyExc_ValueError</name></expr></argument>, <argument><expr><name>d</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>nvlist_alloc</name><argument_list>(<argument><expr><operator>&amp;</operator><name>nvl</name></expr></argument>, <argument><expr><name>NV_UNIQUE_NAME</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>err</name> <operator>==</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<while>while <condition>(<expr><call><name>PyDict_Next</name><argument_list>(<argument><expr><name>d</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>pos</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>key</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>value</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>keystr</name> <init>= <expr><call><name>PyString_AsString</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>keystr</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PyErr_SetObject</name><argument_list>(<argument><expr><name>PyExc_KeyError</name></expr></argument>, <argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>nvlist_free</name><argument_list>(<argument><expr><name>nvl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>PyDict_Check</name><argument_list>(<argument><expr><name>value</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>nvlist_t</name> <modifier>*</modifier></type><name>valnvl</name> <init>= <expr><call><name>dict2nvl</name><argument_list>(<argument><expr><name>value</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>nvlist_add_nvlist</name><argument_list>(<argument><expr><name>nvl</name></expr></argument>, <argument><expr><name>keystr</name></expr></argument>, <argument><expr><name>valnvl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>nvlist_free</name><argument_list>(<argument><expr><name>valnvl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>value</name> <operator>==</operator> <name>Py_None</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>nvlist_add_boolean</name><argument_list>(<argument><expr><name>nvl</name></expr></argument>, <argument><expr><name>keystr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><call><name>PyString_Check</name><argument_list>(<argument><expr><name>value</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>valstr</name> <init>= <expr><call><name>PyString_AsString</name><argument_list>(<argument><expr><name>value</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>nvlist_add_string</name><argument_list>(<argument><expr><name>nvl</name></expr></argument>, <argument><expr><name>keystr</name></expr></argument>, <argument><expr><name>valstr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><call><name>PyInt_Check</name><argument_list>(<argument><expr><name>value</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>valint</name> <init>= <expr><call><name>PyInt_AsUnsignedLongLongMask</name><argument_list>(<argument><expr><name>value</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>nvlist_add_uint64</name><argument_list>(<argument><expr><name>nvl</name></expr></argument>, <argument><expr><name>keystr</name></expr></argument>, <argument><expr><name>valint</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><call><name>PyBool_Check</name><argument_list>(<argument><expr><name>value</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>boolean_t</name></type> <name>valbool</name> <init>= <expr><ternary><condition><expr><name>value</name> <operator>==</operator> <name>Py_True</name></expr> ?</condition><then> <expr><name>B_TRUE</name></expr> </then><else>: <expr><name>B_FALSE</name></expr></else></ternary></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>nvlist_add_boolean_value</name><argument_list>(<argument><expr><name>nvl</name></expr></argument>, <argument><expr><name>keystr</name></expr></argument>, <argument><expr><name>valbool</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>PyErr_SetObject</name><argument_list>(<argument><expr><name>PyExc_ValueError</name></expr></argument>, <argument><expr><name>value</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>nvlist_free</name><argument_list>(<argument><expr><name>nvl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>err</name> <operator>==</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></while>
+
+<return>return <expr><operator>(</operator><name>nvl</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>PyObject</name> <modifier>*</modifier></type>
+<name>fakepropval</name><parameter_list>(<parameter><decl><type><name>uint64_t</name></type> <name>value</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>d</name> <init>= <expr><call><name>PyDict_New</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>PyDict_SetItemString</name><argument_list>(<argument><expr><name>d</name></expr></argument>, <argument><expr><literal type="string">"value"</literal></expr></argument>, <argument><expr><call><name>Py_BuildValue</name><argument_list>(<argument><expr><literal type="string">"K"</literal></expr></argument>, <argument><expr><name>value</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>d</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>add_ds_props</name><parameter_list>(<parameter><decl><type><name>zfs_cmd_t</name> <modifier>*</modifier></type><name>zc</name></decl></parameter>, <parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>nvl</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>dmu_objset_stats_t</name> <modifier>*</modifier></type><name>s</name> <init>= <expr><operator>&amp;</operator><name><name>zc</name><operator>-&gt;</operator><name>zc_objset_stats</name></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>PyDict_SetItemString</name><argument_list>(<argument><expr><name>nvl</name></expr></argument>, <argument><expr><literal type="string">"numclones"</literal></expr></argument>,
+<argument><expr><call><name>fakepropval</name><argument_list>(<argument><expr><name><name>s</name><operator>-&gt;</operator><name>dds_num_clones</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>PyDict_SetItemString</name><argument_list>(<argument><expr><name>nvl</name></expr></argument>, <argument><expr><literal type="string">"issnap"</literal></expr></argument>,
+<argument><expr><call><name>fakepropval</name><argument_list>(<argument><expr><name><name>s</name><operator>-&gt;</operator><name>dds_is_snapshot</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>PyDict_SetItemString</name><argument_list>(<argument><expr><name>nvl</name></expr></argument>, <argument><expr><literal type="string">"inconsistent"</literal></expr></argument>,
+<argument><expr><call><name>fakepropval</name><argument_list>(<argument><expr><name><name>s</name><operator>-&gt;</operator><name>dds_inconsistent</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>PyObject</name> <modifier>*</modifier></type>
+<name>ioctl_with_dstnv</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>ioc</name></decl></parameter>, <parameter><decl><type><name>zfs_cmd_t</name> <modifier>*</modifier></type><name>zc</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>nvsz</name> <init>= <expr><literal type="number">2048</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>nvbuf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>pynv</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+
+<label><name>again</name>:</label>
+<expr_stmt><expr><name>nvbuf</name> <operator>=</operator> <call><name>malloc</name><argument_list>(<argument><expr><name>nvsz</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>zc</name><operator>-&gt;</operator><name>zc_nvlist_dst_size</name></name> <operator>=</operator> <name>nvsz</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>zc</name><operator>-&gt;</operator><name>zc_nvlist_dst</name></name> <operator>=</operator> <operator>(</operator><name>uintptr_t</name><operator>)</operator><name>nvbuf</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>ioctl</name><argument_list>(<argument><expr><name>zfsdevfd</name></expr></argument>, <argument><expr><name>ioc</name></expr></argument>, <argument><expr><name>zc</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>nvlist_t</name> <modifier>*</modifier></type><name>nvl</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>errno</name> <operator>=</operator> <call><name>nvlist_unpack</name><argument_list>(<argument><expr><name>nvbuf</name></expr></argument>, <argument><expr><name><name>zc</name><operator>-&gt;</operator><name>zc_nvlist_dst_size</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>nvl</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>errno</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>pynv</name> <operator>=</operator> <call><name>nvl2py</name><argument_list>(<argument><expr><name>nvl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>nvlist_free</name><argument_list>(<argument><expr><name>nvl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>errno</name> <operator>==</operator> <name>ENOMEM</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>nvbuf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>nvsz</name> <operator>=</operator> <name><name>zc</name><operator>-&gt;</operator><name>zc_nvlist_dst_size</name></name></expr>;</expr_stmt>
+<goto>goto <name>again</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>nvbuf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>pynv</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>PyObject</name> <modifier>*</modifier></type>
+<name>py_next_dataset</name><parameter_list>(<parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>self</name></decl></parameter>, <parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>args</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>ioc</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>cookie</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>zfs_cmd_t</name></type> <name>zc</name> <init>= <expr><block>{ <expr><literal type="number">0</literal></expr> }</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>snaps</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>name</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>nvl</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>ret</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PyArg_ParseTuple</name><argument_list>(<argument><expr><name>args</name></expr></argument>, <argument><expr><literal type="string">"siK"</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>name</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>snaps</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>cookie</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>strlcpy</name><argument_list>(<argument><expr><name><name>zc</name><operator>.</operator><name>zc_name</name></name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name><name>zc</name><operator>.</operator><name>zc_name</name></name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>zc</name><operator>.</operator><name>zc_cookie</name></name> <operator>=</operator> <name>cookie</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>snaps</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>ioc</name> <operator>=</operator> <name>ZFS_IOC_SNAPSHOT_LIST_NEXT</name></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>ioc</name> <operator>=</operator> <name>ZFS_IOC_DATASET_LIST_NEXT</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<expr_stmt><expr><name>nvl</name> <operator>=</operator> <call><name>ioctl_with_dstnv</name><argument_list>(<argument><expr><name>ioc</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>zc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>nvl</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>add_ds_props</name><argument_list>(<argument><expr><operator>&amp;</operator><name>zc</name></expr></argument>, <argument><expr><name>nvl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <call><name>Py_BuildValue</name><argument_list>(<argument><expr><literal type="string">"sKO"</literal></expr></argument>, <argument><expr><name><name>zc</name><operator>.</operator><name>zc_name</name></name></expr></argument>, <argument><expr><name><name>zc</name><operator>.</operator><name>zc_cookie</name></name></expr></argument>, <argument><expr><name>nvl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Py_DECREF</name><argument_list>(<argument><expr><name>nvl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>errno</name> <operator>==</operator> <name>ESRCH</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PyErr_SetNone</name><argument_list>(<argument><expr><name>PyExc_StopIteration</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>snaps</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>seterr</name><argument_list>(<argument><expr><call><name>_</name><argument_list>(<argument><expr><literal type="string">"cannot get snapshots of %s"</literal></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>seterr</name><argument_list>(<argument><expr><call><name>_</name><argument_list>(<argument><expr><literal type="string">"cannot get child datasets of %s"</literal></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></else></if_stmt>
+<return>return <expr><operator>(</operator><name>ret</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>PyObject</name> <modifier>*</modifier></type>
+<name>py_dataset_props</name><parameter_list>(<parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>self</name></decl></parameter>, <parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>args</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>zfs_cmd_t</name></type> <name>zc</name> <init>= <expr><block>{ <expr><literal type="number">0</literal></expr> }</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>snaps</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>name</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>nvl</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PyArg_ParseTuple</name><argument_list>(<argument><expr><name>args</name></expr></argument>, <argument><expr><literal type="string">"s"</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>name</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>strlcpy</name><argument_list>(<argument><expr><name><name>zc</name><operator>.</operator><name>zc_name</name></name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name><name>zc</name><operator>.</operator><name>zc_name</name></name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>nvl</name> <operator>=</operator> <call><name>ioctl_with_dstnv</name><argument_list>(<argument><expr><name>ZFS_IOC_OBJSET_STATS</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>zc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>nvl</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>add_ds_props</name><argument_list>(<argument><expr><operator>&amp;</operator><name>zc</name></expr></argument>, <argument><expr><name>nvl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>seterr</name><argument_list>(<argument><expr><call><name>_</name><argument_list>(<argument><expr><literal type="string">"cannot access dataset %s"</literal></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<return>return <expr><operator>(</operator><name>nvl</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>PyObject</name> <modifier>*</modifier></type>
+<name>py_get_fsacl</name><parameter_list>(<parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>self</name></decl></parameter>, <parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>args</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>zfs_cmd_t</name></type> <name>zc</name> <init>= <expr><block>{ <expr><literal type="number">0</literal></expr> }</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>name</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>nvl</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PyArg_ParseTuple</name><argument_list>(<argument><expr><name>args</name></expr></argument>, <argument><expr><literal type="string">"s"</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>name</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>strlcpy</name><argument_list>(<argument><expr><name><name>zc</name><operator>.</operator><name>zc_name</name></name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name><name>zc</name><operator>.</operator><name>zc_name</name></name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>nvl</name> <operator>=</operator> <call><name>ioctl_with_dstnv</name><argument_list>(<argument><expr><name>ZFS_IOC_GET_FSACL</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>zc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>nvl</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>seterr</name><argument_list>(<argument><expr><call><name>_</name><argument_list>(<argument><expr><literal type="string">"cannot get permissions on %s"</literal></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>nvl</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>PyObject</name> <modifier>*</modifier></type>
+<name>py_set_fsacl</name><parameter_list>(<parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>self</name></decl></parameter>, <parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>args</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>un</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>nvsz</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>zfs_cmd_t</name></type> <name>zc</name> <init>= <expr><block>{ <expr><literal type="number">0</literal></expr> }</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>name</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>nvbuf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>dict</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>file</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>nvlist_t</name> <modifier>*</modifier></type><name>nvl</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>err</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PyArg_ParseTuple</name><argument_list>(<argument><expr><name>args</name></expr></argument>, <argument><expr><literal type="string">"siO!"</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>name</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>un</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>PyDict_Type</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>dict</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>nvl</name> <operator>=</operator> <call><name>dict2nvl</name><argument_list>(<argument><expr><name>dict</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>nvl</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>nvlist_size</name><argument_list>(<argument><expr><name>nvl</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>nvsz</name></expr></argument>, <argument><expr><name>NV_ENCODE_NATIVE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>err</name> <operator>==</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>nvbuf</name> <operator>=</operator> <call><name>malloc</name><argument_list>(<argument><expr><name>nvsz</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>nvlist_pack</name><argument_list>(<argument><expr><name>nvl</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>nvbuf</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>nvsz</name></expr></argument>, <argument><expr><name>NV_ENCODE_NATIVE</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>err</name> <operator>==</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>strlcpy</name><argument_list>(<argument><expr><name><name>zc</name><operator>.</operator><name>zc_name</name></name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name><name>zc</name><operator>.</operator><name>zc_name</name></name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>zc</name><operator>.</operator><name>zc_nvlist_src_size</name></name> <operator>=</operator> <name>nvsz</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>zc</name><operator>.</operator><name>zc_nvlist_src</name></name> <operator>=</operator> <operator>(</operator><name>uintptr_t</name><operator>)</operator><name>nvbuf</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>zc</name><operator>.</operator><name>zc_perm_action</name></name> <operator>=</operator> <name>un</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>ioctl_with_cmdstr</name><argument_list>(<argument><expr><name>ZFS_IOC_SET_FSACL</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>zc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>nvbuf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>err</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>seterr</name><argument_list>(<argument><expr><call><name>_</name><argument_list>(<argument><expr><literal type="string">"cannot set permissions on %s"</literal></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>Py_RETURN_NONE</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>PyObject</name> <modifier>*</modifier></type>
+<name>py_get_holds</name><parameter_list>(<parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>self</name></decl></parameter>, <parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>args</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>zfs_cmd_t</name></type> <name>zc</name> <init>= <expr><block>{ <expr><literal type="number">0</literal></expr> }</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>name</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>nvl</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PyArg_ParseTuple</name><argument_list>(<argument><expr><name>args</name></expr></argument>, <argument><expr><literal type="string">"s"</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>name</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>strlcpy</name><argument_list>(<argument><expr><name><name>zc</name><operator>.</operator><name>zc_name</name></name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name><name>zc</name><operator>.</operator><name>zc_name</name></name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>nvl</name> <operator>=</operator> <call><name>ioctl_with_dstnv</name><argument_list>(<argument><expr><name>ZFS_IOC_GET_HOLDS</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>zc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>nvl</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>seterr</name><argument_list>(<argument><expr><call><name>_</name><argument_list>(<argument><expr><literal type="string">"cannot get holds for %s"</literal></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>nvl</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>PyObject</name> <modifier>*</modifier></type>
+<name>py_userspace_many</name><parameter_list>(<parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>self</name></decl></parameter>, <parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>args</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>zfs_cmd_t</name></type> <name>zc</name> <init>= <expr><block>{ <expr><literal type="number">0</literal></expr> }</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>zfs_userquota_prop_t</name></type> <name>type</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>name</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>propname</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>bufsz</name> <init>= <expr><literal type="number">1</literal><operator>&lt;&lt;</operator><literal type="number">20</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>buf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>dict</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>file</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>error</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PyArg_ParseTuple</name><argument_list>(<argument><expr><name>args</name></expr></argument>, <argument><expr><literal type="string">"ss"</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>name</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>propname</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<for>for <control>(<init><expr><name>type</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>type</name> <operator>&lt;</operator> <name>ZFS_NUM_USERQUOTA_PROPS</name></expr>;</condition> <incr><expr><name>type</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<expr><call><name>strcmp</name><argument_list>(<argument><expr><name>propname</name></expr></argument>, <argument><expr><name><name>zfs_userquota_prop_prefixes</name><index>[<expr><name>type</name></expr>]</index></name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt></block_content></block></for>
+<if_stmt><if>if <condition>(<expr><name>type</name> <operator>==</operator> <name>ZFS_NUM_USERQUOTA_PROPS</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>PyErr_SetString</name><argument_list>(<argument><expr><name>PyExc_KeyError</name></expr></argument>, <argument><expr><name>propname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>dict</name> <operator>=</operator> <call><name>PyDict_New</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>buf</name> <operator>=</operator> <call><name>malloc</name><argument_list>(<argument><expr><name>bufsz</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>strlcpy</name><argument_list>(<argument><expr><name><name>zc</name><operator>.</operator><name>zc_name</name></name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name><name>zc</name><operator>.</operator><name>zc_name</name></name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>zc</name><operator>.</operator><name>zc_objset_type</name></name> <operator>=</operator> <name>type</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>zc</name><operator>.</operator><name>zc_cookie</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<while>while <condition>(<expr><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>zfs_useracct_t</name> <modifier>*</modifier></type><name>zua</name> <init>= <expr><name>buf</name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>zc</name><operator>.</operator><name>zc_nvlist_dst</name></name> <operator>=</operator> <operator>(</operator><name>uintptr_t</name><operator>)</operator><name>buf</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>zc</name><operator>.</operator><name>zc_nvlist_dst_size</name></name> <operator>=</operator> <name>bufsz</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>error</name> <operator>=</operator> <call><name>ioctl</name><argument_list>(<argument><expr><name>zfsdevfd</name></expr></argument>, <argument><expr><name>ZFS_IOC_USERSPACE_MANY</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>zc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>error</name> <operator>||</operator> <name><name>zc</name><operator>.</operator><name>zc_nvlist_dst_size</name></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+
+<while>while <condition>(<expr><name><name>zc</name><operator>.</operator><name>zc_nvlist_dst_size</name></name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>pykey</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>pyval</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>pykey</name> <operator>=</operator> <call><name>Py_BuildValue</name><argument_list>(<argument><expr><literal type="string">"sI"</literal></expr></argument>,
+<argument><expr><name><name>zua</name><operator>-&gt;</operator><name>zu_domain</name></name></expr></argument>, <argument><expr><name><name>zua</name><operator>-&gt;</operator><name>zu_rid</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>pyval</name> <operator>=</operator> <call><name>Py_BuildValue</name><argument_list>(<argument><expr><literal type="string">"K"</literal></expr></argument>, <argument><expr><name><name>zua</name><operator>-&gt;</operator><name>zu_space</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>PyDict_SetItem</name><argument_list>(<argument><expr><name>dict</name></expr></argument>, <argument><expr><name>pykey</name></expr></argument>, <argument><expr><name>pyval</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Py_DECREF</name><argument_list>(<argument><expr><name>pykey</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Py_DECREF</name><argument_list>(<argument><expr><name>pyval</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>zua</name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>zc</name><operator>.</operator><name>zc_nvlist_dst_size</name></name> <operator>-=</operator> <sizeof>sizeof <argument_list>(<argument><expr><name>zfs_useracct_t</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+</block_content>}</block></while>
+</block_content>}</block></while>
+
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>error</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>Py_DECREF</name><argument_list>(<argument><expr><name>dict</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>seterr</name><argument_list>(<argument><expr><call><name>_</name><argument_list>(<argument><expr><literal type="string">"cannot get %s property on %s"</literal></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>propname</name></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>dict</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>PyObject</name> <modifier>*</modifier></type>
+<name>py_userspace_upgrade</name><parameter_list>(<parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>self</name></decl></parameter>, <parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>args</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>zfs_cmd_t</name></type> <name>zc</name> <init>= <expr><block>{ <expr><literal type="number">0</literal></expr> }</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>name</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>error</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PyArg_ParseTuple</name><argument_list>(<argument><expr><name>args</name></expr></argument>, <argument><expr><literal type="string">"s"</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>name</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>strlcpy</name><argument_list>(<argument><expr><name><name>zc</name><operator>.</operator><name>zc_name</name></name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name><name>zc</name><operator>.</operator><name>zc_name</name></name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>error</name> <operator>=</operator> <call><name>ioctl</name><argument_list>(<argument><expr><name>zfsdevfd</name></expr></argument>, <argument><expr><name>ZFS_IOC_USERSPACE_UPGRADE</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>zc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>error</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>seterr</name><argument_list>(<argument><expr><call><name>_</name><argument_list>(<argument><expr><literal type="string">"cannot initialize user accounting information on %s"</literal></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>Py_RETURN_NONE</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>PyObject</name> <modifier>*</modifier></type>
+<name>py_set_cmdstr</name><parameter_list>(<parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>self</name></decl></parameter>, <parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>args</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>str</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PyArg_ParseTuple</name><argument_list>(<argument><expr><name>args</name></expr></argument>, <argument><expr><literal type="string">"s"</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>str</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>strlcpy</name><argument_list>(<argument><expr><name>cmdstr</name></expr></argument>, <argument><expr><name>str</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>cmdstr</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>Py_RETURN_NONE</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>PyObject</name> <modifier>*</modifier></type>
+<name>py_get_proptable</name><parameter_list>(<parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>self</name></decl></parameter>, <parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>args</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>zprop_desc_t</name> <modifier>*</modifier></type><name>t</name> <init>= <expr><call><name>zfs_prop_get_table</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>d</name> <init>= <expr><call><name>PyDict_New</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>zfs_prop_t</name></type> <name>i</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>ZFS_NUM_PROPS</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>zprop_desc_t</name> <modifier>*</modifier></type><name>p</name> <init>= <expr><operator>&amp;</operator><name><name>t</name><index>[<expr><name>i</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>tuple</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name><name>typetable</name><index>[]</index></name> <init>=
+<expr><block>{<expr><literal type="string">"number"</literal></expr>, <expr><literal type="string">"string"</literal></expr>, <expr><literal type="string">"index"</literal></expr>}</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name><name>attrtable</name><index>[]</index></name> <init>=
+<expr><block>{<expr><literal type="string">"default"</literal></expr>, <expr><literal type="string">"readonly"</literal></expr>, <expr><literal type="string">"inherit"</literal></expr>, <expr><literal type="string">"onetime"</literal></expr>}</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>indextable</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>p</name><operator>-&gt;</operator><name>pd_proptype</name></name> <operator>==</operator> <name>PROP_TYPE_INDEX</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>zprop_index_t</name> <modifier>*</modifier></type><name>it</name> <init>= <expr><name><name>p</name><operator>-&gt;</operator><name>pd_table</name></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>indextable</name> <operator>=</operator> <call><name>PyDict_New</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>j</name></decl>;</decl_stmt>
+<for>for <control>(<init><expr><name>j</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name><name>it</name><index>[<expr><name>j</name></expr>]</index></name><operator>.</operator><name>pi_name</name></expr>;</condition> <incr><expr><name>j</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>PyDict_SetItemString</name><argument_list>(<argument><expr><name>indextable</name></expr></argument>,
+<argument><expr><name><name>it</name><index>[<expr><name>j</name></expr>]</index></name><operator>.</operator><name>pi_name</name></expr></argument>,
+<argument><expr><call><name>Py_BuildValue</name><argument_list>(<argument><expr><literal type="string">"K"</literal></expr></argument>, <argument><expr><name><name>it</name><index>[<expr><name>j</name></expr>]</index></name><operator>.</operator><name>pi_value</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>Py_INCREF</name><argument_list>(<argument><expr><name>Py_None</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>indextable</name> <operator>=</operator> <name>Py_None</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<expr_stmt><expr><name>tuple</name> <operator>=</operator> <call><name>Py_BuildValue</name><argument_list>(<argument><expr><literal type="string">"sissKsissiiO"</literal></expr></argument>,
+<argument><expr><name><name>p</name><operator>-&gt;</operator><name>pd_name</name></name></expr></argument>, <argument><expr><name><name>p</name><operator>-&gt;</operator><name>pd_propnum</name></name></expr></argument>, <argument><expr><name><name>typetable</name><index>[<expr><name><name>p</name><operator>-&gt;</operator><name>pd_proptype</name></name></expr>]</index></name></expr></argument>,
+<argument><expr><name><name>p</name><operator>-&gt;</operator><name>pd_strdefault</name></name></expr></argument>, <argument><expr><name><name>p</name><operator>-&gt;</operator><name>pd_numdefault</name></name></expr></argument>,
+<argument><expr><name><name>attrtable</name><index>[<expr><name><name>p</name><operator>-&gt;</operator><name>pd_attr</name></name></expr>]</index></name></expr></argument>, <argument><expr><name><name>p</name><operator>-&gt;</operator><name>pd_types</name></name></expr></argument>,
+<argument><expr><name><name>p</name><operator>-&gt;</operator><name>pd_values</name></name></expr></argument>, <argument><expr><name><name>p</name><operator>-&gt;</operator><name>pd_colname</name></name></expr></argument>,
+<argument><expr><name><name>p</name><operator>-&gt;</operator><name>pd_rightalign</name></name></expr></argument>, <argument><expr><name><name>p</name><operator>-&gt;</operator><name>pd_visible</name></name></expr></argument>, <argument><expr><name>indextable</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>PyDict_SetItemString</name><argument_list>(<argument><expr><name>d</name></expr></argument>, <argument><expr><name><name>p</name><operator>-&gt;</operator><name>pd_name</name></name></expr></argument>, <argument><expr><name>tuple</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Py_DECREF</name><argument_list>(<argument><expr><name>tuple</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<return>return <expr><operator>(</operator><name>d</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>PyMethodDef</name></type> <name><name>zfsmethods</name><index>[]</index></name> <init>= <expr><block>{
+<expr><block>{<expr><literal type="string">"next_dataset"</literal></expr>, <expr><name>py_next_dataset</name></expr>, <expr><name>METH_VARARGS</name></expr>,
+<expr><literal type="string">"Get next child dataset or snapshot."</literal></expr>}</block></expr>,
+<expr><block>{<expr><literal type="string">"get_fsacl"</literal></expr>, <expr><name>py_get_fsacl</name></expr>, <expr><name>METH_VARARGS</name></expr>, <expr><literal type="string">"Get allowed permissions."</literal></expr>}</block></expr>,
+<expr><block>{<expr><literal type="string">"set_fsacl"</literal></expr>, <expr><name>py_set_fsacl</name></expr>, <expr><name>METH_VARARGS</name></expr>, <expr><literal type="string">"Set allowed permissions."</literal></expr>}</block></expr>,
+<expr><block>{<expr><literal type="string">"userspace_many"</literal></expr>, <expr><name>py_userspace_many</name></expr>, <expr><name>METH_VARARGS</name></expr>,
+<expr><literal type="string">"Get user space accounting."</literal></expr>}</block></expr>,
+<expr><block>{<expr><literal type="string">"userspace_upgrade"</literal></expr>, <expr><name>py_userspace_upgrade</name></expr>, <expr><name>METH_VARARGS</name></expr>,
+<expr><literal type="string">"Upgrade fs to enable user space accounting."</literal></expr>}</block></expr>,
+<expr><block>{<expr><literal type="string">"set_cmdstr"</literal></expr>, <expr><name>py_set_cmdstr</name></expr>, <expr><name>METH_VARARGS</name></expr>,
+<expr><literal type="string">"Set command string for history logging."</literal></expr>}</block></expr>,
+<expr><block>{<expr><literal type="string">"dataset_props"</literal></expr>, <expr><name>py_dataset_props</name></expr>, <expr><name>METH_VARARGS</name></expr>,
+<expr><literal type="string">"Get dataset properties."</literal></expr>}</block></expr>,
+<expr><block>{<expr><literal type="string">"get_proptable"</literal></expr>, <expr><name>py_get_proptable</name></expr>, <expr><name>METH_NOARGS</name></expr>,
+<expr><literal type="string">"Get property table."</literal></expr>}</block></expr>,
+<expr><block>{<expr><literal type="string">"get_holds"</literal></expr>, <expr><name>py_get_holds</name></expr>, <expr><name>METH_VARARGS</name></expr>, <expr><literal type="string">"Get user holds."</literal></expr>}</block></expr>,
+<expr><block>{<expr><name>NULL</name></expr>, <expr><name>NULL</name></expr>, <expr><literal type="number">0</literal></expr>, <expr><name>NULL</name></expr>}</block></expr>
+}</block></expr></init></decl>;</decl_stmt>
+
+<function><type><name>void</name></type>
+<name>initioctl</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>zfs_ioctl</name> <init>= <expr><call><name>Py_InitModule</name><argument_list>(<argument><expr><literal type="string">"zfs.ioctl"</literal></expr></argument>, <argument><expr><name>zfsmethods</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>zfs_util</name> <init>= <expr><call><name>PyImport_ImportModule</name><argument_list>(<argument><expr><literal type="string">"zfs.util"</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>devfile</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>zfs_util</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>ZFSError</name> <operator>=</operator> <call><name>PyObject_GetAttrString</name><argument_list>(<argument><expr><name>zfs_util</name></expr></argument>, <argument><expr><literal type="string">"ZFSError"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>devfile</name> <operator>=</operator> <call><name>PyObject_GetAttrString</name><argument_list>(<argument><expr><name>zfs_util</name></expr></argument>, <argument><expr><literal type="string">"dev"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>zfsdevfd</name> <operator>=</operator> <call><name>PyObject_AsFileDescriptor</name><argument_list>(<argument><expr><name>devfile</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>zfs_prop_init</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+</unit>

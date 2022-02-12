@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/libevent/evthread_win32.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"event2/event-config.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"evconfig-private.h"</cpp:file></cpp:include>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>_WIN32</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>_WIN32_WINNT</name></expr></argument>)</argument_list></call></expr></cpp:if>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>_WIN32_WINNT</name></cpp:macro> <cpp:value>0x0403</cpp:value></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;winsock2.h&gt;</cpp:file></cpp:include>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>WIN32_LEAN_AND_MEAN</name></cpp:macro></cpp:define>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;windows.h&gt;</cpp:file></cpp:include>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>WIN32_LEAN_AND_MEAN</name></cpp:undef>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/locking.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<struct_decl>struct <name>event_base</name>;</struct_decl>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"event2/thread.h"</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"mm-internal.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"evthread-internal.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"time-internal.h"</cpp:file></cpp:include>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>SPIN_COUNT</name></cpp:macro> <cpp:value>2000</cpp:value></cpp:define>
+
+<function><type><specifier>static</specifier> <name>void</name> <modifier>*</modifier></type>
+<name>evthread_win32_lock_create</name><parameter_list>(<parameter><decl><type><name>unsigned</name></type> <name>locktype</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>CRITICAL_SECTION</name> <modifier>*</modifier></type><name>lock</name> <init>= <expr><call><name>mm_malloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>CRITICAL_SECTION</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>lock</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>NULL</name></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>InitializeCriticalSectionAndSpinCount</name><argument_list>(<argument><expr><name>lock</name></expr></argument>, <argument><expr><name>SPIN_COUNT</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>mm_free</name><argument_list>(<argument><expr><name>lock</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name>lock</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>evthread_win32_lock_free</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>lock_</name></decl></parameter>, <parameter><decl><type><name>unsigned</name></type> <name>locktype</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>CRITICAL_SECTION</name> <modifier>*</modifier></type><name>lock</name> <init>= <expr><name>lock_</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>DeleteCriticalSection</name><argument_list>(<argument><expr><name>lock</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>mm_free</name><argument_list>(<argument><expr><name>lock</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>evthread_win32_lock</name><parameter_list>(<parameter><decl><type><name>unsigned</name></type> <name>mode</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>lock_</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>CRITICAL_SECTION</name> <modifier>*</modifier></type><name>lock</name> <init>= <expr><name>lock_</name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>mode</name> <operator>&amp;</operator> <name>EVTHREAD_TRY</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<return>return <expr><operator>!</operator> <call><name>TryEnterCriticalSection</name><argument_list>(<argument><expr><name>lock</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>EnterCriticalSection</name><argument_list>(<argument><expr><name>lock</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>evthread_win32_unlock</name><parameter_list>(<parameter><decl><type><name>unsigned</name></type> <name>mode</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>lock_</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>CRITICAL_SECTION</name> <modifier>*</modifier></type><name>lock</name> <init>= <expr><name>lock_</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>LeaveCriticalSection</name><argument_list>(<argument><expr><name>lock</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>unsigned</name> <name>long</name></type>
+<name>evthread_win32_get_id</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><name>unsigned</name> <name>long</name><operator>)</operator> <call><name>GetCurrentThreadId</name><argument_list>()</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>WIN32_HAVE_CONDITION_VARIABLES</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<function_decl><type><specifier>static</specifier> <name>void</name> <name>WINAPI</name></type> (<modifier>*</modifier><name>InitializeConditionVariable_fn</name>)<parameter_list>(<parameter><decl><type><name>PCONDITION_VARIABLE</name></type></decl></parameter>)</parameter_list>
+<init>= <expr><name>NULL</name></expr></init>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>BOOL</name> <name>WINAPI</name></type> (<modifier>*</modifier><name>SleepConditionVariableCS_fn</name>)<parameter_list>(
+<parameter><decl><type><name>PCONDITION_VARIABLE</name></type></decl></parameter>, <parameter><decl><type><name>PCRITICAL_SECTION</name></type></decl></parameter>, <parameter><decl><type><name>DWORD</name></type></decl></parameter>)</parameter_list> <init>= <expr><name>NULL</name></expr></init>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>void</name> <name>WINAPI</name></type> (<modifier>*</modifier><name>WakeAllConditionVariable_fn</name>)<parameter_list>(<parameter><decl><type><name>PCONDITION_VARIABLE</name></type></decl></parameter>)</parameter_list> <init>= <expr><name>NULL</name></expr></init>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>void</name> <name>WINAPI</name></type> (<modifier>*</modifier><name>WakeConditionVariable_fn</name>)<parameter_list>(<parameter><decl><type><name>PCONDITION_VARIABLE</name></type></decl></parameter>)</parameter_list> <init>= <expr><name>NULL</name></expr></init>;</function_decl>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>evthread_win32_condvar_init</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>HANDLE</name></type> <name>lib</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>lib</name> <operator>=</operator> <call><name>GetModuleHandle</name><argument_list>(<argument><expr><call><name>TEXT</name><argument_list>(<argument><expr><literal type="string">"kernel32.dll"</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>lib</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><literal type="number">0</literal></expr>;</return></block_content></block></if></if_stmt>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>LOAD</name><parameter_list>(<parameter><type><name>name</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>name##_fn = GetProcAddress(lib, #name)</cpp:value></cpp:define>
+
+<expr_stmt><expr><call><name>LOAD</name><argument_list>(<argument><expr><name>InitializeConditionVariable</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>LOAD</name><argument_list>(<argument><expr><name>SleepConditionVariableCS</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>LOAD</name><argument_list>(<argument><expr><name>WakeAllConditionVariable</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>LOAD</name><argument_list>(<argument><expr><name>WakeConditionVariable</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><name>InitializeConditionVariable_fn</name> <operator>&amp;&amp;</operator> <name>SleepConditionVariableCS_fn</name> <operator>&amp;&amp;</operator>
+<name>WakeAllConditionVariable_fn</name> <operator>&amp;&amp;</operator> <name>WakeConditionVariable_fn</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<function><type><specifier>static</specifier> <name>void</name> <modifier>*</modifier></type>
+<name>evthread_win32_condvar_alloc</name><parameter_list>(<parameter><decl><type><name>unsigned</name></type> <name>condflags</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>CONDITION_VARIABLE</name> <modifier>*</modifier></type><name>cond</name> <init>= <expr><call><name>mm_malloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>CONDITION_VARIABLE</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>cond</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>NULL</name></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>InitializeConditionVariable_fn</name><argument_list>(<argument><expr><name>cond</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>cond</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>evthread_win32_condvar_free</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>cond_</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>CONDITION_VARIABLE</name> <modifier>*</modifier></type><name>cond</name> <init>= <expr><name>cond_</name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>mm_free</name><argument_list>(<argument><expr><name>cond</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>evthread_win32_condvar_signal</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>cond</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>broadcast</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>CONDITION_VARIABLE</name> <modifier>*</modifier></type><name>cond</name> <init>= <expr><name>cond_</name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>broadcast</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>WakeAllConditionVariable_fn</name><argument_list>(<argument><expr><name>cond</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>WakeConditionVariable_fn</name><argument_list>(<argument><expr><name>cond</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>evthread_win32_condvar_wait</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>cond_</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>lock_</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name><name>struct</name> <name>timeval</name></name> <modifier>*</modifier></type><name>tv</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>CONDITION_VARIABLE</name> <modifier>*</modifier></type><name>cond</name> <init>= <expr><name>cond_</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>CRITICAL_SECTION</name> <modifier>*</modifier></type><name>lock</name> <init>= <expr><name>lock_</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DWORD</name></type> <name>ms</name></decl>, <decl><type ref="prev"/><name>err</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>BOOL</name></type> <name>result</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>tv</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>ms</name> <operator>=</operator> <call><name>evutil_tv_to_msec_</name><argument_list>(<argument><expr><name>tv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>ms</name> <operator>=</operator> <name>INFINITE</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <call><name>SleepConditionVariableCS_fn</name><argument_list>(<argument><expr><name>cond</name></expr></argument>, <argument><expr><name>lock</name></expr></argument>, <argument><expr><name>ms</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>result</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>GetLastError</name><argument_list>()</argument_list></call> <operator>==</operator> <name>WAIT_TIMEOUT</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><literal type="number">1</literal></expr>;</return></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></else></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<struct>struct <name>evthread_win32_cond</name> <block>{
+<decl_stmt><decl><type><name>HANDLE</name></type> <name>event</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>CRITICAL_SECTION</name></type> <name>lock</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>n_waiting</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>n_to_wake</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>generation</name></decl>;</decl_stmt>
+}</block>;</struct>
+
+<function><type><specifier>static</specifier> <name>void</name> <modifier>*</modifier></type>
+<name>evthread_win32_cond_alloc</name><parameter_list>(<parameter><decl><type><name>unsigned</name></type> <name>flags</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>evthread_win32_cond</name></name> <modifier>*</modifier></type><name>cond</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name>cond</name> <operator>=</operator> <call><name>mm_malloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr>struct <name>evthread_win32_cond</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>NULL</name></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>InitializeCriticalSectionAndSpinCount</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>cond</name><operator>-&gt;</operator><name>lock</name></name></expr></argument>, <argument><expr><name>SPIN_COUNT</name></expr></argument>)</argument_list></call><operator>==</operator><literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>mm_free</name><argument_list>(<argument><expr><name>cond</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>cond</name><operator>-&gt;</operator><name>event</name></name> <operator>=</operator> <call><name>CreateEvent</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>,<argument><expr><name>TRUE</name></expr></argument>,<argument><expr><name>FALSE</name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>DeleteCriticalSection</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>cond</name><operator>-&gt;</operator><name>lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>mm_free</name><argument_list>(<argument><expr><name>cond</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>cond</name><operator>-&gt;</operator><name>n_waiting</name></name> <operator>=</operator> <name><name>cond</name><operator>-&gt;</operator><name>n_to_wake</name></name> <operator>=</operator> <name><name>cond</name><operator>-&gt;</operator><name>generation</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<return>return <expr><name>cond</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>evthread_win32_cond_free</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>cond_</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>evthread_win32_cond</name></name> <modifier>*</modifier></type><name>cond</name> <init>= <expr><name>cond_</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>DeleteCriticalSection</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>cond</name><operator>-&gt;</operator><name>lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>CloseHandle</name><argument_list>(<argument><expr><name><name>cond</name><operator>-&gt;</operator><name>event</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>mm_free</name><argument_list>(<argument><expr><name>cond</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>evthread_win32_cond_signal</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>cond_</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>broadcast</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>evthread_win32_cond</name></name> <modifier>*</modifier></type><name>cond</name> <init>= <expr><name>cond_</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>EnterCriticalSection</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>cond</name><operator>-&gt;</operator><name>lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>broadcast</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>cond</name><operator>-&gt;</operator><name>n_to_wake</name></name> <operator>=</operator> <name><name>cond</name><operator>-&gt;</operator><name>n_waiting</name></name></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><operator>++</operator><name><name>cond</name><operator>-&gt;</operator><name>n_to_wake</name></name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<expr_stmt><expr><name><name>cond</name><operator>-&gt;</operator><name>generation</name></name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SetEvent</name><argument_list>(<argument><expr><name><name>cond</name><operator>-&gt;</operator><name>event</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>LeaveCriticalSection</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>cond</name><operator>-&gt;</operator><name>lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>evthread_win32_cond_wait</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>cond_</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>lock_</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name><name>struct</name> <name>timeval</name></name> <modifier>*</modifier></type><name>tv</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>evthread_win32_cond</name></name> <modifier>*</modifier></type><name>cond</name> <init>= <expr><name>cond_</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>CRITICAL_SECTION</name> <modifier>*</modifier></type><name>lock</name> <init>= <expr><name>lock_</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>generation_at_start</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>waiting</name> <init>= <expr><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>result</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DWORD</name></type> <name>ms</name> <init>= <expr><name>INFINITE</name></expr></init></decl>, <decl><type ref="prev"/><name>ms_orig</name> <init>= <expr><name>INFINITE</name></expr></init></decl>, <decl><type ref="prev"/><name>startTime</name></decl>, <decl><type ref="prev"/><name>endTime</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>tv</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>ms_orig</name> <operator>=</operator> <name>ms</name> <operator>=</operator> <call><name>evutil_tv_to_msec_</name><argument_list>(<argument><expr><name>tv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>EnterCriticalSection</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>cond</name><operator>-&gt;</operator><name>lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>++</operator><name><name>cond</name><operator>-&gt;</operator><name>n_waiting</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>generation_at_start</name> <operator>=</operator> <name><name>cond</name><operator>-&gt;</operator><name>generation</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>LeaveCriticalSection</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>cond</name><operator>-&gt;</operator><name>lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>LeaveCriticalSection</name><argument_list>(<argument><expr><name>lock</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>startTime</name> <operator>=</operator> <call><name>GetTickCount</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<do>do <block>{<block_content>
+<decl_stmt><decl><type><name>DWORD</name></type> <name>res</name></decl>;</decl_stmt>
+<expr_stmt><expr><name>res</name> <operator>=</operator> <call><name>WaitForSingleObject</name><argument_list>(<argument><expr><name><name>cond</name><operator>-&gt;</operator><name>event</name></name></expr></argument>, <argument><expr><name>ms</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>EnterCriticalSection</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>cond</name><operator>-&gt;</operator><name>lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>cond</name><operator>-&gt;</operator><name>n_to_wake</name></name> <operator>&amp;&amp;</operator>
+<name><name>cond</name><operator>-&gt;</operator><name>generation</name></name> <operator>!=</operator> <name>generation_at_start</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>--</operator><name><name>cond</name><operator>-&gt;</operator><name>n_to_wake</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>--</operator><name><name>cond</name><operator>-&gt;</operator><name>n_waiting</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>waiting</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>res</name> <operator>!=</operator> <name>WAIT_OBJECT_0</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <ternary><condition><expr><operator>(</operator><name>res</name><operator>==</operator><name>WAIT_TIMEOUT</name><operator>)</operator></expr> ?</condition><then> <expr><literal type="number">1</literal></expr> </then><else>: <expr><operator>-</operator><literal type="number">1</literal></expr></else></ternary></expr>;</expr_stmt>
+<expr_stmt><expr><operator>--</operator><name><name>cond</name><operator>-&gt;</operator><name>n_waiting</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>waiting</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>ms</name> <operator>!=</operator> <name>INFINITE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>endTime</name> <operator>=</operator> <call><name>GetTickCount</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>startTime</name> <operator>+</operator> <name>ms_orig</name> <operator>&lt;=</operator> <name>endTime</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><operator>--</operator><name><name>cond</name><operator>-&gt;</operator><name>n_waiting</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>waiting</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>ms</name> <operator>=</operator> <name>startTime</name> <operator>+</operator> <name>ms_orig</name> <operator>-</operator> <name>endTime</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>cond</name><operator>-&gt;</operator><name>n_to_wake</name></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+
+
+<expr_stmt><expr><call><name>ResetEvent</name><argument_list>(<argument><expr><name><name>cond</name><operator>-&gt;</operator><name>event</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<label><name>out</name>:</label>
+<expr_stmt><expr><call><name>LeaveCriticalSection</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>cond</name><operator>-&gt;</operator><name>lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block> while <condition>(<expr><name>waiting</name></expr>)</condition>;</do>
+
+<expr_stmt><expr><call><name>EnterCriticalSection</name><argument_list>(<argument><expr><name>lock</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>EnterCriticalSection</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>cond</name><operator>-&gt;</operator><name>lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>cond</name><operator>-&gt;</operator><name>n_waiting</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>ResetEvent</name><argument_list>(<argument><expr><name><name>cond</name><operator>-&gt;</operator><name>event</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>LeaveCriticalSection</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>cond</name><operator>-&gt;</operator><name>lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>evthread_use_windows_threads</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>evthread_lock_callbacks</name></name></type> <name>cbs</name> <init>= <expr><block>{
+<expr><name>EVTHREAD_LOCK_API_VERSION</name></expr>,
+<expr><name>EVTHREAD_LOCKTYPE_RECURSIVE</name></expr>,
+<expr><name>evthread_win32_lock_create</name></expr>,
+<expr><name>evthread_win32_lock_free</name></expr>,
+<expr><name>evthread_win32_lock</name></expr>,
+<expr><name>evthread_win32_unlock</name></expr>
+}</block></expr></init></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><name><name>struct</name> <name>evthread_condition_callbacks</name></name></type> <name>cond_cbs</name> <init>= <expr><block>{
+<expr><name>EVTHREAD_CONDITION_API_VERSION</name></expr>,
+<expr><name>evthread_win32_cond_alloc</name></expr>,
+<expr><name>evthread_win32_cond_free</name></expr>,
+<expr><name>evthread_win32_cond_signal</name></expr>,
+<expr><name>evthread_win32_cond_wait</name></expr>
+}</block></expr></init></decl>;</decl_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>WIN32_HAVE_CONDITION_VARIABLES</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<decl_stmt><decl><type><name><name>struct</name> <name>evthread_condition_callbacks</name></name></type> <name>condvar_cbs</name> <init>= <expr><block>{
+<expr><name>EVTHREAD_CONDITION_API_VERSION</name></expr>,
+<expr><name>evthread_win32_condvar_alloc</name></expr>,
+<expr><name>evthread_win32_condvar_free</name></expr>,
+<expr><name>evthread_win32_condvar_signal</name></expr>,
+<expr><name>evthread_win32_condvar_wait</name></expr>
+}</block></expr></init></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<expr_stmt><expr><call><name>evthread_set_lock_callbacks</name><argument_list>(<argument><expr><operator>&amp;</operator><name>cbs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>evthread_set_id_callback</name><argument_list>(<argument><expr><name>evthread_win32_get_id</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>WIN32_HAVE_CONDITION_VARIABLES</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><call><name>evthread_win32_condvar_init</name><argument_list>()</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>evthread_set_condition_callbacks</name><argument_list>(<argument><expr><operator>&amp;</operator><name>condvar_cbs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<expr_stmt><expr><call><name>evthread_set_condition_callbacks</name><argument_list>(<argument><expr><operator>&amp;</operator><name>cond_cbs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+</unit>

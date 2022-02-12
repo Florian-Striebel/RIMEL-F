@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/dialog/inputbox.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;dlg_internals.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;dlg_keys.h&gt;</cpp:file></cpp:include>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>sTEXT</name></cpp:macro> <cpp:value>-1</cpp:value></cpp:define>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>NAVIGATE_BINDINGS</name></cpp:macro> <cpp:value>DLG_KEYS_DATA( DLGK_FIELD_NEXT, KEY_DOWN ), DLG_KEYS_DATA( DLGK_FIELD_NEXT, KEY_RIGHT ), DLG_KEYS_DATA( DLGK_FIELD_NEXT, TAB ), DLG_KEYS_DATA( DLGK_FIELD_PREV, KEY_BTAB ), DLG_KEYS_DATA( DLGK_FIELD_PREV, KEY_LEFT ), DLG_KEYS_DATA( DLGK_FIELD_PREV, KEY_UP )</cpp:value></cpp:define>
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>BTN_HIGH</name></cpp:macro> <cpp:value>1</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>HDR_HIGH</name></cpp:macro> <cpp:value>1</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MIN_HIGH</name></cpp:macro> <cpp:value>(HDR_HIGH + (MARGIN * 2 + 1) + (BTN_HIGH + MARGIN * 2))</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MIN_WIDE</name></cpp:macro> <cpp:value>26</cpp:value></cpp:define>
+
+
+
+
+<function><type><name>int</name></type>
+<name>dialog_inputbox</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>title</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>cprompt</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>height</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>width</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>init</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>int</name></type> <name>password</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>DLG_KEYS_BINDING</name></type> <name><name>binding</name><index>[]</index></name> <init>= <expr><block>{
+<expr><name>HELPKEY_BINDINGS</name></expr>,
+<expr><name>ENTERKEY_BINDINGS</name></expr>,
+<expr><name>NAVIGATE_BINDINGS</name></expr>,
+<expr><name>TOGGLEKEY_BINDINGS</name></expr>,
+<expr><name>END_KEYS_BINDING</name></expr>
+}</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>DLG_KEYS_BINDING</name></type> <name><name>binding2</name><index>[]</index></name> <init>= <expr><block>{
+<expr><name>INPUTSTR_BINDINGS</name></expr>,
+<expr><name>HELPKEY_BINDINGS</name></expr>,
+<expr><name>ENTERKEY_BINDINGS</name></expr>,
+<expr><name>NAVIGATE_BINDINGS</name></expr>,
+
+<expr><name>END_KEYS_BINDING</name></expr>
+}</block></expr></init></decl>;</decl_stmt>
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>KEY_RESIZE</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<decl_stmt><decl><type><name>int</name></type> <name>old_height</name> <init>= <expr><name>height</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>old_width</name> <init>= <expr><name>width</name></expr></init></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<decl_stmt><decl><type><name>int</name></type> <name>xorg</name></decl>, <decl><type ref="prev"/><name>yorg</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>x</name></decl>, <decl><type ref="prev"/><name>y</name></decl>, <decl><type ref="prev"/><name>box_y</name></decl>, <decl><type ref="prev"/><name>box_x</name></decl>, <decl><type ref="prev"/><name>box_width</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>show_buttons</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>col_offset</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>chr_offset</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>key</name></decl>, <decl><type ref="prev"/><name>fkey</name></decl>, <decl><type ref="prev"/><name>code</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>result</name> <init>= <expr><name>DLG_EXIT_UNKNOWN</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>state</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>first</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>edited</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>input</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>WINDOW</name> <modifier>*</modifier></type><name>dialog</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>WINDOW</name> <modifier>*</modifier></type><name>editor</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>prompt</name> <init>= <expr><call><name>dlg_strclone</name><argument_list>(<argument><expr><name>cprompt</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>buttons</name> <init>= <expr><call><name>dlg_ok_labels</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>dlg_does_output</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>DLG_TRACE</name><argument_list>(<argument><expr><operator>(</operator><literal type="string">"#inputbox args:\n"</literal><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DLG_TRACE2S</name><argument_list>(<argument><expr><literal type="string">"title"</literal></expr></argument>, <argument><expr><name>title</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DLG_TRACE2S</name><argument_list>(<argument><expr><literal type="string">"message"</literal></expr></argument>, <argument><expr><name>cprompt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DLG_TRACE2N</name><argument_list>(<argument><expr><literal type="string">"height"</literal></expr></argument>, <argument><expr><name>height</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DLG_TRACE2N</name><argument_list>(<argument><expr><literal type="string">"width"</literal></expr></argument>, <argument><expr><name>width</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DLG_TRACE2S</name><argument_list>(<argument><expr><literal type="string">"init"</literal></expr></argument>, <argument><expr><name>init</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DLG_TRACE2N</name><argument_list>(<argument><expr><literal type="string">"password"</literal></expr></argument>, <argument><expr><name>password</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>dlg_tab_correct_str</name><argument_list>(<argument><expr><name>prompt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><name>input</name> <operator>=</operator> <call><name>dlg_set_result</name><argument_list>(<argument><expr><name>init</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>edited</name> <operator>=</operator> <name>FALSE</name></expr>;</expr_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>KEY_RESIZE</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<label><name>retry</name>:</label>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<expr_stmt><expr><name>show_buttons</name> <operator>=</operator> <name>TRUE</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <ternary><condition><expr><name><name>dialog_vars</name><operator>.</operator><name>default_button</name></name> <operator>&gt;=</operator> <literal type="number">0</literal></expr> ?</condition><then> <expr><call><name>dlg_default_button</name><argument_list>()</argument_list></call></expr> </then><else>: <expr><name>sTEXT</name></expr></else></ternary></expr>;</expr_stmt>
+<expr_stmt><expr><name>first</name> <operator>=</operator> <operator>(</operator><name>state</name> <operator>==</operator> <name>sTEXT</name><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name>key</name> <operator>=</operator> <name>fkey</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>init</name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>dlg_auto_size</name><argument_list>(<argument><expr><name>title</name></expr></argument>, <argument><expr><name>prompt</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>height</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>width</name></expr></argument>, <argument><expr><name>MIN_HIGH</name></expr></argument>,
+<argument><expr><call><name>MIN</name><argument_list>(<argument><expr><call><name>MAX</name><argument_list>(<argument><expr><call><name>dlg_count_columns</name><argument_list>(<argument><expr><name>init</name></expr></argument>)</argument_list></call> <operator>+</operator> <literal type="number">7</literal></expr></argument>, <argument><expr><name>MIN_WIDE</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name>SCOLS</name> <operator>-</operator> <operator>(</operator><ternary><condition><expr><name><name>dialog_vars</name><operator>.</operator><name>begin_set</name></name></expr> ?</condition><then>
+<expr><name><name>dialog_vars</name><operator>.</operator><name>begin_x</name></name></expr> </then><else>: <expr><literal type="number">0</literal></expr></else></ternary><operator>)</operator></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>chr_offset</name> <operator>=</operator> <operator>(</operator><name>int</name><operator>)</operator> <call><name>strlen</name><argument_list>(<argument><expr><name>init</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>dlg_auto_size</name><argument_list>(<argument><expr><name>title</name></expr></argument>, <argument><expr><name>prompt</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>height</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>width</name></expr></argument>, <argument><expr><name>MIN_HIGH</name></expr></argument>, <argument><expr><name>MIN_WIDE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><call><name>dlg_button_layout</name><argument_list>(<argument><expr><name>buttons</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>width</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_print_size</name><argument_list>(<argument><expr><name>height</name></expr></argument>, <argument><expr><name>width</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_ctl_size</name><argument_list>(<argument><expr><name>height</name></expr></argument>, <argument><expr><name>width</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>xorg</name> <operator>=</operator> <call><name>dlg_box_x_ordinate</name><argument_list>(<argument><expr><name>width</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>yorg</name> <operator>=</operator> <call><name>dlg_box_y_ordinate</name><argument_list>(<argument><expr><name>height</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>dialog</name> <operator>=</operator> <call><name>dlg_new_window</name><argument_list>(<argument><expr><name>height</name></expr></argument>, <argument><expr><name>width</name></expr></argument>, <argument><expr><name>yorg</name></expr></argument>, <argument><expr><name>xorg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_register_window</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><literal type="string">"inputbox"</literal></expr></argument>, <argument><expr><name>binding</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_register_buttons</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><literal type="string">"inputbox"</literal></expr></argument>, <argument><expr><name>buttons</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>dlg_mouse_setbase</name><argument_list>(<argument><expr><name>xorg</name></expr></argument>, <argument><expr><name>yorg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>dlg_draw_box2</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>height</name></expr></argument>, <argument><expr><name>width</name></expr></argument>, <argument><expr><name>dialog_attr</name></expr></argument>, <argument><expr><name>border_attr</name></expr></argument>, <argument><expr><name>border2_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_draw_bottom_box2</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>border_attr</name></expr></argument>, <argument><expr><name>border2_attr</name></expr></argument>, <argument><expr><name>dialog_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_draw_title</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>title</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>dlg_attrset</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>dialog_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_draw_helpline</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>FALSE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_print_autowrap</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>prompt</name></expr></argument>, <argument><expr><name>height</name></expr></argument>, <argument><expr><name>width</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><name>box_width</name> <operator>=</operator> <name>width</name> <operator>-</operator> <literal type="number">6</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>getyx</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>y</name></expr></argument>, <argument><expr><name>x</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <name>x</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>box_y</name> <operator>=</operator> <name>y</name> <operator>+</operator> <literal type="number">2</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>box_x</name> <operator>=</operator> <operator>(</operator><name>width</name> <operator>-</operator> <name>box_width</name><operator>)</operator> <operator>/</operator> <literal type="number">2</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_mouse_mkregion</name><argument_list>(<argument><expr><name>y</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><name>box_x</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><name>box_width</name> <operator>+</operator> <literal type="number">2</literal></expr></argument>, <argument><expr><literal type="char">'i'</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_draw_box</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>y</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><name>box_x</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><name>box_width</name> <operator>+</operator> <literal type="number">2</literal></expr></argument>,
+<argument><expr><name>border_attr</name></expr></argument>, <argument><expr><name>border2_attr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><name>editor</name> <operator>=</operator> <call><name>dlg_sub_window</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>box_width</name></expr></argument>, <argument><expr><name>yorg</name> <operator>+</operator> <name>box_y</name></expr></argument>, <argument><expr><name>xorg</name> <operator>+</operator> <name>box_x</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_register_window</name><argument_list>(<argument><expr><name>editor</name></expr></argument>, <argument><expr><literal type="string">"inputbox2"</literal></expr></argument>, <argument><expr><name>binding2</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>input</name> <operator>!=</operator> <literal type="char">'\0'</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>dlg_show_string</name><argument_list>(<argument><expr><name>editor</name></expr></argument>, <argument><expr><name>input</name></expr></argument>, <argument><expr><name>chr_offset</name></expr></argument>, <argument><expr><name>inputbox_attr</name></expr></argument>,
+<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>box_width</name></expr></argument>, <argument><expr><operator>(</operator><name>bool</name><operator>)</operator> <operator>(</operator><name>password</name> <operator>!=</operator> <literal type="number">0</literal><operator>)</operator></expr></argument>, <argument><expr><name>first</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>wsyncup</name><argument_list>(<argument><expr><name>editor</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>wcursyncup</name><argument_list>(<argument><expr><name>editor</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<while>while <condition>(<expr><name>result</name> <operator>==</operator> <name>DLG_EXIT_UNKNOWN</name></expr>)</condition> <block>{<block_content>
+
+
+
+<if_stmt><if>if <condition>(<expr><name>show_buttons</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>show_buttons</name> <operator>=</operator> <name>FALSE</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>col_offset</name> <operator>=</operator> <call><name>dlg_edit_offset</name><argument_list>(<argument><expr><name>input</name></expr></argument>, <argument><expr><name>chr_offset</name></expr></argument>, <argument><expr><name>box_width</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>wmove</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>box_y</name></expr></argument>, <argument><expr><name>box_x</name> <operator>+</operator> <name>col_offset</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_draw_buttons</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>, <argument><expr><name>height</name> <operator>-</operator> <literal type="number">2</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>buttons</name></expr></argument>, <argument><expr><name>state</name></expr></argument>, <argument><expr><name>FALSE</name></expr></argument>, <argument><expr><name>width</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>first</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>input</name> <operator>!=</operator> <literal type="char">'\0'</literal> <operator>&amp;&amp;</operator> <operator>!</operator><name>edited</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>dlg_show_string</name><argument_list>(<argument><expr><name>editor</name></expr></argument>, <argument><expr><name>input</name></expr></argument>, <argument><expr><name>chr_offset</name></expr></argument>, <argument><expr><name>inputbox_attr</name></expr></argument>,
+<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>box_width</name></expr></argument>, <argument><expr><operator>(</operator><name>bool</name><operator>)</operator> <operator>(</operator><name>password</name> <operator>!=</operator> <literal type="number">0</literal><operator>)</operator></expr></argument>, <argument><expr><name>first</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>wmove</name><argument_list>(<argument><expr><name>editor</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>chr_offset</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>wsyncup</name><argument_list>(<argument><expr><name>editor</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>wcursyncup</name><argument_list>(<argument><expr><name>editor</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>key</name> <operator>=</operator> <call><name>dlg_mouse_wgetch</name><argument_list>(<argument><expr><ternary><condition><expr><operator>(</operator><name>state</name> <operator>==</operator> <name>sTEXT</name><operator>)</operator></expr> ?</condition><then> <expr><name>editor</name></expr> </then><else>: <expr><name>dialog</name></expr></else></ternary></expr></argument>, <argument><expr><operator>&amp;</operator><name>fkey</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>dlg_result_key</name><argument_list>(<argument><expr><name>key</name></expr></argument>, <argument><expr><name>fkey</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>result</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>dlg_button_key</name><argument_list>(<argument><expr><name>result</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>code</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>key</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>fkey</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>fkey</name>
+<operator>&amp;&amp;</operator> <call><name>is_DLGK_MOUSE</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call>
+<operator>&amp;&amp;</operator> <operator>(</operator><name>code</name> <operator>=</operator> <call><name>dlg_ok_buttoncode</name><argument_list>(<argument><expr><name>key</name> <operator>-</operator> <name>M_EVENT</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&gt;=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <name>code</name></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>state</name> <operator>==</operator> <name>sTEXT</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>edit</name> <init>= <expr><call><name>dlg_edit_string</name><argument_list>(<argument><expr><name>input</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>chr_offset</name></expr></argument>, <argument><expr><name>key</name></expr></argument>, <argument><expr><name>fkey</name></expr></argument>, <argument><expr><name>first</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>edit</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>dlg_show_string</name><argument_list>(<argument><expr><name>editor</name></expr></argument>, <argument><expr><name>input</name></expr></argument>, <argument><expr><name>chr_offset</name></expr></argument>, <argument><expr><name>inputbox_attr</name></expr></argument>,
+<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>box_width</name></expr></argument>, <argument><expr><operator>(</operator><name>bool</name><operator>)</operator> <operator>(</operator><name>password</name> <operator>!=</operator> <literal type="number">0</literal><operator>)</operator></expr></argument>, <argument><expr><name>first</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>wsyncup</name><argument_list>(<argument><expr><name>editor</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>wcursyncup</name><argument_list>(<argument><expr><name>editor</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>first</name> <operator>=</operator> <name>FALSE</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>edited</name> <operator>=</operator> <name>TRUE</name></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>first</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>first</name> <operator>=</operator> <name>FALSE</name></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>fkey</name> <operator>&amp;&amp;</operator> <operator>(</operator><name>code</name> <operator>=</operator> <call><name>dlg_char_to_button</name><argument_list>(<argument><expr><name>key</name></expr></argument>, <argument><expr><name>buttons</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&gt;=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>dlg_del_window</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <call><name>dlg_ok_buttoncode</name><argument_list>(<argument><expr><name>code</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>fkey</name></expr>)</condition> <block>{<block_content>
+<switch>switch <condition>(<expr><name>key</name></expr>)</condition> <block>{<block_content>
+<case>case <expr><call><name>DLGK_MOUSE</name><argument_list>(<argument><expr><literal type="char">'i'</literal></expr></argument>)</argument_list></call></expr>:</case>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<case>case <expr><name>DLGK_FIELD_PREV</name></expr>:</case>
+<expr_stmt><expr><name>show_buttons</name> <operator>=</operator> <name>TRUE</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <call><name>dlg_prev_ok_buttonindex</name><argument_list>(<argument><expr><name>state</name></expr></argument>, <argument><expr><name>sTEXT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>DLGK_FIELD_NEXT</name></expr>:</case>
+<expr_stmt><expr><name>show_buttons</name> <operator>=</operator> <name>TRUE</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>state</name> <operator>=</operator> <call><name>dlg_next_ok_buttonindex</name><argument_list>(<argument><expr><name>state</name></expr></argument>, <argument><expr><name>sTEXT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>DLGK_TOGGLE</name></expr>:</case>
+<case>case <expr><name>DLGK_ENTER</name></expr>:</case>
+<expr_stmt><expr><call><name>dlg_del_window</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <ternary><condition><expr><operator>(</operator><name>state</name> <operator>&gt;=</operator> <literal type="number">0</literal><operator>)</operator></expr> ?</condition><then> <expr><call><name>dlg_enter_buttoncode</name><argument_list>(<argument><expr><name>state</name></expr></argument>)</argument_list></call></expr> </then><else>: <expr><name>DLG_EXIT_OK</name></expr></else></ternary></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>DLGK_LEAVE</name></expr>:</case>
+<if_stmt><if>if <condition>(<expr><name>state</name> <operator>&gt;=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <call><name>dlg_ok_buttoncode</name><argument_list>(<argument><expr><name>state</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<break>break;</break>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>KEY_RESIZE</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<case>case <expr><name>KEY_RESIZE</name></expr>:</case>
+<expr_stmt><expr><call><name>dlg_will_resize</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>height</name> <operator>=</operator> <name>old_height</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>width</name> <operator>=</operator> <name>old_width</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>_dlg_resize_cleanup</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>retry</name>;</goto>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<default>default:</default>
+<expr_stmt><expr><call><name>beep</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></switch>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>key</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>beep</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></while>
+<expr_stmt><expr><call><name>AddLastKey</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>dlg_unregister_window</name><argument_list>(<argument><expr><name>editor</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_del_window</name><argument_list>(<argument><expr><name>dialog</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dlg_mouse_free_regions</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>prompt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></function>
+</unit>

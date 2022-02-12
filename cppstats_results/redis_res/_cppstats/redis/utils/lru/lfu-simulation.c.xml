@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/results/redis_res/_cppstats/redis/utils/lru/lfu-simulation.c"><cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdio.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;time.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdint.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+<decl_stmt><decl><type><name>int</name></type> <name>decr_every</name> <init>= <expr><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>keyspace_size</name> <init>= <expr><literal type="number">1000000</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>time_t</name></type> <name>switch_after</name> <init>= <expr><literal type="number">30</literal></expr></init></decl>;</decl_stmt>
+<struct>struct <name>entry</name> <block>{
+<decl_stmt><decl><type><name>uint8_t</name></type> <name>counter</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint16_t</name></type> <name>decrtime</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>hits</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>time_t</name></type> <name>ctime</name></decl>;</decl_stmt>
+}</block>;</struct>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>to_16bit_minutes</name><parameter_list>(<parameter><type><name>x</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((x/60) &amp; 65535)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>COUNTER_INIT_VAL</name></cpp:macro> <cpp:value>5</cpp:value></cpp:define>
+<function><type><name>uint16_t</name></type> <name>minutes_diff</name><parameter_list>(<parameter><decl><type><name>uint16_t</name></type> <name>now</name></decl></parameter>, <parameter><decl><type><name>uint16_t</name></type> <name>prev</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>now</name> <operator>&gt;=</operator> <name>prev</name></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><name>now</name><operator>-</operator><name>prev</name></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><literal type="number">65535</literal><operator>-</operator><name>prev</name><operator>+</operator><name>now</name></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>uint8_t</name></type> <name>log_incr</name><parameter_list>(<parameter><decl><type><name>uint8_t</name></type> <name>counter</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>counter</name> <operator>==</operator> <literal type="number">255</literal></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><name>counter</name></expr>;</return></block_content></block></if></if_stmt>
+<decl_stmt><decl><type><name>double</name></type> <name>r</name> <init>= <expr><operator>(</operator><name>double</name><operator>)</operator><call><name>rand</name><argument_list>()</argument_list></call><operator>/</operator><name>RAND_MAX</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>double</name></type> <name>baseval</name> <init>= <expr><name>counter</name><operator>-</operator><name>COUNTER_INIT_VAL</name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>baseval</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>baseval</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<decl_stmt><decl><type><name>double</name></type> <name>limit</name> <init>= <expr><literal type="number">1.0</literal><operator>/</operator><operator>(</operator><name>baseval</name><operator>*</operator><literal type="number">10</literal><operator>+</operator><literal type="number">1</literal><operator>)</operator></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>r</name> <operator>&lt;</operator> <name>limit</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>counter</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><name>counter</name></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>void</name></type> <name>access_entry</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>entry</name></name> <modifier>*</modifier></type><name>e</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><name><name>e</name><operator>-&gt;</operator><name>counter</name></name> <operator>=</operator> <call><name>log_incr</name><argument_list>(<argument><expr><name><name>e</name><operator>-&gt;</operator><name>counter</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>e</name><operator>-&gt;</operator><name>hits</name></name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><name>uint8_t</name></type> <name>scan_entry</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>entry</name></name> <modifier>*</modifier></type><name>e</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>minutes_diff</name><argument_list>(<argument><expr><call><name>to_16bit_minutes</name><argument_list>(<argument><expr><call><name>time</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>,<argument><expr><name><name>e</name><operator>-&gt;</operator><name>decrtime</name></name></expr></argument>)</argument_list></call>
+<operator>&gt;=</operator> <name>decr_every</name></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>e</name><operator>-&gt;</operator><name>counter</name></name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>e</name><operator>-&gt;</operator><name>counter</name></name> <operator>&gt;</operator> <name>COUNTER_INIT_VAL</name><operator>*</operator><literal type="number">2</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>e</name><operator>-&gt;</operator><name>counter</name></name> <operator>/=</operator> <literal type="number">2</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name><name>e</name><operator>-&gt;</operator><name>counter</name></name><operator>--</operator></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>e</name><operator>-&gt;</operator><name>decrtime</name></name> <operator>=</operator> <call><name>to_16bit_minutes</name><argument_list>(<argument><expr><call><name>time</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name><name>e</name><operator>-&gt;</operator><name>counter</name></name></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>void</name></type> <name>show_entry</name><parameter_list>(<parameter><decl><type><name>long</name></type> <name>pos</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>entry</name></name> <modifier>*</modifier></type><name>e</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>tag</name> <init>= <expr><literal type="string">"normal "</literal></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>pos</name> <operator>&gt;=</operator> <literal type="number">10</literal> <operator>&amp;&amp;</operator> <name>pos</name> <operator>&lt;=</operator> <literal type="number">14</literal></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>tag</name> <operator>=</operator> <literal type="string">"new no access"</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>pos</name> <operator>&gt;=</operator> <literal type="number">15</literal> <operator>&amp;&amp;</operator> <name>pos</name> <operator>&lt;=</operator> <literal type="number">19</literal></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>tag</name> <operator>=</operator> <literal type="string">"new accessed "</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>pos</name> <operator>&gt;=</operator> <name>keyspace_size</name> <operator>-</operator><literal type="number">5</literal></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>tag</name><operator>=</operator> <literal type="string">"old no access"</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%ld] &lt;%s&gt; frequency:%d decrtime:%d [%lu hits | age:%ld sec]\n"</literal></expr></argument>,
+<argument><expr><name>pos</name></expr></argument>, <argument><expr><name>tag</name></expr></argument>, <argument><expr><name><name>e</name><operator>-&gt;</operator><name>counter</name></name></expr></argument>, <argument><expr><name><name>e</name><operator>-&gt;</operator><name>decrtime</name></name></expr></argument>, <argument><expr><operator>(</operator><name>unsigned</name> <name>long</name><operator>)</operator><name><name>e</name><operator>-&gt;</operator><name>hits</name></name></expr></argument>,
+<argument><expr><call><name>time</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>)</argument_list></call> <operator>-</operator> <name><name>e</name><operator>-&gt;</operator><name>ctime</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><name>int</name></type> <name>main</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>time_t</name></type> <name>start</name> <init>= <expr><call><name>time</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>time_t</name></type> <name>new_entry_time</name> <init>= <expr><name>start</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>time_t</name></type> <name>display_time</name> <init>= <expr><name>start</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>entry</name></name> <modifier>*</modifier></type><name>entries</name> <init>= <expr><call><name>malloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>entries</name></expr></argument>)</argument_list></sizeof><operator>*</operator><name>keyspace_size</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>long</name></type> <name>j</name></decl>;</decl_stmt>
+<for>for <control>(<init><expr><name>j</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>j</name> <operator>&lt;</operator> <name>keyspace_size</name></expr>;</condition> <incr><expr><name>j</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name><name>entries</name><index>[<expr><name>j</name></expr>]</index></name><operator>.</operator><name>counter</name> <operator>=</operator> <name>COUNTER_INIT_VAL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>entries</name><index>[<expr><name>j</name></expr>]</index></name><operator>.</operator><name>decrtime</name> <operator>=</operator> <call><name>to_16bit_minutes</name><argument_list>(<argument><expr><name>start</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>entries</name><index>[<expr><name>j</name></expr>]</index></name><operator>.</operator><name>hits</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>entries</name><index>[<expr><name>j</name></expr>]</index></name><operator>.</operator><name>ctime</name> <operator>=</operator> <call><name>time</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+<while>while<condition>(<expr><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>time_t</name></type> <name>now</name> <init>= <expr><call><name>time</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>long</name></type> <name>idx</name></decl>;</decl_stmt>
+<for>for <control>(<init><expr><name>j</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>j</name> <operator>&lt;</operator> <literal type="number">3</literal></expr>;</condition> <incr><expr><name>j</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>scan_entry</name><argument_list>(<argument><expr><name>entries</name><operator>+</operator><operator>(</operator><call><name>rand</name><argument_list>()</argument_list></call><operator>%</operator><name>keyspace_size</name><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+<if_stmt><if>if <condition>(<expr><name>now</name><operator>-</operator><name>start</name> <operator>&lt;</operator> <name>switch_after</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>idx</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<while>while<condition>(<expr><operator>(</operator><call><name>rand</name><argument_list>()</argument_list></call> <operator>%</operator> <literal type="number">21</literal><operator>)</operator> <operator>!=</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name>idx</name> <operator>&lt;</operator> <name>keyspace_size</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>idx</name> <operator>*=</operator> <literal type="number">2</literal></expr>;</expr_stmt></block_content></block></while>
+<if_stmt><if>if <condition>(<expr><name>idx</name> <operator>&gt;</operator> <name>keyspace_size</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>idx</name> <operator>=</operator> <name>keyspace_size</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>idx</name> <operator>=</operator> <call><name>rand</name><argument_list>()</argument_list></call> <operator>%</operator> <name>idx</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>idx</name> <operator>=</operator> <call><name>rand</name><argument_list>()</argument_list></call> <operator>%</operator> <name>keyspace_size</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>idx</name> <argument_list type="generic">&lt; <argument><expr><literal type="number">10</literal> <operator>||</operator> <name>idx</name></expr></argument> &gt;</argument_list></name> <literal type="number">14</literal><operator>)</operator> <operator>&amp;&amp;</operator> <operator>(</operator><name>idx</name> <operator>&lt;</operator> <name>keyspace_size</name><operator>-</operator><literal type="number">5</literal><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>access_entry</name><argument_list>(<argument><expr><name>entries</name><operator>+</operator><name>idx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>new_entry_time</name> <operator>&lt;=</operator> <name>now</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>idx</name> <operator>=</operator> <literal type="number">10</literal><operator>+</operator><operator>(</operator><call><name>rand</name><argument_list>()</argument_list></call><operator>%</operator><literal type="number">10</literal><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>entries</name><index>[<expr><name>idx</name></expr>]</index></name><operator>.</operator><name>counter</name> <operator>=</operator> <name>COUNTER_INIT_VAL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>entries</name><index>[<expr><name>idx</name></expr>]</index></name><operator>.</operator><name>decrtime</name> <operator>=</operator> <call><name>to_16bit_minutes</name><argument_list>(<argument><expr><call><name>time</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>entries</name><index>[<expr><name>idx</name></expr>]</index></name><operator>.</operator><name>hits</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>entries</name><index>[<expr><name>idx</name></expr>]</index></name><operator>.</operator><name>ctime</name> <operator>=</operator> <call><name>time</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>new_entry_time</name> <operator>=</operator> <name>now</name><operator>+</operator><literal type="number">10</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>display_time</name> <operator>!=</operator> <name>now</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"=============================\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"Current minutes time: %d\n"</literal></expr></argument>, <argument><expr><operator>(</operator><name>int</name><operator>)</operator><call><name>to_16bit_minutes</name><argument_list>(<argument><expr><name>now</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"Access method: %s\n"</literal></expr></argument>,
+<argument><expr><ternary><condition><expr><operator>(</operator><name>now</name><operator>-</operator><name>start</name> <operator>&lt;</operator> <name>switch_after</name><operator>)</operator></expr> ?</condition><then> <expr><literal type="string">"power-law"</literal></expr> </then><else>: <expr><literal type="string">"flat"</literal></expr></else></ternary></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>j</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>j</name> <operator>&lt;</operator> <literal type="number">20</literal></expr>;</condition> <incr><expr><name>j</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>show_entry</name><argument_list>(<argument><expr><name>j</name></expr></argument>,<argument><expr><name>entries</name><operator>+</operator><name>j</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+<for>for <control>(<init><expr><name>j</name> <operator>=</operator> <name>keyspace_size</name><operator>-</operator><literal type="number">20</literal></expr>;</init> <condition><expr><name>j</name> <operator>&lt;</operator> <name>keyspace_size</name></expr>;</condition> <incr><expr><name>j</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>show_entry</name><argument_list>(<argument><expr><name>j</name></expr></argument>,<argument><expr><name>entries</name><operator>+</operator><name>j</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+<expr_stmt><expr><name>display_time</name> <operator>=</operator> <name>now</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></while>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+</unit>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/llvm-project/compiler-rt/lib/sanitizer_common/sanitizer_lfstack.h">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>SANITIZER_LFSTACK_H</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>SANITIZER_LFSTACK_H</name></cpp:macro></cpp:define>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"sanitizer_internal_defs.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"sanitizer_common.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"sanitizer_atomic.h"</cpp:file></cpp:include>
+
+<decl_stmt><decl><type><name>namespace</name></type> <name>__sanitizer</name> <block>{<block_content>
+
+<macro><name>template</name></macro><expr_stmt><expr><operator>&lt;</operator><name>typename</name> <name>T</name><operator>&gt;</operator>
+struct <name>LFStack</name> <block>{
+<expr><name>void</name> <macro><name>Clear</name><argument_list>()</argument_list></macro> <block>{
+<expr><call><name>atomic_store</name><argument_list>(<argument><expr><operator>&amp;</operator><name>head_</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>memory_order_relaxed</name></expr></argument>)</argument_list></call></expr>;
+}</block>
+
+<name>bool</name> <macro><name>Empty</name><argument_list>()</argument_list></macro> <specifier>const</specifier> <block>{
+<return>return <expr><operator>(</operator><call><name>atomic_load</name><argument_list>(<argument><expr><operator>&amp;</operator><name>head_</name></expr></argument>, <argument><expr><name>memory_order_relaxed</name></expr></argument>)</argument_list></call> <operator>&amp;</operator> <name>kPtrMask</name><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr>;</return>
+}</block>
+
+<name>void</name> <macro><name>Push</name><argument_list>(<argument>T *p</argument>)</argument_list></macro> <block>{
+<expr><name>u64</name> <name>cmp</name> <operator>=</operator> <call><name>atomic_load</name><argument_list>(<argument><expr><operator>&amp;</operator><name>head_</name></expr></argument>, <argument><expr><name>memory_order_relaxed</name></expr></argument>)</argument_list></call></expr>;
+<for>for <control>(<init>;</init><condition>;</condition><incr/>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>u64</name></type> <name>cnt</name> <init>= <expr><operator>(</operator><name>cmp</name> <operator>&amp;</operator> <name>kCounterMask</name><operator>)</operator> <operator>+</operator> <name>kCounterInc</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>u64</name></type> <name>xch</name> <init>= <expr><operator>(</operator><name>u64</name><operator>)</operator><operator>(</operator><name>uptr</name><operator>)</operator><name>p</name> <operator>|</operator> <name>cnt</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>p</name><operator>-&gt;</operator><name>next</name></name> <operator>=</operator> <operator>(</operator><name>T</name><operator>*</operator><operator>)</operator><operator>(</operator><name>uptr</name><operator>)</operator><operator>(</operator><name>cmp</name> <operator>&amp;</operator> <name>kPtrMask</name><operator>)</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>atomic_compare_exchange_weak</name><argument_list>(<argument><expr><operator>&amp;</operator><name>head_</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>cmp</name></expr></argument>, <argument><expr><name>xch</name></expr></argument>,
+<argument><expr><name>memory_order_release</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<expr_stmt/>}</block_content>
+}
+
+T *Pop(</block></for>) <block>{
+<expr><name>u64</name> <name>cmp</name> <operator>=</operator> <call><name>atomic_load</name><argument_list>(<argument><expr><operator>&amp;</operator><name>head_</name></expr></argument>, <argument><expr><name>memory_order_acquire</name></expr></argument>)</argument_list></call></expr>;
+<for>for <control>(<init>;</init><condition>;</condition><incr/>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>T</name> <modifier>*</modifier></type><name>cur</name> <init>= <expr><operator>(</operator><name>T</name><operator>*</operator><operator>)</operator><operator>(</operator><name>uptr</name><operator>)</operator><operator>(</operator><name>cmp</name> <operator>&amp;</operator> <name>kPtrMask</name><operator>)</operator></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>cur</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>nullptr</name></expr>;</return></block_content></block></if></if_stmt>
+<decl_stmt><decl><type><name>T</name> <modifier>*</modifier></type><name>nxt</name> <init>= <expr><name><name>cur</name><operator>-&gt;</operator><name>next</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>u64</name></type> <name>cnt</name> <init>= <expr><operator>(</operator><name>cmp</name> <operator>&amp;</operator> <name>kCounterMask</name><operator>)</operator></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>u64</name></type> <name>xch</name> <init>= <expr><operator>(</operator><name>u64</name><operator>)</operator><operator>(</operator><name>uptr</name><operator>)</operator><name>nxt</name> <operator>|</operator> <name>cnt</name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>atomic_compare_exchange_weak</name><argument_list>(<argument><expr><operator>&amp;</operator><name>head_</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>cmp</name></expr></argument>, <argument><expr><name>xch</name></expr></argument>,
+<argument><expr><name>memory_order_acquire</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>cur</name></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt/>}</block_content>
+}
+
+
+static const int kCounterBits = FIRST_32_SECOND_64(32</block><operator>,</operator> <expr_stmt><expr><literal type="number">17</literal></expr></expr_stmt></for>)</block></block></expr>;
+<expr><specifier>static</specifier> <specifier>const</specifier> <name>u64</name> <name>kPtrMask</name> <operator>=</operator> <operator>(</operator><operator>(</operator><name>u64</name><operator>)</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator> <operator>&gt;&gt;</operator> <name>kCounterBits</name></expr>;
+<expr><specifier>static</specifier> <specifier>const</specifier> <name>u64</name> <name>kCounterMask</name> <operator>=</operator> <operator>~</operator><name>kPtrMask</name></expr>;
+<expr><specifier>static</specifier> <specifier>const</specifier> <name>u64</name> <name>kCounterInc</name> <operator>=</operator> <name>kPtrMask</name> <operator>+</operator> <literal type="number">1</literal></expr>;
+
+<expr><name>atomic_uint64_t</name> <name>head_</name></expr>;
+}</block></expr>;</expr_stmt>
+</block_content>}</block></decl></decl_stmt>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

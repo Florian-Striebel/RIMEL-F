@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/bzip2/huffman.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"bzlib_private.h"</cpp:file></cpp:include>
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>WEIGHTOF</name><parameter_list>(<parameter><type><name>zz0</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((zz0) &amp; 0xffffff00)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>DEPTHOF</name><parameter_list>(<parameter><type><name>zz1</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((zz1) &amp; 0x000000ff)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MYMAX</name><parameter_list>(<parameter><type><name>zz2</name></type></parameter>,<parameter><type><name>zz3</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((zz2) &gt; (zz3) ? (zz2) : (zz3))</cpp:value></cpp:define>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ADDWEIGHTS</name><parameter_list>(<parameter><type><name>zw1</name></type></parameter>,<parameter><type><name>zw2</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>(WEIGHTOF(zw1)+WEIGHTOF(zw2)) | (1 + MYMAX(DEPTHOF(zw1),DEPTHOF(zw2)))</cpp:value></cpp:define>
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>UPHEAP</name><parameter_list>(<parameter><type><name>z</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>{ Int32 zz, tmp; zz = z; tmp = heap[zz]; while (weight[tmp] &lt; weight[heap[zz &gt;&gt; 1]]) { heap[zz] = heap[zz &gt;&gt; 1]; zz &gt;&gt;= 1; } heap[zz] = tmp; }</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>DOWNHEAP</name><parameter_list>(<parameter><type><name>z</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>{ Int32 zz, yy, tmp; zz = z; tmp = heap[zz]; while (True) { yy = zz &lt;&lt; 1; if (yy &gt; nHeap) break; if (yy &lt; nHeap &amp;&amp; weight[heap[yy+1]] &lt; weight[heap[yy]]) yy++; if (weight[tmp] &lt; weight[heap[yy]]) break; heap[zz] = heap[yy]; zz = yy; } heap[zz] = tmp; }</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><name>void</name></type> <name>BZ2_hbMakeCodeLengths</name> <parameter_list>( <parameter><decl><type><name>UChar</name> <modifier>*</modifier></type><name>len</name></decl></parameter>,
+<parameter><decl><type><name>Int32</name> <modifier>*</modifier></type><name>freq</name></decl></parameter>,
+<parameter><decl><type><name>Int32</name></type> <name>alphaSize</name></decl></parameter>,
+<parameter><decl><type><name>Int32</name></type> <name>maxLen</name></decl></parameter> )</parameter_list>
+<block>{<block_content>
+
+
+
+
+<decl_stmt><decl><type><name>Int32</name></type> <name>nNodes</name></decl>, <decl><type ref="prev"/><name>nHeap</name></decl>, <decl><type ref="prev"/><name>n1</name></decl>, <decl><type ref="prev"/><name>n2</name></decl>, <decl><type ref="prev"/><name>i</name></decl>, <decl><type ref="prev"/><name>j</name></decl>, <decl><type ref="prev"/><name>k</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Bool</name></type> <name>tooLong</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>Int32</name></type> <name><name>heap</name> <index>[ <expr><name>BZ_MAX_ALPHA_SIZE</name> <operator>+</operator> <literal type="number">2</literal></expr> ]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Int32</name></type> <name><name>weight</name> <index>[ <expr><name>BZ_MAX_ALPHA_SIZE</name> <operator>*</operator> <literal type="number">2</literal></expr> ]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Int32</name></type> <name><name>parent</name> <index>[ <expr><name>BZ_MAX_ALPHA_SIZE</name> <operator>*</operator> <literal type="number">2</literal></expr> ]</index></name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>alphaSize</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>weight</name><index>[<expr><name>i</name><operator>+</operator><literal type="number">1</literal></expr>]</index></name> <operator>=</operator> <operator>(</operator><ternary><condition><expr><name><name>freq</name><index>[<expr><name>i</name></expr>]</index></name> <operator>==</operator> <literal type="number">0</literal></expr> ?</condition><then> <expr><literal type="number">1</literal></expr> </then><else>: <expr><name><name>freq</name><index>[<expr><name>i</name></expr>]</index></name></expr></else></ternary><operator>)</operator> <operator>&lt;&lt;</operator> <literal type="number">8</literal></expr>;</expr_stmt></block_content></block></for>
+
+<while>while <condition>(<expr><name>True</name></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><name>nNodes</name> <operator>=</operator> <name>alphaSize</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>nHeap</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>heap</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>weight</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>parent</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>=</operator> <operator>-</operator><literal type="number">2</literal></expr>;</expr_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">1</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;=</operator> <name>alphaSize</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name><name>parent</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>nHeap</name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>heap</name><index>[<expr><name>nHeap</name></expr>]</index></name> <operator>=</operator> <name>i</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>UPHEAP</name><argument_list>(<argument><expr><name>nHeap</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><call><name>AssertH</name><argument_list>( <argument><expr><name>nHeap</name> <operator>&lt;</operator> <operator>(</operator><name>BZ_MAX_ALPHA_SIZE</name><operator>+</operator><literal type="number">2</literal><operator>)</operator></expr></argument>, <argument><expr><literal type="number">2001</literal></expr></argument> )</argument_list></call></expr>;</expr_stmt>
+
+<while>while <condition>(<expr><name>nHeap</name> <operator>&gt;</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>n1</name> <operator>=</operator> <name><name>heap</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr>;</expr_stmt> <expr_stmt><expr><name><name>heap</name><index>[<expr><literal type="number">1</literal></expr>]</index></name> <operator>=</operator> <name><name>heap</name><index>[<expr><name>nHeap</name></expr>]</index></name></expr>;</expr_stmt> <expr_stmt><expr><name>nHeap</name><operator>--</operator></expr>;</expr_stmt> <expr_stmt><expr><call><name>DOWNHEAP</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>n2</name> <operator>=</operator> <name><name>heap</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr>;</expr_stmt> <expr_stmt><expr><name><name>heap</name><index>[<expr><literal type="number">1</literal></expr>]</index></name> <operator>=</operator> <name><name>heap</name><index>[<expr><name>nHeap</name></expr>]</index></name></expr>;</expr_stmt> <expr_stmt><expr><name>nHeap</name><operator>--</operator></expr>;</expr_stmt> <expr_stmt><expr><call><name>DOWNHEAP</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>nNodes</name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>parent</name><index>[<expr><name>n1</name></expr>]</index></name> <operator>=</operator> <name><name>parent</name><index>[<expr><name>n2</name></expr>]</index></name> <operator>=</operator> <name>nNodes</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>weight</name><index>[<expr><name>nNodes</name></expr>]</index></name> <operator>=</operator> <call><name>ADDWEIGHTS</name><argument_list>(<argument><expr><name><name>weight</name><index>[<expr><name>n1</name></expr>]</index></name></expr></argument>, <argument><expr><name><name>weight</name><index>[<expr><name>n2</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>parent</name><index>[<expr><name>nNodes</name></expr>]</index></name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>nHeap</name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>heap</name><index>[<expr><name>nHeap</name></expr>]</index></name> <operator>=</operator> <name>nNodes</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>UPHEAP</name><argument_list>(<argument><expr><name>nHeap</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></while>
+
+<expr_stmt><expr><call><name>AssertH</name><argument_list>( <argument><expr><name>nNodes</name> <operator>&lt;</operator> <operator>(</operator><name>BZ_MAX_ALPHA_SIZE</name> <operator>*</operator> <literal type="number">2</literal><operator>)</operator></expr></argument>, <argument><expr><literal type="number">2002</literal></expr></argument> )</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>tooLong</name> <operator>=</operator> <name>False</name></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">1</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;=</operator> <name>alphaSize</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>j</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>k</name> <operator>=</operator> <name>i</name></expr>;</expr_stmt>
+<while>while <condition>(<expr><name><name>parent</name><index>[<expr><name>k</name></expr>]</index></name> <operator>&gt;=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content> <expr_stmt><expr><name>k</name> <operator>=</operator> <name><name>parent</name><index>[<expr><name>k</name></expr>]</index></name></expr>;</expr_stmt> <expr_stmt><expr><name>j</name><operator>++</operator></expr>;</expr_stmt> </block_content>}</block></while>
+<expr_stmt><expr><name><name>len</name><index>[<expr><name>i</name><operator>-</operator><literal type="number">1</literal></expr>]</index></name> <operator>=</operator> <name>j</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>j</name> <operator>&gt;</operator> <name>maxLen</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>tooLong</name> <operator>=</operator> <name>True</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></for>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator> <name>tooLong</name></expr>)</condition><block type="pseudo"><block_content> <break>break;</break></block_content></block></if></if_stmt>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">1</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;=</operator> <name>alphaSize</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>j</name> <operator>=</operator> <name><name>weight</name><index>[<expr><name>i</name></expr>]</index></name> <operator>&gt;&gt;</operator> <literal type="number">8</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>j</name> <operator>=</operator> <literal type="number">1</literal> <operator>+</operator> <operator>(</operator><name>j</name> <operator>/</operator> <literal type="number">2</literal><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>weight</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <name>j</name> <operator>&lt;&lt;</operator> <literal type="number">8</literal></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></while>
+</block_content>}</block></function>
+
+
+
+<function><type><name>void</name></type> <name>BZ2_hbAssignCodes</name> <parameter_list>( <parameter><decl><type><name>Int32</name> <modifier>*</modifier></type><name>code</name></decl></parameter>,
+<parameter><decl><type><name>UChar</name> <modifier>*</modifier></type><name>length</name></decl></parameter>,
+<parameter><decl><type><name>Int32</name></type> <name>minLen</name></decl></parameter>,
+<parameter><decl><type><name>Int32</name></type> <name>maxLen</name></decl></parameter>,
+<parameter><decl><type><name>Int32</name></type> <name>alphaSize</name></decl></parameter> )</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>Int32</name></type> <name>n</name></decl>, <decl><type ref="prev"/><name>vec</name></decl>, <decl><type ref="prev"/><name>i</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>vec</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>n</name> <operator>=</operator> <name>minLen</name></expr>;</init> <condition><expr><name>n</name> <operator>&lt;=</operator> <name>maxLen</name></expr>;</condition> <incr><expr><name>n</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>alphaSize</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<expr><name><name>length</name><index>[<expr><name>i</name></expr>]</index></name> <operator>==</operator> <name>n</name></expr>)</condition> <block>{<block_content> <expr_stmt><expr><name><name>code</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <name>vec</name></expr>;</expr_stmt> <expr_stmt><expr><name>vec</name><operator>++</operator></expr>;</expr_stmt> </block_content>}</block></if></if_stmt></block_content></block></for><empty_stmt>;</empty_stmt>
+<expr_stmt><expr><name>vec</name> <operator>&lt;&lt;=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+
+
+<function><type><name>void</name></type> <name>BZ2_hbCreateDecodeTables</name> <parameter_list>( <parameter><decl><type><name>Int32</name> <modifier>*</modifier></type><name>limit</name></decl></parameter>,
+<parameter><decl><type><name>Int32</name> <modifier>*</modifier></type><name>base</name></decl></parameter>,
+<parameter><decl><type><name>Int32</name> <modifier>*</modifier></type><name>perm</name></decl></parameter>,
+<parameter><decl><type><name>UChar</name> <modifier>*</modifier></type><name>length</name></decl></parameter>,
+<parameter><decl><type><name>Int32</name></type> <name>minLen</name></decl></parameter>,
+<parameter><decl><type><name>Int32</name></type> <name>maxLen</name></decl></parameter>,
+<parameter><decl><type><name>Int32</name></type> <name>alphaSize</name></decl></parameter> )</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>Int32</name></type> <name>pp</name></decl>, <decl><type ref="prev"/><name>i</name></decl>, <decl><type ref="prev"/><name>j</name></decl>, <decl><type ref="prev"/><name>vec</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>pp</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <name>minLen</name></expr>;</init> <condition><expr><name>i</name> <operator>&lt;=</operator> <name>maxLen</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<for>for <control>(<init><expr><name>j</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>j</name> <operator>&lt;</operator> <name>alphaSize</name></expr>;</condition> <incr><expr><name>j</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<expr><name><name>length</name><index>[<expr><name>j</name></expr>]</index></name> <operator>==</operator> <name>i</name></expr>)</condition> <block>{<block_content> <expr_stmt><expr><name><name>perm</name><index>[<expr><name>pp</name></expr>]</index></name> <operator>=</operator> <name>j</name></expr>;</expr_stmt> <expr_stmt><expr><name>pp</name><operator>++</operator></expr>;</expr_stmt> </block_content>}</block></if></if_stmt></block_content></block></for></block_content></block></for><empty_stmt>;</empty_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>BZ_MAX_CODE_LEN</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content> <expr_stmt><expr><name><name>base</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></for>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>alphaSize</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content> <expr_stmt><expr><name><name>base</name><index>[<expr><name><name>length</name><index>[<expr><name>i</name></expr>]</index></name><operator>+</operator><literal type="number">1</literal></expr>]</index></name><operator>++</operator></expr>;</expr_stmt></block_content></block></for>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">1</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>BZ_MAX_CODE_LEN</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content> <expr_stmt><expr><name><name>base</name><index>[<expr><name>i</name></expr>]</index></name> <operator>+=</operator> <name><name>base</name><index>[<expr><name>i</name><operator>-</operator><literal type="number">1</literal></expr>]</index></name></expr>;</expr_stmt></block_content></block></for>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>BZ_MAX_CODE_LEN</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content> <expr_stmt><expr><name><name>limit</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></for>
+<expr_stmt><expr><name>vec</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <name>minLen</name></expr>;</init> <condition><expr><name>i</name> <operator>&lt;=</operator> <name>maxLen</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>vec</name> <operator>+=</operator> <operator>(</operator><name><name>base</name><index>[<expr><name>i</name><operator>+</operator><literal type="number">1</literal></expr>]</index></name> <operator>-</operator> <name><name>base</name><index>[<expr><name>i</name></expr>]</index></name><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>limit</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <name>vec</name><operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>vec</name> <operator>&lt;&lt;=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></for>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <name>minLen</name> <operator>+</operator> <literal type="number">1</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;=</operator> <name>maxLen</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>base</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <operator>(</operator><operator>(</operator><name><name>limit</name><index>[<expr><name>i</name><operator>-</operator><literal type="number">1</literal></expr>]</index></name> <operator>+</operator> <literal type="number">1</literal><operator>)</operator> <operator>&lt;&lt;</operator> <literal type="number">1</literal><operator>)</operator> <operator>-</operator> <name><name>base</name><index>[<expr><name>i</name></expr>]</index></name></expr>;</expr_stmt></block_content></block></for>
+</block_content>}</block></function>
+
+
+
+
+
+</unit>

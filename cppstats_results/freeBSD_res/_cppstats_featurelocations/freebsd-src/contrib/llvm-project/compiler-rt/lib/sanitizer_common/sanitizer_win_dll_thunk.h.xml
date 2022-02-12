@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/llvm-project/compiler-rt/lib/sanitizer_common/sanitizer_win_dll_thunk.h">
+
+
+
+
+
+
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>SANITIZER_WIN_DLL_THUNK_H</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>SANITIZER_WIN_DLL_THUNK_H</name></cpp:macro></cpp:define>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"sanitizer_internal_defs.h"</cpp:file></cpp:include>
+
+<decl_stmt><decl><type><name>namespace</name></type> <name>__sanitizer</name> <block>{<block_content>
+<function_decl><type><name>uptr</name></type> <name>dllThunkGetRealAddrOrDie</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>name</name></decl></parameter>)</parameter_list>;</function_decl>
+
+<function_decl><type><name>int</name></type> <name>dllThunkIntercept</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name><modifier>*</modifier></type> <name>main_function</name></decl></parameter>, <parameter><decl><type><name>uptr</name></type> <name>dll_function</name></decl></parameter>)</parameter_list>;</function_decl>
+
+<function_decl><type><name>int</name></type> <name>dllThunkInterceptWhenPossible</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name><modifier>*</modifier></type> <name>main_function</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name><modifier>*</modifier></type> <name>default_function</name></decl></parameter>, <parameter><decl><type><name>uptr</name></type> <name>dll_function</name></decl></parameter>)</parameter_list>;</function_decl>
+</block_content>}</block></decl></decl_stmt>
+
+<extern>extern <literal type="string">"C"</literal> <function_decl><type><name>int</name></type> <name>__dll_thunk_init</name><parameter_list>()</parameter_list>;</function_decl></extern>
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>INTERCEPT_OR_DIE</name><parameter_list>(<parameter><type><name>main_function</name></type></parameter>, <parameter><type><name>dll_function</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>static int intercept_##dll_function() { return __sanitizer::dllThunkIntercept(main_function, (__sanitizer::uptr) dll_function); } __pragma(section(".DLLTH$M", long, read)) __declspec(allocate(".DLLTH$M")) int (*__dll_thunk_##dll_function)() = intercept_##dll_function;</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>INTERCEPT_WHEN_POSSIBLE</name><parameter_list>(<parameter><type><name>main_function</name></type></parameter>, <parameter><type><name>default_function</name></type></parameter>, <parameter><type><name>dll_function</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>static int intercept_##dll_function() { return __sanitizer::dllThunkInterceptWhenPossible(main_function, default_function, (__sanitizer::uptr)dll_function); } __pragma(section(".DLLTH$M", long, read)) __declspec(allocate(".DLLTH$M")) int (*__dll_thunk_##dll_function)() = intercept_##dll_function;</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>INTERCEPT_SANITIZER_FUNCTION</name><parameter_list>(<parameter><type><name>name</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>extern "C" __declspec(noinline) void name() { volatile int prevent_icf = (__LINE__ &lt;&lt; 8) ^ __COUNTER__; static const char function_name[] = #name; for (const char* ptr = &amp;function_name[0]; *ptr; ++ptr) prevent_icf ^= *ptr; (void)prevent_icf; __debugbreak(); } INTERCEPT_OR_DIE(#name, name)</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>INTERCEPT_SANITIZER_WEAK_FUNCTION</name><parameter_list>(<parameter><type><name>name</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>extern "C" __declspec(noinline) void name() { volatile int prevent_icf = (__LINE__ &lt;&lt; 8) ^ __COUNTER__; static const char function_name[] = #name; for (const char* ptr = &amp;function_name[0]; *ptr; ++ptr) prevent_icf ^= *ptr; (void)prevent_icf; __debugbreak(); } INTERCEPT_WHEN_POSSIBLE(#name, STRINGIFY(WEAK_EXPORT_NAME(name)), name)</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>INTERCEPT_LIBRARY_FUNCTION</name><parameter_list>(<parameter><type><name>name</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>extern "C" void name(); INTERCEPT_OR_DIE(WRAPPER_NAME(name), name)</cpp:value></cpp:define>
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>INTERCEPT_WRAP_V_V</name><parameter_list>(<parameter><type><name>name</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>extern "C" void name() { typedef decltype(name) *fntype; static fntype fn = (fntype)__sanitizer::dllThunkGetRealAddrOrDie(#name); fn(); } INTERCEPT_OR_DIE(#name, name);</cpp:value></cpp:define>
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>INTERCEPT_WRAP_V_W</name><parameter_list>(<parameter><type><name>name</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>extern "C" void name(void *arg) { typedef decltype(name) *fntype; static fntype fn = (fntype)__sanitizer::dllThunkGetRealAddrOrDie(#name); fn(arg); } INTERCEPT_OR_DIE(#name, name);</cpp:value></cpp:define>
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>INTERCEPT_WRAP_V_WW</name><parameter_list>(<parameter><type><name>name</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>extern "C" void name(void *arg1, void *arg2) { typedef decltype(name) *fntype; static fntype fn = (fntype)__sanitizer::dllThunkGetRealAddrOrDie(#name); fn(arg1, arg2); } INTERCEPT_OR_DIE(#name, name);</cpp:value></cpp:define>
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>INTERCEPT_WRAP_V_WWW</name><parameter_list>(<parameter><type><name>name</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>extern "C" void name(void *arg1, void *arg2, void *arg3) { typedef decltype(name) *fntype; static fntype fn = (fntype)__sanitizer::dllThunkGetRealAddrOrDie(#name); fn(arg1, arg2, arg3); } INTERCEPT_OR_DIE(#name, name);</cpp:value></cpp:define>
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>INTERCEPT_WRAP_W_V</name><parameter_list>(<parameter><type><name>name</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>extern "C" void *name() { typedef decltype(name) *fntype; static fntype fn = (fntype)__sanitizer::dllThunkGetRealAddrOrDie(#name); return fn(); } INTERCEPT_OR_DIE(#name, name);</cpp:value></cpp:define>
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>INTERCEPT_WRAP_W_W</name><parameter_list>(<parameter><type><name>name</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>extern "C" void *name(void *arg) { typedef decltype(name) *fntype; static fntype fn = (fntype)__sanitizer::dllThunkGetRealAddrOrDie(#name); return fn(arg); } INTERCEPT_OR_DIE(#name, name);</cpp:value></cpp:define>
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>INTERCEPT_WRAP_W_WW</name><parameter_list>(<parameter><type><name>name</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>extern "C" void *name(void *arg1, void *arg2) { typedef decltype(name) *fntype; static fntype fn = (fntype)__sanitizer::dllThunkGetRealAddrOrDie(#name); return fn(arg1, arg2); } INTERCEPT_OR_DIE(#name, name);</cpp:value></cpp:define>
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>INTERCEPT_WRAP_W_WWW</name><parameter_list>(<parameter><type><name>name</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>extern "C" void *name(void *arg1, void *arg2, void *arg3) { typedef decltype(name) *fntype; static fntype fn = (fntype)__sanitizer::dllThunkGetRealAddrOrDie(#name); return fn(arg1, arg2, arg3); } INTERCEPT_OR_DIE(#name, name);</cpp:value></cpp:define>
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>INTERCEPT_WRAP_W_WWWW</name><parameter_list>(<parameter><type><name>name</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>extern "C" void *name(void *arg1, void *arg2, void *arg3, void *arg4) { typedef decltype(name) *fntype; static fntype fn = (fntype)__sanitizer::dllThunkGetRealAddrOrDie(#name); return fn(arg1, arg2, arg3, arg4); } INTERCEPT_OR_DIE(#name, name);</cpp:value></cpp:define>
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>INTERCEPT_WRAP_W_WWWWW</name><parameter_list>(<parameter><type><name>name</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>extern "C" void *name(void *arg1, void *arg2, void *arg3, void *arg4, void *arg5) { typedef decltype(name) *fntype; static fntype fn = (fntype)__sanitizer::dllThunkGetRealAddrOrDie(#name); return fn(arg1, arg2, arg3, arg4, arg5); } INTERCEPT_OR_DIE(#name, name);</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>INTERCEPT_WRAP_W_WWWWWW</name><parameter_list>(<parameter><type><name>name</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>extern "C" void *name(void *arg1, void *arg2, void *arg3, void *arg4, void *arg5, void *arg6) { typedef decltype(name) *fntype; static fntype fn = (fntype)__sanitizer::dllThunkGetRealAddrOrDie(#name); return fn(arg1, arg2, arg3, arg4, arg5, arg6); } INTERCEPT_OR_DIE(#name, name);</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

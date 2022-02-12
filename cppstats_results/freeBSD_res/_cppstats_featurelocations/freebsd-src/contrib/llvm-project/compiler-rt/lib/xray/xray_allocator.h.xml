@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/llvm-project/compiler-rt/lib/xray/xray_allocator.h">
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>XRAY_ALLOCATOR_H</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>XRAY_ALLOCATOR_H</name></cpp:macro></cpp:define>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"sanitizer_common/sanitizer_common.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"sanitizer_common/sanitizer_internal_defs.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"sanitizer_common/sanitizer_mutex.h"</cpp:file></cpp:include>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SANITIZER_FUCHSIA</name></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;zircon/process.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;zircon/status.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;zircon/syscalls.h&gt;</cpp:file></cpp:include>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"sanitizer_common/sanitizer_posix.h"</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"xray_defs.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"xray_utils.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;cstddef&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;cstdint&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/mman.h&gt;</cpp:file></cpp:include>
+
+<decl_stmt><decl><type><name>namespace</name></type> <name>__xray</name> <block>{<block_content>
+
+
+
+
+<function><type><name><name>template</name> <argument_list type="generic">&lt;<argument><expr><name>class</name> <name>T</name></expr></argument>&gt;</argument_list></name> <name>T</name> <modifier>*</modifier></type><name>allocate</name><parameter_list>()</parameter_list> XRAY_NEVER_INSTRUMENT <block>{<block_content>
+<decl_stmt><decl><type><name>uptr</name></type> <name>RoundedSize</name> <init>= <expr><call><name>RoundUpTo</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>T</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><call><name>GetPageSizeCached</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SANITIZER_FUCHSIA</name></expr></cpp:if>
+<decl_stmt><decl><type><name>zx_handle_t</name></type> <name>Vmo</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>zx_status_t</name></type> <name>Status</name> <init>= <expr><call><name>_zx_vmo_create</name><argument_list>(<argument><expr><name>RoundedSize</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>Vmo</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>Status</name> <operator>!=</operator> <name>ZX_OK</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>Verbosity</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Report</name><argument_list>(<argument><expr><literal type="string">"XRay Profiling: Failed to create VMO of size %zu: %s\n"</literal></expr></argument>,
+<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>T</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><call><name>_zx_status_get_string</name><argument_list>(<argument><expr><name>Status</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><name>nullptr</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>B</name></decl>;</decl_stmt>
+<expr_stmt><expr><name>Status</name> <operator>=</operator>
+<call><name>_zx_vmar_map</name><argument_list>(<argument><expr><call><name>_zx_vmar_root_self</name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><name>ZX_VM_PERM_READ</name> <operator>|</operator> <name>ZX_VM_PERM_WRITE</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>,
+<argument><expr><name>Vmo</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>T</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><operator>&amp;</operator><name>B</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>_zx_handle_close</name><argument_list>(<argument><expr><name>Vmo</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>Status</name> <operator>!=</operator> <name>ZX_OK</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>Verbosity</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Report</name><argument_list>(<argument><expr><literal type="string">"XRay Profiling: Failed to map VMAR of size %zu: %s\n"</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>T</name></expr></argument>)</argument_list></sizeof></expr></argument>,
+<argument><expr><call><name>_zx_status_get_string</name><argument_list>(<argument><expr><name>Status</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><name>nullptr</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><call><name><name>reinterpret_cast</name><argument_list type="generic">&lt;<argument><expr><name>T</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>B</name></expr></argument>)</argument_list></call></expr>;</return>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<decl_stmt><decl><type><name>uptr</name></type> <name>B</name> <init>= <expr><call><name>internal_mmap</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>RoundedSize</name></expr></argument>, <argument><expr><name>PROT_READ</name> <operator>|</operator> <name>PROT_WRITE</name></expr></argument>,
+<argument><expr><name>MAP_PRIVATE</name> <operator>|</operator> <name>MAP_ANONYMOUS</name></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ErrNo</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>UNLIKELY</name><argument_list>(<argument><expr><call><name>internal_iserror</name><argument_list>(<argument><expr><name>B</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ErrNo</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>Verbosity</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Report</name><argument_list>(
+<argument><expr><literal type="string">"XRay Profiling: Failed to allocate memory of size %d; Error = %d.\n"</literal></expr></argument>,
+<argument><expr><name>RoundedSize</name></expr></argument>, <argument><expr><name>B</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><name>nullptr</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<return>return <expr><call><name><name>reinterpret_cast</name><argument_list type="generic">&lt;<argument><expr><name>T</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>B</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name><name>template</name> <argument_list type="generic">&lt;<argument><expr><name>class</name> <name>T</name></expr></argument>&gt;</argument_list></name> <name>void</name></type> <name>deallocate</name><parameter_list>(<parameter><decl><type><name>T</name> <modifier>*</modifier></type><name>B</name></decl></parameter>)</parameter_list> XRAY_NEVER_INSTRUMENT <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>B</name> <operator>==</operator> <name>nullptr</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+<decl_stmt><decl><type><name>uptr</name></type> <name>RoundedSize</name> <init>= <expr><call><name>RoundUpTo</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>T</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><call><name>GetPageSizeCached</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SANITIZER_FUCHSIA</name></expr></cpp:if>
+<expr_stmt><expr><call><name>_zx_vmar_unmap</name><argument_list>(<argument><expr><call><name>_zx_vmar_root_self</name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><call><name><name>reinterpret_cast</name><argument_list type="generic">&lt;<argument><expr><name>uintptr_t</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>B</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name>RoundedSize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><call><name>internal_munmap</name><argument_list>(<argument><expr><name>B</name></expr></argument>, <argument><expr><name>RoundedSize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+<function><type><name><name>template</name> <argument_list type="generic">&lt;<argument><expr><name>class</name> <name>T</name> <operator>=</operator> <name>unsigned</name> <name>char</name></expr></argument>&gt;</argument_list></name>
+<name>T</name> <modifier>*</modifier></type><name>allocateBuffer</name><parameter_list>(<parameter><decl><type><name>size_t</name></type> <name>S</name></decl></parameter>)</parameter_list> XRAY_NEVER_INSTRUMENT <block>{<block_content>
+<decl_stmt><decl><type><name>uptr</name></type> <name>RoundedSize</name> <init>= <expr><call><name>RoundUpTo</name><argument_list>(<argument><expr><name>S</name> <operator>*</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>T</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><call><name>GetPageSizeCached</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SANITIZER_FUCHSIA</name></expr></cpp:if>
+<decl_stmt><decl><type><name>zx_handle_t</name></type> <name>Vmo</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>zx_status_t</name></type> <name>Status</name> <init>= <expr><call><name>_zx_vmo_create</name><argument_list>(<argument><expr><name>RoundedSize</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>Vmo</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>Status</name> <operator>!=</operator> <name>ZX_OK</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>Verbosity</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Report</name><argument_list>(<argument><expr><literal type="string">"XRay Profiling: Failed to create VMO of size %zu: %s\n"</literal></expr></argument>, <argument><expr><name>S</name></expr></argument>,
+<argument><expr><call><name>_zx_status_get_string</name><argument_list>(<argument><expr><name>Status</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><name>nullptr</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>B</name></decl>;</decl_stmt>
+<expr_stmt><expr><name>Status</name> <operator>=</operator> <call><name>_zx_vmar_map</name><argument_list>(<argument><expr><call><name>_zx_vmar_root_self</name><argument_list>()</argument_list></call></expr></argument>,
+<argument><expr><name>ZX_VM_PERM_READ</name> <operator>|</operator> <name>ZX_VM_PERM_WRITE</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>Vmo</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>S</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>B</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>_zx_handle_close</name><argument_list>(<argument><expr><name>Vmo</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>Status</name> <operator>!=</operator> <name>ZX_OK</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>Verbosity</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Report</name><argument_list>(<argument><expr><literal type="string">"XRay Profiling: Failed to map VMAR of size %zu: %s\n"</literal></expr></argument>, <argument><expr><name>S</name></expr></argument>,
+<argument><expr><call><name>_zx_status_get_string</name><argument_list>(<argument><expr><name>Status</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><name>nullptr</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<decl_stmt><decl><type><name>uptr</name></type> <name>B</name> <init>= <expr><call><name>internal_mmap</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>RoundedSize</name></expr></argument>, <argument><expr><name>PROT_READ</name> <operator>|</operator> <name>PROT_WRITE</name></expr></argument>,
+<argument><expr><name>MAP_PRIVATE</name> <operator>|</operator> <name>MAP_ANONYMOUS</name></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ErrNo</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>UNLIKELY</name><argument_list>(<argument><expr><call><name>internal_iserror</name><argument_list>(<argument><expr><name>B</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ErrNo</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>Verbosity</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Report</name><argument_list>(
+<argument><expr><literal type="string">"XRay Profiling: Failed to allocate memory of size %d; Error = %d.\n"</literal></expr></argument>,
+<argument><expr><name>RoundedSize</name></expr></argument>, <argument><expr><name>B</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><name>nullptr</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<return>return <expr><call><name><name>reinterpret_cast</name><argument_list type="generic">&lt;<argument><expr><name>T</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>B</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name><name>template</name> <argument_list type="generic">&lt;<argument><expr><name>class</name> <name>T</name></expr></argument>&gt;</argument_list></name> <name>void</name></type> <name>deallocateBuffer</name><parameter_list>(<parameter><decl><type><name>T</name> <modifier>*</modifier></type><name>B</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>S</name></decl></parameter>)</parameter_list> XRAY_NEVER_INSTRUMENT <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>B</name> <operator>==</operator> <name>nullptr</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+<decl_stmt><decl><type><name>uptr</name></type> <name>RoundedSize</name> <init>= <expr><call><name>RoundUpTo</name><argument_list>(<argument><expr><name>S</name> <operator>*</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>T</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><call><name>GetPageSizeCached</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SANITIZER_FUCHSIA</name></expr></cpp:if>
+<expr_stmt><expr><call><name>_zx_vmar_unmap</name><argument_list>(<argument><expr><call><name>_zx_vmar_root_self</name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><call><name><name>reinterpret_cast</name><argument_list type="generic">&lt;<argument><expr><name>uintptr_t</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>B</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name>RoundedSize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><call><name>internal_munmap</name><argument_list>(<argument><expr><name>B</name></expr></argument>, <argument><expr><name>RoundedSize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+<decl_stmt><decl><type><name><name>template</name> <argument_list type="generic">&lt;<argument><expr><name>class</name> <name>T</name></expr></argument>, <argument><expr><name>class</name><modifier>...</modifier> <name>U</name></expr></argument>&gt;</argument_list></name>
+<name>T</name> <modifier>*</modifier></type><name>initArray</name><argument_list>(<argument><expr><name>size_t</name> <name>N</name></expr></argument>, <argument><expr><name>U</name> <operator>&amp;&amp;</operator><operator>...</operator> <name>Us</name></expr></argument>)</argument_list> <name>XRAY_NEVER_INSTRUMENT</name> <block>{<block_content>
+<decl_stmt><decl><type><name>auto</name></type> <name>A</name> <init>= <expr><call><name><name>allocateBuffer</name><argument_list type="generic">&lt;<argument><expr><name>T</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>N</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>A</name> <operator>!=</operator> <name>nullptr</name></expr>)</condition><block type="pseudo"><block_content>
+<while>while <condition>(<expr><name>N</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<macro><name>new</name> <argument_list>(<argument>A + (--N)</argument>)</argument_list></macro> <expr_stmt><expr><call><name>T</name><argument_list>(<argument><expr><name>std</name><operator>::</operator><call><name><name>forward</name><argument_list type="generic">&lt;<argument><expr><name>U</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>Us</name></expr></argument>)</argument_list></call><operator>...</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></while></block_content></block></if></if_stmt>
+<return>return <expr><name>A</name></expr>;</return>
+</block_content>}</block></decl></decl_stmt>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<macro><name>template</name></macro> <expr_stmt><expr><operator>&lt;</operator><name>size_t</name> <name>N</name><operator>&gt;</operator> struct <name>Allocator</name> <block>{
+
+struct <expr><name>Block</name> <block>{
+
+<expr><specifier>static</specifier> <name>constexpr</name> <name>auto</name> <name>Size</name> <operator>=</operator> <call><name>nearest_boundary</name><argument_list>(<argument><expr><name>N</name></expr></argument>, <argument><expr><name>kCacheLineSize</name></expr></argument>)</argument_list></call></expr>;
+<expr><name>void</name> <operator>*</operator><name>Data</name></expr>;
+}</block></expr>;
+
+<expr><name>private</name><operator>:</operator>
+<name>size_t</name> <name>MaxMemory</name><block>{<expr><literal type="number">0</literal></expr>}</block></expr>;
+<expr><name>unsigned</name> <name>char</name> <operator>*</operator><name>BackingStore</name> <operator>=</operator> <name>nullptr</name></expr>;
+<expr><name>unsigned</name> <name>char</name> <operator>*</operator><name>AlignedNextBlock</name> <operator>=</operator> <name>nullptr</name></expr>;
+<expr><name>size_t</name> <name>AllocatedBlocks</name> <operator>=</operator> <literal type="number">0</literal></expr>;
+<expr><name>bool</name> <name>Owned</name></expr>;
+<expr><name>SpinMutex</name> <name>Mutex</name><block>{}</block></expr>;
+
+<expr><name>void</name> <operator>*</operator><macro><name>Alloc</name><argument_list>()</argument_list></macro> <name>XRAY_NEVER_INSTRUMENT</name> <block>{
+<expr><name>SpinMutexLock</name> <call><name>Lock</name><argument_list>(<argument><expr><operator>&amp;</operator><name>Mutex</name></expr></argument>)</argument_list></call></expr>;
+<if_stmt><if>if <condition>(<expr><call><name>UNLIKELY</name><argument_list>(<argument><expr><name>BackingStore</name> <operator>==</operator> <name>nullptr</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>BackingStore</name> <operator>=</operator> <call><name>allocateBuffer</name><argument_list>(<argument><expr><name>MaxMemory</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>BackingStore</name> <operator>==</operator> <name>nullptr</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>Verbosity</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Report</name><argument_list>(<argument><expr><literal type="string">"XRay Profiling: Failed to allocate memory for allocator.\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><name>nullptr</name></expr>;</return>
+<expr_stmt/>}</block_content>
+
+AlignedNextBlock = BackingStore</block><empty_stmt>;</empty_stmt></if></if_stmt>
+
+
+<decl_stmt><decl><type><name>auto</name></type> <name>BackingStoreNum</name> <init>= <expr><call><name><name>reinterpret_cast</name><argument_list type="generic">&lt;<argument><expr><name>uintptr_t</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>BackingStore</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>auto</name></type> <name>AlignedNextBlockNum</name> <init>= <expr><call><name>nearest_boundary</name><argument_list>(
+<argument><expr><call><name><name>reinterpret_cast</name><argument_list type="generic">&lt;<argument><expr><name>uintptr_t</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>AlignedNextBlock</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>kCacheLineSize</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>diff</name><argument_list>(<argument><expr><name>AlignedNextBlockNum</name></expr></argument>, <argument><expr><name>BackingStoreNum</name></expr></argument>)</argument_list></call> <operator>&gt;</operator> <call><name>ptrdiff_t</name><argument_list>(<argument><expr><name>MaxMemory</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>deallocateBuffer</name><argument_list>(<argument><expr><name>BackingStore</name></expr></argument>, <argument><expr><name>MaxMemory</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>AlignedNextBlock</name> <operator>=</operator> <name>BackingStore</name> <operator>=</operator> <name>nullptr</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>Verbosity</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Report</name><argument_list>(<argument><expr><literal type="string">"XRay Profiling: Cannot obtain enough memory from "</literal>
+<literal type="string">"preallocated region.\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><name>nullptr</name></expr>;</return>
+<expr_stmt/>}</block_content>
+
+AlignedNextBlock = reinterpret_cast&lt;unsigned char *&gt;(AlignedNextBlockNum</block></if></if_stmt>)</block_content></block><empty_stmt>;</empty_stmt></if></if_stmt>
+
+
+<call><name>DCHECK_EQ</name><argument_list>(<argument><expr><call><name><name>reinterpret_cast</name><argument_list type="generic">&lt;<argument><expr><name>uintptr_t</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>AlignedNextBlock</name></expr></argument>)</argument_list></call> <operator>%</operator> <name>kCacheLineSize</name></expr></argument>,
+<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></block></expr>;
+}</block></expr></expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><operator>(</operator><name>AllocatedBlocks</name> <operator>+</operator> <literal type="number">1</literal><operator>)</operator> <operator>*</operator> <name>Block</name><operator>::</operator><name>Size</name><operator>)</operator> <operator>&gt;</operator> <name>MaxMemory</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>nullptr</name></expr>;</return></block_content></block></if></if_stmt>
+
+
+
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>Result</name> <init>= <expr><name>AlignedNextBlock</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>AlignedNextBlock</name> <operator>=</operator>
+<call><name><name>reinterpret_cast</name><argument_list type="generic">&lt;<argument><expr><name>unsigned</name> <name>char</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>AlignedNextBlock</name></expr></argument>)</argument_list></call> <operator>+</operator> <name>Block</name><operator>::</operator><name>Size</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>++</operator><name>AllocatedBlocks</name></expr>;</expr_stmt>
+<return>return <expr><name>Result</name></expr>;</return>
+</block_content>}</block></decl></decl_stmt>
+
+<label><name>public</name>:</label>
+<decl_stmt><decl><type><name>explicit</name></type> <name>Allocator</name><argument_list>(<argument><expr><name>size_t</name> <name>M</name></expr></argument>)</argument_list> <name>XRAY_NEVER_INSTRUMENT</name>
+<range>: <expr><call><name>MaxMemory</name><argument_list>(<argument><expr><call><name>RoundUpTo</name><argument_list>(<argument><expr><name>M</name></expr></argument>, <argument><expr><name>kCacheLineSize</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></range></decl>,
+<decl><type ref="prev"/><name>BackingStore</name><argument_list>(<argument><expr><name>nullptr</name></expr></argument>)</argument_list></decl>,
+<decl><type ref="prev"/><name>AlignedNextBlock</name><argument_list>(<argument><expr><name>nullptr</name></expr></argument>)</argument_list></decl>,
+<decl><type ref="prev"/><name>AllocatedBlocks</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></decl>,
+<decl><type ref="prev"/><name>Owned</name><argument_list>(<argument><expr><name>true</name></expr></argument>)</argument_list></decl>,
+<decl><type ref="prev"/><name>Mutex</name><argument_list>()</argument_list> <block>{<block_content/>}</block></decl></decl_stmt>
+
+<decl_stmt><decl><type><name>explicit</name></type> <name>Allocator</name><argument_list>(<argument><expr><name>void</name> <operator>*</operator><name>P</name></expr></argument>, <argument><expr><name>size_t</name> <name>M</name></expr></argument>)</argument_list> <name>XRAY_NEVER_INSTRUMENT</name>
+<range>: <expr><call><name>MaxMemory</name><argument_list>(<argument><expr><name>M</name></expr></argument>)</argument_list></call></expr></range></decl>,
+<decl><type ref="prev"/><name>BackingStore</name><argument_list>(<argument><expr><call><name><name>reinterpret_cast</name><argument_list type="generic">&lt;<argument><expr><name>unsigned</name> <name>char</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>P</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></decl>,
+<decl><type ref="prev"/><name>AlignedNextBlock</name><argument_list>(<argument><expr><call><name><name>reinterpret_cast</name><argument_list type="generic">&lt;<argument><expr><name>unsigned</name> <name>char</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>P</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></decl>,
+<decl><type ref="prev"/><name>AllocatedBlocks</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></decl>,
+<decl><type ref="prev"/><name>Owned</name><argument_list>(<argument><expr><name>false</name></expr></argument>)</argument_list></decl>,
+<decl><type ref="prev"/><name>Mutex</name><argument_list>()</argument_list> <block>{<block_content/>}</block></decl></decl_stmt>
+
+<expr_stmt><expr><call><name>Allocator</name><argument_list>(<argument><expr><specifier>const</specifier> <name>Allocator</name> <operator>&amp;</operator></expr></argument>)</argument_list></call> <operator>=</operator> <name>delete</name></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>Allocator</name> <modifier>&amp;</modifier></type><name>operator</name><init>=<expr><operator>(</operator><specifier>const</specifier> <name>Allocator</name> <operator>&amp;</operator><operator>)</operator> <operator>=</operator> <name>delete</name></expr></init></decl>;</decl_stmt>
+
+<macro><name>Allocator</name><argument_list>(<argument>Allocator &amp;&amp;O</argument>)</argument_list></macro> <macro><name>XRAY_NEVER_INSTRUMENT</name></macro> <block>{<block_content>
+<decl_stmt><decl><type><name>SpinMutexLock</name></type> <name>L0</name><argument_list>(<argument><expr><operator>&amp;</operator><name>Mutex</name></expr></argument>)</argument_list></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>SpinMutexLock</name></type> <name>L1</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>O</name><operator>.</operator><name>Mutex</name></name></expr></argument>)</argument_list></decl>;</decl_stmt>
+<expr_stmt><expr><name>MaxMemory</name> <operator>=</operator> <name><name>O</name><operator>.</operator><name>MaxMemory</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>O</name><operator>.</operator><name>MaxMemory</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>BackingStore</name> <operator>=</operator> <name><name>O</name><operator>.</operator><name>BackingStore</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>O</name><operator>.</operator><name>BackingStore</name></name> <operator>=</operator> <name>nullptr</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>AlignedNextBlock</name> <operator>=</operator> <name><name>O</name><operator>.</operator><name>AlignedNextBlock</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>O</name><operator>.</operator><name>AlignedNextBlock</name></name> <operator>=</operator> <name>nullptr</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>AllocatedBlocks</name> <operator>=</operator> <name><name>O</name><operator>.</operator><name>AllocatedBlocks</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>O</name><operator>.</operator><name>AllocatedBlocks</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>Owned</name> <operator>=</operator> <name><name>O</name><operator>.</operator><name>Owned</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>O</name><operator>.</operator><name>Owned</name></name> <operator>=</operator> <name>false</name></expr>;</expr_stmt>
+</block_content>}</block>
+
+<decl_stmt><decl><type><name>Allocator</name> <modifier>&amp;</modifier></type><name>operator</name><init>=<expr><operator>(</operator><name>Allocator</name> <operator>&amp;&amp;</operator><name>O</name><operator>)</operator> <name>XRAY_NEVER_INSTRUMENT</name> <block>{
+<expr><name>SpinMutexLock</name> <call><name>L0</name><argument_list>(<argument><expr><operator>&amp;</operator><name>Mutex</name></expr></argument>)</argument_list></call></expr>;
+<expr><name>SpinMutexLock</name> <call><name>L1</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>O</name><operator>.</operator><name>Mutex</name></name></expr></argument>)</argument_list></call></expr>;
+<expr><name>MaxMemory</name> <operator>=</operator> <name><name>O</name><operator>.</operator><name>MaxMemory</name></name></expr>;
+<expr><name><name>O</name><operator>.</operator><name>MaxMemory</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;
+<if_stmt><if>if <condition>(<expr><name>BackingStore</name> <operator>!=</operator> <name>nullptr</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>deallocateBuffer</name><argument_list>(<argument><expr><name>BackingStore</name></expr></argument>, <argument><expr><name>MaxMemory</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<name>BackingStore</name> <operator>=</operator> <name><name>O</name><operator>.</operator><name>BackingStore</name></name></block></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>O</name><operator>.</operator><name>BackingStore</name></name> <operator>=</operator> <name>nullptr</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>AlignedNextBlock</name> <operator>=</operator> <name><name>O</name><operator>.</operator><name>AlignedNextBlock</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>O</name><operator>.</operator><name>AlignedNextBlock</name></name> <operator>=</operator> <name>nullptr</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>AllocatedBlocks</name> <operator>=</operator> <name><name>O</name><operator>.</operator><name>AllocatedBlocks</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>O</name><operator>.</operator><name>AllocatedBlocks</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>Owned</name> <operator>=</operator> <name><name>O</name><operator>.</operator><name>Owned</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>O</name><operator>.</operator><name>Owned</name></name> <operator>=</operator> <name>false</name></expr>;</expr_stmt>
+<return>return <expr><operator>*</operator><name>this</name></expr>;</return>
+}
+
+Block <macro><name>Allocate</name><argument_list>()</argument_list></macro> <macro><name>XRAY_NEVER_INSTRUMENT</name></macro> <block>{<block_content> <return>return <expr><block>{<macro><name>Alloc</name><argument_list>()</argument_list></macro>}</block></expr>;</return> </block_content>}</block>
+
+<expr_stmt><expr><operator>~</operator><macro><name>Allocator</name><argument_list>()</argument_list></macro> <name>NOEXCEPT</name> <name>XRAY_NEVER_INSTRUMENT</name> <block>{
+<if_stmt><if>if <condition>(<expr><name>Owned</name> <operator>&amp;&amp;</operator> <name>BackingStore</name> <operator>!=</operator> <name>nullptr</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>deallocateBuffer</name><argument_list>(<argument><expr><name>BackingStore</name></expr></argument>, <argument><expr><name>MaxMemory</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt/></block_content></block></if></if_stmt>}</block></expr></expr_stmt>
+}
+}<empty_stmt>;</empty_stmt>
+
+}
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

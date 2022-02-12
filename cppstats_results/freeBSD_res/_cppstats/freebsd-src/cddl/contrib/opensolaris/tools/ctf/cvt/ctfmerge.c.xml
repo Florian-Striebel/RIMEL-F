@@ -1,0 +1,576 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/results/freeBSD_res/_cppstats/freebsd-src/cddl/contrib/opensolaris/tools/ctf/cvt/ctfmerge.c"><cpp:pragma>#<cpp:directive>pragma</cpp:directive> <name>ident</name> <cpp:literal>"%Z%%M% %I% %E% SMI"</cpp:literal></cpp:pragma>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdio.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;unistd.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;pthread.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;assert.h&gt;</cpp:file></cpp:include>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>illumos</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;synch.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;signal.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;libgen.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;string.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;errno.h&gt;</cpp:file></cpp:include>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>illumos</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;alloca.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/param.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/types.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/mman.h&gt;</cpp:file></cpp:include>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>illumos</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/sysconf.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"ctf_headers.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"ctftools.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"ctfmerge.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"traverse.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"memory.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"fifo.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"barrier.h"</cpp:file></cpp:include>
+<cpp:pragma>#<cpp:directive>pragma</cpp:directive> <name>init</name><name>(</name><name>bigheap</name><name>)</name></cpp:pragma>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MERGE_PHASE1_BATCH_SIZE</name></cpp:macro> <cpp:value>8</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MERGE_PHASE1_MAX_SLOTS</name></cpp:macro> <cpp:value>5</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MERGE_INPUT_THROTTLE_LEN</name></cpp:macro> <cpp:value>10</cpp:value></cpp:define>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>progname</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type><name>outfile</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type><name>tmpname</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>dynsym</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>debug_level</name> <init>= <expr><name>DEBUG_LEVEL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>size_t</name></type> <name>maxpgsize</name> <init>= <expr><literal type="number">0x400000</literal></expr></init></decl>;</decl_stmt>
+<function><type><name>void</name></type>
+<name>usage</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>,
+<argument><expr><literal type="string">"Usage: %s [-fgstv] -l label | -L labelenv -o outfile file ...\n"</literal>
+<literal type="string">" %s [-fgstv] -l label | -L labelenv -o outfile -d uniqfile\n"</literal>
+<literal type="string">" %*s [-g] [-D uniqlabel] file ...\n"</literal>
+<literal type="string">" %s [-fgstv] -l label | -L labelenv -o outfile -w withfile "</literal>
+<literal type="string">"file ...\n"</literal>
+<literal type="string">" %s [-g] -c srcfile destfile\n"</literal>
+<literal type="string">"\n"</literal>
+<literal type="string">" Note: if -L labelenv is specified and labelenv is not set in\n"</literal>
+<literal type="string">" the environment, a default value is used.\n"</literal></expr></argument>,
+<argument><expr><name>progname</name></expr></argument>, <argument><expr><name>progname</name></expr></argument>, <argument><expr><operator>(</operator><name>int</name><operator>)</operator><call><name>strlen</name><argument_list>(<argument><expr><name>progname</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><literal type="string">" "</literal></expr></argument>,
+<argument><expr><name>progname</name></expr></argument>, <argument><expr><name>progname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>illumos</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>bigheap</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>size_t</name></type> <name>big</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>size</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>sizes</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>memcntl_mha</name></name></type> <name>mha</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>sizes</name> <operator>=</operator> <call><name>getpagesizes</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>sizes</name> <operator>==</operator> <literal type="number">1</literal> <operator>||</operator> <operator>(</operator><name>size</name> <operator>=</operator> <call><name>alloca</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>size_t</name></expr></argument>)</argument_list></sizeof> <operator>*</operator> <name>sizes</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>getpagesizes</name><argument_list>(<argument><expr><name>size</name></expr></argument>, <argument><expr><name>sizes</name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+<while>while <condition>(<expr><name><name>size</name><index>[<expr><name>sizes</name> <operator>-</operator> <literal type="number">1</literal></expr>]</index></name> <operator>&gt;</operator> <name>maxpgsize</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>sizes</name><operator>--</operator></expr>;</expr_stmt></block_content></block></while>
+<expr_stmt><expr><name>big</name> <operator>=</operator> <name><name>size</name><index>[<expr><name>sizes</name> <operator>-</operator> <literal type="number">1</literal></expr>]</index></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>big</name> <operator>&amp;</operator> <operator>(</operator><name>big</name> <operator>-</operator> <literal type="number">1</literal><operator>)</operator></expr>)</condition> <block>{<block_content>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>brk</name><argument_list>(<argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><operator>(</operator><operator>(</operator><operator>(</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><call><name>sbrk</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call> <operator>-</operator> <literal type="number">1</literal><operator>)</operator> <operator>&amp;</operator> <operator>~</operator><operator>(</operator><name>big</name> <operator>-</operator> <literal type="number">1</literal><operator>)</operator><operator>)</operator> <operator>+</operator> <name>big</name><operator>)</operator></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>mha</name><operator>.</operator><name>mha_cmd</name></name> <operator>=</operator> <name>MHA_MAPSIZE_BSSBRK</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>mha</name><operator>.</operator><name>mha_flags</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>mha</name><operator>.</operator><name>mha_pagesize</name></name> <operator>=</operator> <name>big</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>memcntl</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>MC_HAT_ADVISE</name></expr></argument>, <argument><expr><operator>(</operator><name>caddr_t</name><operator>)</operator><operator>&amp;</operator><name>mha</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>finalize_phase_one</name><parameter_list>(<parameter><decl><type><name>workqueue_t</name> <modifier>*</modifier></type><name>wq</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>startslot</name></decl>, <decl><type ref="prev"/><name>i</name></decl>;</decl_stmt>
+<for>for <control>(<init><expr><name>startslot</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr><operator>,</operator> <expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name><name>wq</name><operator>-&gt;</operator><name>wq_nwipslots</name></name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>wq</name><operator>-&gt;</operator><name>wq_wip</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>wip_batchid</name> <operator>==</operator> <name><name>wq</name><operator>-&gt;</operator><name>wq_lastdonebatch</name></name> <operator>+</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>startslot</name> <operator>=</operator> <name>i</name></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>startslot</name> <operator>!=</operator> <operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <name>startslot</name></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>startslot</name> <operator>+</operator> <name><name>wq</name><operator>-&gt;</operator><name>wq_nwipslots</name></name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>slotnum</name> <init>= <expr><name>i</name> <operator>%</operator> <name><name>wq</name><operator>-&gt;</operator><name>wq_nwipslots</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>wip_t</name> <modifier>*</modifier></type><name>wipslot</name> <init>= <expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_wip</name><index>[<expr><name>slotnum</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>wipslot</name><operator>-&gt;</operator><name>wip_td</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">2</literal></expr></argument>, <argument><expr><literal type="string">"clearing slot %d (%d) (saving %d)\n"</literal></expr></argument>,
+<argument><expr><name>slotnum</name></expr></argument>, <argument><expr><name>i</name></expr></argument>, <argument><expr><name><name>wipslot</name><operator>-&gt;</operator><name>wip_nmerged</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">2</literal></expr></argument>, <argument><expr><literal type="string">"clearing slot %d (%d)\n"</literal></expr></argument>, <argument><expr><name>slotnum</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>wipslot</name><operator>-&gt;</operator><name>wip_td</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fifo_add</name><argument_list>(<argument><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_donequeue</name></name></expr></argument>, <argument><expr><name><name>wipslot</name><operator>-&gt;</operator><name>wip_td</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_wip</name><index>[<expr><name>slotnum</name></expr>]</index></name><operator>.</operator><name>wip_td</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_lastdonebatch</name></name> <operator>=</operator> <name><name>wq</name><operator>-&gt;</operator><name>wq_next_batchid</name></name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">2</literal></expr></argument>, <argument><expr><literal type="string">"phase one done: donequeue has %d items\n"</literal></expr></argument>,
+<argument><expr><call><name>fifo_len</name><argument_list>(<argument><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_donequeue</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>init_phase_two</name><parameter_list>(<parameter><decl><type><name>workqueue_t</name> <modifier>*</modifier></type><name>wq</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>num</name></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_ninqueue</name></name> <operator>=</operator> <name>num</name> <operator>=</operator> <call><name>fifo_len</name><argument_list>(<argument><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_donequeue</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<while>while <condition>(<expr><name>num</name> <operator>!=</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_ninqueue</name></name> <operator>+=</operator> <name>num</name> <operator>/</operator> <literal type="number">2</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>num</name> <operator>=</operator> <name>num</name> <operator>/</operator> <literal type="number">2</literal> <operator>+</operator> <name>num</name> <operator>%</operator> <literal type="number">2</literal></expr>;</expr_stmt>
+</block_content>}</block></while>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><call><name>fifo_len</name><argument_list>(<argument><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_queue</name></name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fifo_free</name><argument_list>(<argument><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_queue</name></name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_queue</name></name> <operator>=</operator> <name><name>wq</name><operator>-&gt;</operator><name>wq_donequeue</name></name></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>wip_save_work</name><parameter_list>(<parameter><decl><type><name>workqueue_t</name> <modifier>*</modifier></type><name>wq</name></decl></parameter>, <parameter><decl><type><name>wip_t</name> <modifier>*</modifier></type><name>slot</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>slotnum</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>pthread_mutex_lock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_donequeue_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<while>while <condition>(<expr><name><name>wq</name><operator>-&gt;</operator><name>wq_lastdonebatch</name></name> <operator>+</operator> <literal type="number">1</literal> <operator>&lt;</operator> <name><name>slot</name><operator>-&gt;</operator><name>wip_batchid</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>pthread_cond_wait</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>slot</name><operator>-&gt;</operator><name>wip_cv</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_donequeue_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></while>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_lastdonebatch</name></name> <operator>+</operator> <literal type="number">1</literal> <operator>==</operator> <name><name>slot</name><operator>-&gt;</operator><name>wip_batchid</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fifo_add</name><argument_list>(<argument><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_donequeue</name></name></expr></argument>, <argument><expr><name><name>slot</name><operator>-&gt;</operator><name>wip_td</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_lastdonebatch</name></name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_cond_signal</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_wip</name><index>[<expr><operator>(</operator><name>slotnum</name> <operator>+</operator> <literal type="number">1</literal><operator>)</operator> <operator>%</operator>
+<name><name>wq</name><operator>-&gt;</operator><name>wq_nwipslots</name></name></expr>]</index></name><operator>.</operator><name>wip_cv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>slot</name><operator>-&gt;</operator><name>wip_td</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>slot</name><operator>-&gt;</operator><name>wip_batchid</name></name> <operator>=</operator> <name><name>wq</name><operator>-&gt;</operator><name>wq_next_batchid</name></name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_unlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_donequeue_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>wip_add_work</name><parameter_list>(<parameter><decl><type><name>wip_t</name> <modifier>*</modifier></type><name>slot</name></decl></parameter>, <parameter><decl><type><name>tdata_t</name> <modifier>*</modifier></type><name>pow</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>slot</name><operator>-&gt;</operator><name>wip_td</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>slot</name><operator>-&gt;</operator><name>wip_td</name></name> <operator>=</operator> <name>pow</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>slot</name><operator>-&gt;</operator><name>wip_nmerged</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">2</literal></expr></argument>, <argument><expr><literal type="string">"%d: merging %p into %p\n"</literal></expr></argument>, <argument><expr><call><name>pthread_self</name><argument_list>()</argument_list></call></expr></argument>,
+<argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name>pow</name></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name><name>slot</name><operator>-&gt;</operator><name>wip_td</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>merge_into_master</name><argument_list>(<argument><expr><name>pow</name></expr></argument>, <argument><expr><name><name>slot</name><operator>-&gt;</operator><name>wip_td</name></name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>tdata_free</name><argument_list>(<argument><expr><name>pow</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>slot</name><operator>-&gt;</operator><name>wip_nmerged</name></name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>worker_runphase1</name><parameter_list>(<parameter><decl><type><name>workqueue_t</name> <modifier>*</modifier></type><name>wq</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>wip_t</name> <modifier>*</modifier></type><name>wipslot</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>tdata_t</name> <modifier>*</modifier></type><name>pow</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>wipslotnum</name></decl>, <decl><type ref="prev"/><name>pownum</name></decl>;</decl_stmt>
+<for>for <control>(<init>;</init><condition>;</condition><incr/>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>pthread_mutex_lock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_queue_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<while>while <condition>(<expr><call><name>fifo_empty</name><argument_list>(<argument><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_queue</name></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>wq</name><operator>-&gt;</operator><name>wq_nomorefiles</name></name> <operator>==</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>pthread_cond_broadcast</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_work_avail</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_unlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_queue_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>pthread_cond_wait</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_work_avail</name></name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_queue_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></while>
+<expr_stmt><expr><name>pow</name> <operator>=</operator> <call><name>fifo_remove</name><argument_list>(<argument><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_queue</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>pownum</name> <operator>=</operator> <name><name>wq</name><operator>-&gt;</operator><name>wq_nextpownum</name></name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_cond_broadcast</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_work_removed</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>pow</name> <operator>!=</operator> <name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>wipslotnum</name> <operator>=</operator> <name>pownum</name> <operator>%</operator> <name><name>wq</name><operator>-&gt;</operator><name>wq_nwipslots</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>wipslot</name> <operator>=</operator> <operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_wip</name><index>[<expr><name>wipslotnum</name></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_lock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wipslot</name><operator>-&gt;</operator><name>wip_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_unlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_queue_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>wip_add_work</name><argument_list>(<argument><expr><name>wipslot</name></expr></argument>, <argument><expr><name>pow</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>wipslot</name><operator>-&gt;</operator><name>wip_nmerged</name></name> <operator>==</operator> <name><name>wq</name><operator>-&gt;</operator><name>wq_maxbatchsz</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>wip_save_work</name><argument_list>(<argument><expr><name>wq</name></expr></argument>, <argument><expr><name>wipslot</name></expr></argument>, <argument><expr><name>wipslotnum</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_unlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wipslot</name><operator>-&gt;</operator><name>wip_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>worker_runphase2</name><parameter_list>(<parameter><decl><type><name>workqueue_t</name> <modifier>*</modifier></type><name>wq</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdata_t</name> <modifier>*</modifier></type><name>pow1</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>pow2</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>batchid</name></decl>;</decl_stmt>
+<for>for <control>(<init>;</init><condition>;</condition><incr/>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>pthread_mutex_lock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_queue_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>wq</name><operator>-&gt;</operator><name>wq_ninqueue</name></name> <operator>==</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>pthread_cond_broadcast</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_work_avail</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_unlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_queue_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">2</literal></expr></argument>, <argument><expr><literal type="string">"%d: entering p2 completion barrier\n"</literal></expr></argument>,
+<argument><expr><call><name>pthread_self</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>barrier_wait</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_bar1</name></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>pthread_mutex_lock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_queue_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_alldone</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_cond_signal</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_alldone_cv</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_unlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_queue_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>fifo_len</name><argument_list>(<argument><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_queue</name></name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">2</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>pthread_cond_wait</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_work_avail</name></name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_queue_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_unlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_queue_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>pow1</name> <operator>=</operator> <call><name>fifo_remove</name><argument_list>(<argument><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_queue</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>pow2</name> <operator>=</operator> <call><name>fifo_remove</name><argument_list>(<argument><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_queue</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_ninqueue</name></name> <operator>-=</operator> <literal type="number">2</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>batchid</name> <operator>=</operator> <name><name>wq</name><operator>-&gt;</operator><name>wq_next_batchid</name></name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_unlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_queue_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">2</literal></expr></argument>, <argument><expr><literal type="string">"%d: merging %p into %p\n"</literal></expr></argument>, <argument><expr><call><name>pthread_self</name><argument_list>()</argument_list></call></expr></argument>,
+<argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name>pow1</name></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name>pow2</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>merge_into_master</name><argument_list>(<argument><expr><name>pow1</name></expr></argument>, <argument><expr><name>pow2</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>tdata_free</name><argument_list>(<argument><expr><name>pow1</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_lock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_queue_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<while>while <condition>(<expr><name><name>wq</name><operator>-&gt;</operator><name>wq_lastdonebatch</name></name> <operator>+</operator> <literal type="number">1</literal> <operator>!=</operator> <name>batchid</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>pthread_cond_wait</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_done_cv</name></name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_queue_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></while>
+<expr_stmt><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_lastdonebatch</name></name> <operator>=</operator> <name>batchid</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fifo_add</name><argument_list>(<argument><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_queue</name></name></expr></argument>, <argument><expr><name>pow2</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">2</literal></expr></argument>, <argument><expr><literal type="string">"%d: added %p to queue, len now %d, ninqueue %d\n"</literal></expr></argument>,
+<argument><expr><call><name>pthread_self</name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name>pow2</name></expr></argument>, <argument><expr><call><name>fifo_len</name><argument_list>(<argument><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_queue</name></name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_ninqueue</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_cond_broadcast</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_done_cv</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_cond_signal</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_work_avail</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_unlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_queue_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>worker_thread</name><parameter_list>(<parameter><decl><type><name>workqueue_t</name> <modifier>*</modifier></type><name>wq</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>worker_runphase1</name><argument_list>(<argument><expr><name>wq</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">2</literal></expr></argument>, <argument><expr><literal type="string">"%d: entering first barrier\n"</literal></expr></argument>, <argument><expr><call><name>pthread_self</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>barrier_wait</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_bar1</name></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">2</literal></expr></argument>, <argument><expr><literal type="string">"%d: doing work in first barrier\n"</literal></expr></argument>, <argument><expr><call><name>pthread_self</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>finalize_phase_one</name><argument_list>(<argument><expr><name>wq</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>init_phase_two</name><argument_list>(<argument><expr><name>wq</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">2</literal></expr></argument>, <argument><expr><literal type="string">"%d: ninqueue is %d, %d on queue\n"</literal></expr></argument>, <argument><expr><call><name>pthread_self</name><argument_list>()</argument_list></call></expr></argument>,
+<argument><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_ninqueue</name></name></expr></argument>, <argument><expr><call><name>fifo_len</name><argument_list>(<argument><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_queue</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">2</literal></expr></argument>, <argument><expr><literal type="string">"%d: entering second barrier\n"</literal></expr></argument>, <argument><expr><call><name>pthread_self</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>barrier_wait</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_bar2</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">2</literal></expr></argument>, <argument><expr><literal type="string">"%d: phase 1 complete\n"</literal></expr></argument>, <argument><expr><call><name>pthread_self</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>worker_runphase2</name><argument_list>(<argument><expr><name>wq</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>merge_ctf_cb</name><parameter_list>(<parameter><decl><type><name>tdata_t</name> <modifier>*</modifier></type><name>td</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>name</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>workqueue_t</name> <modifier>*</modifier></type><name>wq</name> <init>= <expr><name>arg</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"Adding tdata %p for processing\n"</literal></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name>td</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_lock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_queue_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<while>while <condition>(<expr><call><name>fifo_len</name><argument_list>(<argument><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_queue</name></name></expr></argument>)</argument_list></call> <operator>&gt;</operator> <name><name>wq</name><operator>-&gt;</operator><name>wq_ithrottle</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">2</literal></expr></argument>, <argument><expr><literal type="string">"Throttling input (len = %d, throttle = %d)\n"</literal></expr></argument>,
+<argument><expr><call><name>fifo_len</name><argument_list>(<argument><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_queue</name></name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_ithrottle</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_cond_wait</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_work_removed</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_queue_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></while>
+<expr_stmt><expr><call><name>fifo_add</name><argument_list>(<argument><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_queue</name></name></expr></argument>, <argument><expr><name>td</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="string">"Thread %d announcing %s\n"</literal></expr></argument>, <argument><expr><call><name>pthread_self</name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_cond_broadcast</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_work_avail</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_unlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_queue_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>handle_sig</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>sig</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>terminate</name><argument_list>(<argument><expr><literal type="string">"Caught signal %d - exiting\n"</literal></expr></argument>, <argument><expr><name>sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>terminate_cleanup</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>dounlink</name> <init>= <expr><ternary><condition><expr><call><name>getenv</name><argument_list>(<argument><expr><literal type="string">"CTFMERGE_TERMINATE_NO_UNLINK"</literal></expr></argument>)</argument_list></call></expr> ?</condition><then> <expr><literal type="number">0</literal></expr> </then><else>: <expr><literal type="number">1</literal></expr></else></ternary></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>tmpname</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <name>dounlink</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>unlink</name><argument_list>(<argument><expr><name>tmpname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>outfile</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>__FreeBSD__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name>dounlink</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"Removing %s\n"</literal></expr></argument>, <argument><expr><name>outfile</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>unlink</name><argument_list>(<argument><expr><name>outfile</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>copy_ctf_data</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>srcfile</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>destfile</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>keep_stabs</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdata_t</name> <modifier>*</modifier></type><name>srctd</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>read_ctf</name><argument_list>(<argument><expr><operator>&amp;</operator><name>srcfile</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>read_ctf_save_cb</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>srctd</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>terminate</name><argument_list>(<argument><expr><literal type="string">"No CTF data found in source file %s\n"</literal></expr></argument>, <argument><expr><name>srcfile</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>tmpname</name> <operator>=</operator> <call><name>mktmpname</name><argument_list>(<argument><expr><name>destfile</name></expr></argument>, <argument><expr><literal type="string">".ctf"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>write_ctf</name><argument_list>(<argument><expr><name>srctd</name></expr></argument>, <argument><expr><name>destfile</name></expr></argument>, <argument><expr><name>tmpname</name></expr></argument>, <argument><expr><name>CTF_COMPRESS</name> <operator>|</operator> <name>CTF_SWAP_BYTES</name> <operator>|</operator> <name>keep_stabs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>rename</name><argument_list>(<argument><expr><name>tmpname</name></expr></argument>, <argument><expr><name>destfile</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>terminate</name><argument_list>(<argument><expr><literal type="string">"Couldn't rename temp file %s to %s"</literal></expr></argument>, <argument><expr><name>tmpname</name></expr></argument>,
+<argument><expr><name>destfile</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>tmpname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>tdata_free</name><argument_list>(<argument><expr><name>srctd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>wq_init</name><parameter_list>(<parameter><decl><type><name>workqueue_t</name> <modifier>*</modifier></type><name>wq</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>nfiles</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>throttle</name></decl>, <decl><type ref="prev"/><name>nslots</name></decl>, <decl><type ref="prev"/><name>i</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>getenv</name><argument_list>(<argument><expr><literal type="string">"CTFMERGE_MAX_SLOTS"</literal></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>nslots</name> <operator>=</operator> <call><name>atoi</name><argument_list>(<argument><expr><call><name>getenv</name><argument_list>(<argument><expr><literal type="string">"CTFMERGE_MAX_SLOTS"</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>nslots</name> <operator>=</operator> <name>MERGE_PHASE1_MAX_SLOTS</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>getenv</name><argument_list>(<argument><expr><literal type="string">"CTFMERGE_PHASE1_BATCH_SIZE"</literal></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_maxbatchsz</name></name> <operator>=</operator> <call><name>atoi</name><argument_list>(<argument><expr><call><name>getenv</name><argument_list>(<argument><expr><literal type="string">"CTFMERGE_PHASE1_BATCH_SIZE"</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_maxbatchsz</name></name> <operator>=</operator> <name>MERGE_PHASE1_BATCH_SIZE</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<expr_stmt><expr><name>nslots</name> <operator>=</operator> <call><name>MIN</name><argument_list>(<argument><expr><name>nslots</name></expr></argument>, <argument><expr><operator>(</operator><name>nfiles</name> <operator>+</operator> <name><name>wq</name><operator>-&gt;</operator><name>wq_maxbatchsz</name></name> <operator>-</operator> <literal type="number">1</literal><operator>)</operator> <operator>/</operator>
+<name><name>wq</name><operator>-&gt;</operator><name>wq_maxbatchsz</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_wip</name></name> <operator>=</operator> <call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>wip_t</name></expr></argument>)</argument_list></sizeof> <operator>*</operator> <name>nslots</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_nwipslots</name></name> <operator>=</operator> <name>nslots</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_nthreads</name></name> <operator>=</operator> <call><name>MIN</name><argument_list>(<argument><expr><call><name>sysconf</name><argument_list>(<argument><expr><name>_SC_NPROCESSORS_ONLN</name></expr></argument>)</argument_list></call> <operator>*</operator> <literal type="number">3</literal> <operator>/</operator> <literal type="number">2</literal></expr></argument>, <argument><expr><name>nslots</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_thread</name></name> <operator>=</operator> <call><name>xmalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>pthread_t</name></expr></argument>)</argument_list></sizeof> <operator>*</operator> <name><name>wq</name><operator>-&gt;</operator><name>wq_nthreads</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>getenv</name><argument_list>(<argument><expr><literal type="string">"CTFMERGE_INPUT_THROTTLE"</literal></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>throttle</name> <operator>=</operator> <call><name>atoi</name><argument_list>(<argument><expr><call><name>getenv</name><argument_list>(<argument><expr><literal type="string">"CTFMERGE_INPUT_THROTTLE"</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>throttle</name> <operator>=</operator> <name>MERGE_INPUT_THROTTLE_LEN</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<expr_stmt><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_ithrottle</name></name> <operator>=</operator> <name>throttle</name> <operator>*</operator> <name><name>wq</name><operator>-&gt;</operator><name>wq_nthreads</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="string">"Using %d slots, %d threads\n"</literal></expr></argument>, <argument><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_nwipslots</name></name></expr></argument>,
+<argument><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_nthreads</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_next_batchid</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>nslots</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>pthread_mutex_init</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_wip</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>wip_lock</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_cond_init</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_wip</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>wip_cv</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_wip</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>wip_batchid</name> <operator>=</operator> <name><name>wq</name><operator>-&gt;</operator><name>wq_next_batchid</name></name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><call><name>pthread_mutex_init</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_queue_lock</name></name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_queue</name></name> <operator>=</operator> <call><name>fifo_new</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_cond_init</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_work_avail</name></name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_cond_init</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_work_removed</name></name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_ninqueue</name></name> <operator>=</operator> <name>nfiles</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_nextpownum</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_init</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_donequeue_lock</name></name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_donequeue</name></name> <operator>=</operator> <call><name>fifo_new</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_lastdonebatch</name></name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_cond_init</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_done_cv</name></name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_cond_init</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_alldone_cv</name></name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_alldone</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>barrier_init</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_bar1</name></name></expr></argument>, <argument><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_nthreads</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>barrier_init</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_bar2</name></name></expr></argument>, <argument><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_nthreads</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_nomorefiles</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>start_threads</name><parameter_list>(<parameter><decl><type><name>workqueue_t</name> <modifier>*</modifier></type><name>wq</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>sigset_t</name></type> <name>sets</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>sigemptyset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>sets</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>sigaddset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>sets</name></expr></argument>, <argument><expr><name>SIGINT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>sigaddset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>sets</name></expr></argument>, <argument><expr><name>SIGQUIT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>sigaddset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>sets</name></expr></argument>, <argument><expr><name>SIGTERM</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_sigmask</name><argument_list>(<argument><expr><name>SIG_BLOCK</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>sets</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name><name>wq</name><operator>-&gt;</operator><name>wq_nthreads</name></name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>pthread_create</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>-&gt;</operator><name>wq_thread</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>,
+<argument><expr><operator>(</operator><name>void</name> <operator>*</operator><call>(<modifier>*</modifier>)<argument_list>(<argument><expr><name>void</name> <operator>*</operator></expr></argument>)</argument_list></call><operator>)</operator><name>worker_thread</name></expr></argument>, <argument><expr><name>wq</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>illumos</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr_stmt><expr><call><name>sigset</name><argument_list>(<argument><expr><name>SIGINT</name></expr></argument>, <argument><expr><name>handle_sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>sigset</name><argument_list>(<argument><expr><name>SIGQUIT</name></expr></argument>, <argument><expr><name>handle_sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>sigset</name><argument_list>(<argument><expr><name>SIGTERM</name></expr></argument>, <argument><expr><name>handle_sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><call><name>signal</name><argument_list>(<argument><expr><name>SIGINT</name></expr></argument>, <argument><expr><name>handle_sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>signal</name><argument_list>(<argument><expr><name>SIGQUIT</name></expr></argument>, <argument><expr><name>handle_sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>signal</name><argument_list>(<argument><expr><name>SIGTERM</name></expr></argument>, <argument><expr><name>handle_sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<expr_stmt><expr><call><name>pthread_sigmask</name><argument_list>(<argument><expr><name>SIG_UNBLOCK</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>sets</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>join_threads</name><parameter_list>(<parameter><decl><type><name>workqueue_t</name> <modifier>*</modifier></type><name>wq</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name><name>wq</name><operator>-&gt;</operator><name>wq_nthreads</name></name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>pthread_join</name><argument_list>(<argument><expr><name><name>wq</name><operator>-&gt;</operator><name>wq_thread</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>strcompare</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>p1</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>p2</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>s1</name> <init>= <expr><operator>*</operator><operator>(</operator><operator>(</operator><name>char</name> <operator>*</operator><operator>*</operator><operator>)</operator><name>p1</name><operator>)</operator></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>s2</name> <init>= <expr><operator>*</operator><operator>(</operator><operator>(</operator><name>char</name> <operator>*</operator><operator>*</operator><operator>)</operator><name>p2</name><operator>)</operator></expr></init></decl>;</decl_stmt>
+<return>return <expr><operator>(</operator><call><name>strcmp</name><argument_list>(<argument><expr><name>s1</name></expr></argument>, <argument><expr><name>s2</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<decl_stmt><decl><type><specifier>static</specifier> <name>workqueue_t</name></type> <name>wq</name></decl>;</decl_stmt>
+<function><type><name>int</name></type>
+<name>main</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>argc</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdata_t</name> <modifier>*</modifier></type><name>mstrtd</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>savetd</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>uniqfile</name> <init>= <expr><name>NULL</name></expr></init></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>uniqlabel</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>withfile</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>label</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>ifiles</name></decl>, <decl><type ref="prev"><modifier>*</modifier><modifier>*</modifier></type><name>tifiles</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>verbose</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>, <decl><type ref="prev"/><name>docopy</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>write_fuzzy_match</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>keep_stabs</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>require_ctf</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>nifiles</name></decl>, <decl><type ref="prev"/><name>nielems</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>c</name></decl>, <decl><type ref="prev"/><name>i</name></decl>, <decl><type ref="prev"/><name>idx</name></decl>, <decl><type ref="prev"/><name>tidx</name></decl>, <decl><type ref="prev"/><name>err</name></decl>;</decl_stmt>
+<expr_stmt><expr><name>progname</name> <operator>=</operator> <call><name>basename</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>getenv</name><argument_list>(<argument><expr><literal type="string">"CTFMERGE_DEBUG_LEVEL"</literal></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>debug_level</name> <operator>=</operator> <call><name>atoi</name><argument_list>(<argument><expr><call><name>getenv</name><argument_list>(<argument><expr><literal type="string">"CTFMERGE_DEBUG_LEVEL"</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>err</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<while>while <condition>(<expr><operator>(</operator><name>c</name> <operator>=</operator> <call><name>getopt</name><argument_list>(<argument><expr><name>argc</name></expr></argument>, <argument><expr><name>argv</name></expr></argument>, <argument><expr><literal type="string">":cd:D:fgl:L:o:tvw:s"</literal></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>EOF</name></expr>)</condition> <block>{<block_content>
+<switch>switch <condition>(<expr><name>c</name></expr>)</condition> <block>{<block_content>
+<case>case <expr><literal type="char">'c'</literal></expr>:</case>
+<expr_stmt><expr><name>docopy</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'d'</literal></expr>:</case>
+<expr_stmt><expr><name>uniqfile</name> <operator>=</operator> <name>optarg</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'D'</literal></expr>:</case>
+<expr_stmt><expr><name>uniqlabel</name> <operator>=</operator> <name>optarg</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'f'</literal></expr>:</case>
+<expr_stmt><expr><name>write_fuzzy_match</name> <operator>=</operator> <name>CTF_FUZZY_MATCH</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'g'</literal></expr>:</case>
+<expr_stmt><expr><name>keep_stabs</name> <operator>=</operator> <name>CTF_KEEP_STABS</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'l'</literal></expr>:</case>
+<expr_stmt><expr><name>label</name> <operator>=</operator> <name>optarg</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'L'</literal></expr>:</case>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>label</name> <operator>=</operator> <call><name>getenv</name><argument_list>(<argument><expr><name>optarg</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>label</name> <operator>=</operator> <name>CTF_DEFAULT_LABEL</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'o'</literal></expr>:</case>
+<expr_stmt><expr><name>outfile</name> <operator>=</operator> <name>optarg</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'t'</literal></expr>:</case>
+<expr_stmt><expr><name>require_ctf</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'v'</literal></expr>:</case>
+<expr_stmt><expr><name>verbose</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'w'</literal></expr>:</case>
+<expr_stmt><expr><name>withfile</name> <operator>=</operator> <name>optarg</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'s'</literal></expr>:</case>
+<expr_stmt><expr><name>dynsym</name> <operator>=</operator> <name>CTF_USE_DYNSYM</name></expr>;</expr_stmt>
+<break>break;</break>
+<default>default:</default>
+<expr_stmt><expr><call><name>usage</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><literal type="number">2</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></switch>
+</block_content>}</block></while>
+<if_stmt><if>if <condition>(<expr><name>docopy</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>uniqfile</name> <operator>!=</operator> <name>NULL</name> <operator>||</operator> <name>uniqlabel</name> <operator>!=</operator> <name>NULL</name> <operator>||</operator> <name>label</name> <operator>!=</operator> <name>NULL</name> <operator>||</operator>
+<name>outfile</name> <operator>!=</operator> <name>NULL</name> <operator>||</operator> <name>withfile</name> <operator>!=</operator> <name>NULL</name> <operator>||</operator> <name>dynsym</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>err</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>argc</name> <operator>-</operator> <name>optind</name> <operator>!=</operator> <literal type="number">2</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>err</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>uniqfile</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <name>withfile</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>err</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>uniqlabel</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <name>uniqfile</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>err</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>outfile</name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <name>label</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>err</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>argc</name> <operator>-</operator> <name>optind</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>err</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>err</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>usage</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><literal type="number">2</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>getenv</name><argument_list>(<argument><expr><literal type="string">"STRIPSTABS_KEEP_STABS"</literal></expr></argument>)</argument_list></call> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>keep_stabs</name> <operator>=</operator> <name>CTF_KEEP_STABS</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>uniqfile</name> <operator>&amp;&amp;</operator> <call><name>access</name><argument_list>(<argument><expr><name>uniqfile</name></expr></argument>, <argument><expr><name>R_OK</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warning</name><argument_list>(<argument><expr><literal type="string">"Uniquification file %s couldn't be opened and "</literal>
+<literal type="string">"will be ignored.\n"</literal></expr></argument>, <argument><expr><name>uniqfile</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>uniqfile</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>withfile</name> <operator>&amp;&amp;</operator> <call><name>access</name><argument_list>(<argument><expr><name>withfile</name></expr></argument>, <argument><expr><name>R_OK</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warning</name><argument_list>(<argument><expr><literal type="string">"With file %s couldn't be opened and will be "</literal>
+<literal type="string">"ignored.\n"</literal></expr></argument>, <argument><expr><name>withfile</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>withfile</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>outfile</name> <operator>&amp;&amp;</operator> <call><name>access</name><argument_list>(<argument><expr><name>outfile</name></expr></argument>, <argument><expr><name>R_OK</name><operator>|</operator><name>W_OK</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>terminate</name><argument_list>(<argument><expr><literal type="string">"Cannot open output file %s for r/w"</literal></expr></argument>, <argument><expr><name>outfile</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>docopy</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>copy_ctf_data</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr><name>optind</name></expr>]</index></name></expr></argument>, <argument><expr><name><name>argv</name><index>[<expr><name>optind</name> <operator>+</operator> <literal type="number">1</literal></expr>]</index></name></expr></argument>, <argument><expr><name>keep_stabs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>set_terminate_cleanup</name><argument_list>(<argument><expr><name>terminate_cleanup</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>nifiles</name> <operator>=</operator> <name>argc</name> <operator>-</operator> <name>optind</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>ifiles</name> <operator>=</operator> <call><name>xmalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>char</name> <operator>*</operator></expr></argument>)</argument_list></sizeof> <operator>*</operator> <name>nifiles</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>tifiles</name> <operator>=</operator> <call><name>xmalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>char</name> <operator>*</operator></expr></argument>)</argument_list></sizeof> <operator>*</operator> <name>nifiles</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>nifiles</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>tifiles</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <name><name>argv</name><index>[<expr><name>optind</name> <operator>+</operator> <name>i</name></expr>]</index></name></expr>;</expr_stmt></block_content></block></for>
+<expr_stmt><expr><call><name>qsort</name><argument_list>(<argument><expr><name>tifiles</name></expr></argument>, <argument><expr><name>nifiles</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>char</name> <operator>*</operator></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><operator>(</operator><call><call><name>int</name> <argument_list>(<argument><expr><operator>*</operator></expr></argument>)</argument_list></call><argument_list>()</argument_list></call><operator>)</operator><name>strcompare</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ifiles</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>=</operator> <name><name>tifiles</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>idx</name> <operator>=</operator> <literal type="number">0</literal></expr><operator>,</operator> <expr><name>tidx</name> <operator>=</operator> <literal type="number">1</literal></expr>;</init> <condition><expr><name>tidx</name> <operator>&lt;</operator> <name>nifiles</name></expr>;</condition> <incr><expr><name>tidx</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>strcmp</name><argument_list>(<argument><expr><name><name>ifiles</name><index>[<expr><name>idx</name></expr>]</index></name></expr></argument>, <argument><expr><name><name>tifiles</name><index>[<expr><name>tidx</name></expr>]</index></name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>ifiles</name><index>[<expr><operator>++</operator><name>idx</name></expr>]</index></name> <operator>=</operator> <name><name>tifiles</name><index>[<expr><name>tidx</name></expr>]</index></name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><name>nifiles</name> <operator>=</operator> <name>idx</name> <operator>+</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>nielems</name> <operator>=</operator> <call><name>count_files</name><argument_list>(<argument><expr><name>ifiles</name></expr></argument>, <argument><expr><name>nifiles</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>terminate</name><argument_list>(<argument><expr><literal type="string">"Some input files were inaccessible\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>wq_init</name><argument_list>(<argument><expr><operator>&amp;</operator><name>wq</name></expr></argument>, <argument><expr><name>nielems</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>start_threads</name><argument_list>(<argument><expr><operator>&amp;</operator><name>wq</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>read_ctf</name><argument_list>(<argument><expr><name>ifiles</name></expr></argument>, <argument><expr><name>nifiles</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>merge_ctf_cb</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>wq</name></expr></argument>, <argument><expr><name>require_ctf</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>require_ctf</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>terminate</name><argument_list>(<argument><expr><literal type="string">"No ctf sections found to merge\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_lock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>.</operator><name>wq_queue_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>wq</name><operator>.</operator><name>wq_nomorefiles</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_cond_broadcast</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>.</operator><name>wq_work_avail</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_unlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>.</operator><name>wq_queue_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>pthread_mutex_lock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>.</operator><name>wq_queue_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<while>while <condition>(<expr><name><name>wq</name><operator>.</operator><name>wq_alldone</name></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>pthread_cond_wait</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>.</operator><name>wq_alldone_cv</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>wq</name><operator>.</operator><name>wq_queue_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></while>
+<expr_stmt><expr><call><name>pthread_mutex_unlock</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wq</name><operator>.</operator><name>wq_queue_lock</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>join_threads</name><argument_list>(<argument><expr><operator>&amp;</operator><name>wq</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><call><name>fifo_len</name><argument_list>(<argument><expr><name><name>wq</name><operator>.</operator><name>wq_queue</name></name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>mstrtd</name> <operator>=</operator> <call><name>fifo_remove</name><argument_list>(<argument><expr><name><name>wq</name><operator>.</operator><name>wq_queue</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>verbose</name> <operator>||</operator> <name>debug_level</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">2</literal></expr></argument>, <argument><expr><literal type="string">"Statistics for td %p\n"</literal></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name>mstrtd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>iidesc_stats</name><argument_list>(<argument><expr><name><name>mstrtd</name><operator>-&gt;</operator><name>td_iihash</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>uniqfile</name> <operator>!=</operator> <name>NULL</name> <operator>||</operator> <name>withfile</name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>reffile</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>reflabel</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>tdata_t</name> <modifier>*</modifier></type><name>reftd</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>uniqfile</name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>reffile</name> <operator>=</operator> <name>uniqfile</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>reflabel</name> <operator>=</operator> <name>uniqlabel</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>reffile</name> <operator>=</operator> <name>withfile</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>read_ctf</name><argument_list>(<argument><expr><operator>&amp;</operator><name>reffile</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>reflabel</name></expr></argument>, <argument><expr><name>read_ctf_save_cb</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>reftd</name></expr></argument>, <argument><expr><name>require_ctf</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>terminate</name><argument_list>(<argument><expr><literal type="string">"No CTF data found in reference file %s\n"</literal></expr></argument>,
+<argument><expr><name>reffile</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>savetd</name> <operator>=</operator> <call><name>tdata_new</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>CTF_TYPE_ISCHILD</name><argument_list>(<argument><expr><name><name>reftd</name><operator>-&gt;</operator><name>td_nextid</name></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>terminate</name><argument_list>(<argument><expr><literal type="string">"No room for additional types in master\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>savetd</name><operator>-&gt;</operator><name>td_nextid</name></name> <operator>=</operator> <ternary><condition><expr><name>withfile</name></expr> ?</condition><then> <expr><name><name>reftd</name><operator>-&gt;</operator><name>td_nextid</name></name></expr> </then><else>:
+<expr><call><name>CTF_INDEX_TO_TYPE</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>TRUE</name></expr></argument>)</argument_list></call></expr></else></ternary></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>merge_into_master</name><argument_list>(<argument><expr><name>mstrtd</name></expr></argument>, <argument><expr><name>reftd</name></expr></argument>, <argument><expr><name>savetd</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>tdata_label_add</name><argument_list>(<argument><expr><name>savetd</name></expr></argument>, <argument><expr><name>label</name></expr></argument>, <argument><expr><name>CTF_LABEL_LASTIDX</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>withfile</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>tdata_t</name> <modifier>*</modifier></type><name>withtd</name> <init>= <expr><name>reftd</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>tdata_merge</name><argument_list>(<argument><expr><name>withtd</name></expr></argument>, <argument><expr><name>savetd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>savetd</name> <operator>=</operator> <name>withtd</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<decl_stmt><decl><type><name>char</name></type> <name><name>uniqname</name><index>[<expr><name>MAXPATHLEN</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>labelent_t</name> <modifier>*</modifier></type><name>parle</name></decl>;</decl_stmt>
+<expr_stmt><expr><name>parle</name> <operator>=</operator> <call><name>tdata_label_top</name><argument_list>(<argument><expr><name>reftd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>savetd</name><operator>-&gt;</operator><name>td_parlabel</name></name> <operator>=</operator> <call><name>xstrdup</name><argument_list>(<argument><expr><name><name>parle</name><operator>-&gt;</operator><name>le_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>strncpy</name><argument_list>(<argument><expr><name>uniqname</name></expr></argument>, <argument><expr><name>reffile</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>uniqname</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>uniqname</name><index>[<expr><name>MAXPATHLEN</name> <operator>-</operator> <literal type="number">1</literal></expr>]</index></name> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>savetd</name><operator>-&gt;</operator><name>td_parname</name></name> <operator>=</operator> <call><name>xstrdup</name><argument_list>(<argument><expr><call><name>basename</name><argument_list>(<argument><expr><name>uniqname</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>tdata_label_free</name><argument_list>(<argument><expr><name>mstrtd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>tdata_label_add</name><argument_list>(<argument><expr><name>mstrtd</name></expr></argument>, <argument><expr><name>label</name></expr></argument>, <argument><expr><name>CTF_LABEL_LASTIDX</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>savetd</name> <operator>=</operator> <name>mstrtd</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><name>tmpname</name> <operator>=</operator> <call><name>mktmpname</name><argument_list>(<argument><expr><name>outfile</name></expr></argument>, <argument><expr><literal type="string">".ctf"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>write_ctf</name><argument_list>(<argument><expr><name>savetd</name></expr></argument>, <argument><expr><name>outfile</name></expr></argument>, <argument><expr><name>tmpname</name></expr></argument>,
+<argument><expr><name>CTF_COMPRESS</name> <operator>|</operator> <name>CTF_SWAP_BYTES</name> <operator>|</operator> <name>write_fuzzy_match</name> <operator>|</operator> <name>dynsym</name> <operator>|</operator> <name>keep_stabs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>rename</name><argument_list>(<argument><expr><name>tmpname</name></expr></argument>, <argument><expr><name>outfile</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>terminate</name><argument_list>(<argument><expr><literal type="string">"Couldn't rename output temp file %s"</literal></expr></argument>, <argument><expr><name>tmpname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>tmpname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+</unit>

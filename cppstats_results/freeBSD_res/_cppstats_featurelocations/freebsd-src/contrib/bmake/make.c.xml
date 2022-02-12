@@ -1,0 +1,1490 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/bmake/make.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"make.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"dir.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"job.h"</cpp:file></cpp:include>
+
+
+<expr_stmt><expr><call><name>MAKE_RCSID</name><argument_list>(<argument><expr><literal type="string">"$NetBSD: make.c,v 1.248 2021/11/28 23:12:51 rillig Exp $"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>unsigned</name> <name>int</name></type> <name>checked_seqno</name> <init>= <expr><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+
+
+
+
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>GNodeList</name></type> <name>toBeMade</name> <init>= <expr><name>LST_INIT</name></expr></init></decl>;</decl_stmt>
+
+
+<function><type><name>void</name></type>
+<name>debug_printf</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>fmt</name></decl></parameter>, <parameter><decl><type><modifier>...</modifier></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>va_list</name></type> <name>args</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>va_start</name><argument_list>(<argument><expr><name>args</name></expr></argument>, <argument><expr><name>fmt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>vfprintf</name><argument_list>(<argument><expr><name><name>opts</name><operator>.</operator><name>debug_file</name></name></expr></argument>, <argument><expr><name>fmt</name></expr></argument>, <argument><expr><name>args</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>va_end</name><argument_list>(<argument><expr><name>args</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>MAKE_ATTR_DEAD</name> <specifier>static</specifier> <name>void</name></type>
+<name>make_abort</name><parameter_list>(<parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>gn</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>lineno</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+<expr_stmt><expr><call><name>debug_printf</name><argument_list>(<argument><expr><literal type="string">"make_abort from line %d\n"</literal></expr></argument>, <argument><expr><name>lineno</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Targ_PrintNode</name><argument_list>(<argument><expr><name>gn</name></expr></argument>, <argument><expr><literal type="number">2</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Targ_PrintNodes</name><argument_list>(<argument><expr><operator>&amp;</operator><name>toBeMade</name></expr></argument>, <argument><expr><literal type="number">2</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Targ_PrintGraph</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>abort</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <specifier>const</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>GNodeType_ToString</name><parameter_list>(<parameter><decl><type><name>GNodeType</name></type> <name>type</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier><modifier>*</modifier></type><name>freeIt</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>Buffer</name></type> <name>buf</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>Buf_InitSize</name><argument_list>(<argument><expr><operator>&amp;</operator><name>buf</name></expr></argument>, <argument><expr><literal type="number">32</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ADD</name><parameter_list>(<parameter><type><name>flag</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>Buf_AddFlag(&amp;buf, (type &amp; (flag)) != OP_NONE, #flag)</cpp:value></cpp:define>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_DEPENDS</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_FORCE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_DOUBLEDEP</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_OPTIONAL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_USE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_EXEC</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_IGNORE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_PRECIOUS</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_SILENT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_MAKE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_JOIN</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_MADE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_SPECIAL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_USEBEFORE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_INVISIBLE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_NOTMAIN</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_PHONY</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_NOPATH</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_WAIT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_NOMETA</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_META</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_NOMETA_CMP</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_SUBMAKE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_TRANSFORM</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_MEMBER</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_LIB</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_ARCHV</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_HAS_COMMANDS</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_SAVE_CMDS</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_DEPS_FOUND</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>OP_MARK</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>ADD</name></cpp:undef>
+<return>return <expr><ternary><condition><expr><name><name>buf</name><operator>.</operator><name>len</name></name> <operator>==</operator> <literal type="number">0</literal></expr> ?</condition><then> <expr><literal type="string">"none"</literal></expr> </then><else>: <expr><operator>(</operator><operator>*</operator><name>freeIt</name> <operator>=</operator> <call><name>Buf_DoneData</name><argument_list>(<argument><expr><operator>&amp;</operator><name>buf</name></expr></argument>)</argument_list></call><operator>)</operator></expr></else></ternary></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <specifier>const</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>GNodeFlags_ToString</name><parameter_list>(<parameter><decl><type><name>GNodeFlags</name></type> <name>flags</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier><modifier>*</modifier></type><name>freeIt</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>Buffer</name></type> <name>buf</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>Buf_InitSize</name><argument_list>(<argument><expr><operator>&amp;</operator><name>buf</name></expr></argument>, <argument><expr><literal type="number">32</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ADD</name><parameter_list>(<parameter><type><name>flag</name></type></parameter>, <parameter><type><name>name</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>Buf_AddFlag(&amp;buf, flags.flag, name)</cpp:value></cpp:define>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>remake</name></expr></argument>, <argument><expr><literal type="string">"REMAKE"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>childMade</name></expr></argument>, <argument><expr><literal type="string">"CHILDMADE"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>force</name></expr></argument>, <argument><expr><literal type="string">"FORCE"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>doneWait</name></expr></argument>, <argument><expr><literal type="string">"DONE_WAIT"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>doneOrder</name></expr></argument>, <argument><expr><literal type="string">"DONE_ORDER"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>fromDepend</name></expr></argument>, <argument><expr><literal type="string">"FROM_DEPEND"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>doneAllsrc</name></expr></argument>, <argument><expr><literal type="string">"DONE_ALLSRC"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>cycle</name></expr></argument>, <argument><expr><literal type="string">"CYCLE"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ADD</name><argument_list>(<argument><expr><name>doneCycle</name></expr></argument>, <argument><expr><literal type="string">"DONECYCLE"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>ADD</name></cpp:undef>
+<return>return <expr><ternary><condition><expr><name><name>buf</name><operator>.</operator><name>len</name></name> <operator>==</operator> <literal type="number">0</literal></expr> ?</condition><then> <expr><literal type="string">"none"</literal></expr> </then><else>: <expr><operator>(</operator><operator>*</operator><name>freeIt</name> <operator>=</operator> <call><name>Buf_DoneData</name><argument_list>(<argument><expr><operator>&amp;</operator><name>buf</name></expr></argument>)</argument_list></call><operator>)</operator></expr></else></ternary></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type>
+<name>GNode_FprintDetails</name><parameter_list>(<parameter><decl><type><name>FILE</name> <modifier>*</modifier></type><name>f</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>prefix</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>GNode</name> <modifier>*</modifier></type><name>gn</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>suffix</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>type_freeIt</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>flags_freeIt</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>f</name></expr></argument>, <argument><expr><literal type="string">"%s%s, type %s, flags %s%s"</literal></expr></argument>,
+<argument><expr><name>prefix</name></expr></argument>,
+<argument><expr><call><name>GNodeMade_Name</name><argument_list>(<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>made</name></name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>GNodeType_ToString</name><argument_list>(<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>type</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>type_freeIt</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>GNodeFlags_ToString</name><argument_list>(<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>flags</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>flags_freeIt</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name>suffix</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>type_freeIt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>flags_freeIt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>bool</name></type>
+<name>GNode_ShouldExecute</name><parameter_list>(<parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>gn</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>!</operator><operator>(</operator><ternary><condition><expr><operator>(</operator><name><name>gn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_MAKE</name><operator>)</operator></expr>
+?</condition><then> <expr><name><name>opts</name><operator>.</operator><name>noRecursiveExecute</name></name></expr>
+</then><else>: <expr><name><name>opts</name><operator>.</operator><name>noExecute</name></name></expr></else></ternary><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><name>void</name></type>
+<name>GNode_UpdateYoungestChild</name><parameter_list>(<parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>gn</name></decl></parameter>, <parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>cgn</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>youngestChild</name></name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <name><name>cgn</name><operator>-&gt;</operator><name>mtime</name></name> <operator>&gt;</operator> <name><name>gn</name><operator>-&gt;</operator><name>youngestChild</name><operator>-&gt;</operator><name>mtime</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>gn</name><operator>-&gt;</operator><name>youngestChild</name></name> <operator>=</operator> <name>cgn</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>IsOODateRegular</name><parameter_list>(<parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>gn</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>youngestChild</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>mtime</name></name> <operator>&lt;</operator> <name><name>gn</name><operator>-&gt;</operator><name>youngestChild</name><operator>-&gt;</operator><name>mtime</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>DEBUG1</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">"modified before source \"%s\"..."</literal></expr></argument>,
+<argument><expr><call><name>GNode_Path</name><argument_list>(<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>youngestChild</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>true</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name>false</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>mtime</name></name> <operator>==</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <operator>!</operator><operator>(</operator><name><name>gn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_OPTIONAL</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>DEBUG0</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">"nonexistent and no sources..."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>true</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_DOUBLEDEP</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>DEBUG0</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">":: operator and no sources..."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>true</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><name>false</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><name>bool</name></type>
+<name>GNode_IsOODate</name><parameter_list>(<parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>gn</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>bool</name></type> <name>oodate</name></decl>;</decl_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name><name>gn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <operator>(</operator><name>OP_JOIN</name> <operator>|</operator> <name>OP_USE</name> <operator>|</operator> <name>OP_USEBEFORE</name> <operator>|</operator> <name>OP_EXEC</name><operator>)</operator><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>Dir_UpdateMTime</name><argument_list>(<argument><expr><name>gn</name></expr></argument>, <argument><expr><name>true</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>DEBUG</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>mtime</name></name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>debug_printf</name><argument_list>(<argument><expr><literal type="string">"modified %s..."</literal></expr></argument>,
+<argument><expr><call><name>Targ_FmtTime</name><argument_list>(<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>mtime</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>debug_printf</name><argument_list>(<argument><expr><literal type="string">"nonexistent..."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <operator>(</operator><name>OP_USE</name> <operator>|</operator> <name>OP_USEBEFORE</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+
+
+
+
+<expr_stmt><expr><call><name>DEBUG0</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">".USE node..."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>oodate</name> <operator>=</operator> <name>false</name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>(</operator><name><name>gn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_LIB</name><operator>)</operator> <operator>&amp;&amp;</operator> <operator>(</operator><name><name>gn</name><operator>-&gt;</operator><name>mtime</name></name> <operator>==</operator> <literal type="number">0</literal> <operator>||</operator> <call><name>Arch_IsLib</name><argument_list>(<argument><expr><name>gn</name></expr></argument>)</argument_list></call><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>DEBUG0</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">"library..."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+<expr_stmt><expr><name>oodate</name> <operator>=</operator> <operator>(</operator><name><name>gn</name><operator>-&gt;</operator><name>mtime</name></name> <operator>==</operator> <literal type="number">0</literal> <operator>||</operator> <call><name>Arch_LibOODate</name><argument_list>(<argument><expr><name>gn</name></expr></argument>)</argument_list></call> <operator>||</operator>
+<operator>(</operator><name><name>gn</name><operator>-&gt;</operator><name>youngestChild</name></name> <operator>==</operator> <name>NULL</name> <operator>&amp;&amp;</operator>
+<operator>(</operator><name><name>gn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_DOUBLEDEP</name><operator>)</operator><operator>)</operator><operator>)</operator></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_JOIN</name></expr>)</condition> <block>{<block_content>
+
+
+
+
+<expr_stmt><expr><call><name>DEBUG0</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">".JOIN node..."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DEBUG1</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">"source %smade..."</literal></expr></argument>,
+<argument><expr><ternary><condition><expr><name><name>gn</name><operator>-&gt;</operator><name>flags</name><operator>.</operator><name>childMade</name></name></expr> ?</condition><then> <expr><literal type="string">""</literal></expr> </then><else>: <expr><literal type="string">"not "</literal></expr></else></ternary></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>oodate</name> <operator>=</operator> <name><name>gn</name><operator>-&gt;</operator><name>flags</name><operator>.</operator><name>childMade</name></name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <operator>(</operator><name>OP_FORCE</name> <operator>|</operator> <name>OP_EXEC</name> <operator>|</operator> <name>OP_PHONY</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>DEBUG</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_FORCE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>debug_printf</name><argument_list>(<argument><expr><literal type="string">"! operator..."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_PHONY</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>debug_printf</name><argument_list>(<argument><expr><literal type="string">".PHONY node..."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>debug_printf</name><argument_list>(<argument><expr><literal type="string">".EXEC node..."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>oodate</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><call><name>IsOODateRegular</name><argument_list>(<argument><expr><name>gn</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>oodate</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>DEBUG</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>flags</name><operator>.</operator><name>force</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>debug_printf</name><argument_list>(<argument><expr><literal type="string">"non existing child..."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>oodate</name> <operator>=</operator> <name><name>gn</name><operator>-&gt;</operator><name>flags</name><operator>.</operator><name>force</name></name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_META</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name>useMeta</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>oodate</name> <operator>=</operator> <call><name>meta_oodate</name><argument_list>(<argument><expr><name>gn</name></expr></argument>, <argument><expr><name>oodate</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>oodate</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>GNodeListNode</name> <modifier>*</modifier></type><name>ln</name></decl>;</decl_stmt>
+<for>for <control>(<init><expr><name>ln</name> <operator>=</operator> <name><name>gn</name><operator>-&gt;</operator><name>parents</name><operator>.</operator><name>first</name></name></expr>;</init> <condition><expr><name>ln</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>ln</name> <operator>=</operator> <name><name>ln</name><operator>-&gt;</operator><name>next</name></name></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>GNode_UpdateYoungestChild</name><argument_list>(<argument><expr><name><name>ln</name><operator>-&gt;</operator><name>datum</name></name></expr></argument>, <argument><expr><name>gn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><name>oodate</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>PretendAllChildrenAreMade</name><parameter_list>(<parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>pgn</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>GNodeListNode</name> <modifier>*</modifier></type><name>ln</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>ln</name> <operator>=</operator> <name><name>pgn</name><operator>-&gt;</operator><name>children</name><operator>.</operator><name>first</name></name></expr>;</init> <condition><expr><name>ln</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>ln</name> <operator>=</operator> <name><name>ln</name><operator>-&gt;</operator><name>next</name></name></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>GNode</name> <modifier>*</modifier></type><name>cgn</name> <init>= <expr><name><name>ln</name><operator>-&gt;</operator><name>datum</name></name></expr></init></decl>;</decl_stmt>
+
+
+<expr_stmt><expr><call><name>Dir_UpdateMTime</name><argument_list>(<argument><expr><name>cgn</name></expr></argument>, <argument><expr><name>false</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>GNode_UpdateYoungestChild</name><argument_list>(<argument><expr><name>pgn</name></expr></argument>, <argument><expr><name>cgn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>pgn</name><operator>-&gt;</operator><name>unmade</name></name><operator>--</operator></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><name>void</name></type>
+<name>Make_HandleUse</name><parameter_list>(<parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>cgn</name></decl></parameter>, <parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>pgn</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>GNodeListNode</name> <modifier>*</modifier></type><name>ln</name></decl>;</decl_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>DEBUG_SRC</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name><name>cgn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <operator>(</operator><name>OP_USE</name> <operator>|</operator> <name>OP_USEBEFORE</name> <operator>|</operator> <name>OP_TRANSFORM</name><operator>)</operator><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>debug_printf</name><argument_list>(<argument><expr><literal type="string">"Make_HandleUse: called for plain node %s\n"</literal></expr></argument>,
+<argument><expr><name><name>cgn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>cgn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <operator>(</operator><name>OP_USE</name> <operator>|</operator> <name>OP_USEBEFORE</name><operator>)</operator><operator>)</operator> <operator>||</operator>
+<call><name>Lst_IsEmpty</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>pgn</name><operator>-&gt;</operator><name>commands</name></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>cgn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_USEBEFORE</name></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><call><name>Lst_PrependAll</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>pgn</name><operator>-&gt;</operator><name>commands</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>cgn</name><operator>-&gt;</operator><name>commands</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+<expr_stmt><expr><call><name>Lst_AppendAll</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>pgn</name><operator>-&gt;</operator><name>commands</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>cgn</name><operator>-&gt;</operator><name>commands</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<for>for <control>(<init><expr><name>ln</name> <operator>=</operator> <name><name>cgn</name><operator>-&gt;</operator><name>children</name><operator>.</operator><name>first</name></name></expr>;</init> <condition><expr><name>ln</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>ln</name> <operator>=</operator> <name><name>ln</name><operator>-&gt;</operator><name>next</name></name></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>GNode</name> <modifier>*</modifier></type><name>gn</name> <init>= <expr><name><name>ln</name><operator>-&gt;</operator><name>datum</name></name></expr></init></decl>;</decl_stmt>
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>uname</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>gn</name><operator>-&gt;</operator><name>uname</name></name> <operator>=</operator> <name><name>gn</name><operator>-&gt;</operator><name>name</name></name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>Var_Subst</name><argument_list>(<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>uname</name></name></expr></argument>, <argument><expr><name>pgn</name></expr></argument>, <argument><expr><name>VARE_WANTRES</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>gn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>uname</name></name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <call><name>strcmp</name><argument_list>(<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><name><name>gn</name><operator>-&gt;</operator><name>uname</name></name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+
+<decl_stmt><decl><type><name>GNode</name> <modifier>*</modifier></type><name>tgn</name> <init>= <expr><call><name>Targ_FindNode</name><argument_list>(<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>tgn</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>gn</name> <operator>=</operator> <name>tgn</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>Lst_Append</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>pgn</name><operator>-&gt;</operator><name>children</name></name></expr></argument>, <argument><expr><name>gn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Lst_Append</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>gn</name><operator>-&gt;</operator><name>parents</name></name></expr></argument>, <argument><expr><name>pgn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>pgn</name><operator>-&gt;</operator><name>unmade</name></name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><name><name>pgn</name><operator>-&gt;</operator><name>type</name></name> <operator>|=</operator>
+<name><name>cgn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <operator>~</operator><operator>(</operator><name>OP_OPMASK</name> <operator>|</operator> <name>OP_USE</name> <operator>|</operator> <name>OP_USEBEFORE</name> <operator>|</operator> <name>OP_TRANSFORM</name><operator>)</operator></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>MakeHandleUse</name><parameter_list>(<parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>cgn</name></decl></parameter>, <parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>pgn</name></decl></parameter>, <parameter><decl><type><name>GNodeListNode</name> <modifier>*</modifier></type><name>ln</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>bool</name></type> <name>unmarked</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>unmarked</name> <operator>=</operator> <operator>!</operator><operator>(</operator><name><name>cgn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_MARK</name><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>cgn</name><operator>-&gt;</operator><name>type</name></name> <operator>|=</operator> <name>OP_MARK</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name><name>cgn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <operator>(</operator><name>OP_USE</name> <operator>|</operator> <name>OP_USEBEFORE</name><operator>)</operator><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>unmarked</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Make_HandleUse</name><argument_list>(<argument><expr><name>cgn</name></expr></argument>, <argument><expr><name>pgn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+
+
+
+
+
+
+<expr_stmt><expr><call><name>Lst_Remove</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>pgn</name><operator>-&gt;</operator><name>children</name></name></expr></argument>, <argument><expr><name>ln</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>pgn</name><operator>-&gt;</operator><name>unmade</name></name><operator>--</operator></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>HandleUseNodes</name><parameter_list>(<parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>gn</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>GNodeListNode</name> <modifier>*</modifier></type><name>ln</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>nln</name></decl>;</decl_stmt>
+<for>for <control>(<init><expr><name>ln</name> <operator>=</operator> <name><name>gn</name><operator>-&gt;</operator><name>children</name><operator>.</operator><name>first</name></name></expr>;</init> <condition><expr><name>ln</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>ln</name> <operator>=</operator> <name>nln</name></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>nln</name> <operator>=</operator> <name><name>ln</name><operator>-&gt;</operator><name>next</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>MakeHandleUse</name><argument_list>(<argument><expr><name><name>ln</name><operator>-&gt;</operator><name>datum</name></name></expr></argument>, <argument><expr><name>gn</name></expr></argument>, <argument><expr><name>ln</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+
+
+
+
+
+<function><type><name>time_t</name></type>
+<name>Make_Recheck</name><parameter_list>(<parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>gn</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>time_t</name></type> <name>mtime</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>Dir_UpdateMTime</name><argument_list>(<argument><expr><name>gn</name></expr></argument>, <argument><expr><name>true</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>mtime</name> <operator>=</operator> <name><name>gn</name><operator>-&gt;</operator><name>mtime</name></name></expr>;</expr_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>RECHECK</name></expr></argument>)</argument_list></call></expr></cpp:if>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>Lst_IsEmpty</name><argument_list>(<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>commands</name></name></expr></argument>)</argument_list></call> <operator>||</operator> <call><name>Lst_IsEmpty</name><argument_list>(<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>children</name></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>gn</name><operator>-&gt;</operator><name>mtime</name></name> <operator>=</operator> <name>now</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>GNode_ShouldExecute</name><argument_list>(<argument><expr><name>gn</name></expr></argument>)</argument_list></call> <operator>||</operator> <operator>(</operator><name><name>gn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_SAVE_CMDS</name><operator>)</operator> <operator>||</operator>
+<operator>(</operator><name>mtime</name> <operator>==</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <operator>!</operator><operator>(</operator><name><name>gn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_WAIT</name><operator>)</operator><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>DEBUG2</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">" recheck(%s): update time from %s to now\n"</literal></expr></argument>,
+<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>,
+<argument><expr><ternary><condition><expr><name><name>gn</name><operator>-&gt;</operator><name>mtime</name></name> <operator>==</operator> <literal type="number">0</literal></expr> ?</condition><then> <expr><literal type="string">"nonexistent"</literal></expr> </then><else>: <expr><call><name>Targ_FmtTime</name><argument_list>(<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>mtime</name></name></expr></argument>)</argument_list></call></expr></else></ternary></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>gn</name><operator>-&gt;</operator><name>mtime</name></name> <operator>=</operator> <name>now</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>DEBUG2</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">" recheck(%s): current update time: %s\n"</literal></expr></argument>,
+<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><call><name>Targ_FmtTime</name><argument_list>(<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>mtime</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+<return>return <expr><name>mtime</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>UpdateImplicitParentsVars</name><parameter_list>(<parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>cgn</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>cname</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>GNodeListNode</name> <modifier>*</modifier></type><name>ln</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>cpref</name> <init>= <expr><call><name>GNode_VarPrefix</name><argument_list>(<argument><expr><name>cgn</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>ln</name> <operator>=</operator> <name><name>cgn</name><operator>-&gt;</operator><name>implicitParents</name><operator>.</operator><name>first</name></name></expr>;</init> <condition><expr><name>ln</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>ln</name> <operator>=</operator> <name><name>ln</name><operator>-&gt;</operator><name>next</name></name></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>GNode</name> <modifier>*</modifier></type><name>pgn</name> <init>= <expr><name><name>ln</name><operator>-&gt;</operator><name>datum</name></name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>pgn</name><operator>-&gt;</operator><name>flags</name><operator>.</operator><name>remake</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>Var_Set</name><argument_list>(<argument><expr><name>pgn</name></expr></argument>, <argument><expr><name>IMPSRC</name></expr></argument>, <argument><expr><name>cname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>cpref</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Var_Set</name><argument_list>(<argument><expr><name>pgn</name></expr></argument>, <argument><expr><name>PREFIX</name></expr></argument>, <argument><expr><name>cpref</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>IsWaitingForOrder</name><parameter_list>(<parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>gn</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>GNodeListNode</name> <modifier>*</modifier></type><name>ln</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>ln</name> <operator>=</operator> <name><name>gn</name><operator>-&gt;</operator><name>order_pred</name><operator>.</operator><name>first</name></name></expr>;</init> <condition><expr><name>ln</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>ln</name> <operator>=</operator> <name><name>ln</name><operator>-&gt;</operator><name>next</name></name></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>GNode</name> <modifier>*</modifier></type><name>ogn</name> <init>= <expr><name><name>ln</name><operator>-&gt;</operator><name>datum</name></name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>GNode_IsDone</name><argument_list>(<argument><expr><name>ogn</name></expr></argument>)</argument_list></call> <operator>||</operator> <operator>!</operator><name><name>ogn</name><operator>-&gt;</operator><name>flags</name><operator>.</operator><name>remake</name></name></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>DEBUG2</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>,
+<argument><expr><literal type="string">"IsWaitingForOrder: Waiting for .ORDER node \"%s%s\"\n"</literal></expr></argument>,
+<argument><expr><name><name>ogn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><name><name>ogn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>true</name></expr>;</return>
+</block_content>}</block></for>
+<return>return <expr><name>false</name></expr>;</return>
+</block_content>}</block></function>
+
+<function_decl><type><specifier>static</specifier> <name>void</name></type> <name>MakeBuildParent</name><parameter_list>(<parameter><decl><type><name>GNode</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>GNodeListNode</name> <modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>ScheduleOrderSuccessors</name><parameter_list>(<parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>gn</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>GNodeListNode</name> <modifier>*</modifier></type><name>toBeMadeNext</name> <init>= <expr><name><name>toBeMade</name><operator>.</operator><name>first</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>GNodeListNode</name> <modifier>*</modifier></type><name>ln</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>ln</name> <operator>=</operator> <name><name>gn</name><operator>-&gt;</operator><name>order_succ</name><operator>.</operator><name>first</name></name></expr>;</init> <condition><expr><name>ln</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>ln</name> <operator>=</operator> <name><name>ln</name><operator>-&gt;</operator><name>next</name></name></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>MakeBuildParent</name><argument_list>(<argument><expr><name><name>ln</name><operator>-&gt;</operator><name>datum</name></name></expr></argument>, <argument><expr><name>toBeMadeNext</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><name>void</name></type>
+<name>Make_Update</name><parameter_list>(<parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>cgn</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>cname</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>time_t</name></type> <name>mtime</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>GNodeList</name> <modifier>*</modifier></type><name>parents</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>GNodeListNode</name> <modifier>*</modifier></type><name>ln</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>GNode</name> <modifier>*</modifier></type><name>centurion</name></decl>;</decl_stmt>
+
+
+<expr_stmt><expr><name>checked_seqno</name><operator>++</operator></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>cname</name> <operator>=</operator> <call><name>GNode_VarTarget</name><argument_list>(<argument><expr><name>cgn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>DEBUG2</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">"Make_Update: %s%s\n"</literal></expr></argument>, <argument><expr><name><name>cgn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><name><name>cgn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>cgn</name><operator>-&gt;</operator><name>made</name></name> <operator>!=</operator> <name>UPTODATE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>mtime</name> <operator>=</operator> <call><name>Make_Recheck</name><argument_list>(<argument><expr><name>cgn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>centurion</name> <operator>=</operator> <name><name>cgn</name><operator>-&gt;</operator><name>centurion</name></name><operator>)</operator> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>Lst_IsEmpty</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>cgn</name><operator>-&gt;</operator><name>parents</name></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Punt</name><argument_list>(<argument><expr><literal type="string">"%s%s: cohort has parents"</literal></expr></argument>, <argument><expr><name><name>cgn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>,
+<argument><expr><name><name>cgn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>centurion</name><operator>-&gt;</operator><name>unmade_cohorts</name></name><operator>--</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>centurion</name><operator>-&gt;</operator><name>unmade_cohorts</name></name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Error</name><argument_list>(<argument><expr><literal type="string">"Graph cycles through centurion %s"</literal></expr></argument>,
+<argument><expr><name><name>centurion</name><operator>-&gt;</operator><name>name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>centurion</name> <operator>=</operator> <name>cgn</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><name>parents</name> <operator>=</operator> <operator>&amp;</operator><name><name>centurion</name><operator>-&gt;</operator><name>parents</name></name></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><call><name>ScheduleOrderSuccessors</name><argument_list>(<argument><expr><name>centurion</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<for>for <control>(<init><expr><name>ln</name> <operator>=</operator> <name><name>parents</name><operator>-&gt;</operator><name>first</name></name></expr>;</init> <condition><expr><name>ln</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>ln</name> <operator>=</operator> <name><name>ln</name><operator>-&gt;</operator><name>next</name></name></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>GNode</name> <modifier>*</modifier></type><name>pgn</name> <init>= <expr><name><name>ln</name><operator>-&gt;</operator><name>datum</name></name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>DEBUG</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>debug_printf</name><argument_list>(<argument><expr><literal type="string">"inspect parent %s%s: "</literal></expr></argument>, <argument><expr><name><name>pgn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>,
+<argument><expr><name><name>pgn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>GNode_FprintDetails</name><argument_list>(<argument><expr><name><name>opts</name><operator>.</operator><name>debug_file</name></name></expr></argument>, <argument><expr><literal type="string">""</literal></expr></argument>, <argument><expr><name>pgn</name></expr></argument>, <argument><expr><literal type="string">""</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>debug_printf</name><argument_list>(<argument><expr><literal type="string">", unmade %d "</literal></expr></argument>, <argument><expr><name><name>pgn</name><operator>-&gt;</operator><name>unmade</name></name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>pgn</name><operator>-&gt;</operator><name>flags</name><operator>.</operator><name>remake</name></name></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><call><name>DEBUG0</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">"- not needed\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>mtime</name> <operator>==</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <operator>!</operator><operator>(</operator><name><name>cgn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_WAIT</name><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>pgn</name><operator>-&gt;</operator><name>flags</name><operator>.</operator><name>force</name></name> <operator>=</operator> <name>true</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>pgn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_MADE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>DEBUG0</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">"- .MADE\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name><name>cgn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <operator>(</operator><name>OP_EXEC</name> <operator>|</operator> <name>OP_USE</name> <operator>|</operator> <name>OP_USEBEFORE</name><operator>)</operator><operator>)</operator></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>cgn</name><operator>-&gt;</operator><name>made</name></name> <operator>==</operator> <name>MADE</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>pgn</name><operator>-&gt;</operator><name>flags</name><operator>.</operator><name>childMade</name></name> <operator>=</operator> <name>true</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>GNode_UpdateYoungestChild</name><argument_list>(<argument><expr><name>pgn</name></expr></argument>, <argument><expr><name>cgn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>centurion</name><operator>-&gt;</operator><name>unmade_cohorts</name></name> <operator>!=</operator> <literal type="number">0</literal> <operator>||</operator>
+<operator>!</operator><call><name>GNode_IsDone</name><argument_list>(<argument><expr><name>centurion</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>DEBUG2</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>,
+<argument><expr><literal type="string">"- centurion made %d, %d unmade cohorts\n"</literal></expr></argument>,
+<argument><expr><name><name>centurion</name><operator>-&gt;</operator><name>made</name></name></expr></argument>, <argument><expr><name><name>centurion</name><operator>-&gt;</operator><name>unmade_cohorts</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><name><name>pgn</name><operator>-&gt;</operator><name>unmade</name></name><operator>--</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>pgn</name><operator>-&gt;</operator><name>unmade</name></name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>DEBUG</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>debug_printf</name><argument_list>(<argument><expr><literal type="string">"Graph cycles through %s%s\n"</literal></expr></argument>,
+<argument><expr><name><name>pgn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><name><name>pgn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Targ_PrintGraph</name><argument_list>(<argument><expr><literal type="number">2</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>Error</name><argument_list>(<argument><expr><literal type="string">"Graph cycles through %s%s"</literal></expr></argument>, <argument><expr><name><name>pgn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>,
+<argument><expr><name><name>pgn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>pgn</name><operator>-&gt;</operator><name>unmade</name></name> <operator>!=</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <operator>!</operator><operator>(</operator><name><name>centurion</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_WAIT</name><operator>)</operator>
+<operator>&amp;&amp;</operator> <operator>!</operator><name><name>centurion</name><operator>-&gt;</operator><name>flags</name><operator>.</operator><name>doneOrder</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>DEBUG0</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">"- unmade children\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>pgn</name><operator>-&gt;</operator><name>made</name></name> <operator>!=</operator> <name>DEFERRED</name></expr>)</condition> <block>{<block_content>
+
+
+
+
+
+<expr_stmt><expr><call><name>DEBUG0</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">"- not deferred\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>IsWaitingForOrder</name><argument_list>(<argument><expr><name>pgn</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>DEBUG</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>debug_printf</name><argument_list>(<argument><expr><literal type="string">"- %s%s made, schedule %s%s (made %d)\n"</literal></expr></argument>,
+<argument><expr><name><name>cgn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><name><name>cgn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>,
+<argument><expr><name><name>pgn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><name><name>pgn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>, <argument><expr><name><name>pgn</name><operator>-&gt;</operator><name>made</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Targ_PrintNode</name><argument_list>(<argument><expr><name>pgn</name></expr></argument>, <argument><expr><literal type="number">2</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>pgn</name><operator>-&gt;</operator><name>made</name></name> <operator>=</operator> <name>REQUESTED</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Lst_Enqueue</name><argument_list>(<argument><expr><operator>&amp;</operator><name>toBeMade</name></expr></argument>, <argument><expr><name>pgn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><call><name>UpdateImplicitParentsVars</name><argument_list>(<argument><expr><name>cgn</name></expr></argument>, <argument><expr><name>cname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>UnmarkChildren</name><parameter_list>(<parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>gn</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>GNodeListNode</name> <modifier>*</modifier></type><name>ln</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>ln</name> <operator>=</operator> <name><name>gn</name><operator>-&gt;</operator><name>children</name><operator>.</operator><name>first</name></name></expr>;</init> <condition><expr><name>ln</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>ln</name> <operator>=</operator> <name><name>ln</name><operator>-&gt;</operator><name>next</name></name></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>GNode</name> <modifier>*</modifier></type><name>child</name> <init>= <expr><name><name>ln</name><operator>-&gt;</operator><name>datum</name></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>child</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;=</operator> <operator>~</operator><name>OP_MARK</name></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>MakeAddAllSrc</name><parameter_list>(<parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>cgn</name></decl></parameter>, <parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>pgn</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>child</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>allsrc</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>cgn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_MARK</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>cgn</name><operator>-&gt;</operator><name>type</name></name> <operator>|=</operator> <name>OP_MARK</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>cgn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <operator>(</operator><name>OP_EXEC</name> <operator>|</operator> <name>OP_USE</name> <operator>|</operator> <name>OP_USEBEFORE</name> <operator>|</operator> <name>OP_INVISIBLE</name><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>cgn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_ARCHV</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>child</name> <operator>=</operator> <call><name>GNode_VarMember</name><argument_list>(<argument><expr><name>cgn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>child</name> <operator>=</operator> <call><name>GNode_Path</name><argument_list>(<argument><expr><name>cgn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>cgn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_JOIN</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>allsrc</name> <operator>=</operator> <call><name>GNode_VarAllsrc</name><argument_list>(<argument><expr><name>cgn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>allsrc</name> <operator>=</operator> <name>child</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>allsrc</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Var_Append</name><argument_list>(<argument><expr><name>pgn</name></expr></argument>, <argument><expr><name>ALLSRC</name></expr></argument>, <argument><expr><name>allsrc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>pgn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_JOIN</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>cgn</name><operator>-&gt;</operator><name>made</name></name> <operator>==</operator> <name>MADE</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Var_Append</name><argument_list>(<argument><expr><name>pgn</name></expr></argument>, <argument><expr><name>OODATE</name></expr></argument>, <argument><expr><name>child</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>(</operator><name><name>pgn</name><operator>-&gt;</operator><name>mtime</name></name> <operator>&lt;</operator> <name><name>cgn</name><operator>-&gt;</operator><name>mtime</name></name><operator>)</operator> <operator>||</operator>
+<operator>(</operator><name><name>cgn</name><operator>-&gt;</operator><name>mtime</name></name> <operator>&gt;=</operator> <name>now</name> <operator>&amp;&amp;</operator> <name><name>cgn</name><operator>-&gt;</operator><name>made</name></name> <operator>==</operator> <name>MADE</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<expr_stmt><expr><call><name>Var_Append</name><argument_list>(<argument><expr><name>pgn</name></expr></argument>, <argument><expr><name>OODATE</name></expr></argument>, <argument><expr><name>child</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><name>void</name></type>
+<name>GNode_SetLocalVars</name><parameter_list>(<parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>gn</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>GNodeListNode</name> <modifier>*</modifier></type><name>ln</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>flags</name><operator>.</operator><name>doneAllsrc</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>UnmarkChildren</name><argument_list>(<argument><expr><name>gn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>ln</name> <operator>=</operator> <name><name>gn</name><operator>-&gt;</operator><name>children</name><operator>.</operator><name>first</name></name></expr>;</init> <condition><expr><name>ln</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>ln</name> <operator>=</operator> <name><name>ln</name><operator>-&gt;</operator><name>next</name></name></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>MakeAddAllSrc</name><argument_list>(<argument><expr><name><name>ln</name><operator>-&gt;</operator><name>datum</name></name></expr></argument>, <argument><expr><name>gn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>Var_Exists</name><argument_list>(<argument><expr><name>gn</name></expr></argument>, <argument><expr><name>OODATE</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Var_Set</name><argument_list>(<argument><expr><name>gn</name></expr></argument>, <argument><expr><name>OODATE</name></expr></argument>, <argument><expr><literal type="string">""</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>Var_Exists</name><argument_list>(<argument><expr><name>gn</name></expr></argument>, <argument><expr><name>ALLSRC</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Var_Set</name><argument_list>(<argument><expr><name>gn</name></expr></argument>, <argument><expr><name>ALLSRC</name></expr></argument>, <argument><expr><literal type="string">""</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_JOIN</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Var_Set</name><argument_list>(<argument><expr><name>gn</name></expr></argument>, <argument><expr><name>TARGET</name></expr></argument>, <argument><expr><call><name>GNode_VarAllsrc</name><argument_list>(<argument><expr><name>gn</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>gn</name><operator>-&gt;</operator><name>flags</name><operator>.</operator><name>doneAllsrc</name></name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>MakeBuildChild</name><parameter_list>(<parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>cn</name></decl></parameter>, <parameter><decl><type><name>GNodeListNode</name> <modifier>*</modifier></type><name>toBeMadeNext</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><call><name>DEBUG</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>debug_printf</name><argument_list>(<argument><expr><literal type="string">"MakeBuildChild: inspect %s%s, "</literal></expr></argument>,
+<argument><expr><name><name>cn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><name><name>cn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>GNode_FprintDetails</name><argument_list>(<argument><expr><name><name>opts</name><operator>.</operator><name>debug_file</name></name></expr></argument>, <argument><expr><literal type="string">""</literal></expr></argument>, <argument><expr><name>cn</name></expr></argument>, <argument><expr><literal type="string">"\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>GNode_IsReady</name><argument_list>(<argument><expr><name>cn</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>false</name></expr>;</return></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>IsWaitingForOrder</name><argument_list>(<argument><expr><name>cn</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><name><name>cn</name><operator>-&gt;</operator><name>made</name></name> <operator>=</operator> <name>DEFERRED</name></expr>;</expr_stmt>
+<return>return <expr><name>false</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>DEBUG2</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">"MakeBuildChild: schedule %s%s\n"</literal></expr></argument>,
+<argument><expr><name><name>cn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><name><name>cn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>cn</name><operator>-&gt;</operator><name>made</name></name> <operator>=</operator> <name>REQUESTED</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>toBeMadeNext</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Lst_Append</name><argument_list>(<argument><expr><operator>&amp;</operator><name>toBeMade</name></expr></argument>, <argument><expr><name>cn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Lst_InsertBefore</name><argument_list>(<argument><expr><operator>&amp;</operator><name>toBeMade</name></expr></argument>, <argument><expr><name>toBeMadeNext</name></expr></argument>, <argument><expr><name>cn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>cn</name><operator>-&gt;</operator><name>unmade_cohorts</name></name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>ListNode</name> <modifier>*</modifier></type><name>ln</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>ln</name> <operator>=</operator> <name><name>cn</name><operator>-&gt;</operator><name>cohorts</name><operator>.</operator><name>first</name></name></expr>;</init> <condition><expr><name>ln</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>ln</name> <operator>=</operator> <name><name>ln</name><operator>-&gt;</operator><name>next</name></name></expr></incr>)</control><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<expr><call><name>MakeBuildChild</name><argument_list>(<argument><expr><name><name>ln</name><operator>-&gt;</operator><name>datum</name></name></expr></argument>, <argument><expr><name>toBeMadeNext</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt></block_content></block></for>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<return>return <expr><name><name>cn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_WAIT</name> <operator>&amp;&amp;</operator> <name><name>cn</name><operator>-&gt;</operator><name>unmade</name></name> <operator>&gt;</operator> <literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>MakeBuildParent</name><parameter_list>(<parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>pn</name></decl></parameter>, <parameter><decl><type><name>GNodeListNode</name> <modifier>*</modifier></type><name>toBeMadeNext</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>pn</name><operator>-&gt;</operator><name>made</name></name> <operator>!=</operator> <name>DEFERRED</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>MakeBuildChild</name><argument_list>(<argument><expr><name>pn</name></expr></argument>, <argument><expr><name>toBeMadeNext</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><name><name>pn</name><operator>-&gt;</operator><name>flags</name><operator>.</operator><name>doneOrder</name></name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>MakeChildren</name><parameter_list>(<parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>gn</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>GNodeListNode</name> <modifier>*</modifier></type><name>toBeMadeNext</name> <init>= <expr><name><name>toBeMade</name><operator>.</operator><name>first</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>GNodeListNode</name> <modifier>*</modifier></type><name>ln</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>ln</name> <operator>=</operator> <name><name>gn</name><operator>-&gt;</operator><name>children</name><operator>.</operator><name>first</name></name></expr>;</init> <condition><expr><name>ln</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>ln</name> <operator>=</operator> <name><name>ln</name><operator>-&gt;</operator><name>next</name></name></expr></incr>)</control><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<expr><call><name>MakeBuildChild</name><argument_list>(<argument><expr><name><name>ln</name><operator>-&gt;</operator><name>datum</name></name></expr></argument>, <argument><expr><name>toBeMadeNext</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt></block_content></block></for>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>MakeStartJobs</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>GNode</name> <modifier>*</modifier></type><name>gn</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>have_token</name> <init>= <expr><name>false</name></expr></init></decl>;</decl_stmt>
+
+<while>while <condition>(<expr><operator>!</operator><call><name>Lst_IsEmpty</name><argument_list>(<argument><expr><operator>&amp;</operator><name>toBeMade</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>have_token</name> <operator>&amp;&amp;</operator> <operator>!</operator><call><name>Job_TokenWithdraw</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>have_token</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>gn</name> <operator>=</operator> <call><name>Lst_Dequeue</name><argument_list>(<argument><expr><operator>&amp;</operator><name>toBeMade</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DEBUG2</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">"Examining %s%s...\n"</literal></expr></argument>, <argument><expr><name><name>gn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><name><name>gn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>made</name></name> <operator>!=</operator> <name>REQUESTED</name></expr>)</condition> <block>{<block_content>
+
+
+
+
+<expr_stmt><expr><call><name>DEBUG1</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">"state %d\n"</literal></expr></argument>, <argument><expr><name><name>gn</name><operator>-&gt;</operator><name>made</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>make_abort</name><argument_list>(<argument><expr><name>gn</name></expr></argument>, <argument><expr><name>__LINE__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>checked_seqno</name></name> <operator>==</operator> <name>checked_seqno</name></expr>)</condition> <block>{<block_content>
+
+
+
+
+<expr_stmt><expr><call><name>DEBUG2</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">"already checked %s%s\n"</literal></expr></argument>, <argument><expr><name><name>gn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>,
+<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>gn</name><operator>-&gt;</operator><name>made</name></name> <operator>=</operator> <name>DEFERRED</name></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>gn</name><operator>-&gt;</operator><name>checked_seqno</name></name> <operator>=</operator> <name>checked_seqno</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>unmade</name></name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+
+
+
+
+<expr_stmt><expr><name><name>gn</name><operator>-&gt;</operator><name>made</name></name> <operator>=</operator> <name>DEFERRED</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>MakeChildren</name><argument_list>(<argument><expr><name>gn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><call><name>DEBUG2</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">"dropped %s%s\n"</literal></expr></argument>, <argument><expr><name><name>gn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>,
+<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>gn</name><operator>-&gt;</operator><name>made</name></name> <operator>=</operator> <name>BEINGMADE</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>GNode_IsOODate</name><argument_list>(<argument><expr><name>gn</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>DEBUG0</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">"out-of-date\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>opts</name><operator>.</operator><name>queryFlag</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>true</name></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>GNode_SetLocalVars</name><argument_list>(<argument><expr><name>gn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Job_Make</name><argument_list>(<argument><expr><name>gn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>have_token</name> <operator>=</operator> <name>false</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>DEBUG0</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">"up-to-date\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>gn</name><operator>-&gt;</operator><name>made</name></name> <operator>=</operator> <name>UPTODATE</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_JOIN</name></expr>)</condition> <block>{<block_content>
+
+
+
+
+
+
+
+<expr_stmt><expr><call><name>GNode_SetLocalVars</name><argument_list>(<argument><expr><name>gn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>Make_Update</name><argument_list>(<argument><expr><name>gn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></while>
+
+<if_stmt><if>if <condition>(<expr><name>have_token</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Job_TokenReturn</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<return>return <expr><name>false</name></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>MakePrintStatusOrderNode</name><parameter_list>(<parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>ogn</name></decl></parameter>, <parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>gn</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>GNode_IsWaitingFor</name><argument_list>(<argument><expr><name>ogn</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">" `%s%s' has .ORDER dependency against %s%s "</literal></expr></argument>,
+<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><name><name>gn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>, <argument><expr><name><name>ogn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><name><name>ogn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>GNode_FprintDetails</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">"("</literal></expr></argument>, <argument><expr><name>ogn</name></expr></argument>, <argument><expr><literal type="string">")\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>DEBUG</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <name><name>opts</name><operator>.</operator><name>debug_file</name></name> <operator>!=</operator> <name>stdout</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>debug_printf</name><argument_list>(<argument><expr><literal type="string">" `%s%s' has .ORDER dependency against %s%s "</literal></expr></argument>,
+<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><name><name>gn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>, <argument><expr><name><name>ogn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><name><name>ogn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>GNode_FprintDetails</name><argument_list>(<argument><expr><name><name>opts</name><operator>.</operator><name>debug_file</name></name></expr></argument>, <argument><expr><literal type="string">"("</literal></expr></argument>, <argument><expr><name>ogn</name></expr></argument>, <argument><expr><literal type="string">")\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>MakePrintStatusOrder</name><parameter_list>(<parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>gn</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>GNodeListNode</name> <modifier>*</modifier></type><name>ln</name></decl>;</decl_stmt>
+<for>for <control>(<init><expr><name>ln</name> <operator>=</operator> <name><name>gn</name><operator>-&gt;</operator><name>order_pred</name><operator>.</operator><name>first</name></name></expr>;</init> <condition><expr><name>ln</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>ln</name> <operator>=</operator> <name><name>ln</name><operator>-&gt;</operator><name>next</name></name></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>MakePrintStatusOrderNode</name><argument_list>(<argument><expr><name><name>ln</name><operator>-&gt;</operator><name>datum</name></name></expr></argument>, <argument><expr><name>gn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+</block_content>}</block></function>
+
+<function_decl><type><specifier>static</specifier> <name>void</name></type> <name>MakePrintStatusList</name><parameter_list>(<parameter><decl><type><name>GNodeList</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>int</name> <modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>MakePrintStatus</name><parameter_list>(<parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>gn</name></decl></parameter>, <parameter><decl><type><name>int</name> <modifier>*</modifier></type><name>errors</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>flags</name><operator>.</operator><name>doneCycle</name></name></expr>)</condition> <block>{<block_content>
+
+
+
+
+<return>return <expr><name>false</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>unmade</name></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>gn</name><operator>-&gt;</operator><name>flags</name><operator>.</operator><name>doneCycle</name></name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<switch>switch <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>made</name></name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>UPTODATE</name></expr>:</case>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"`%s%s' is up to date.\n"</literal></expr></argument>, <argument><expr><name><name>gn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>,
+<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>MADE</name></expr>:</case>
+<break>break;</break>
+<case>case <expr><name>UNMADE</name></expr>:</case>
+<case>case <expr><name>DEFERRED</name></expr>:</case>
+<case>case <expr><name>REQUESTED</name></expr>:</case>
+<case>case <expr><name>BEINGMADE</name></expr>:</case>
+<expr_stmt><expr><operator>(</operator><operator>*</operator><name>errors</name><operator>)</operator><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"`%s%s' was not built"</literal></expr></argument>, <argument><expr><name><name>gn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>,
+<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>GNode_FprintDetails</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">" ("</literal></expr></argument>, <argument><expr><name>gn</name></expr></argument>, <argument><expr><literal type="string">")!\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>DEBUG</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <name><name>opts</name><operator>.</operator><name>debug_file</name></name> <operator>!=</operator> <name>stdout</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>debug_printf</name><argument_list>(<argument><expr><literal type="string">"`%s%s' was not built"</literal></expr></argument>, <argument><expr><name><name>gn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>,
+<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>GNode_FprintDetails</name><argument_list>(<argument><expr><name><name>opts</name><operator>.</operator><name>debug_file</name></name></expr></argument>, <argument><expr><literal type="string">" ("</literal></expr></argument>, <argument><expr><name>gn</name></expr></argument>,
+<argument><expr><literal type="string">")!\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>MakePrintStatusOrder</name><argument_list>(<argument><expr><name>gn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+<default>default:</default>
+
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"`%s%s' not remade because of errors.\n"</literal></expr></argument>,
+<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><name><name>gn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>DEBUG</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <name><name>opts</name><operator>.</operator><name>debug_file</name></name> <operator>!=</operator> <name>stdout</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>debug_printf</name><argument_list>(
+<argument><expr><literal type="string">"`%s%s' not remade because of errors.\n"</literal></expr></argument>,
+<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><name><name>gn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<break>break;</break>
+</block_content>}</block></switch>
+<return>return <expr><name>false</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>DEBUG3</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">"MakePrintStatus: %s%s has %d unmade children\n"</literal></expr></argument>,
+<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><name><name>gn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>, <argument><expr><name><name>gn</name><operator>-&gt;</operator><name>unmade</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>gn</name><operator>-&gt;</operator><name>flags</name><operator>.</operator><name>cycle</name></name></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><name><name>gn</name><operator>-&gt;</operator><name>flags</name><operator>.</operator><name>cycle</name></name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>MakePrintStatusList</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>gn</name><operator>-&gt;</operator><name>children</name></name></expr></argument>, <argument><expr><name>errors</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>gn</name><operator>-&gt;</operator><name>flags</name><operator>.</operator><name>doneCycle</name></name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<return>return <expr><name>false</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><name><name>gn</name><operator>-&gt;</operator><name>flags</name><operator>.</operator><name>doneCycle</name></name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Error</name><argument_list>(<argument><expr><literal type="string">"Graph cycles through `%s%s'"</literal></expr></argument>, <argument><expr><name><name>gn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><name><name>gn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><operator>*</operator><name>errors</name><operator>)</operator><operator>++</operator> <operator>&gt;</operator> <literal type="number">100</literal></expr>)</condition><block type="pseudo"><block_content>
+
+<return>return <expr><name>true</name></expr>;</return></block_content></block></if></if_stmt>
+
+
+<expr_stmt><expr><call><name>MakePrintStatusList</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>gn</name><operator>-&gt;</operator><name>children</name></name></expr></argument>, <argument><expr><name>errors</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>false</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>MakePrintStatusList</name><parameter_list>(<parameter><decl><type><name>GNodeList</name> <modifier>*</modifier></type><name>gnodes</name></decl></parameter>, <parameter><decl><type><name>int</name> <modifier>*</modifier></type><name>errors</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>GNodeListNode</name> <modifier>*</modifier></type><name>ln</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>ln</name> <operator>=</operator> <name><name>gnodes</name><operator>-&gt;</operator><name>first</name></name></expr>;</init> <condition><expr><name>ln</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>ln</name> <operator>=</operator> <name><name>ln</name><operator>-&gt;</operator><name>next</name></name></expr></incr>)</control><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<expr><call><name>MakePrintStatus</name><argument_list>(<argument><expr><name><name>ln</name><operator>-&gt;</operator><name>datum</name></name></expr></argument>, <argument><expr><name>errors</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt></block_content></block></for>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>ExamineLater</name><parameter_list>(<parameter><decl><type><name>GNodeList</name> <modifier>*</modifier></type><name>examine</name></decl></parameter>, <parameter><decl><type><name>GNodeList</name> <modifier>*</modifier></type><name>toBeExamined</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ListNode</name> <modifier>*</modifier></type><name>ln</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>ln</name> <operator>=</operator> <name><name>toBeExamined</name><operator>-&gt;</operator><name>first</name></name></expr>;</init> <condition><expr><name>ln</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>ln</name> <operator>=</operator> <name><name>ln</name><operator>-&gt;</operator><name>next</name></name></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>GNode</name> <modifier>*</modifier></type><name>gn</name> <init>= <expr><name><name>ln</name><operator>-&gt;</operator><name>datum</name></name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>flags</name><operator>.</operator><name>remake</name></name></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <operator>(</operator><name>OP_USE</name> <operator>|</operator> <name>OP_USEBEFORE</name><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>DEBUG2</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">"ExamineLater: need to examine \"%s%s\"\n"</literal></expr></argument>,
+<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><name><name>gn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Lst_Enqueue</name><argument_list>(<argument><expr><name>examine</name></expr></argument>, <argument><expr><name>gn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+<function><type><name>void</name></type>
+<name>Make_ExpandUse</name><parameter_list>(<parameter><decl><type><name>GNodeList</name> <modifier>*</modifier></type><name>targs</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>GNodeList</name></type> <name>examine</name> <init>= <expr><name>LST_INIT</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>Lst_AppendAll</name><argument_list>(<argument><expr><operator>&amp;</operator><name>examine</name></expr></argument>, <argument><expr><name>targs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+
+
+
+
+
+
+<while>while <condition>(<expr><operator>!</operator><call><name>Lst_IsEmpty</name><argument_list>(<argument><expr><operator>&amp;</operator><name>examine</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>GNode</name> <modifier>*</modifier></type><name>gn</name> <init>= <expr><call><name>Lst_Dequeue</name><argument_list>(<argument><expr><operator>&amp;</operator><name>examine</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>flags</name><operator>.</operator><name>remake</name></name></expr>)</condition><block type="pseudo"><block_content>
+
+<continue>continue;</continue></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>gn</name><operator>-&gt;</operator><name>flags</name><operator>.</operator><name>remake</name></name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DEBUG2</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">"Make_ExpandUse: examine %s%s\n"</literal></expr></argument>,
+<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><name><name>gn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_DOUBLEDEP</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Lst_PrependAll</name><argument_list>(<argument><expr><operator>&amp;</operator><name>examine</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>gn</name><operator>-&gt;</operator><name>cohorts</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_ARCHV</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>eoa</name> <init>= <expr><call><name>strchr</name><argument_list>(<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><literal type="char">'('</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>eon</name> <init>= <expr><call><name>strchr</name><argument_list>(<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><literal type="char">')'</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>eoa</name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <name>eon</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+<expr_stmt><expr><operator>*</operator><name>eoa</name> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>eon</name> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Var_Set</name><argument_list>(<argument><expr><name>gn</name></expr></argument>, <argument><expr><name>MEMBER</name></expr></argument>, <argument><expr><name>eoa</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Var_Set</name><argument_list>(<argument><expr><name>gn</name></expr></argument>, <argument><expr><name>ARCHIVE</name></expr></argument>, <argument><expr><name><name>gn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>eoa</name> <operator>=</operator> <literal type="char">'('</literal></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>eon</name> <operator>=</operator> <literal type="char">')'</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>Dir_UpdateMTime</name><argument_list>(<argument><expr><name>gn</name></expr></argument>, <argument><expr><name>false</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Var_Set</name><argument_list>(<argument><expr><name>gn</name></expr></argument>, <argument><expr><name>TARGET</name></expr></argument>, <argument><expr><call><name>GNode_Path</name><argument_list>(<argument><expr><name>gn</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>UnmarkChildren</name><argument_list>(<argument><expr><name>gn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>HandleUseNodes</name><argument_list>(<argument><expr><name>gn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name><name>gn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_MADE</name><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Suff_FindDeps</name><argument_list>(<argument><expr><name>gn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else <block>{<block_content>
+<expr_stmt><expr><call><name>PretendAllChildrenAreMade</name><argument_list>(<argument><expr><name>gn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>unmade</name></name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(
+<argument><expr><literal type="string">"Warning: "</literal>
+<literal type="string">"%s%s still has %d unmade children\n"</literal></expr></argument>,
+<argument><expr><name><name>gn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><name><name>gn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>, <argument><expr><name><name>gn</name><operator>-&gt;</operator><name>unmade</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>gn</name><operator>-&gt;</operator><name>unmade</name></name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>ExamineLater</name><argument_list>(<argument><expr><operator>&amp;</operator><name>examine</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>gn</name><operator>-&gt;</operator><name>children</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></while>
+
+<expr_stmt><expr><call><name>Lst_Done</name><argument_list>(<argument><expr><operator>&amp;</operator><name>examine</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>add_wait_dependency</name><parameter_list>(<parameter><decl><type><name>GNodeListNode</name> <modifier>*</modifier></type><name>owln</name></decl></parameter>, <parameter><decl><type><name>GNode</name> <modifier>*</modifier></type><name>wn</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>GNodeListNode</name> <modifier>*</modifier></type><name>cln</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>GNode</name> <modifier>*</modifier></type><name>cn</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>cln</name> <operator>=</operator> <name>owln</name></expr>;</init> <condition><expr><operator>(</operator><name>cn</name> <operator>=</operator> <name><name>cln</name><operator>-&gt;</operator><name>datum</name></name><operator>)</operator> <operator>!=</operator> <name>wn</name></expr>;</condition> <incr><expr><name>cln</name> <operator>=</operator> <name><name>cln</name><operator>-&gt;</operator><name>next</name></name></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>DEBUG3</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">".WAIT: add dependency %s%s -&gt; %s\n"</literal></expr></argument>,
+<argument><expr><name><name>cn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><name><name>cn</name><operator>-&gt;</operator><name>cohort_num</name></name></expr></argument>, <argument><expr><name><name>wn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><call><name>Lst_Append</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>wn</name><operator>-&gt;</operator><name>children</name></name></expr></argument>, <argument><expr><name>cn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>wn</name><operator>-&gt;</operator><name>unmade</name></name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Lst_Append</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>cn</name><operator>-&gt;</operator><name>parents</name></name></expr></argument>, <argument><expr><name>wn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>Make_ProcessWait</name><parameter_list>(<parameter><decl><type><name>GNodeList</name> <modifier>*</modifier></type><name>targs</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>GNode</name> <modifier>*</modifier></type><name>pgn</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>GNodeListNode</name> <modifier>*</modifier></type><name>owln</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>GNodeList</name></type> <name>examine</name></decl>;</decl_stmt>
+
+
+
+
+
+
+
+<expr_stmt><expr><name>pgn</name> <operator>=</operator> <call><name>GNode_New</name><argument_list>(<argument><expr><literal type="string">".MAIN"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>pgn</name><operator>-&gt;</operator><name>flags</name><operator>.</operator><name>remake</name></name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>pgn</name><operator>-&gt;</operator><name>type</name></name> <operator>=</operator> <name>OP_PHONY</name> <operator>|</operator> <name>OP_DEPENDS</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>Lst_Prepend</name><argument_list>(<argument><expr><call><name>Targ_List</name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><name>pgn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<block>{<block_content>
+<decl_stmt><decl><type><name>GNodeListNode</name> <modifier>*</modifier></type><name>ln</name></decl>;</decl_stmt>
+<for>for <control>(<init><expr><name>ln</name> <operator>=</operator> <name><name>targs</name><operator>-&gt;</operator><name>first</name></name></expr>;</init> <condition><expr><name>ln</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>ln</name> <operator>=</operator> <name><name>ln</name><operator>-&gt;</operator><name>next</name></name></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>GNode</name> <modifier>*</modifier></type><name>cgn</name> <init>= <expr><name><name>ln</name><operator>-&gt;</operator><name>datum</name></name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>Lst_Append</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>pgn</name><operator>-&gt;</operator><name>children</name></name></expr></argument>, <argument><expr><name>cgn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Lst_Append</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>cgn</name><operator>-&gt;</operator><name>parents</name></name></expr></argument>, <argument><expr><name>pgn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>pgn</name><operator>-&gt;</operator><name>unmade</name></name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block>
+
+
+<expr_stmt><expr><call><name>MakeBuildChild</name><argument_list>(<argument><expr><name>pgn</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>Lst_Init</name><argument_list>(<argument><expr><operator>&amp;</operator><name>examine</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Lst_Append</name><argument_list>(<argument><expr><operator>&amp;</operator><name>examine</name></expr></argument>, <argument><expr><name>pgn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<while>while <condition>(<expr><operator>!</operator><call><name>Lst_IsEmpty</name><argument_list>(<argument><expr><operator>&amp;</operator><name>examine</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>GNodeListNode</name> <modifier>*</modifier></type><name>ln</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>pgn</name> <operator>=</operator> <call><name>Lst_Dequeue</name><argument_list>(<argument><expr><operator>&amp;</operator><name>examine</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>pgn</name><operator>-&gt;</operator><name>flags</name><operator>.</operator><name>doneWait</name></name></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>pgn</name><operator>-&gt;</operator><name>flags</name><operator>.</operator><name>doneWait</name></name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DEBUG1</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">"Make_ProcessWait: examine %s\n"</literal></expr></argument>, <argument><expr><name><name>pgn</name><operator>-&gt;</operator><name>name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>pgn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_DOUBLEDEP</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Lst_PrependAll</name><argument_list>(<argument><expr><operator>&amp;</operator><name>examine</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>pgn</name><operator>-&gt;</operator><name>cohorts</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>owln</name> <operator>=</operator> <name><name>pgn</name><operator>-&gt;</operator><name>children</name><operator>.</operator><name>first</name></name></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>ln</name> <operator>=</operator> <name><name>pgn</name><operator>-&gt;</operator><name>children</name><operator>.</operator><name>first</name></name></expr>;</init> <condition><expr><name>ln</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>ln</name> <operator>=</operator> <name><name>ln</name><operator>-&gt;</operator><name>next</name></name></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>GNode</name> <modifier>*</modifier></type><name>cgn</name> <init>= <expr><name><name>ln</name><operator>-&gt;</operator><name>datum</name></name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>cgn</name><operator>-&gt;</operator><name>type</name></name> <operator>&amp;</operator> <name>OP_WAIT</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>add_wait_dependency</name><argument_list>(<argument><expr><name>owln</name></expr></argument>, <argument><expr><name>cgn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>owln</name> <operator>=</operator> <name>ln</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>Lst_Append</name><argument_list>(<argument><expr><operator>&amp;</operator><name>examine</name></expr></argument>, <argument><expr><name>cgn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></while>
+
+<expr_stmt><expr><call><name>Lst_Done</name><argument_list>(<argument><expr><operator>&amp;</operator><name>examine</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><name>bool</name></type>
+<name>Make_Run</name><parameter_list>(<parameter><decl><type><name>GNodeList</name> <modifier>*</modifier></type><name>targs</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>errors</name></decl>;</decl_stmt>
+
+
+<expr_stmt><expr><call><name>Lst_Init</name><argument_list>(<argument><expr><operator>&amp;</operator><name>toBeMade</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>Make_ExpandUse</name><argument_list>(<argument><expr><name>targs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Make_ProcessWait</name><argument_list>(<argument><expr><name>targs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>DEBUG</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>debug_printf</name><argument_list>(<argument><expr><literal type="string">"#***#full graph\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Targ_PrintGraph</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>opts</name><operator>.</operator><name>queryFlag</name></name></expr>)</condition> <block>{<block_content>
+
+
+
+
+
+
+<return>return <expr><call><name>MakeStartJobs</name><argument_list>()</argument_list></call></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>MakeStartJobs</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+
+
+
+
+
+
+<while>while <condition>(<expr><operator>!</operator><call><name>Lst_IsEmpty</name><argument_list>(<argument><expr><operator>&amp;</operator><name>toBeMade</name></expr></argument>)</argument_list></call> <operator>||</operator> <name>jobTokensRunning</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>Job_CatchOutput</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><call><name>MakeStartJobs</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></while>
+
+<expr_stmt><expr><name>errors</name> <operator>=</operator> <call><name>Job_Finish</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+<expr_stmt><expr><call><name>DEBUG1</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>, <argument><expr><literal type="string">"done: errors %d\n"</literal></expr></argument>, <argument><expr><name>errors</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>errors</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>MakePrintStatusList</name><argument_list>(<argument><expr><name>targs</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>errors</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>DEBUG</name><argument_list>(<argument><expr><name>MAKE</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>debug_printf</name><argument_list>(<argument><expr><literal type="string">"done: errors %d\n"</literal></expr></argument>, <argument><expr><name>errors</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>errors</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Targ_PrintGraph</name><argument_list>(<argument><expr><literal type="number">4</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name>errors</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+</unit>

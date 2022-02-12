@@ -1,0 +1,836 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/libxo/encoder/csv/enc_csv.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;string.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/types.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;unistd.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdint.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;ctype.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;limits.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"xo.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"xo_encoder.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"xo_buf.h"</cpp:file></cpp:include>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>UNUSED</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>UNUSED</name></cpp:macro> <cpp:value>__attribute__ ((__unused__))</cpp:value></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<typedef>typedef <type><struct>struct <name>path_frame_s</name> <block>{
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>pf_name</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>pf_flags</name></decl>;</decl_stmt>
+}</block></struct></type> <name>path_frame_t</name>;</typedef>
+
+<typedef>typedef <type><struct>struct <name>stack_frame_s</name> <block>{
+<decl_stmt><decl><type><name>ssize_t</name></type> <name>sf_off</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>sf_flags</name></decl>;</decl_stmt>
+}</block></struct></type> <name>stack_frame_t</name>;</typedef>
+
+
+
+<typedef>typedef <type><struct>struct <name>leaf_s</name> <block>{
+<decl_stmt><decl><type><name>ssize_t</name></type> <name>f_name</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ssize_t</name></type> <name>f_value</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>f_flags</name></decl>;</decl_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>CSV_STACK_IS_NEEDED</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<decl_stmt><decl><type><name>ssize_t</name></type> <name>f_depth</name></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+}</block></struct></type> <name>leaf_t</name>;</typedef>
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>LF_KEY</name></cpp:macro> <cpp:value>(1&lt;&lt;0)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>LF_HAS_VALUE</name></cpp:macro> <cpp:value>(1&lt;&lt;1)</cpp:value></cpp:define>
+
+<typedef>typedef <type><struct>struct <name>csv_private_s</name> <block>{
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>c_flags</name></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>c_path_buf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>path_frame_t</name> <modifier>*</modifier></type><name>c_path</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ssize_t</name></type> <name>c_path_max</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ssize_t</name></type> <name>c_path_cur</name></decl>;</decl_stmt>
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>CSV_STACK_IS_NEEDED</name></expr></cpp:if>
+<decl_stmt><decl><type><name>xo_buffer_t</name></type> <name>c_stack_buf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>stack_frame_t</name> <modifier>*</modifier></type><name>c_stack</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ssize_t</name></type> <name>c_stack_max</name></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<decl_stmt><decl><type><name>ssize_t</name></type> <name>c_stack_depth</name></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><name>xo_buffer_t</name></type> <name>c_name_buf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>xo_buffer_t</name></type> <name>c_value_buf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>leaf_t</name> <modifier>*</modifier></type><name>c_leaf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ssize_t</name></type> <name>c_leaf_depth</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ssize_t</name></type> <name>c_leaf_max</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>xo_buffer_t</name></type> <name>c_data</name></decl>;</decl_stmt>
+}</block></struct></type> <name>csv_private_t</name>;</typedef>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>C_STACK_MAX</name></cpp:macro> <cpp:value>32</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>C_LEAF_MAX</name></cpp:macro> <cpp:value>32</cpp:value></cpp:define>
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>CF_HEADER_DONE</name></cpp:macro> <cpp:value>(1&lt;&lt;0)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>CF_NO_HEADER</name></cpp:macro> <cpp:value>(1&lt;&lt;1)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>CF_NO_KEYS</name></cpp:macro> <cpp:value>(1&lt;&lt;2)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>CF_VALUE_ONLY</name></cpp:macro> <cpp:value>(1&lt;&lt;3)</cpp:value></cpp:define>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>CF_DOS_NEWLINE</name></cpp:macro> <cpp:value>(1&lt;&lt;4)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>CF_LEAFS_DONE</name></cpp:macro> <cpp:value>(1&lt;&lt;5)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>CF_NO_QUOTES</name></cpp:macro> <cpp:value>(1&lt;&lt;6)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>CF_RECORD_DATA</name></cpp:macro> <cpp:value>(1&lt;&lt;7)</cpp:value></cpp:define>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>CF_DEBUG</name></cpp:macro> <cpp:value>(1&lt;&lt;8)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>CF_HAS_PATH</name></cpp:macro> <cpp:value>(1&lt;&lt;9)</cpp:value></cpp:define>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>csv_dbg</name> <parameter_list>(<parameter><decl><type><name>xo_handle_t</name> <modifier>*</modifier><name>xop</name></type> <name>UNUSED</name></decl></parameter>, <parameter><decl><type><name>csv_private_t</name> <modifier>*</modifier><name>csv</name></type> <name>UNUSED</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>fmt</name></decl></parameter>, <parameter><decl><type><modifier>...</modifier></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>csv</name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <operator>!</operator><operator>(</operator><name><name>csv</name><operator>-&gt;</operator><name>c_flags</name></name> <operator>&amp;</operator> <name>CF_DEBUG</name><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+<decl_stmt><decl><type><name>va_list</name></type> <name>vap</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>va_start</name><argument_list>(<argument><expr><name>vap</name></expr></argument>, <argument><expr><name>fmt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>vfprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><name>fmt</name></expr></argument>, <argument><expr><name>vap</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>va_end</name><argument_list>(<argument><expr><name>vap</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>csv_create</name> <parameter_list>(<parameter><decl><type><name>xo_handle_t</name> <modifier>*</modifier></type><name>xop</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>csv_private_t</name> <modifier>*</modifier></type><name>csv</name> <init>= <expr><call><name>xo_realloc</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>csv</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>csv</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>bzero</name><argument_list>(<argument><expr><name>csv</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>csv</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>xo_buf_init</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_data</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>xo_buf_init</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_name_buf</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>xo_buf_init</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_value_buf</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>CSV_STACK_IS_NEEDED</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr_stmt><expr><call><name>xo_buf_init</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_stack_buf</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<expr_stmt><expr><call><name>xo_set_private</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>csv_destroy</name> <parameter_list>(<parameter><decl><type><name>xo_handle_t</name> <modifier>*</modifier><name>xop</name></type> <name>UNUSED</name></decl></parameter>, <parameter><decl><type><name>csv_private_t</name> <modifier>*</modifier></type><name>csv</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+<expr_stmt><expr><call><name>xo_buf_cleanup</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_data</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>xo_buf_cleanup</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_name_buf</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>xo_buf_cleanup</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_value_buf</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>CSV_STACK_IS_NEEDED</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr_stmt><expr><call><name>xo_buf_cleanup</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_stack_buf</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<if_stmt><if>if <condition>(<expr><name><name>csv</name><operator>-&gt;</operator><name>c_leaf</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>xo_free</name><argument_list>(<argument><expr><name><name>csv</name><operator>-&gt;</operator><name>c_leaf</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>csv</name><operator>-&gt;</operator><name>c_path_buf</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>xo_free</name><argument_list>(<argument><expr><name><name>csv</name><operator>-&gt;</operator><name>c_path_buf</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <specifier>const</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>csv_path_top</name> <parameter_list>(<parameter><decl><type><name>csv_private_t</name> <modifier>*</modifier></type><name>csv</name></decl></parameter>, <parameter><decl><type><name>ssize_t</name></type> <name>delta</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name><name>csv</name><operator>-&gt;</operator><name>c_flags</name></name> <operator>&amp;</operator> <name>CF_HAS_PATH</name><operator>)</operator> <operator>||</operator> <name><name>csv</name><operator>-&gt;</operator><name>c_path</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>NULL</name></expr>;</return></block_content></block></if></if_stmt>
+
+<decl_stmt><decl><type><name>ssize_t</name></type> <name>cur</name> <init>= <expr><name><name>csv</name><operator>-&gt;</operator><name>c_path_cur</name></name> <operator>+</operator> <name>delta</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>cur</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>NULL</name></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><name><name>csv</name><operator>-&gt;</operator><name>c_path</name><index>[<expr><name>cur</name></expr>]</index></name><operator>.</operator><name>pf_name</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <specifier>inline</specifier> <name>void</name></type>
+<name>csv_stack_push</name> <parameter_list>(<parameter><decl><type><name>csv_private_t</name> <modifier>*</modifier><name>csv</name></type> <name>UNUSED</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier><name>name</name></type> <name>UNUSED</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>CSV_STACK_IS_NEEDED</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr_stmt><expr><name><name>csv</name><operator>-&gt;</operator><name>c_stack_depth</name></name> <operator>+=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <specifier>inline</specifier> <name>void</name></type>
+<name>csv_stack_pop</name> <parameter_list>(<parameter><decl><type><name>csv_private_t</name> <modifier>*</modifier><name>csv</name></type> <name>UNUSED</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier><name>name</name></type> <name>UNUSED</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>CSV_STACK_IS_NEEDED</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr_stmt><expr><name><name>csv</name><operator>-&gt;</operator><name>c_stack_depth</name></name> <operator>-=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>QF_NEEDS_QUOTES</name></cpp:macro> <cpp:value>(1&lt;&lt;0)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>QF_NEEDS_ESCAPE</name></cpp:macro> <cpp:value>(1&lt;&lt;1)</cpp:value></cpp:define>
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>uint32_t</name></type>
+<name>csv_quote_flags</name> <parameter_list>(<parameter><decl><type><name>xo_handle_t</name> <modifier>*</modifier><name>xop</name></type> <name>UNUSED</name></decl></parameter>, <parameter><decl><type><name>csv_private_t</name> <modifier>*</modifier><name>csv</name></type> <name>UNUSED</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>value</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>char</name></type> <name><name>quoted</name><index>[]</index></name> <init>= <expr><literal type="string">"\n\r\","</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>char</name></type> <name><name>escaped</name><index>[]</index></name> <init>= <expr><literal type="string">"\""</literal></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>csv</name><operator>-&gt;</operator><name>c_flags</name></name> <operator>&amp;</operator> <name>CF_NO_QUOTES</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><literal type="number">0</literal></expr>;</return></block_content></block></if></if_stmt>
+
+<decl_stmt><decl><type><name>size_t</name></type> <name>len</name> <init>= <expr><call><name>strlen</name><argument_list>(<argument><expr><name>value</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>rc</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>strcspn</name><argument_list>(<argument><expr><name>value</name></expr></argument>, <argument><expr><name>quoted</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>len</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>rc</name> <operator>|=</operator> <name>QF_NEEDS_QUOTES</name></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><call><name>isspace</name><argument_list>(<argument><expr><operator>(</operator><name>int</name><operator>)</operator> <name><name>value</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>rc</name> <operator>|=</operator> <name>QF_NEEDS_QUOTES</name></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><call><name>isspace</name><argument_list>(<argument><expr><operator>(</operator><name>int</name><operator>)</operator> <name><name>value</name><index>[<expr><name>len</name> <operator>-</operator> <literal type="number">1</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>rc</name> <operator>|=</operator> <name>QF_NEEDS_QUOTES</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>strcspn</name><argument_list>(<argument><expr><name>value</name></expr></argument>, <argument><expr><name>escaped</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>len</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>rc</name> <operator>|=</operator> <name>QF_NEEDS_ESCAPE</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>csv_dbg</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>, <argument><expr><literal type="string">"csv: quote flags [%s] -&gt; %x (%zu/%zu)\n"</literal></expr></argument>,
+<argument><expr><name>value</name></expr></argument>, <argument><expr><name>rc</name></expr></argument>, <argument><expr><name>len</name></expr></argument>, <argument><expr><call><name>strcspn</name><argument_list>(<argument><expr><name>value</name></expr></argument>, <argument><expr><name>quoted</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><name>rc</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>csv_escape</name> <parameter_list>(<parameter><decl><type><name>xo_buffer_t</name> <modifier>*</modifier></type><name>xbp</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>value</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>len</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>cp</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>ep</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>np</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>cp</name> <operator>=</operator> <name>value</name></expr><operator>,</operator> <expr><name>ep</name> <operator>=</operator> <name>value</name> <operator>+</operator> <name>len</name></expr>;</init> <condition><expr><name>cp</name> <operator>&amp;&amp;</operator> <name>cp</name> <operator>&lt;</operator> <name>ep</name></expr>;</condition> <incr><expr><name>cp</name> <operator>=</operator> <name>np</name></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>np</name> <operator>=</operator> <call><name>strchr</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><literal type="char">'"'</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>np</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>np</name> <operator>+=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>xo_buf_append</name><argument_list>(<argument><expr><name>xbp</name></expr></argument>, <argument><expr><name>cp</name></expr></argument>, <argument><expr><name>np</name> <operator>-</operator> <name>cp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>xo_buf_append</name><argument_list>(<argument><expr><name>xbp</name></expr></argument>, <argument><expr><literal type="string">"\""</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>xo_buf_append</name><argument_list>(<argument><expr><name>xbp</name></expr></argument>, <argument><expr><name>cp</name></expr></argument>, <argument><expr><name>ep</name> <operator>-</operator> <name>cp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>csv_append_newline</name> <parameter_list>(<parameter><decl><type><name>xo_buffer_t</name> <modifier>*</modifier></type><name>xbp</name></decl></parameter>, <parameter><decl><type><name>csv_private_t</name> <modifier>*</modifier></type><name>csv</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>csv</name><operator>-&gt;</operator><name>c_flags</name></name> <operator>&amp;</operator> <name>CF_DOS_NEWLINE</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>xo_buf_append</name><argument_list>(<argument><expr><name>xbp</name></expr></argument>, <argument><expr><literal type="string">"\r\n"</literal></expr></argument>, <argument><expr><literal type="number">2</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>xo_buf_append</name><argument_list>(<argument><expr><name>xbp</name></expr></argument>, <argument><expr><literal type="string">"\n"</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>csv_emit_record</name> <parameter_list>(<parameter><decl><type><name>xo_handle_t</name> <modifier>*</modifier></type><name>xop</name></decl></parameter>, <parameter><decl><type><name>csv_private_t</name> <modifier>*</modifier></type><name>csv</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>csv_dbg</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>, <argument><expr><literal type="string">"csv: emit: ...\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>ssize_t</name></type> <name>fnum</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>quote_flags</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>leaf_t</name> <modifier>*</modifier></type><name>lp</name></decl>;</decl_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>csv</name><operator>-&gt;</operator><name>c_leaf_depth</name></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name><name>csv</name><operator>-&gt;</operator><name>c_flags</name></name> <operator>&amp;</operator> <operator>(</operator><name>CF_HEADER_DONE</name> <operator>|</operator> <name>CF_NO_HEADER</name><operator>)</operator><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>csv</name><operator>-&gt;</operator><name>c_flags</name></name> <operator>|=</operator> <name>CF_HEADER_DONE</name></expr>;</expr_stmt>
+
+<for>for <control>(<init><expr><name>fnum</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>fnum</name> <operator>&lt;</operator> <name><name>csv</name><operator>-&gt;</operator><name>c_leaf_depth</name></name></expr>;</condition> <incr><expr><name>fnum</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>lp</name> <operator>=</operator> <operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_leaf</name><index>[<expr><name>fnum</name></expr>]</index></name></expr>;</expr_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>name</name> <init>= <expr><call><name>xo_buf_data</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_name_buf</name></name></expr></argument>, <argument><expr><name><name>lp</name><operator>-&gt;</operator><name>f_name</name></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>fnum</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>xo_buf_append</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_data</name></name></expr></argument>, <argument><expr><literal type="string">","</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>xo_buf_append</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_data</name></name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name>name</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><call><name>csv_append_newline</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_data</name></name></expr></argument>, <argument><expr><name>csv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<for>for <control>(<init><expr><name>fnum</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>fnum</name> <operator>&lt;</operator> <name><name>csv</name><operator>-&gt;</operator><name>c_leaf_depth</name></name></expr>;</condition> <incr><expr><name>fnum</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>lp</name> <operator>=</operator> <operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_leaf</name><index>[<expr><name>fnum</name></expr>]</index></name></expr>;</expr_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>value</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>lp</name><operator>-&gt;</operator><name>f_flags</name></name> <operator>&amp;</operator> <name>LF_HAS_VALUE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>value</name> <operator>=</operator> <call><name>xo_buf_data</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_value_buf</name></name></expr></argument>, <argument><expr><name><name>lp</name><operator>-&gt;</operator><name>f_value</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>value</name> <operator>=</operator> <literal type="string">""</literal></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<expr_stmt><expr><name>quote_flags</name> <operator>=</operator> <call><name>csv_quote_flags</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>, <argument><expr><name>value</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>fnum</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>xo_buf_append</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_data</name></name></expr></argument>, <argument><expr><literal type="string">","</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>quote_flags</name> <operator>&amp;</operator> <name>QF_NEEDS_QUOTES</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>xo_buf_append</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_data</name></name></expr></argument>, <argument><expr><literal type="string">"\""</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>quote_flags</name> <operator>&amp;</operator> <name>QF_NEEDS_ESCAPE</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>csv_escape</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_data</name></name></expr></argument>, <argument><expr><name>value</name></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name>value</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>xo_buf_append</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_data</name></name></expr></argument>, <argument><expr><name>value</name></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name>value</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>quote_flags</name> <operator>&amp;</operator> <name>QF_NEEDS_QUOTES</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>xo_buf_append</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_data</name></name></expr></argument>, <argument><expr><literal type="string">"\""</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><call><name>csv_append_newline</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_data</name></name></expr></argument>, <argument><expr><name>csv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>xo_get_flags</name><argument_list>(<argument><expr><name>xop</name></expr></argument>)</argument_list></call> <operator>&amp;</operator> <operator>(</operator><name>XOF_FLUSH</name> <operator>|</operator> <name>XOF_FLUSH_LINE</name><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>xo_flush_h</name><argument_list>(<argument><expr><name>xop</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+<for>for <control>(<init><expr><name>fnum</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>fnum</name> <operator>&lt;</operator> <name><name>csv</name><operator>-&gt;</operator><name>c_leaf_depth</name></name></expr>;</condition> <incr><expr><name>fnum</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>lp</name> <operator>=</operator> <operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_leaf</name><index>[<expr><name>fnum</name></expr>]</index></name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>lp</name><operator>-&gt;</operator><name>f_flags</name></name> <operator>&amp;=</operator> <operator>~</operator><name>LF_HAS_VALUE</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>lp</name><operator>-&gt;</operator><name>f_value</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><call><name>xo_buf_reset</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_value_buf</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+<expr_stmt><expr><name><name>csv</name><operator>-&gt;</operator><name>c_flags</name></name> <operator>|=</operator> <name>CF_LEAFS_DONE</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>csv_open_level</name> <parameter_list>(<parameter><decl><type><name>xo_handle_t</name> <modifier>*</modifier><name>xop</name></type> <name>UNUSED</name></decl></parameter>, <parameter><decl><type><name>csv_private_t</name> <modifier>*</modifier></type><name>csv</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>name</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>instance</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><name><name>csv</name><operator>-&gt;</operator><name>c_flags</name></name> <operator>&amp;</operator> <name>CF_RECORD_DATA</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>csv</name><operator>-&gt;</operator><name>c_flags</name></name> <operator>&amp;=</operator> <operator>~</operator><name>CF_RECORD_DATA</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>csv_emit_record</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>path_top</name> <init>= <expr><call><name>csv_path_top</name><argument_list>(<argument><expr><name>csv</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>path_top</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>instance</name> <operator>&amp;&amp;</operator> <operator>!</operator><operator>(</operator><name><name>csv</name><operator>-&gt;</operator><name>c_flags</name></name> <operator>&amp;</operator> <name>CF_HAS_PATH</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>csv_dbg</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>, <argument><expr><literal type="string">"csv: recording (no-path) ...\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>csv</name><operator>-&gt;</operator><name>c_flags</name></name> <operator>|=</operator> <name>CF_RECORD_DATA</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><call><name>xo_streq</name><argument_list>(<argument><expr><name>path_top</name></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>csv</name><operator>-&gt;</operator><name>c_path_cur</name></name> <operator>+=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>csv_dbg</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>, <argument><expr><literal type="string">"csv: match: [%s] (%zd/%zd)\n"</literal></expr></argument>, <argument><expr><name>name</name></expr></argument>,
+<argument><expr><name><name>csv</name><operator>-&gt;</operator><name>c_path_cur</name></name></expr></argument>, <argument><expr><name><name>csv</name><operator>-&gt;</operator><name>c_path_max</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>csv</name><operator>-&gt;</operator><name>c_path_cur</name></name> <operator>==</operator> <name><name>csv</name><operator>-&gt;</operator><name>c_path_max</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>csv_dbg</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>, <argument><expr><literal type="string">"csv: recording ...\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>csv</name><operator>-&gt;</operator><name>c_flags</name></name> <operator>|=</operator> <name>CF_RECORD_DATA</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><call><name>csv_stack_push</name><argument_list>(<argument><expr><name>csv</name></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>csv_close_level</name> <parameter_list>(<parameter><decl><type><name>xo_handle_t</name> <modifier>*</modifier><name>xop</name></type> <name>UNUSED</name></decl></parameter>, <parameter><decl><type><name>csv_private_t</name> <modifier>*</modifier></type><name>csv</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>name</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><name><name>csv</name><operator>-&gt;</operator><name>c_flags</name></name> <operator>&amp;</operator> <name>CF_RECORD_DATA</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>csv</name><operator>-&gt;</operator><name>c_flags</name></name> <operator>&amp;=</operator> <operator>~</operator><name>CF_RECORD_DATA</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>csv_emit_record</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>path_top</name> <init>= <expr><call><name>csv_path_top</name><argument_list>(<argument><expr><name>csv</name></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>csv_dbg</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>, <argument><expr><literal type="string">"csv: close: [%s] [%s] (%zd)\n"</literal></expr></argument>, <argument><expr><name>name</name></expr></argument>,
+<argument><expr><ternary><condition><expr><name>path_top</name></expr> ?</condition><then/><else>: <expr><literal type="string">""</literal></expr></else></ternary></expr></argument>, <argument><expr><name><name>csv</name><operator>-&gt;</operator><name>c_path_cur</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>path_top</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <call><name>xo_streq</name><argument_list>(<argument><expr><name>path_top</name></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>csv</name><operator>-&gt;</operator><name>c_path_cur</name></name> <operator>-=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><call><name>csv_stack_pop</name><argument_list>(<argument><expr><name>csv</name></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>csv_leaf_num</name> <parameter_list>(<parameter><decl><type><name>xo_handle_t</name> <modifier>*</modifier><name>xop</name></type> <name>UNUSED</name></decl></parameter>, <parameter><decl><type><name>csv_private_t</name> <modifier>*</modifier></type><name>csv</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>name</name></decl></parameter>, <parameter><decl><type><name>xo_xff_flags_t</name></type> <name>flags</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ssize_t</name></type> <name>fnum</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>leaf_t</name> <modifier>*</modifier></type><name>lp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>xo_buffer_t</name> <modifier>*</modifier></type><name>xbp</name> <init>= <expr><operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_name_buf</name></name></expr></init></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>fnum</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>fnum</name> <operator>&lt;</operator> <name><name>csv</name><operator>-&gt;</operator><name>c_leaf_depth</name></name></expr>;</condition> <incr><expr><name>fnum</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>lp</name> <operator>=</operator> <operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_leaf</name><index>[<expr><name>fnum</name></expr>]</index></name></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>fname</name> <init>= <expr><call><name>xo_buf_data</name><argument_list>(<argument><expr><name>xbp</name></expr></argument>, <argument><expr><name><name>lp</name><operator>-&gt;</operator><name>f_name</name></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>xo_streq</name><argument_list>(<argument><expr><name>fname</name></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>fnum</name></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></for>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>csv</name><operator>-&gt;</operator><name>c_flags</name></name> <operator>&amp;</operator> <name>CF_LEAFS_DONE</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>csv</name><operator>-&gt;</operator><name>c_leaf_depth</name></name> <operator>+</operator> <literal type="number">1</literal> <operator>&gt;=</operator> <name><name>csv</name><operator>-&gt;</operator><name>c_leaf_max</name></name></expr>)</condition> <block>{<block_content>
+
+<decl_stmt><decl><type><name>ssize_t</name></type> <name>new_max</name> <init>= <expr><name><name>csv</name><operator>-&gt;</operator><name>c_leaf_max</name></name> <operator>*</operator> <literal type="number">2</literal></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>new_max</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>new_max</name> <operator>=</operator> <name>C_LEAF_MAX</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>lp</name> <operator>=</operator> <call><name>xo_realloc</name><argument_list>(<argument><expr><name><name>csv</name><operator>-&gt;</operator><name>c_leaf</name></name></expr></argument>, <argument><expr><name>new_max</name> <operator>*</operator> <sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>lp</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>lp</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+
+
+<expr_stmt><expr><call><name>bzero</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>lp</name><index>[<expr><name><name>csv</name><operator>-&gt;</operator><name>c_leaf_max</name></name></expr>]</index></name></expr></argument>, <argument><expr><name><name>csv</name><operator>-&gt;</operator><name>c_leaf_max</name></name> <operator>*</operator> <sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>lp</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><name><name>csv</name><operator>-&gt;</operator><name>c_leaf</name></name> <operator>=</operator> <name>lp</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>csv</name><operator>-&gt;</operator><name>c_leaf_max</name></name> <operator>=</operator> <name>new_max</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>lp</name> <operator>=</operator> <operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_leaf</name><index>[<expr><name><name>csv</name><operator>-&gt;</operator><name>c_leaf_depth</name></name><operator>++</operator></expr>]</index></name></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>CSV_STACK_IS_NEEDED</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr_stmt><expr><name><name>lp</name><operator>-&gt;</operator><name>f_depth</name></name> <operator>=</operator> <name><name>csv</name><operator>-&gt;</operator><name>c_stack_depth</name></name></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<expr_stmt><expr><name><name>lp</name><operator>-&gt;</operator><name>f_name</name></name> <operator>=</operator> <call><name>xo_buf_offset</name><argument_list>(<argument><expr><name>xbp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name> <init>= <expr><call><name>xo_buf_cur</name><argument_list>(<argument><expr><name>xbp</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>xo_buf_append</name><argument_list>(<argument><expr><name>xbp</name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name>name</name></expr></argument>)</argument_list></call> <operator>+</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>flags</name> <operator>&amp;</operator> <name>XFF_KEY</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>lp</name><operator>-&gt;</operator><name>f_flags</name></name> <operator>|=</operator> <name>LF_KEY</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>csv_dbg</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>, <argument><expr><literal type="string">"csv: leaf: name: %zd [%s] [%s] %x\n"</literal></expr></argument>,
+<argument><expr><name>fnum</name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><name>cp</name></expr></argument>, <argument><expr><name><name>lp</name><operator>-&gt;</operator><name>f_flags</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><name>fnum</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>csv_leaf_set</name> <parameter_list>(<parameter><decl><type><name>xo_handle_t</name> <modifier>*</modifier><name>xop</name></type> <name>UNUSED</name></decl></parameter>, <parameter><decl><type><name>csv_private_t</name> <modifier>*</modifier></type><name>csv</name></decl></parameter>, <parameter><decl><type><name>leaf_t</name> <modifier>*</modifier></type><name>lp</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>value</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>xo_buffer_t</name> <modifier>*</modifier></type><name>xbp</name> <init>= <expr><operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_value_buf</name></name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>lp</name><operator>-&gt;</operator><name>f_value</name></name> <operator>=</operator> <call><name>xo_buf_offset</name><argument_list>(<argument><expr><name>xbp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>lp</name><operator>-&gt;</operator><name>f_flags</name></name> <operator>|=</operator> <name>LF_HAS_VALUE</name></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name> <init>= <expr><call><name>xo_buf_cur</name><argument_list>(<argument><expr><name>xbp</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>xo_buf_append</name><argument_list>(<argument><expr><name>xbp</name></expr></argument>, <argument><expr><name>value</name></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name>value</name></expr></argument>)</argument_list></call> <operator>+</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>csv_dbg</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>, <argument><expr><literal type="string">"csv: leaf: value: [%s] [%s] %x\n"</literal></expr></argument>,
+<argument><expr><name>value</name></expr></argument>, <argument><expr><name>cp</name></expr></argument>, <argument><expr><name><name>lp</name><operator>-&gt;</operator><name>f_flags</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>csv_record_leafs</name> <parameter_list>(<parameter><decl><type><name>xo_handle_t</name> <modifier>*</modifier></type><name>xop</name></decl></parameter>, <parameter><decl><type><name>csv_private_t</name> <modifier>*</modifier></type><name>csv</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>leafs_raw</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>ep</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>np</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ssize_t</name></type> <name>len</name> <init>= <expr><call><name>strlen</name><argument_list>(<argument><expr><name>leafs_raw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>leafs_buf</name> <init>= <expr><call><name>alloca</name><argument_list>(<argument><expr><name>len</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>leafs_buf</name></expr></argument>, <argument><expr><name>leafs_raw</name></expr></argument>, <argument><expr><name>len</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<for>for <control>(<init><expr><name>cp</name> <operator>=</operator> <name>leafs_buf</name></expr><operator>,</operator> <expr><name>ep</name> <operator>=</operator> <name>leafs_buf</name> <operator>+</operator> <name>len</name></expr>;</init> <condition><expr><name>cp</name> <operator>&amp;&amp;</operator> <name>cp</name> <operator>&lt;</operator> <name>ep</name></expr>;</condition> <incr><expr><name>cp</name> <operator>=</operator> <name>np</name></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>np</name> <operator>=</operator> <call><name>strchr</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><literal type="char">'.'</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>np</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>*</operator><name>np</name><operator>++</operator> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>cp</name> <operator>==</operator> <literal type="char">'\0'</literal></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>csv_dbg</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>, <argument><expr><literal type="string">"adding leaf: [%s]\n"</literal></expr></argument>, <argument><expr><name>cp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>csv_leaf_num</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>, <argument><expr><name>cp</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+
+
+
+<expr_stmt><expr><name><name>csv</name><operator>-&gt;</operator><name>c_flags</name></name> <operator>|=</operator> <name>CF_LEAFS_DONE</name></expr>;</expr_stmt>
+
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>csv_record_path</name> <parameter_list>(<parameter><decl><type><name>xo_handle_t</name> <modifier>*</modifier></type><name>xop</name></decl></parameter>, <parameter><decl><type><name>csv_private_t</name> <modifier>*</modifier></type><name>csv</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>path_raw</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>count</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>ep</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>np</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ssize_t</name></type> <name>len</name> <init>= <expr><call><name>strlen</name><argument_list>(<argument><expr><name>path_raw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>path_buf</name> <init>= <expr><call><name>xo_realloc</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>len</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>path_buf</name></expr></argument>, <argument><expr><name>path_raw</name></expr></argument>, <argument><expr><name>len</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<for>for <control>(<init><expr><name>cp</name> <operator>=</operator> <name>path_buf</name></expr><operator>,</operator> <expr><name>ep</name> <operator>=</operator> <name>path_buf</name> <operator>+</operator> <name>len</name></expr><operator>,</operator> <expr><name>count</name> <operator>=</operator> <literal type="number">2</literal></expr>;</init>
+<condition><expr><name>cp</name> <operator>&amp;&amp;</operator> <name>cp</name> <operator>&lt;</operator> <name>ep</name></expr>;</condition> <incr><expr><name>cp</name> <operator>=</operator> <name>np</name></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>np</name> <operator>=</operator> <call><name>strchr</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><literal type="char">'/'</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>np</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>np</name> <operator>+=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>count</name> <operator>+=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+
+<decl_stmt><decl><type><name>path_frame_t</name> <modifier>*</modifier></type><name>path</name> <init>= <expr><call><name>xo_realloc</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name><name>path</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>)</argument_list></sizeof> <operator>*</operator> <name>count</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>path</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>xo_failure</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><literal type="string">"allocation failure for path '%s'"</literal></expr></argument>, <argument><expr><name>path_buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>bzero</name><argument_list>(<argument><expr><name>path</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name><name>path</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>)</argument_list></sizeof> <operator>*</operator> <name>count</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<for>for <control>(<init><expr><name>count</name> <operator>=</operator> <literal type="number">0</literal></expr><operator>,</operator> <expr><name>cp</name> <operator>=</operator> <name>path_buf</name></expr>;</init> <condition><expr><name>cp</name> <operator>&amp;&amp;</operator> <name>cp</name> <operator>&lt;</operator> <name>ep</name></expr>;</condition> <incr><expr><name>cp</name> <operator>=</operator> <name>np</name></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name><name>path</name><index>[<expr><name>count</name><operator>++</operator></expr>]</index></name><operator>.</operator><name>pf_name</name> <operator>=</operator> <name>cp</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>np</name> <operator>=</operator> <call><name>strchr</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><literal type="char">'/'</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>np</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>*</operator><name>np</name><operator>++</operator> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>csv_dbg</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>, <argument><expr><literal type="string">"path: [%s]\n"</literal></expr></argument>, <argument><expr><name>cp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><name><name>path</name><index>[<expr><name>count</name></expr>]</index></name><operator>.</operator><name>pf_name</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>csv</name><operator>-&gt;</operator><name>c_path</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>xo_free</name><argument_list>(<argument><expr><name><name>csv</name><operator>-&gt;</operator><name>c_path</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>csv</name><operator>-&gt;</operator><name>c_path_buf</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>xo_free</name><argument_list>(<argument><expr><name><name>csv</name><operator>-&gt;</operator><name>c_path_buf</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name><name>csv</name><operator>-&gt;</operator><name>c_path_buf</name></name> <operator>=</operator> <name>path_buf</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>csv</name><operator>-&gt;</operator><name>c_path</name></name> <operator>=</operator> <name>path</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>csv</name><operator>-&gt;</operator><name>c_path_max</name></name> <operator>=</operator> <name>count</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>csv</name><operator>-&gt;</operator><name>c_path_cur</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>csv_options</name> <parameter_list>(<parameter><decl><type><name>xo_handle_t</name> <modifier>*</modifier></type><name>xop</name></decl></parameter>, <parameter><decl><type><name>csv_private_t</name> <modifier>*</modifier></type><name>csv</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>raw_opts</name></decl></parameter>, <parameter><decl><type><name>char</name></type> <name>opts_char</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ssize_t</name></type> <name>len</name> <init>= <expr><call><name>strlen</name><argument_list>(<argument><expr><name>raw_opts</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>options</name> <init>= <expr><call><name>alloca</name><argument_list>(<argument><expr><name>len</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>options</name></expr></argument>, <argument><expr><name>raw_opts</name></expr></argument>, <argument><expr><name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>options</name><index>[<expr><name>len</name></expr>]</index></name> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>cp</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>ep</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>np</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>vp</name></decl>;</decl_stmt>
+<for>for <control>(<init><expr><name>cp</name> <operator>=</operator> <name>options</name></expr><operator>,</operator> <expr><name>ep</name> <operator>=</operator> <name>options</name> <operator>+</operator> <name>len</name> <operator>+</operator> <literal type="number">1</literal></expr>;</init> <condition><expr><name>cp</name> <operator>&amp;&amp;</operator> <name>cp</name> <operator>&lt;</operator> <name>ep</name></expr>;</condition> <incr><expr><name>cp</name> <operator>=</operator> <name>np</name></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>np</name> <operator>=</operator> <call><name>strchr</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><name>opts_char</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>np</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>*</operator><name>np</name><operator>++</operator> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>vp</name> <operator>=</operator> <call><name>strchr</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><literal type="char">'='</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>vp</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>*</operator><name>vp</name><operator>++</operator> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>xo_streq</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><literal type="string">"path"</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><name>vp</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <call><name>csv_record_path</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>, <argument><expr><name>vp</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name><name>csv</name><operator>-&gt;</operator><name>c_flags</name></name> <operator>|=</operator> <name>CF_HAS_PATH</name></expr>;</expr_stmt>
+
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><call><name>xo_streq</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><literal type="string">"leafs"</literal></expr></argument>)</argument_list></call>
+<operator>||</operator> <call><name>xo_streq</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><literal type="string">"leaf"</literal></expr></argument>)</argument_list></call>
+<operator>||</operator> <call><name>xo_streq</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><literal type="string">"leaves"</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><name>vp</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <call><name>csv_record_leafs</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>, <argument><expr><name>vp</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><call><name>xo_streq</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><literal type="string">"no-keys"</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>csv</name><operator>-&gt;</operator><name>c_flags</name></name> <operator>|=</operator> <name>CF_NO_KEYS</name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><call><name>xo_streq</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><literal type="string">"no-header"</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>csv</name><operator>-&gt;</operator><name>c_flags</name></name> <operator>|=</operator> <name>CF_NO_HEADER</name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><call><name>xo_streq</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><literal type="string">"value-only"</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>csv</name><operator>-&gt;</operator><name>c_flags</name></name> <operator>|=</operator> <name>CF_VALUE_ONLY</name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><call><name>xo_streq</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><literal type="string">"dos"</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>csv</name><operator>-&gt;</operator><name>c_flags</name></name> <operator>|=</operator> <name>CF_DOS_NEWLINE</name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><call><name>xo_streq</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><literal type="string">"no-quotes"</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>csv</name><operator>-&gt;</operator><name>c_flags</name></name> <operator>|=</operator> <name>CF_NO_QUOTES</name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><call><name>xo_streq</name><argument_list>(<argument><expr><name>cp</name></expr></argument>, <argument><expr><literal type="string">"debug"</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>csv</name><operator>-&gt;</operator><name>c_flags</name></name> <operator>|=</operator> <name>CF_DEBUG</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>xo_warn_hc</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>,
+<argument><expr><literal type="string">"unknown encoder option value: '%s'"</literal></expr></argument>, <argument><expr><name>cp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></for>
+
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>csv_data</name> <parameter_list>(<parameter><decl><type><name>xo_handle_t</name> <modifier>*</modifier><name>xop</name></type> <name>UNUSED</name></decl></parameter>, <parameter><decl><type><name>csv_private_t</name> <modifier>*</modifier><name>csv</name></type> <name>UNUSED</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>name</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>value</name></decl></parameter>,
+<parameter><decl><type><name>xo_xof_flags_t</name></type> <name>flags</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>csv_dbg</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>, <argument><expr><literal type="string">"data: [%s]=[%s] %llx\n"</literal></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><name>value</name></expr></argument>, <argument><expr><operator>(</operator><name>unsigned</name> <name>long</name> <name>long</name><operator>)</operator> <name>flags</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name><name>csv</name><operator>-&gt;</operator><name>c_flags</name></name> <operator>&amp;</operator> <name>CF_RECORD_DATA</name><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><literal type="number">0</literal></expr>;</return></block_content></block></if></if_stmt>
+
+
+<decl_stmt><decl><type><name>int</name></type> <name>fnum</name> <init>= <expr><call><name>csv_leaf_num</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><name>flags</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>fnum</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><literal type="number">0</literal></expr>;</return></block_content></block></if></if_stmt>
+
+<decl_stmt><decl><type><name>leaf_t</name> <modifier>*</modifier></type><name>lp</name> <init>= <expr><operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_leaf</name><index>[<expr><name>fnum</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>csv_leaf_set</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>, <argument><expr><name>lp</name></expr></argument>, <argument><expr><name>value</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>csv_handler</name> <parameter_list>(<parameter><decl><type><name>XO_ENCODER_HANDLER_ARGS</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>rc</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>csv_private_t</name> <modifier>*</modifier></type><name>csv</name> <init>= <expr><name>private</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>xo_buffer_t</name> <modifier>*</modifier></type><name>xbp</name> <init>= <expr><ternary><condition><expr><name>csv</name></expr> ?</condition><then> <expr><operator>&amp;</operator><name><name>csv</name><operator>-&gt;</operator><name>c_data</name></name></expr> </then><else>: <expr><name>NULL</name></expr></else></ternary></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>csv_dbg</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>, <argument><expr><literal type="string">"op %s: [%s] [%s]\n"</literal></expr></argument>, <argument><expr><call><name>xo_encoder_op_name</name><argument_list>(<argument><expr><name>op</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><ternary><condition><expr><name>name</name></expr> ?</condition><then/><else>: <expr><literal type="string">""</literal></expr></else></ternary></expr></argument>, <argument><expr><ternary><condition><expr><name>value</name></expr> ?</condition><then/><else>: <expr><literal type="string">""</literal></expr></else></ternary></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fflush</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>csv</name> <operator>==</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <name>op</name> <operator>!=</operator> <name>XO_OP_CREATE</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+
+<switch>switch <condition>(<expr><name>op</name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>XO_OP_CREATE</name></expr>:</case>
+<expr_stmt><expr><name>rc</name> <operator>=</operator> <call><name>csv_create</name><argument_list>(<argument><expr><name>xop</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>XO_OP_OPTIONS</name></expr>:</case>
+<expr_stmt><expr><name>rc</name> <operator>=</operator> <call><name>csv_options</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>, <argument><expr><name>value</name></expr></argument>, <argument><expr><literal type="char">':'</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>XO_OP_OPTIONS_PLUS</name></expr>:</case>
+<expr_stmt><expr><name>rc</name> <operator>=</operator> <call><name>csv_options</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>, <argument><expr><name>value</name></expr></argument>, <argument><expr><literal type="char">'+'</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>XO_OP_OPEN_LIST</name></expr>:</case>
+<case>case <expr><name>XO_OP_CLOSE_LIST</name></expr>:</case>
+<break>break;</break>
+
+<case>case <expr><name>XO_OP_OPEN_CONTAINER</name></expr>:</case>
+<case>case <expr><name>XO_OP_OPEN_LEAF_LIST</name></expr>:</case>
+<expr_stmt><expr><name>rc</name> <operator>=</operator> <call><name>csv_open_level</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>XO_OP_OPEN_INSTANCE</name></expr>:</case>
+<expr_stmt><expr><name>rc</name> <operator>=</operator> <call><name>csv_open_level</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>XO_OP_CLOSE_CONTAINER</name></expr>:</case>
+<case>case <expr><name>XO_OP_CLOSE_LEAF_LIST</name></expr>:</case>
+<case>case <expr><name>XO_OP_CLOSE_INSTANCE</name></expr>:</case>
+<expr_stmt><expr><name>rc</name> <operator>=</operator> <call><name>csv_close_level</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>XO_OP_STRING</name></expr>:</case>
+<case>case <expr><name>XO_OP_CONTENT</name></expr>:</case>
+<expr_stmt><expr><name>rc</name> <operator>=</operator> <call><name>csv_data</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><name>value</name></expr></argument>, <argument><expr><name>flags</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>XO_OP_FINISH</name></expr>:</case>
+<break>break;</break>
+
+<case>case <expr><name>XO_OP_FLUSH</name></expr>:</case>
+<expr_stmt><expr><name>rc</name> <operator>=</operator> <call><name>write</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name><name>xbp</name><operator>-&gt;</operator><name>xb_bufp</name></name></expr></argument>, <argument><expr><name><name>xbp</name><operator>-&gt;</operator><name>xb_curp</name></name> <operator>-</operator> <name><name>xbp</name><operator>-&gt;</operator><name>xb_bufp</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>rc</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>rc</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>xo_buf_reset</name><argument_list>(<argument><expr><name>xbp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>XO_OP_DESTROY</name></expr>:</case>
+<expr_stmt><expr><call><name>csv_destroy</name><argument_list>(<argument><expr><name>xop</name></expr></argument>, <argument><expr><name>csv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>XO_OP_ATTRIBUTE</name></expr>:</case>
+<break>break;</break>
+
+<case>case <expr><name>XO_OP_VERSION</name></expr>:</case>
+<break>break;</break>
+</block_content>}</block></switch>
+
+<return>return <expr><name>rc</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>int</name></type>
+<name>xo_encoder_library_init</name> <parameter_list>(<parameter><decl><type><name>XO_ENCODER_INIT_ARGS</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><name><name>arg</name><operator>-&gt;</operator><name>xei_handler</name></name> <operator>=</operator> <name>csv_handler</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>arg</name><operator>-&gt;</operator><name>xei_version</name></name> <operator>=</operator> <name>XO_ENCODER_VERSION</name></expr>;</expr_stmt>
+
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+</unit>

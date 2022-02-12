@@ -1,0 +1,383 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/arm-optimized-routines/networking/test/chksum.c">
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>_GNU_SOURCE</name></cpp:macro></cpp:define>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;inttypes.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdbool.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdint.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdio.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;string.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/mman.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;time.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;unistd.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"../include/networking.h"</cpp:file></cpp:include>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>WANT_ASSERT</name></expr></cpp:if>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>NDEBUG</name></cpp:undef>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;assert.h&gt;</cpp:file></cpp:include>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>Assert</name><parameter_list>(<parameter><type><name>exp</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>assert(exp)</cpp:value></cpp:define>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>Assert</name><parameter_list>(<parameter><type><name>exp</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>(void) (exp)</cpp:value></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__GNUC__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>may_alias</name></cpp:macro> <cpp:value>__attribute__((__may_alias__))</cpp:value></cpp:define>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>may_alias</name></cpp:macro></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>CACHE_LINE</name></cpp:macro> <cpp:value>64</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ALIGN</name><parameter_list>(<parameter><type><name>x</name></type></parameter>, <parameter><type><name>y</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>(((x) + (y) - 1) &amp; ~((y) - 1))</cpp:value></cpp:define>
+
+
+<function><type><specifier>static</specifier> <name>uint16_t</name></type>
+<name>checksum_simple</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>ptr</name></decl></parameter>, <parameter><decl><type><name>uint32_t</name></type> <name>nbytes</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uint16_t</name> <modifier>*</modifier><name>may_alias</name></type> <name>hptr</name> <init>= <expr><name>ptr</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>sum</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+
+<for>for <control>(<init><decl><type><name>uint32_t</name></type> <name>nhalfs</name> <init>= <expr><name>nbytes</name> <operator>&gt;&gt;</operator> <literal type="number">1</literal></expr></init></decl>;</init> <condition><expr><name>nhalfs</name> <operator>!=</operator> <literal type="number">0</literal></expr>;</condition> <incr><expr><name>nhalfs</name><operator>--</operator></expr></incr>)</control>
+<block>{<block_content>
+<expr_stmt><expr><name>sum</name> <operator>+=</operator> <operator>*</operator><name>hptr</name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>nbytes</name> <operator>&amp;</operator> <literal type="number">0x01</literal><operator>)</operator> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>sum</name> <operator>+=</operator> <operator>*</operator><operator>(</operator><name>uint8_t</name> <operator>*</operator><operator>)</operator> <name>hptr</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><name>sum</name> <operator>=</operator> <operator>(</operator><name>sum</name> <operator>&amp;</operator> <literal type="number">0xffffffff</literal><operator>)</operator> <operator>+</operator> <operator>(</operator><name>sum</name> <operator>&gt;&gt;</operator> <literal type="number">32</literal><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name>sum</name> <operator>=</operator> <operator>(</operator><name>sum</name> <operator>&amp;</operator> <literal type="number">0xffffffff</literal><operator>)</operator> <operator>+</operator> <operator>(</operator><name>sum</name> <operator>&gt;&gt;</operator> <literal type="number">32</literal><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Assert</name><argument_list>(<argument><expr><name>sum</name> <operator>==</operator> <operator>(</operator><name>uint32_t</name><operator>)</operator> <name>sum</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><name>sum</name> <operator>=</operator> <operator>(</operator><name>sum</name> <operator>&amp;</operator> <literal type="number">0xffff</literal><operator>)</operator> <operator>+</operator> <operator>(</operator><name>sum</name> <operator>&gt;&gt;</operator> <literal type="number">16</literal><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name>sum</name> <operator>=</operator> <operator>(</operator><name>sum</name> <operator>&amp;</operator> <literal type="number">0xffff</literal><operator>)</operator> <operator>+</operator> <operator>(</operator><name>sum</name> <operator>&gt;&gt;</operator> <literal type="number">16</literal><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Assert</name><argument_list>(<argument><expr><name>sum</name> <operator>==</operator> <operator>(</operator><name>uint16_t</name><operator>)</operator> <name>sum</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>uint16_t</name><operator>)</operator> <name>sum</name></expr>;</return>
+</block_content>}</block></function>
+
+<struct><specifier>static</specifier> struct
+<block>{
+<function_decl><type><name>uint16_t</name></type> (<modifier>*</modifier><name>cksum_fp</name>)<parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>uint32_t</name></type></decl></parameter>)</parameter_list>;</function_decl>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>name</name></decl>;</decl_stmt>
+}</block> <decl><name><name>implementations</name><index>[]</index></name> <init>=
+<expr><block>{
+<expr><block>{ <expr><name>checksum_simple</name></expr>, <expr><literal type="string">"simple"</literal></expr>}</block></expr>,
+<expr><block>{ <expr><name>__chksum</name></expr>, <expr><literal type="string">"scalar"</literal></expr>}</block></expr>,
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>__arm__</name></expr></cpp:if>
+<expr><block>{ <expr><name>__chksum_arm_simd</name></expr>, <expr><literal type="string">"simd"</literal></expr> }</block></expr>,
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><name>__aarch64__</name></expr></cpp:elif>
+<expr><block>{ <expr><name>__chksum_aarch64_simd</name></expr>, <expr><literal type="string">"simd"</literal></expr> }</block></expr>,
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<expr><block>{ <expr><name>NULL</name></expr>, <expr><name>NULL</name></expr>}</block></expr>
+}</block></expr></init></decl>;</struct>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>find_impl</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>name</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<for>for <control>(<init><decl><type><name>int</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name><name>implementations</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>name</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>strcmp</name><argument_list>(<argument><expr><name><name>implementations</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>name</name></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition>
+<block>{<block_content>
+<return>return <expr><name>i</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></function>
+
+<function_decl><type><specifier>static</specifier> <name>uint16_t</name></type> (<modifier>*</modifier><name>CKSUM_FP</name>)<parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>uint32_t</name></type></decl></parameter>)</parameter_list>;</function_decl>
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>volatile</specifier> <name>uint16_t</name></type> <name>SINK</name></decl>;</decl_stmt>
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>verify</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>data</name></decl></parameter>, <parameter><decl><type><name>uint32_t</name></type> <name>offset</name></decl></parameter>, <parameter><decl><type><name>uint32_t</name></type> <name>size</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+<decl_stmt><decl><type><name>uint16_t</name></type> <name>csum_expected</name> <init>= <expr><call><name>checksum_simple</name><argument_list>(<argument><expr><name>data</name></expr></argument>, <argument><expr><name>size</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint16_t</name></type> <name>csum_actual</name> <init>= <expr><call><name>CKSUM_FP</name><argument_list>(<argument><expr><name>data</name></expr></argument>, <argument><expr><name>size</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>csum_actual</name> <operator>!=</operator> <name>csum_expected</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"\nInvalid checksum for offset %u size %u: "</literal>
+<literal type="string">"actual %04x expected %04x (valid)"</literal></expr></argument>,
+<argument><expr><name>offset</name></expr></argument>, <argument><expr><name>size</name></expr></argument>, <argument><expr><name>csum_actual</name></expr></argument>, <argument><expr><name>csum_expected</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>size</name> <operator>&lt;</operator> <literal type="number">65536</literal></expr>)</condition>
+<block>{<block_content>
+
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><name>false</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name>true</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>uint64_t</name></type>
+<name>clock_get_ns</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>timespec</name></name></type> <name>ts</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>clock_gettime</name><argument_list>(<argument><expr><name>CLOCK_MONOTONIC</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ts</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name><name>ts</name><operator>.</operator><name>tv_sec</name></name> <operator>*</operator> <operator>(</operator><name>uint64_t</name><operator>)</operator> <literal type="number">1000000000</literal> <operator>+</operator> <name><name>ts</name><operator>.</operator><name>tv_nsec</name></name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>benchmark</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>uint8_t</name> <modifier>*</modifier></type><name>base</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>poolsize</name></decl></parameter>,
+<parameter><decl><type><name>uint32_t</name></type> <name>blksize</name></decl></parameter>,
+<parameter><decl><type><name>uint32_t</name></type> <name>numops</name></decl></parameter>,
+<parameter><decl><type><name>uint64_t</name></type> <name>cpufreq</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%11u "</literal></expr></argument>, <argument><expr><operator>(</operator><name>unsigned</name> <name>int</name><operator>)</operator> <name>blksize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt> <expr_stmt><expr><call><name>fflush</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>start</name> <init>= <expr><call><name>clock_get_ns</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<for>for <control>(<init><decl><type><name>uint32_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>numops</name></expr>;</condition> <incr><expr><name>i</name> <operator>++</operator></expr></incr>)</control>
+<block>{<block_content>
+
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>random</name> <init>= <expr><operator>(</operator><operator>(</operator><name>uint32_t</name> <operator>*</operator><operator>)</operator> <name>base</name><operator>)</operator><index>[<expr><name>i</name> <operator>%</operator> <operator>(</operator><name>poolsize</name> <operator>/</operator> <literal type="number">4</literal><operator>)</operator></expr>]</index></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>data</name> <init>= <expr><operator>&amp;</operator><name><name>base</name><index>[<expr><name>random</name> <operator>%</operator> <operator>(</operator><name>poolsize</name> <operator>-</operator> <name>blksize</name><operator>)</operator></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>SINK</name> <operator>=</operator> <call><name>CKSUM_FP</name><argument_list>(<argument><expr><name>data</name></expr></argument>, <argument><expr><name>blksize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>end</name> <init>= <expr><call><name>clock_get_ns</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MEGABYTE</name></cpp:macro> <cpp:value>1000000</cpp:value></cpp:define>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>elapsed_ns</name> <init>= <expr><name>end</name> <operator>-</operator> <name>start</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>elapsed_ms</name> <init>= <expr><name>elapsed_ns</name> <operator>/</operator> <literal type="number">1000000</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>blks_per_s</name> <init>= <expr><operator>(</operator><name>uint32_t</name><operator>)</operator> <operator>(</operator><operator>(</operator><name>numops</name> <operator>/</operator> <name>elapsed_ms</name><operator>)</operator> <operator>*</operator> <literal type="number">1000</literal><operator>)</operator></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>accbytes</name> <init>= <expr><operator>(</operator><name>uint64_t</name><operator>)</operator> <name>numops</name> <operator>*</operator> <name>blksize</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%11ju "</literal></expr></argument>, <argument><expr><operator>(</operator><name>uintmax_t</name><operator>)</operator> <operator>(</operator><operator>(</operator><name>accbytes</name> <operator>/</operator> <name>elapsed_ms</name><operator>)</operator> <operator>*</operator> <literal type="number">1000</literal><operator>)</operator> <operator>/</operator> <name>MEGABYTE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>int</name></type> <name>cyc_per_blk</name> <init>= <expr><name>cpufreq</name> <operator>/</operator> <name>blks_per_s</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%11u "</literal></expr></argument>, <argument><expr><name>cyc_per_blk</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>blksize</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition>
+<block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name> <name>int</name></type> <name>cyc_per_byte</name> <init>= <expr><literal type="number">1000</literal> <operator>*</operator> <name>cyc_per_blk</name> <operator>/</operator> <name>blksize</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%7u.%03u "</literal></expr></argument>,
+<argument><expr><name>cyc_per_byte</name> <operator>/</operator> <literal type="number">1000</literal></expr></argument>, <argument><expr><name>cyc_per_byte</name> <operator>%</operator> <literal type="number">1000</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type> <name>main</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>argc</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier></type><name><name>argv</name><index>[]</index></name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>c</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>DUMP</name> <init>= <expr><name>false</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>IMPL</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>CPUFREQ</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>BLKSIZE</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>NUMOPS</name> <init>= <expr><literal type="number">1000000</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>POOLSIZE</name> <init>= <expr><literal type="number">512</literal> <operator>*</operator> <literal type="number">1024</literal></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>setvbuf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>_IOLBF</name></expr></argument>, <argument><expr><literal type="number">160</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<while>while <condition>(<expr><operator>(</operator><name>c</name> <operator>=</operator> <call><name>getopt</name><argument_list>(<argument><expr><name>argc</name></expr></argument>, <argument><expr><name>argv</name></expr></argument>, <argument><expr><literal type="string">"b:df:i:n:p:"</literal></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition>
+<block>{<block_content>
+<switch>switch <condition>(<expr><name>c</name></expr>)</condition>
+<block>{<block_content>
+<case>case <expr><literal type="char">'b'</literal></expr> :</case>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>blksize</name> <init>= <expr><call><name>atoi</name><argument_list>(<argument><expr><name>optarg</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>blksize</name> <argument_list type="generic">&lt; <argument><expr><literal type="number">1</literal> <operator>||</operator> <name>blksize</name></expr></argument> &gt;</argument_list></name> <name>POOLSIZE</name> <operator>/</operator> <literal type="number">2</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"Invalid block size %d\n"</literal></expr></argument>, <argument><expr><name>blksize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>BLKSIZE</name> <operator>=</operator> <operator>(</operator><name>unsigned</name><operator>)</operator> <name>blksize</name></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block>
+<case>case <expr><literal type="char">'d'</literal></expr> :</case>
+<expr_stmt><expr><name>DUMP</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'f'</literal></expr> :</case>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int64_t</name></type> <name>cpufreq</name> <init>= <expr><call><name>atoll</name><argument_list>(<argument><expr><name>optarg</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>cpufreq</name> <operator>&lt;</operator> <literal type="number">1</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"Invalid CPU frequency %"</literal><name>PRId64</name><literal type="string">"\n"</literal></expr></argument>,
+<argument><expr><name>cpufreq</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>CPUFREQ</name> <operator>=</operator> <name>cpufreq</name></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block>
+<case>case <expr><literal type="char">'i'</literal></expr> :</case>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>impl</name> <init>= <expr><call><name>find_impl</name><argument_list>(<argument><expr><name>optarg</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>impl</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"Invalid implementation %s\n"</literal></expr></argument>, <argument><expr><name>optarg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>usage</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>IMPL</name> <operator>=</operator> <operator>(</operator><name>unsigned</name><operator>)</operator> <name>impl</name></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block>
+<case>case <expr><literal type="char">'n'</literal></expr> :</case>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>numops</name> <init>= <expr><call><name>atoi</name><argument_list>(<argument><expr><name>optarg</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>numops</name> <operator>&lt;</operator> <literal type="number">1</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"Invalid number of operations %d\n"</literal></expr></argument>, <argument><expr><name>numops</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>NUMOPS</name> <operator>=</operator> <operator>(</operator><name>unsigned</name><operator>)</operator> <name>numops</name></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block>
+<case>case <expr><literal type="char">'p'</literal></expr> :</case>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>poolsize</name> <init>= <expr><call><name>atoi</name><argument_list>(<argument><expr><name>optarg</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>poolsize</name> <operator>&lt;</operator> <literal type="number">4096</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"Invalid pool size %d\n"</literal></expr></argument>, <argument><expr><name>poolsize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name>c</name> <init>= <expr><name><name>optarg</name><index>[<expr><call><name>strlen</name><argument_list>(<argument><expr><name>optarg</name></expr></argument>)</argument_list></call> <operator>-</operator> <literal type="number">1</literal></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>c</name> <operator>==</operator> <literal type="char">'M'</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>POOLSIZE</name> <operator>=</operator> <operator>(</operator><name>unsigned</name><operator>)</operator> <name>poolsize</name> <operator>*</operator> <literal type="number">1024</literal> <operator>*</operator> <literal type="number">1024</literal></expr>;</expr_stmt>
+</block_content>}</block></if>
+<if type="elseif">else if <condition>(<expr><name>c</name> <operator>==</operator> <literal type="char">'K'</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>POOLSIZE</name> <operator>=</operator> <operator>(</operator><name>unsigned</name><operator>)</operator> <name>poolsize</name> <operator>*</operator> <literal type="number">1024</literal></expr>;</expr_stmt>
+</block_content>}</block></if>
+<else>else
+<block>{<block_content>
+<expr_stmt><expr><name>POOLSIZE</name> <operator>=</operator> <operator>(</operator><name>unsigned</name><operator>)</operator> <name>poolsize</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<break>break;</break>
+</block_content>}</block>
+<default>default :</default>
+<label><name>usage</name> :</label>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"Usage: checksum &lt;options&gt;\n"</literal>
+<literal type="string">"-b &lt;blksize&gt; Block size\n"</literal>
+<literal type="string">"-d Dump first 96 bytes of data\n"</literal>
+<literal type="string">"-f &lt;cpufreq&gt; CPU frequency (Hz)\n"</literal>
+<literal type="string">"-i &lt;impl&gt; Implementation\n"</literal>
+<literal type="string">"-n &lt;numops&gt; Number of operations\n"</literal>
+<literal type="string">"-p &lt;poolsize&gt; Pool size (K or M suffix)\n"</literal></expr></argument>
+)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"Implementations:"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><decl><type><name>int</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name><name>implementations</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>name</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control>
+<block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">" %s"</literal></expr></argument>, <argument><expr><name><name>implementations</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></switch>
+</block_content>}</block></while>
+<if_stmt><if>if <condition>(<expr><name>optind</name> <operator>&gt;</operator> <name>argc</name></expr>)</condition>
+<block>{<block_content>
+<goto>goto <name>usage</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>CKSUM_FP</name> <operator>=</operator> <name><name>implementations</name><index>[<expr><name>IMPL</name></expr>]</index></name><operator>.</operator><name>cksum_fp</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>POOLSIZE</name> <operator>=</operator> <call><name>ALIGN</name><argument_list>(<argument><expr><name>POOLSIZE</name></expr></argument>, <argument><expr><name>CACHE_LINE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>uint8_t</name> <modifier>*</modifier></type><name>base</name> <init>= <expr><call><name>mmap</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>POOLSIZE</name></expr></argument>, <argument><expr><name>PROT_READ</name><operator>|</operator><name>PROT_WRITE</name></expr></argument>,
+<argument><expr><name>MAP_PRIVATE</name><operator>|</operator><name>MAP_ANONYMOUS</name></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>base</name> <operator>==</operator> <name>MAP_FAILED</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>perror</name><argument_list>(<argument><expr><literal type="string">"aligned_alloc"</literal></expr></argument>)</argument_list></call></expr><operator>,</operator> <expr><call><name>exit</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>POOLSIZE</name> <operator>/</operator> <literal type="number">4</literal></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><operator>(</operator><name>uint32_t</name> <operator>*</operator><operator>)</operator> <name>base</name><operator>)</operator><index>[<expr><name>i</name></expr>]</index> <operator>=</operator> <call><name>rand</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"Implementation: %s\n"</literal></expr></argument>, <argument><expr><name><name>implementations</name><index>[<expr><name>IMPL</name></expr>]</index></name><operator>.</operator><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"numops %u, poolsize "</literal></expr></argument>, <argument><expr><name>NUMOPS</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>POOLSIZE</name> <operator>%</operator> <operator>(</operator><literal type="number">1024</literal> <operator>*</operator> <literal type="number">1024</literal><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%uMiB"</literal></expr></argument>, <argument><expr><name>POOLSIZE</name> <operator>/</operator> <operator>(</operator><literal type="number">1024</literal> <operator>*</operator> <literal type="number">1024</literal><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if>
+<if type="elseif">else if <condition>(<expr><name>POOLSIZE</name> <operator>%</operator> <literal type="number">1024</literal> <operator>==</operator> <literal type="number">0</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%uKiB"</literal></expr></argument>, <argument><expr><name>POOLSIZE</name> <operator>/</operator> <literal type="number">1024</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if>
+<else>else
+<block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%uB"</literal></expr></argument>, <argument><expr><name>POOLSIZE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">", blocksize %u, CPU frequency %juMHz\n"</literal></expr></argument>,
+<argument><expr><name>BLKSIZE</name></expr></argument>, <argument><expr><operator>(</operator><name>uintmax_t</name><operator>)</operator> <operator>(</operator><name>CPUFREQ</name> <operator>/</operator> <literal type="number">1000000</literal><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>WANT_ASSERT</name></expr></cpp:if>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"Warning: assertions are enabled\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<if_stmt><if>if <condition>(<expr><name>DUMP</name></expr>)</condition>
+<block>{<block_content>
+
+<for>for <control>(<init><decl><type><name>int</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <literal type="number">96</literal></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>i</name> <operator>%</operator> <literal type="number">8</literal> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%2u:"</literal></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">" %02x"</literal></expr></argument>, <argument><expr><name><name>base</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>i</name> <operator>%</operator> <literal type="number">8</literal> <operator>==</operator> <literal type="number">7</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"Verifying..."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt> <expr_stmt><expr><call><name>fflush</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>success</name> <init>= <expr><name>true</name></expr></init></decl>;</decl_stmt>
+
+<for>for <control>(<init><decl><type><name>int</name></type> <name>size</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>size</name> <operator>&lt;=</operator> <literal type="number">256</literal></expr>;</condition> <incr><expr><name>size</name><operator>++</operator></expr></incr>)</control>
+<block>{<block_content>
+<for>for <control>(<init><decl><type><name>int</name></type> <name>offset</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>offset</name> <operator>&lt;</operator> <literal type="number">255</literal></expr>;</condition> <incr><expr><name>offset</name><operator>++</operator></expr></incr>)</control>
+<block>{<block_content>
+
+<expr_stmt><expr><name>success</name> <operator>&amp;=</operator> <call><name>verify</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>base</name><index>[<expr><name>offset</name></expr>]</index></name></expr></argument>, <argument><expr><name>offset</name></expr></argument>, <argument><expr><name>size</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>uint8_t</name> <modifier>*</modifier></type><name>p</name> <init>= <expr><name>base</name> <operator>+</operator> <name>POOLSIZE</name> <operator>-</operator> <operator>(</operator><name>size</name> <operator>+</operator> <name>offset</name><operator>)</operator></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>success</name> <operator>&amp;=</operator> <call><name>verify</name><argument_list>(<argument><expr><name>p</name></expr></argument>, <argument><expr><operator>(</operator><name>uintptr_t</name><operator>)</operator> <name>p</name> <operator>%</operator> <literal type="number">64</literal></expr></argument>, <argument><expr><name>size</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></for>
+
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>size</name> <init>= <expr><literal type="number">1</literal></expr></init></decl>;</init> <condition><expr><name>size</name> <operator>&lt;</operator> <name>POOLSIZE</name></expr>;</condition> <incr><expr><name>size</name> <operator>*=</operator> <literal type="number">2</literal></expr></incr>)</control>
+<block>{<block_content>
+<expr_stmt><expr><name>success</name> <operator>&amp;=</operator> <call><name>verify</name><argument_list>(<argument><expr><name>base</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>size</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><name>success</name> <operator>&amp;=</operator> <call><name>verify</name><argument_list>(<argument><expr><name>base</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>POOLSIZE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%s\n"</literal></expr></argument>, <argument><expr><ternary><condition><expr><name>success</name></expr> ?</condition><then> <expr><literal type="string">"OK"</literal></expr> </then><else>: <expr><literal type="string">"failure"</literal></expr></else></ternary></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>CPUFREQ</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%11s %11s %11s %11s\n"</literal></expr></argument>,
+<argument><expr><literal type="string">"block size"</literal></expr></argument>, <argument><expr><literal type="string">"MB/s"</literal></expr></argument>, <argument><expr><literal type="string">"cycles/blk"</literal></expr></argument>, <argument><expr><literal type="string">"cycles/byte"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if>
+<else>else
+<block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%11s %11s %11s %11s\n"</literal></expr></argument>,
+<argument><expr><literal type="string">"block size"</literal></expr></argument>, <argument><expr><literal type="string">"MB/s"</literal></expr></argument>, <argument><expr><literal type="string">"ns/blk"</literal></expr></argument>, <argument><expr><literal type="string">"ns/byte"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>CPUFREQ</name> <operator>=</operator> <literal type="number">1000000000</literal></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>BLKSIZE</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>benchmark</name><argument_list>(<argument><expr><name>base</name></expr></argument>, <argument><expr><name>POOLSIZE</name></expr></argument>, <argument><expr><name>BLKSIZE</name></expr></argument>, <argument><expr><name>NUMOPS</name></expr></argument>, <argument><expr><name>CPUFREQ</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if>
+<else>else
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>uint16_t</name></type> <name><name>sizes</name><index>[]</index></name> <init>=
+<expr><block>{ <expr><literal type="number">20</literal></expr>, <expr><literal type="number">42</literal></expr>, <expr><literal type="number">102</literal></expr>, <expr><literal type="number">250</literal></expr>, <expr><literal type="number">612</literal></expr>, <expr><literal type="number">1500</literal></expr>, <expr><literal type="number">3674</literal></expr>, <expr><literal type="number">9000</literal></expr>, <expr><literal type="number">0</literal></expr> }</block></expr></init></decl>;</decl_stmt>
+<for>for <control>(<init><decl><type><name>int</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name><name>sizes</name><index>[<expr><name>i</name></expr>]</index></name> <operator>!=</operator> <literal type="number">0</literal></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control>
+<block>{<block_content>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>numops</name> <init>= <expr><name>NUMOPS</name> <operator>*</operator> <literal type="number">10000</literal> <operator>/</operator> <operator>(</operator><literal type="number">40</literal> <operator>+</operator> <name><name>sizes</name><index>[<expr><name>i</name></expr>]</index></name><operator>)</operator></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>benchmark</name><argument_list>(<argument><expr><name>base</name></expr></argument>, <argument><expr><name>POOLSIZE</name></expr></argument>, <argument><expr><name><name>sizes</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><name>numops</name></expr></argument>, <argument><expr><name>CPUFREQ</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>munmap</name><argument_list>(<argument><expr><name>base</name></expr></argument>, <argument><expr><name>POOLSIZE</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>perror</name><argument_list>(<argument><expr><literal type="string">"munmap"</literal></expr></argument>)</argument_list></call></expr><operator>,</operator> <expr><call><name>exit</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><ternary><condition><expr><name>success</name></expr> ?</condition><then> <expr><name>EXIT_SUCCESS</name></expr> </then><else>: <expr><name>EXIT_FAILURE</name></expr></else></ternary></expr>;</return>
+</block_content>}</block></function>
+</unit>

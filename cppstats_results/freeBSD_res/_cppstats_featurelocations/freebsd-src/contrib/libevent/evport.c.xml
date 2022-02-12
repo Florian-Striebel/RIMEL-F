@@ -1,0 +1,453 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/libevent/evport.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"event2/event-config.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"evconfig-private.h"</cpp:file></cpp:include>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>EVENT__HAVE_EVENT_PORTS</name></expr></argument>)</argument_list></call></expr></cpp:if>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/time.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/queue.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;errno.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;poll.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;port.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;signal.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdio.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;string.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;time.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;unistd.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"event2/thread.h"</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"evthread-internal.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"event-internal.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"log-internal.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"evsignal-internal.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"evmap-internal.h"</cpp:file></cpp:include>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>INITIAL_EVENTS_PER_GETN</name></cpp:macro> <cpp:value>8</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MAX_EVENTS_PER_GETN</name></cpp:macro> <cpp:value>4096</cpp:value></cpp:define>
+
+
+
+
+
+
+<struct>struct <name>fd_info</name> <block>{
+
+<decl_stmt><decl><type><name>short</name></type> <name>fdi_what</name></decl>;</decl_stmt>
+
+
+
+<decl_stmt><decl><type><name>int</name></type> <name>pending_idx_plus_1</name></decl>;</decl_stmt>
+}</block>;</struct>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>FDI_HAS_READ</name><parameter_list>(<parameter><type><name>fdi</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((fdi)-&gt;fdi_what &amp; EV_READ)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>FDI_HAS_WRITE</name><parameter_list>(<parameter><type><name>fdi</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((fdi)-&gt;fdi_what &amp; EV_WRITE)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>FDI_HAS_EVENTS</name><parameter_list>(<parameter><type><name>fdi</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>(FDI_HAS_READ(fdi) || FDI_HAS_WRITE(fdi))</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>FDI_TO_SYSEVENTS</name><parameter_list>(<parameter><type><name>fdi</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>(FDI_HAS_READ(fdi) ? POLLIN : 0) | (FDI_HAS_WRITE(fdi) ? POLLOUT : 0)</cpp:value></cpp:define>
+
+
+<struct>struct <name>evport_data</name> <block>{
+<decl_stmt><decl><type><name>int</name></type> <name>ed_port</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>int</name></type> <name>ed_npending</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>int</name></type> <name>ed_maxevents</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>int</name> <modifier>*</modifier></type><name>ed_pending</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>port_event_t</name> <modifier>*</modifier></type><name>ed_pevtlist</name></decl>;</decl_stmt>
+
+}</block>;</struct>
+
+<function_decl><type><specifier>static</specifier> <name>void</name><modifier>*</modifier></type> <name>evport_init</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>event_base</name></name> <modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>evport_add</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>event_base</name></name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>fd</name></decl></parameter>, <parameter><decl><type><name>short</name></type> <name>old</name></decl></parameter>, <parameter><decl><type><name>short</name></type> <name>events</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>evport_del</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>event_base</name></name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>fd</name></decl></parameter>, <parameter><decl><type><name>short</name></type> <name>old</name></decl></parameter>, <parameter><decl><type><name>short</name></type> <name>events</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>evport_dispatch</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>event_base</name></name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>timeval</name></name> <modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>void</name></type> <name>evport_dealloc</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>event_base</name></name> <modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>grow</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>evport_data</name></name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>min_events</name></decl></parameter>)</parameter_list>;</function_decl>
+
+<decl_stmt><decl><type><specifier>const</specifier> <name><name>struct</name> <name>eventop</name></name></type> <name>evportops</name> <init>= <expr><block>{
+<expr><literal type="string">"evport"</literal></expr>,
+<expr><name>evport_init</name></expr>,
+<expr><name>evport_add</name></expr>,
+<expr><name>evport_del</name></expr>,
+<expr><name>evport_dispatch</name></expr>,
+<expr><name>evport_dealloc</name></expr>,
+<expr><literal type="number">1</literal></expr>,
+<expr><literal type="number">0</literal></expr>,
+<expr><sizeof>sizeof<argument_list>(<argument><expr>struct <name>fd_info</name></expr></argument>)</argument_list></sizeof></expr>,
+}</block></expr></init></decl>;</decl_stmt>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name><modifier>*</modifier></type>
+<name>evport_init</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>event_base</name></name> <modifier>*</modifier></type><name>base</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>evport_data</name></name> <modifier>*</modifier></type><name>evpd</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name>evpd</name> <operator>=</operator> <call><name>mm_calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr>struct <name>evport_data</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>evpd</name><operator>-&gt;</operator><name>ed_port</name></name> <operator>=</operator> <call><name>port_create</name><argument_list>()</argument_list></call><operator>)</operator> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>mm_free</name><argument_list>(<argument><expr><name>evpd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>grow</name><argument_list>(<argument><expr><name>evpd</name></expr></argument>, <argument><expr><name>INITIAL_EVENTS_PER_GETN</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>close</name><argument_list>(<argument><expr><name><name>evpd</name><operator>-&gt;</operator><name>ed_port</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>mm_free</name><argument_list>(<argument><expr><name>evpd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>evpd</name><operator>-&gt;</operator><name>ed_npending</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>evsig_init_</name><argument_list>(<argument><expr><name>base</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>evpd</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>grow</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>evport_data</name></name> <modifier>*</modifier></type><name>data</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>min_events</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>newsize</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name> <modifier>*</modifier></type><name>new_pending</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>port_event_t</name> <modifier>*</modifier></type><name>new_pevtlist</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>data</name><operator>-&gt;</operator><name>ed_maxevents</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>newsize</name> <operator>=</operator> <name><name>data</name><operator>-&gt;</operator><name>ed_maxevents</name></name></expr>;</expr_stmt>
+<do>do <block>{<block_content>
+<expr_stmt><expr><name>newsize</name> <operator>*=</operator> <literal type="number">2</literal></expr>;</expr_stmt>
+</block_content>}</block> while <condition>(<expr><name>newsize</name> <operator>&lt;</operator> <name>min_events</name></expr>)</condition>;</do>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>newsize</name> <operator>=</operator> <name>min_events</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<expr_stmt><expr><name>new_pending</name> <operator>=</operator> <call><name>mm_realloc</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>ed_pending</name></name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>int</name></expr></argument>)</argument_list></sizeof><operator>*</operator><name>newsize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>new_pending</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>data</name><operator>-&gt;</operator><name>ed_pending</name></name> <operator>=</operator> <name>new_pending</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>new_pevtlist</name> <operator>=</operator> <call><name>mm_realloc</name><argument_list>(<argument><expr><name><name>data</name><operator>-&gt;</operator><name>ed_pevtlist</name></name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>port_event_t</name></expr></argument>)</argument_list></sizeof><operator>*</operator><name>newsize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>new_pevtlist</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>data</name><operator>-&gt;</operator><name>ed_pevtlist</name></name> <operator>=</operator> <name>new_pevtlist</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>data</name><operator>-&gt;</operator><name>ed_maxevents</name></name> <operator>=</operator> <name>newsize</name></expr>;</expr_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>CHECK_INVARIANTS</name></expr></argument>)</argument_list></call></expr></cpp:if>
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>check_evportop</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>evport_data</name></name> <modifier>*</modifier></type><name>evpd</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>EVUTIL_ASSERT</name><argument_list>(<argument><expr><name>evpd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>EVUTIL_ASSERT</name><argument_list>(<argument><expr><name><name>evpd</name><operator>-&gt;</operator><name>ed_port</name></name> <operator>&gt;</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>check_event</name><parameter_list>(<parameter><decl><type><name>port_event_t</name><modifier>*</modifier></type> <name>pevt</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+
+
+
+
+
+<expr_stmt><expr><call><name>EVUTIL_ASSERT</name><argument_list>(<argument><expr><name><name>pevt</name><operator>-&gt;</operator><name>portev_source</name></name> <operator>==</operator> <name>PORT_SOURCE_FD</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>check_evportop</name><parameter_list>(<parameter><type><name>epop</name></type></parameter>)</parameter_list></cpp:macro></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>check_event</name><parameter_list>(<parameter><type><name>pevt</name></type></parameter>)</parameter_list></cpp:macro></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>reassociate</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>evport_data</name></name> <modifier>*</modifier></type><name>epdp</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>fd_info</name></name> <modifier>*</modifier></type><name>fdip</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>fd</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>sysevents</name> <init>= <expr><call><name>FDI_TO_SYSEVENTS</name><argument_list>(<argument><expr><name>fdip</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>sysevents</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>port_associate</name><argument_list>(<argument><expr><name><name>epdp</name><operator>-&gt;</operator><name>ed_port</name></name></expr></argument>, <argument><expr><name>PORT_SOURCE_FD</name></expr></argument>,
+<argument><expr><name>fd</name></expr></argument>, <argument><expr><name>sysevents</name></expr></argument>, <argument><expr><name>fdip</name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>event_warn</name><argument_list>(<argument><expr><literal type="string">"port_associate"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>check_evportop</name><argument_list>(<argument><expr><name>epdp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>evport_dispatch</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>event_base</name></name> <modifier>*</modifier></type><name>base</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>timeval</name></name> <modifier>*</modifier></type><name>tv</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>, <decl><type ref="prev"/><name>res</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>evport_data</name></name> <modifier>*</modifier></type><name>epdp</name> <init>= <expr><name><name>base</name><operator>-&gt;</operator><name>evbase</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>port_event_t</name> <modifier>*</modifier></type><name>pevtlist</name> <init>= <expr><name><name>epdp</name><operator>-&gt;</operator><name>ed_pevtlist</name></name></expr></init></decl>;</decl_stmt>
+
+
+
+
+
+
+
+<decl_stmt><decl><type><name>int</name></type> <name>nevents</name> <init>= <expr><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+
+
+
+
+
+<decl_stmt><decl><type><name><name>struct</name> <name>timespec</name></name></type> <name>ts</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>timespec</name></name> <modifier>*</modifier></type><name>ts_p</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>tv</name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>ts</name><operator>.</operator><name>tv_sec</name></name> <operator>=</operator> <name><name>tv</name><operator>-&gt;</operator><name>tv_sec</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ts</name><operator>.</operator><name>tv_nsec</name></name> <operator>=</operator> <name><name>tv</name><operator>-&gt;</operator><name>tv_usec</name></name> <operator>*</operator> <literal type="number">1000</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>ts_p</name> <operator>=</operator> <operator>&amp;</operator><name>ts</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name><name>epdp</name><operator>-&gt;</operator><name>ed_npending</name></name></expr>;</condition> <incr><expr><operator>++</operator><name>i</name></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>fd_info</name></name> <modifier>*</modifier></type><name>fdi</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>int</name></type> <name>fd</name> <init>= <expr><name><name>epdp</name><operator>-&gt;</operator><name>ed_pending</name><index>[<expr><name>i</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>fd</name> <operator>!=</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+
+
+<expr_stmt><expr><name>fdi</name> <operator>=</operator> <call><name>evmap_io_get_fdinfo_</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>base</name><operator>-&gt;</operator><name>io</name></name></expr></argument>, <argument><expr><name>fd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>fdi</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <call><name>FDI_HAS_EVENTS</name><argument_list>(<argument><expr><name>fdi</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>reassociate</name><argument_list>(<argument><expr><name>epdp</name></expr></argument>, <argument><expr><name>fdi</name></expr></argument>, <argument><expr><name>fd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>fdi</name><operator>-&gt;</operator><name>pending_idx_plus_1</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><call><name>EVBASE_RELEASE_LOCK</name><argument_list>(<argument><expr><name>base</name></expr></argument>, <argument><expr><name>th_base_lock</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>res</name> <operator>=</operator> <call><name>port_getn</name><argument_list>(<argument><expr><name><name>epdp</name><operator>-&gt;</operator><name>ed_port</name></name></expr></argument>, <argument><expr><name>pevtlist</name></expr></argument>, <argument><expr><name><name>epdp</name><operator>-&gt;</operator><name>ed_maxevents</name></name></expr></argument>,
+<argument><expr><operator>(</operator><name>unsigned</name> <name>int</name> <operator>*</operator><operator>)</operator> <operator>&amp;</operator><name>nevents</name></expr></argument>, <argument><expr><name>ts_p</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>EVBASE_ACQUIRE_LOCK</name><argument_list>(<argument><expr><name>base</name></expr></argument>, <argument><expr><name>th_base_lock</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>res</name> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>errno</name> <operator>==</operator> <name>EINTR</name> <operator>||</operator> <name>errno</name> <operator>==</operator> <name>EAGAIN</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>errno</name> <operator>==</operator> <name>ETIME</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>nevents</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>event_warn</name><argument_list>(<argument><expr><literal type="string">"port_getn"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>event_debug</name><argument_list>(<argument><expr><operator>(</operator><literal type="string">"%s: port_getn reports %d events"</literal><operator>,</operator> <name>__func__</name><operator>,</operator> <name>nevents</name><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>nevents</name></expr>;</condition> <incr><expr><operator>++</operator><name>i</name></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>port_event_t</name> <modifier>*</modifier></type><name>pevt</name> <init>= <expr><operator>&amp;</operator><name><name>pevtlist</name><index>[<expr><name>i</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>fd</name> <init>= <expr><operator>(</operator><name>int</name><operator>)</operator> <name><name>pevt</name><operator>-&gt;</operator><name>portev_object</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>fd_info</name></name> <modifier>*</modifier></type><name>fdi</name> <init>= <expr><name><name>pevt</name><operator>-&gt;</operator><name>portev_user</name></name></expr></init></decl>;</decl_stmt>
+
+
+<expr_stmt><expr><call><name>check_evportop</name><argument_list>(<argument><expr><name>epdp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>check_event</name><argument_list>(<argument><expr><name>pevt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>epdp</name><operator>-&gt;</operator><name>ed_pending</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <name>fd</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>fdi</name><operator>-&gt;</operator><name>pending_idx_plus_1</name></name> <operator>=</operator> <name>i</name> <operator>+</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+
+
+
+
+
+<expr_stmt><expr><name>res</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>pevt</name><operator>-&gt;</operator><name>portev_events</name></name> <operator>&amp;</operator> <operator>(</operator><name>POLLERR</name><operator>|</operator><name>POLLHUP</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>res</name> <operator>=</operator> <name>EV_READ</name> <operator>|</operator> <name>EV_WRITE</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>pevt</name><operator>-&gt;</operator><name>portev_events</name></name> <operator>&amp;</operator> <name>POLLIN</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>res</name> <operator>|=</operator> <name>EV_READ</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>pevt</name><operator>-&gt;</operator><name>portev_events</name></name> <operator>&amp;</operator> <name>POLLOUT</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>res</name> <operator>|=</operator> <name>EV_WRITE</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>pevt</name><operator>-&gt;</operator><name>portev_events</name></name> <operator>&amp;</operator> <operator>(</operator><name>POLLERR</name><operator>|</operator><name>POLLHUP</name><operator>|</operator><name>POLLNVAL</name><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>res</name> <operator>|=</operator> <name>EV_READ</name><operator>|</operator><name>EV_WRITE</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>evmap_io_active_</name><argument_list>(<argument><expr><name>base</name></expr></argument>, <argument><expr><name>fd</name></expr></argument>, <argument><expr><name>res</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><name><name>epdp</name><operator>-&gt;</operator><name>ed_npending</name></name> <operator>=</operator> <name>nevents</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>nevents</name> <operator>==</operator> <name><name>epdp</name><operator>-&gt;</operator><name>ed_maxevents</name></name> <operator>&amp;&amp;</operator>
+<name><name>epdp</name><operator>-&gt;</operator><name>ed_maxevents</name></name> <operator>&lt;</operator> <name>MAX_EVENTS_PER_GETN</name></expr>)</condition> <block>{<block_content>
+
+
+<expr_stmt><expr><call><name>grow</name><argument_list>(<argument><expr><name>epdp</name></expr></argument>, <argument><expr><name><name>epdp</name><operator>-&gt;</operator><name>ed_maxevents</name></name> <operator>*</operator> <literal type="number">2</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>check_evportop</name><argument_list>(<argument><expr><name>epdp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>evport_add</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>event_base</name></name> <modifier>*</modifier></type><name>base</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>fd</name></decl></parameter>, <parameter><decl><type><name>short</name></type> <name>old</name></decl></parameter>, <parameter><decl><type><name>short</name></type> <name>events</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>p</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>evport_data</name></name> <modifier>*</modifier></type><name>evpd</name> <init>= <expr><name><name>base</name><operator>-&gt;</operator><name>evbase</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>fd_info</name></name> <modifier>*</modifier></type><name>fdi</name> <init>= <expr><name>p</name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>check_evportop</name><argument_list>(<argument><expr><name>evpd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>fdi</name><operator>-&gt;</operator><name>fdi_what</name></name> <operator>|=</operator> <name>events</name></expr>;</expr_stmt>
+
+<return>return <expr><call><name>reassociate</name><argument_list>(<argument><expr><name>evpd</name></expr></argument>, <argument><expr><name>fdi</name></expr></argument>, <argument><expr><name>fd</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>evport_del</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>event_base</name></name> <modifier>*</modifier></type><name>base</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>fd</name></decl></parameter>, <parameter><decl><type><name>short</name></type> <name>old</name></decl></parameter>, <parameter><decl><type><name>short</name></type> <name>events</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>p</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>evport_data</name></name> <modifier>*</modifier></type><name>evpd</name> <init>= <expr><name><name>base</name><operator>-&gt;</operator><name>evbase</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>fd_info</name></name> <modifier>*</modifier></type><name>fdi</name> <init>= <expr><name>p</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>associated</name> <init>= <expr><operator>!</operator> <name><name>fdi</name><operator>-&gt;</operator><name>pending_idx_plus_1</name></name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>check_evportop</name><argument_list>(<argument><expr><name>evpd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>fdi</name><operator>-&gt;</operator><name>fdi_what</name></name> <operator>&amp;=</operator> <operator>~</operator><operator>(</operator><name>events</name> <operator>&amp;</operator><operator>(</operator><name>EV_READ</name><operator>|</operator><name>EV_WRITE</name><operator>)</operator><operator>)</operator></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>associated</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>FDI_HAS_EVENTS</name><argument_list>(<argument><expr><name>fdi</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator>
+<call><name>port_dissociate</name><argument_list>(<argument><expr><name><name>evpd</name><operator>-&gt;</operator><name>ed_port</name></name></expr></argument>, <argument><expr><name>PORT_SOURCE_FD</name></expr></argument>, <argument><expr><name>fd</name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>errno</name> <operator>!=</operator> <name>EBADFD</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>event_warn</name><argument_list>(<argument><expr><literal type="string">"port_dissociate"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>FDI_HAS_EVENTS</name><argument_list>(<argument><expr><name>fdi</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<return>return <expr><operator>(</operator><call><name>reassociate</name><argument_list>(<argument><expr><name>evpd</name></expr></argument>, <argument><expr><name>fdi</name></expr></argument>, <argument><expr><name>fd</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>fdi</name><operator>-&gt;</operator><name>fdi_what</name></name> <operator>&amp;</operator> <operator>(</operator><name>EV_READ</name><operator>|</operator><name>EV_WRITE</name><operator>)</operator><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>int</name></type> <name>i</name> <init>= <expr><name><name>fdi</name><operator>-&gt;</operator><name>pending_idx_plus_1</name></name> <operator>-</operator> <literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>EVUTIL_ASSERT</name><argument_list>(<argument><expr><name><name>evpd</name><operator>-&gt;</operator><name>ed_pending</name><index>[<expr><name>i</name></expr>]</index></name> <operator>==</operator> <name>fd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>evpd</name><operator>-&gt;</operator><name>ed_pending</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>fdi</name><operator>-&gt;</operator><name>pending_idx_plus_1</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>evport_dealloc</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>event_base</name></name> <modifier>*</modifier></type><name>base</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>evport_data</name></name> <modifier>*</modifier></type><name>evpd</name> <init>= <expr><name><name>base</name><operator>-&gt;</operator><name>evbase</name></name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>evsig_dealloc_</name><argument_list>(<argument><expr><name>base</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>close</name><argument_list>(<argument><expr><name><name>evpd</name><operator>-&gt;</operator><name>ed_port</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>evpd</name><operator>-&gt;</operator><name>ed_pending</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>mm_free</name><argument_list>(<argument><expr><name><name>evpd</name><operator>-&gt;</operator><name>ed_pending</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>evpd</name><operator>-&gt;</operator><name>ed_pevtlist</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>mm_free</name><argument_list>(<argument><expr><name><name>evpd</name><operator>-&gt;</operator><name>ed_pevtlist</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>mm_free</name><argument_list>(<argument><expr><name>evpd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

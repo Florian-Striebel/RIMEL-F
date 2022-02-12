@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/llvm-project/compiler-rt/lib/tsan/rtl/tsan_interceptors.h"><cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>TSAN_INTERCEPTORS_H</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>TSAN_INTERCEPTORS_H</name></cpp:macro></cpp:define>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"sanitizer_common/sanitizer_stacktrace.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"tsan_rtl.h"</cpp:file></cpp:include>
+
+<decl_stmt><decl><type><name>namespace</name></type> <name>__tsan</name> <block>{<block_content>
+
+<decl_stmt><decl><type><name>class</name></type> <name>ScopedInterceptor</name> <block>{<block_content>
+<label><name>public</name>:</label>
+<macro><name>ScopedInterceptor</name><argument_list>(<argument>ThreadState *thr</argument>, <argument>const char *fname</argument>, <argument>uptr pc</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<expr_stmt><expr><operator>~</operator><call><name>ScopedInterceptor</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<function_decl><type><name>void</name></type> <name>DisableIgnores</name><parameter_list>()</parameter_list>;</function_decl>
+<function_decl><type><name>void</name></type> <name>EnableIgnores</name><parameter_list>()</parameter_list>;</function_decl>
+<label><name>private</name>:</label>
+<decl_stmt><decl><type><name>ThreadState</name> <modifier>*</modifier><specifier>const</specifier></type> <name>thr_</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uptr</name></type> <name>pc_</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>in_ignored_lib_</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>ignoring_</name></decl>;</decl_stmt>
+</block_content>}</block></decl></decl_stmt><empty_stmt>;</empty_stmt>
+
+<function_decl><type><name>LibIgnore</name> <modifier>*</modifier></type><name>libignore</name><parameter_list>()</parameter_list>;</function_decl>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><name>SANITIZER_GO</name></expr></cpp:if>
+<function><type><specifier>inline</specifier> <name>bool</name></type> <name>in_symbolizer</name><parameter_list>()</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>cur_thread_init</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><call><name>UNLIKELY</name><argument_list>(<argument><expr><call><name>cur_thread</name><argument_list>()</argument_list></call><operator>-&gt;</operator><name>in_symbolizer</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+</block_content>}</block></decl></decl_stmt>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>SCOPED_INTERCEPTOR_RAW</name><parameter_list>(<parameter><type><name>func</name></type></parameter>, <parameter><type><modifier>...</modifier></type></parameter>)</parameter_list></cpp:macro> <cpp:value>cur_thread_init(); ThreadState *thr = cur_thread(); const uptr caller_pc = GET_CALLER_PC(); ScopedInterceptor si(thr, #func, caller_pc); const uptr pc = GET_CURRENT_PC(); (void)pc;</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>SCOPED_TSAN_INTERCEPTOR</name><parameter_list>(<parameter><type><name>func</name></type></parameter>, <parameter><type><modifier>...</modifier></type></parameter>)</parameter_list></cpp:macro> <cpp:value>SCOPED_INTERCEPTOR_RAW(func, __VA_ARGS__); if (REAL(func) == 0) { Report("FATAL: ThreadSanitizer: failed to intercept %s\n", #func); Die(); } if (!thr-&gt;is_inited || thr-&gt;ignore_interceptors || thr-&gt;in_ignored_lib) return REAL(func)(__VA_ARGS__);</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>SCOPED_TSAN_INTERCEPTOR_USER_CALLBACK_START</name><parameter_list>()</parameter_list></cpp:macro> <cpp:value>si.DisableIgnores();</cpp:value></cpp:define>
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>SCOPED_TSAN_INTERCEPTOR_USER_CALLBACK_END</name><parameter_list>()</parameter_list></cpp:macro> <cpp:value>si.EnableIgnores();</cpp:value></cpp:define>
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>TSAN_INTERCEPTOR</name><parameter_list>(<parameter><type><name>ret</name></type></parameter>, <parameter><type><name>func</name></type></parameter>, <parameter><type><modifier>...</modifier></type></parameter>)</parameter_list></cpp:macro> <cpp:value>INTERCEPTOR(ret, func, __VA_ARGS__)</cpp:value></cpp:define>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SANITIZER_NETBSD</name></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>TSAN_INTERCEPTOR_NETBSD_ALIAS</name><parameter_list>(<parameter><type><name>ret</name></type></parameter>, <parameter><type><name>func</name></type></parameter>, <parameter><type><modifier>...</modifier></type></parameter>)</parameter_list></cpp:macro> <cpp:value>TSAN_INTERCEPTOR(ret, __libc_##func, __VA_ARGS__) ALIAS(WRAPPER_NAME(pthread_##func));</cpp:value></cpp:define>
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>TSAN_INTERCEPTOR_NETBSD_ALIAS_THR</name><parameter_list>(<parameter><type><name>ret</name></type></parameter>, <parameter><type><name>func</name></type></parameter>, <parameter><type><modifier>...</modifier></type></parameter>)</parameter_list></cpp:macro> <cpp:value>TSAN_INTERCEPTOR(ret, __libc_thr_##func, __VA_ARGS__) ALIAS(WRAPPER_NAME(pthread_##func));</cpp:value></cpp:define>
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>TSAN_INTERCEPTOR_NETBSD_ALIAS_THR2</name><parameter_list>(<parameter><type><name>ret</name></type></parameter>, <parameter><type><name>func</name></type></parameter>, <parameter><type><name>func2</name></type></parameter>, <parameter><type><modifier>...</modifier></type></parameter>)</parameter_list></cpp:macro> <cpp:value>TSAN_INTERCEPTOR(ret, __libc_thr_##func, __VA_ARGS__) ALIAS(WRAPPER_NAME(pthread_##func2));</cpp:value></cpp:define>
+
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>TSAN_INTERCEPTOR_NETBSD_ALIAS</name><parameter_list>(<parameter><type><name>ret</name></type></parameter>, <parameter><type><name>func</name></type></parameter>, <parameter><type><modifier>...</modifier></type></parameter>)</parameter_list></cpp:macro></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>TSAN_INTERCEPTOR_NETBSD_ALIAS_THR</name><parameter_list>(<parameter><type><name>ret</name></type></parameter>, <parameter><type><name>func</name></type></parameter>, <parameter><type><modifier>...</modifier></type></parameter>)</parameter_list></cpp:macro></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>TSAN_INTERCEPTOR_NETBSD_ALIAS_THR2</name><parameter_list>(<parameter><type><name>ret</name></type></parameter>, <parameter><type><name>func</name></type></parameter>, <parameter><type><name>func2</name></type></parameter>, <parameter><type><modifier>...</modifier></type></parameter>)</parameter_list></cpp:macro></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/libfido2/src/hid_hidapi.c">
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__linux__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/ioctl.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;linux/hidraw.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;linux/input.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;fcntl.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;errno.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;hidapi.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;wchar.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"fido.h"</cpp:file></cpp:include>
+
+<struct>struct <name>hid_hidapi</name> <block>{
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>handle</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>report_in_len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>report_out_len</name></decl>;</decl_stmt>
+}</block>;</struct>
+
+<function><type><specifier>static</specifier> <name>size_t</name></type>
+<name>fido_wcslen</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>wchar_t</name> <modifier>*</modifier></type><name>wcs</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>size_t</name></type> <name>l</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<while>while <condition>(<expr><operator>*</operator><name>wcs</name><operator>++</operator> <operator>!=</operator> <name>L</name><literal type="char">'\0'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>l</name><operator>++</operator></expr>;</expr_stmt></block_content></block></while>
+<return>return <expr><name>l</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>wcs_to_cs</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>wchar_t</name> <modifier>*</modifier></type><name>wcs</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>cs</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>i</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>wcs</name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <operator>(</operator><name>cs</name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><call><name>fido_wcslen</name><argument_list>(<argument><expr><name>wcs</name></expr></argument>)</argument_list></call> <operator>+</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>NULL</name></expr>;</return></block_content></block></if></if_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <call><name>fido_wcslen</name><argument_list>(<argument><expr><name>wcs</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>wcs</name><index>[<expr><name>i</name></expr>]</index></name> <operator>&gt;=</operator> <literal type="number">128</literal></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>cs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><call><name>strdup</name><argument_list>(<argument><expr><literal type="string">"hidapi device"</literal></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>cs</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <operator>(</operator><name>char</name><operator>)</operator><name><name>wcs</name><index>[<expr><name>i</name></expr>]</index></name></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<return>return <expr><name>cs</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>copy_info</name><parameter_list>(<parameter><decl><type><name>fido_dev_info_t</name> <modifier>*</modifier></type><name>di</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name><name>struct</name> <name>hid_device_info</name></name> <modifier>*</modifier></type><name>d</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><name>di</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>di</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>d</name><operator>-&gt;</operator><name>path</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>di</name><operator>-&gt;</operator><name>path</name></name> <operator>=</operator> <call><name>strdup</name><argument_list>(<argument><expr><name><name>d</name><operator>-&gt;</operator><name>path</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>di</name><operator>-&gt;</operator><name>path</name></name> <operator>=</operator> <call><name>strdup</name><argument_list>(<argument><expr><literal type="string">""</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>d</name><operator>-&gt;</operator><name>manufacturer_string</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>di</name><operator>-&gt;</operator><name>manufacturer</name></name> <operator>=</operator> <call><name>wcs_to_cs</name><argument_list>(<argument><expr><name><name>d</name><operator>-&gt;</operator><name>manufacturer_string</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>di</name><operator>-&gt;</operator><name>manufacturer</name></name> <operator>=</operator> <call><name>strdup</name><argument_list>(<argument><expr><literal type="string">""</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>d</name><operator>-&gt;</operator><name>product_string</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>di</name><operator>-&gt;</operator><name>product</name></name> <operator>=</operator> <call><name>wcs_to_cs</name><argument_list>(<argument><expr><name><name>d</name><operator>-&gt;</operator><name>product_string</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>di</name><operator>-&gt;</operator><name>product</name></name> <operator>=</operator> <call><name>strdup</name><argument_list>(<argument><expr><literal type="string">""</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>di</name><operator>-&gt;</operator><name>path</name></name> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<name><name>di</name><operator>-&gt;</operator><name>manufacturer</name></name> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<name><name>di</name><operator>-&gt;</operator><name>product</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>di</name><operator>-&gt;</operator><name>path</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>di</name><operator>-&gt;</operator><name>manufacturer</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>di</name><operator>-&gt;</operator><name>product</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>explicit_bzero</name><argument_list>(<argument><expr><name>di</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>di</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>di</name><operator>-&gt;</operator><name>product_id</name></name> <operator>=</operator> <operator>(</operator><name>int16_t</name><operator>)</operator><name><name>d</name><operator>-&gt;</operator><name>product_id</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>di</name><operator>-&gt;</operator><name>vendor_id</name></name> <operator>=</operator> <operator>(</operator><name>int16_t</name><operator>)</operator><name><name>d</name><operator>-&gt;</operator><name>vendor_id</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>di</name><operator>-&gt;</operator><name>io</name></name> <operator>=</operator> <operator>(</operator><name>fido_dev_io_t</name><operator>)</operator> <block>{
+<expr><operator>&amp;</operator><name>fido_hid_open</name></expr>,
+<expr><operator>&amp;</operator><name>fido_hid_close</name></expr>,
+<expr><operator>&amp;</operator><name>fido_hid_read</name></expr>,
+<expr><operator>&amp;</operator><name>fido_hid_write</name></expr>,
+}</block></expr>;</expr_stmt>
+
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__linux__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>get_report_descriptor</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>path</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>hidraw_report_descriptor</name></name> <modifier>*</modifier></type><name>hrd</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>fd</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>s</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ok</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>fd</name> <operator>=</operator> <call><name>fido_hid_unix_open</name><argument_list>(<argument><expr><name>path</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_hid_unix_open"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>ioctl</name><argument_list>(<argument><expr><name>fd</name></expr></argument>, <argument><expr><call><name>IOCTL_REQ</name><argument_list>(<argument><expr><name>HIDIOCGRDESCSIZE</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><operator>&amp;</operator><name>s</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator> <name><name>s</name> <argument_list type="generic">&lt; <argument><expr><literal type="number">0</literal> <operator>||</operator>
+<operator>(</operator><name>unsigned</name><operator>)</operator><name>s</name></expr></argument> &gt;</argument_list></name> <name>HID_MAX_DESCRIPTOR_SIZE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_error</name><argument_list>(<argument><expr><name>errno</name></expr></argument>, <argument><expr><literal type="string">"%s: ioctl HIDIOCGRDESCSIZE"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>hrd</name><operator>-&gt;</operator><name>size</name></name> <operator>=</operator> <operator>(</operator><name>unsigned</name><operator>)</operator><name>s</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>ioctl</name><argument_list>(<argument><expr><name>fd</name></expr></argument>, <argument><expr><call><name>IOCTL_REQ</name><argument_list>(<argument><expr><name>HIDIOCGRDESC</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>hrd</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_error</name><argument_list>(<argument><expr><name>errno</name></expr></argument>, <argument><expr><literal type="string">"%s: ioctl HIDIOCGRDESC"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>ok</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<label><name>fail</name>:</label>
+<if_stmt><if>if <condition>(<expr><name>fd</name> <operator>!=</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>close</name><argument_list>(<argument><expr><name>fd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<return>return <expr><name>ok</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>is_fido</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name><name>struct</name> <name>hid_device_info</name></name> <modifier>*</modifier></type><name>hdi</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>usage_page</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>hidraw_report_descriptor</name></name></type> <name>hrd</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>hrd</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>hrd</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>get_report_descriptor</name><argument_list>(<argument><expr><name><name>hdi</name><operator>-&gt;</operator><name>path</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>hrd</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>fido_hid_get_usage</name><argument_list>(<argument><expr><name><name>hrd</name><operator>.</operator><name>value</name></name></expr></argument>, <argument><expr><name><name>hrd</name><operator>.</operator><name>size</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>usage_page</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>false</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><name>usage_page</name> <operator>==</operator> <literal type="number">0xf1d0</literal></expr>;</return>
+</block_content>}</block></function>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>_WIN32</name></expr></argument>)</argument_list></call> <operator>||</operator> <call><name>defined</name><argument_list>(<argument><expr><name>__APPLE__</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>is_fido</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name><name>struct</name> <name>hid_device_info</name></name> <modifier>*</modifier></type><name>hdi</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><name><name>hdi</name><operator>-&gt;</operator><name>usage_page</name></name> <operator>==</operator> <literal type="number">0xf1d0</literal></expr>;</return>
+</block_content>}</block></function>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<function><type><specifier>static</specifier> <name>bool</name></type>
+<name>is_fido</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name><name>struct</name> <name>hid_device_info</name></name> <modifier>*</modifier></type><name>hdi</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>hdi</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: assuming FIDO HID"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>true</name></expr>;</return>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<function><type><name>void</name> <modifier>*</modifier></type>
+<name>fido_hid_open</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>path</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>hid_hidapi</name></name> <modifier>*</modifier></type><name>ctx</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>ctx</name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>ctx</name><operator>-&gt;</operator><name>handle</name></name> <operator>=</operator> <call><name>hid_open_path</name><argument_list>(<argument><expr><name>path</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>ctx</name><operator>-&gt;</operator><name>report_in_len</name></name> <operator>=</operator> <name><name>ctx</name><operator>-&gt;</operator><name>report_out_len</name></name> <operator>=</operator> <name>CTAP_MAX_REPORT_LEN</name></expr>;</expr_stmt>
+
+<return>return <expr><name>ctx</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type>
+<name>fido_hid_close</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>handle</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>hid_hidapi</name></name> <modifier>*</modifier></type><name>ctx</name> <init>= <expr><name>handle</name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>hid_close</name><argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>handle</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>fido_hid_set_sigmask</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>handle</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>fido_sigset_t</name> <modifier>*</modifier></type><name>sigmask</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>handle</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>sigmask</name></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>FIDO_ERR_INTERNAL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>fido_hid_read</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>handle</name></decl></parameter>, <parameter><decl><type><name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>len</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ms</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>hid_hidapi</name></name> <modifier>*</modifier></type><name>ctx</name> <init>= <expr><name>handle</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>len</name> <operator>!=</operator> <name><name>ctx</name><operator>-&gt;</operator><name>report_in_len</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: len %zu"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>, <argument><expr><name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><call><name>hid_read_timeout</name><argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>handle</name></name></expr></argument>, <argument><expr><name>buf</name></expr></argument>, <argument><expr><name>len</name></expr></argument>, <argument><expr><name>ms</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>fido_hid_write</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>handle</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>len</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>hid_hidapi</name></name> <modifier>*</modifier></type><name>ctx</name> <init>= <expr><name>handle</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>len</name> <operator>!=</operator> <name><name>ctx</name><operator>-&gt;</operator><name>report_out_len</name></name> <operator>+</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: len %zu"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>, <argument><expr><name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><call><name>hid_write</name><argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>handle</name></name></expr></argument>, <argument><expr><name>buf</name></expr></argument>, <argument><expr><name>len</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>fido_hid_manifest</name><parameter_list>(<parameter><decl><type><name>fido_dev_info_t</name> <modifier>*</modifier></type><name>devlist</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>ilen</name></decl></parameter>, <parameter><decl><type><name>size_t</name> <modifier>*</modifier></type><name>olen</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>hid_device_info</name></name> <modifier>*</modifier></type><name>hdi</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>olen</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ilen</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>FIDO_OK</name></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>devlist</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>FIDO_ERR_INVALID_ARGUMENT</name></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>hdi</name> <operator>=</operator> <call><name>hid_enumerate</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>FIDO_OK</name></expr>;</return></block_content></block></if></if_stmt>
+
+<for>for <control>(<init><decl><type><name><name>struct</name> <name>hid_device_info</name></name> <modifier>*</modifier><name>d</name></type> <init>= <expr><name>hdi</name></expr></init></decl>;</init> <condition><expr><name>d</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>d</name> <operator>=</operator> <name><name>d</name><operator>-&gt;</operator><name>next</name></name></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>is_fido</name><argument_list>(<argument><expr><name>d</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>copy_info</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>devlist</name><index>[<expr><operator>*</operator><name>olen</name></expr>]</index></name></expr></argument>, <argument><expr><name>d</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>++</operator><operator>(</operator><operator>*</operator><name>olen</name><operator>)</operator> <operator>==</operator> <name>ilen</name></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><call><name>hid_free_enumeration</name><argument_list>(<argument><expr><name>hdi</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><name>FIDO_OK</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>size_t</name></type>
+<name>fido_hid_report_in_len</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>handle</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>hid_hidapi</name></name> <modifier>*</modifier></type><name>ctx</name> <init>= <expr><name>handle</name></expr></init></decl>;</decl_stmt>
+
+<return>return <expr><operator>(</operator><name><name>ctx</name><operator>-&gt;</operator><name>report_in_len</name></name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>size_t</name></type>
+<name>fido_hid_report_out_len</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>handle</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>hid_hidapi</name></name> <modifier>*</modifier></type><name>ctx</name> <init>= <expr><name>handle</name></expr></init></decl>;</decl_stmt>
+
+<return>return <expr><operator>(</operator><name><name>ctx</name><operator>-&gt;</operator><name>report_out_len</name></name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+</unit>

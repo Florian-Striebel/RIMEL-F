@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/results/redis_res/_cppstats/redis/src/evict.c"><cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"server.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"bio.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"atomicvar.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"script.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;math.h&gt;</cpp:file></cpp:include>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>EVPOOL_SIZE</name></cpp:macro> <cpp:value>16</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>EVPOOL_CACHED_SDS_SIZE</name></cpp:macro> <cpp:value>255</cpp:value></cpp:define>
+<struct>struct <name>evictionPoolEntry</name> <block>{
+<decl_stmt><decl><type><name>unsigned</name> <name>long</name> <name>long</name></type> <name>idle</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>sds</name></type> <name>key</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>sds</name></type> <name>cached</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>dbid</name></decl>;</decl_stmt>
+}</block>;</struct>
+<decl_stmt><decl><type><specifier>static</specifier> <name><name>struct</name> <name>evictionPoolEntry</name></name> <modifier>*</modifier></type><name>EvictionPoolLRU</name></decl>;</decl_stmt>
+<function><type><name>unsigned</name> <name>int</name></type> <name>getLRUClock</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<return>return <expr><operator>(</operator><call><name>mstime</name><argument_list>()</argument_list></call><operator>/</operator><name>LRU_CLOCK_RESOLUTION</name><operator>)</operator> <operator>&amp;</operator> <name>LRU_CLOCK_MAX</name></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>unsigned</name> <name>int</name></type> <name>LRU_CLOCK</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name> <name>int</name></type> <name>lruclock</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><literal type="number">1000</literal><operator>/</operator><name><name>server</name><operator>.</operator><name>hz</name></name> <operator>&lt;=</operator> <name>LRU_CLOCK_RESOLUTION</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>atomicGet</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>lruclock</name></name></expr></argument>,<argument><expr><name>lruclock</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>lruclock</name> <operator>=</operator> <call><name>getLRUClock</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<return>return <expr><name>lruclock</name></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>unsigned</name> <name>long</name> <name>long</name></type> <name>estimateObjectIdleTime</name><parameter_list>(<parameter><decl><type><name>robj</name> <modifier>*</modifier></type><name>o</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name> <name>long</name> <name>long</name></type> <name>lruclock</name> <init>= <expr><call><name>LRU_CLOCK</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>lruclock</name> <operator>&gt;=</operator> <name><name>o</name><operator>-&gt;</operator><name>lru</name></name></expr>)</condition> <block>{<block_content>
+<return>return <expr><operator>(</operator><name>lruclock</name> <operator>-</operator> <name><name>o</name><operator>-&gt;</operator><name>lru</name></name><operator>)</operator> <operator>*</operator> <name>LRU_CLOCK_RESOLUTION</name></expr>;</return>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<return>return <expr><operator>(</operator><name>lruclock</name> <operator>+</operator> <operator>(</operator><name>LRU_CLOCK_MAX</name> <operator>-</operator> <name><name>o</name><operator>-&gt;</operator><name>lru</name></name><operator>)</operator><operator>)</operator> <operator>*</operator>
+<name>LRU_CLOCK_RESOLUTION</name></expr>;</return>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></function>
+<function><type><name>void</name></type> <name>evictionPoolAlloc</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>evictionPoolEntry</name></name> <modifier>*</modifier></type><name>ep</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>j</name></decl>;</decl_stmt>
+<expr_stmt><expr><name>ep</name> <operator>=</operator> <call><name>zmalloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>ep</name></expr></argument>)</argument_list></sizeof><operator>*</operator><name>EVPOOL_SIZE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>j</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>j</name> <operator>&lt;</operator> <name>EVPOOL_SIZE</name></expr>;</condition> <incr><expr><name>j</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name><name>ep</name><index>[<expr><name>j</name></expr>]</index></name><operator>.</operator><name>idle</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ep</name><index>[<expr><name>j</name></expr>]</index></name><operator>.</operator><name>key</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ep</name><index>[<expr><name>j</name></expr>]</index></name><operator>.</operator><name>cached</name> <operator>=</operator> <call><name>sdsnewlen</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>,<argument><expr><name>EVPOOL_CACHED_SDS_SIZE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ep</name><index>[<expr><name>j</name></expr>]</index></name><operator>.</operator><name>dbid</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><name>EvictionPoolLRU</name> <operator>=</operator> <name>ep</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><name>void</name></type> <name>evictionPoolPopulate</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>dbid</name></decl></parameter>, <parameter><decl><type><name>dict</name> <modifier>*</modifier></type><name>sampledict</name></decl></parameter>, <parameter><decl><type><name>dict</name> <modifier>*</modifier></type><name>keydict</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>evictionPoolEntry</name></name> <modifier>*</modifier></type><name>pool</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>j</name></decl>, <decl><type ref="prev"/><name>k</name></decl>, <decl><type ref="prev"/><name>count</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>dictEntry</name> <modifier>*</modifier></type><name><name>samples</name><index>[<expr><name><name>server</name><operator>.</operator><name>maxmemory_samples</name></name></expr>]</index></name></decl>;</decl_stmt>
+<expr_stmt><expr><name>count</name> <operator>=</operator> <call><name>dictGetSomeKeys</name><argument_list>(<argument><expr><name>sampledict</name></expr></argument>,<argument><expr><name>samples</name></expr></argument>,<argument><expr><name><name>server</name><operator>.</operator><name>maxmemory_samples</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>j</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>j</name> <operator>&lt;</operator> <name>count</name></expr>;</condition> <incr><expr><name>j</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name> <name>long</name> <name>long</name></type> <name>idle</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>sds</name></type> <name>key</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>robj</name> <modifier>*</modifier></type><name>o</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>dictEntry</name> <modifier>*</modifier></type><name>de</name></decl>;</decl_stmt>
+<expr_stmt><expr><name>de</name> <operator>=</operator> <name><name>samples</name><index>[<expr><name>j</name></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>key</name> <operator>=</operator> <call><name>dictGetKey</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>server</name><operator>.</operator><name>maxmemory_policy</name></name> <operator>!=</operator> <name>MAXMEMORY_VOLATILE_TTL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>sampledict</name> <operator>!=</operator> <name>keydict</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>de</name> <operator>=</operator> <call><name>dictFind</name><argument_list>(<argument><expr><name>keydict</name></expr></argument>, <argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>o</name> <operator>=</operator> <call><name>dictGetVal</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>server</name><operator>.</operator><name>maxmemory_policy</name></name> <operator>&amp;</operator> <name>MAXMEMORY_FLAG_LRU</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>idle</name> <operator>=</operator> <call><name>estimateObjectIdleTime</name><argument_list>(<argument><expr><name>o</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>server</name><operator>.</operator><name>maxmemory_policy</name></name> <operator>&amp;</operator> <name>MAXMEMORY_FLAG_LFU</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>idle</name> <operator>=</operator> <literal type="number">255</literal><operator>-</operator><call><name>LFUDecrAndReturn</name><argument_list>(<argument><expr><name>o</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>server</name><operator>.</operator><name>maxmemory_policy</name></name> <operator>==</operator> <name>MAXMEMORY_VOLATILE_TTL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>idle</name> <operator>=</operator> <name>ULLONG_MAX</name> <operator>-</operator> <operator>(</operator><name>long</name><operator>)</operator><call><name>dictGetVal</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>serverPanic</name><argument_list>(<argument><expr><literal type="string">"Unknown eviction policy in evictionPoolPopulate()"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><name>k</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<while>while <condition>(<expr><name>k</name> <operator>&lt;</operator> <name>EVPOOL_SIZE</name> <operator>&amp;&amp;</operator>
+<name><name>pool</name><index>[<expr><name>k</name></expr>]</index></name><operator>.</operator><name>key</name> <operator>&amp;&amp;</operator>
+<name><name>pool</name><index>[<expr><name>k</name></expr>]</index></name><operator>.</operator><name>idle</name> <operator>&lt;</operator> <name>idle</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>k</name><operator>++</operator></expr>;</expr_stmt></block_content></block></while>
+<if_stmt><if>if <condition>(<expr><name>k</name> <operator>==</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name><name>pool</name><index>[<expr><name>EVPOOL_SIZE</name><operator>-</operator><literal type="number">1</literal></expr>]</index></name><operator>.</operator><name>key</name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<continue>continue;</continue>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>k</name> <operator>&lt;</operator> <name>EVPOOL_SIZE</name> <operator>&amp;&amp;</operator> <name><name>pool</name><index>[<expr><name>k</name></expr>]</index></name><operator>.</operator><name>key</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>pool</name><index>[<expr><name>EVPOOL_SIZE</name><operator>-</operator><literal type="number">1</literal></expr>]</index></name><operator>.</operator><name>key</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>sds</name></type> <name>cached</name> <init>= <expr><name><name>pool</name><index>[<expr><name>EVPOOL_SIZE</name><operator>-</operator><literal type="number">1</literal></expr>]</index></name><operator>.</operator><name>cached</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>memmove</name><argument_list>(<argument><expr><name>pool</name><operator>+</operator><name>k</name><operator>+</operator><literal type="number">1</literal></expr></argument>,<argument><expr><name>pool</name><operator>+</operator><name>k</name></expr></argument>,
+<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name><name>pool</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>)</argument_list></sizeof><operator>*</operator><operator>(</operator><name>EVPOOL_SIZE</name><operator>-</operator><name>k</name><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>pool</name><index>[<expr><name>k</name></expr>]</index></name><operator>.</operator><name>cached</name> <operator>=</operator> <name>cached</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>k</name><operator>--</operator></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>sds</name></type> <name>cached</name> <init>= <expr><name><name>pool</name><index>[<expr><literal type="number">0</literal></expr>]</index></name><operator>.</operator><name>cached</name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>pool</name><index>[<expr><literal type="number">0</literal></expr>]</index></name><operator>.</operator><name>key</name> <operator>!=</operator> <name><name>pool</name><index>[<expr><literal type="number">0</literal></expr>]</index></name><operator>.</operator><name>cached</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><call><name>sdsfree</name><argument_list>(<argument><expr><name><name>pool</name><index>[<expr><literal type="number">0</literal></expr>]</index></name><operator>.</operator><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>memmove</name><argument_list>(<argument><expr><name>pool</name></expr></argument>,<argument><expr><name>pool</name><operator>+</operator><literal type="number">1</literal></expr></argument>,<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name><name>pool</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>)</argument_list></sizeof><operator>*</operator><name>k</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>pool</name><index>[<expr><name>k</name></expr>]</index></name><operator>.</operator><name>cached</name> <operator>=</operator> <name>cached</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></else></if_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>klen</name> <init>= <expr><call><name>sdslen</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>klen</name> <operator>&gt;</operator> <name>EVPOOL_CACHED_SDS_SIZE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>pool</name><index>[<expr><name>k</name></expr>]</index></name><operator>.</operator><name>key</name> <operator>=</operator> <call><name>sdsdup</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name><name>pool</name><index>[<expr><name>k</name></expr>]</index></name><operator>.</operator><name>cached</name></expr></argument>,<argument><expr><name>key</name></expr></argument>,<argument><expr><name>klen</name><operator>+</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>sdssetlen</name><argument_list>(<argument><expr><name><name>pool</name><index>[<expr><name>k</name></expr>]</index></name><operator>.</operator><name>cached</name></expr></argument>,<argument><expr><name>klen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>pool</name><index>[<expr><name>k</name></expr>]</index></name><operator>.</operator><name>key</name> <operator>=</operator> <name><name>pool</name><index>[<expr><name>k</name></expr>]</index></name><operator>.</operator><name>cached</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><name><name>pool</name><index>[<expr><name>k</name></expr>]</index></name><operator>.</operator><name>idle</name> <operator>=</operator> <name>idle</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>pool</name><index>[<expr><name>k</name></expr>]</index></name><operator>.</operator><name>dbid</name> <operator>=</operator> <name>dbid</name></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+<function><type><name>unsigned</name> <name>long</name></type> <name>LFUGetTimeInMinutes</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<return>return <expr><operator>(</operator><name><name>server</name><operator>.</operator><name>unixtime</name></name><operator>/</operator><literal type="number">60</literal><operator>)</operator> <operator>&amp;</operator> <literal type="number">65535</literal></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>unsigned</name> <name>long</name></type> <name>LFUTimeElapsed</name><parameter_list>(<parameter><decl><type><name>unsigned</name> <name>long</name></type> <name>ldt</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name> <name>long</name></type> <name>now</name> <init>= <expr><call><name>LFUGetTimeInMinutes</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>now</name> <operator>&gt;=</operator> <name>ldt</name></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><name>now</name><operator>-</operator><name>ldt</name></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><literal type="number">65535</literal><operator>-</operator><name>ldt</name><operator>+</operator><name>now</name></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>uint8_t</name></type> <name>LFULogIncr</name><parameter_list>(<parameter><decl><type><name>uint8_t</name></type> <name>counter</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>counter</name> <operator>==</operator> <literal type="number">255</literal></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><literal type="number">255</literal></expr>;</return></block_content></block></if></if_stmt>
+<decl_stmt><decl><type><name>double</name></type> <name>r</name> <init>= <expr><operator>(</operator><name>double</name><operator>)</operator><call><name>rand</name><argument_list>()</argument_list></call><operator>/</operator><name>RAND_MAX</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>double</name></type> <name>baseval</name> <init>= <expr><name>counter</name> <operator>-</operator> <name>LFU_INIT_VAL</name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>baseval</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>baseval</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<decl_stmt><decl><type><name>double</name></type> <name>p</name> <init>= <expr><literal type="number">1.0</literal><operator>/</operator><operator>(</operator><name>baseval</name><operator>*</operator><name><name>server</name><operator>.</operator><name>lfu_log_factor</name></name><operator>+</operator><literal type="number">1</literal><operator>)</operator></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>r</name> <operator>&lt;</operator> <name>p</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>counter</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><name>counter</name></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>unsigned</name> <name>long</name></type> <name>LFUDecrAndReturn</name><parameter_list>(<parameter><decl><type><name>robj</name> <modifier>*</modifier></type><name>o</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name> <name>long</name></type> <name>ldt</name> <init>= <expr><name><name>o</name><operator>-&gt;</operator><name>lru</name></name> <operator>&gt;&gt;</operator> <literal type="number">8</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>long</name></type> <name>counter</name> <init>= <expr><name><name>o</name><operator>-&gt;</operator><name>lru</name></name> <operator>&amp;</operator> <literal type="number">255</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>long</name></type> <name>num_periods</name> <init>= <expr><ternary><condition><expr><name><name>server</name><operator>.</operator><name>lfu_decay_time</name></name></expr> ?</condition><then> <expr><call><name>LFUTimeElapsed</name><argument_list>(<argument><expr><name>ldt</name></expr></argument>)</argument_list></call> <operator>/</operator> <name><name>server</name><operator>.</operator><name>lfu_decay_time</name></name></expr> </then><else>: <expr><literal type="number">0</literal></expr></else></ternary></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>num_periods</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>counter</name> <operator>=</operator> <ternary><condition><expr><operator>(</operator><name>num_periods</name> <operator>&gt;</operator> <name>counter</name><operator>)</operator></expr> ?</condition><then> <expr><literal type="number">0</literal></expr> </then><else>: <expr><name>counter</name> <operator>-</operator> <name>num_periods</name></expr></else></ternary></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><name>counter</name></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>size_t</name></type> <name>freeMemoryGetNotCountedMemory</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>size_t</name></type> <name>overhead</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>long</name> <name>long</name><operator>)</operator><name><name>server</name><operator>.</operator><name>repl_buffer_mem</name></name> <operator>&gt;</operator> <name><name>server</name><operator>.</operator><name>repl_backlog_size</name></name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>size_t</name></type> <name>extra_approx_size</name> <init>=
+<expr><operator>(</operator><name><name>server</name><operator>.</operator><name>repl_backlog_size</name></name><operator>/</operator><name>PROTO_REPLY_CHUNK_BYTES</name> <operator>+</operator> <literal type="number">1</literal><operator>)</operator> <operator>*</operator>
+<operator>(</operator><sizeof>sizeof<argument_list>(<argument><expr><name>replBufBlock</name></expr></argument>)</argument_list></sizeof><operator>+</operator><sizeof>sizeof<argument_list>(<argument><expr><name>listNode</name></expr></argument>)</argument_list></sizeof><operator>)</operator></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>counted_mem</name> <init>= <expr><name><name>server</name><operator>.</operator><name>repl_backlog_size</name></name> <operator>+</operator> <name>extra_approx_size</name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>server</name><operator>.</operator><name>repl_buffer_mem</name></name> <operator>&gt;</operator> <name>counted_mem</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>overhead</name> <operator>+=</operator> <operator>(</operator><name><name>server</name><operator>.</operator><name>repl_buffer_mem</name></name> <operator>-</operator> <name>counted_mem</name><operator>)</operator></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>server</name><operator>.</operator><name>aof_state</name></name> <operator>!=</operator> <name>AOF_OFF</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>overhead</name> <operator>+=</operator> <call><name>sdsAllocSize</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>aof_buf</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name>overhead</name></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>int</name></type> <name>getMaxmemoryState</name><parameter_list>(<parameter><decl><type><name>size_t</name> <modifier>*</modifier></type><name>total</name></decl></parameter>, <parameter><decl><type><name>size_t</name> <modifier>*</modifier></type><name>logical</name></decl></parameter>, <parameter><decl><type><name>size_t</name> <modifier>*</modifier></type><name>tofree</name></decl></parameter>, <parameter><decl><type><name>float</name> <modifier>*</modifier></type><name>level</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>size_t</name></type> <name>mem_reported</name></decl>, <decl><type ref="prev"/><name>mem_used</name></decl>, <decl><type ref="prev"/><name>mem_tofree</name></decl>;</decl_stmt>
+<expr_stmt><expr><name>mem_reported</name> <operator>=</operator> <call><name>zmalloc_used_memory</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>total</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><operator>*</operator><name>total</name> <operator>=</operator> <name>mem_reported</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>server</name><operator>.</operator><name>maxmemory</name></name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>level</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><operator>*</operator><name>level</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><name>C_OK</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>mem_reported</name> <operator>&lt;=</operator> <name><name>server</name><operator>.</operator><name>maxmemory</name></name> <operator>&amp;&amp;</operator> <operator>!</operator><name>level</name></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><name>C_OK</name></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>mem_used</name> <operator>=</operator> <name>mem_reported</name></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>overhead</name> <init>= <expr><call><name>freeMemoryGetNotCountedMemory</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>mem_used</name> <operator>=</operator> <ternary><condition><expr><operator>(</operator><name>mem_used</name> <operator>&gt;</operator> <name>overhead</name><operator>)</operator></expr> ?</condition><then> <expr><name>mem_used</name><operator>-</operator><name>overhead</name></expr> </then><else>: <expr><literal type="number">0</literal></expr></else></ternary></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>level</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><operator>*</operator><name>level</name> <operator>=</operator> <operator>(</operator><name>float</name><operator>)</operator><name>mem_used</name> <operator>/</operator> <operator>(</operator><name>float</name><operator>)</operator><name><name>server</name><operator>.</operator><name>maxmemory</name></name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>mem_reported</name> <operator>&lt;=</operator> <name><name>server</name><operator>.</operator><name>maxmemory</name></name></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><name>C_OK</name></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>mem_used</name> <operator>&lt;=</operator> <name><name>server</name><operator>.</operator><name>maxmemory</name></name></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><name>C_OK</name></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>mem_tofree</name> <operator>=</operator> <name>mem_used</name> <operator>-</operator> <name><name>server</name><operator>.</operator><name>maxmemory</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>logical</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><operator>*</operator><name>logical</name> <operator>=</operator> <name>mem_used</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>tofree</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><operator>*</operator><name>tofree</name> <operator>=</operator> <name>mem_tofree</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><name>C_ERR</name></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>int</name></type> <name>overMaxmemoryAfterAlloc</name><parameter_list>(<parameter><decl><type><name>size_t</name></type> <name>moremem</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>server</name><operator>.</operator><name>maxmemory</name></name></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><literal type="number">0</literal></expr>;</return></block_content></block></if></if_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>mem_used</name> <init>= <expr><call><name>zmalloc_used_memory</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>mem_used</name> <operator>+</operator> <name>moremem</name> <operator>&lt;=</operator> <name><name>server</name><operator>.</operator><name>maxmemory</name></name></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><literal type="number">0</literal></expr>;</return></block_content></block></if></if_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>overhead</name> <init>= <expr><call><name>freeMemoryGetNotCountedMemory</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>mem_used</name> <operator>=</operator> <ternary><condition><expr><operator>(</operator><name>mem_used</name> <operator>&gt;</operator> <name>overhead</name><operator>)</operator></expr> ?</condition><then> <expr><name>mem_used</name> <operator>-</operator> <name>overhead</name></expr> </then><else>: <expr><literal type="number">0</literal></expr></else></ternary></expr>;</expr_stmt>
+<return>return <expr><name>mem_used</name> <operator>+</operator> <name>moremem</name> <operator>&gt;</operator> <name><name>server</name><operator>.</operator><name>maxmemory</name></name></expr>;</return>
+</block_content>}</block></function>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>isEvictionProcRunning</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<function><type><specifier>static</specifier> <name>int</name></type> <name>evictionTimeProc</name><parameter_list>(
+<parameter><decl><type><name><name>struct</name> <name>aeEventLoop</name></name> <modifier>*</modifier></type><name>eventLoop</name></decl></parameter>, <parameter><decl><type><name>long</name> <name>long</name></type> <name>id</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>clientData</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>UNUSED</name><argument_list>(<argument><expr><name>eventLoop</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>UNUSED</name><argument_list>(<argument><expr><name>id</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>UNUSED</name><argument_list>(<argument><expr><name>clientData</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>performEvictions</name><argument_list>()</argument_list></call> <operator>==</operator> <name>EVICT_RUNNING</name></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><literal type="number">0</literal></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>isEvictionProcRunning</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<return>return <expr><name>AE_NOMORE</name></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>void</name></type> <name>startEvictionTimeProc</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>isEvictionProcRunning</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>isEvictionProcRunning</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>aeCreateTimeEvent</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>el</name></name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>,
+<argument><expr><name>evictionTimeProc</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>int</name></type> <name>isSafeToPerformEvictions</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>scriptIsTimedout</name><argument_list>()</argument_list></call> <operator>||</operator> <name><name>server</name><operator>.</operator><name>loading</name></name></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><literal type="number">0</literal></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>server</name><operator>.</operator><name>masterhost</name></name> <operator>&amp;&amp;</operator> <name><name>server</name><operator>.</operator><name>repl_slave_ignore_maxmemory</name></name></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><literal type="number">0</literal></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>checkClientPauseTimeoutAndReturnIfPaused</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><literal type="number">0</literal></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>server</name><operator>.</operator><name>also_propagate</name><operator>.</operator><name>numops</name></name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><literal type="number">0</literal></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>unsigned</name> <name>long</name></type> <name>evictionTimeLimitUs</name><parameter_list>()</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>serverAssert</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>maxmemory_eviction_tenacity</name></name> <operator>&gt;=</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>serverAssert</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>maxmemory_eviction_tenacity</name></name> <operator>&lt;=</operator> <literal type="number">100</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>server</name><operator>.</operator><name>maxmemory_eviction_tenacity</name></name> <operator>&lt;=</operator> <literal type="number">10</literal></expr>)</condition> <block>{<block_content>
+<return>return <expr><literal type="number">50uL</literal> <operator>*</operator> <name><name>server</name><operator>.</operator><name>maxmemory_eviction_tenacity</name></name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>server</name><operator>.</operator><name>maxmemory_eviction_tenacity</name></name> <operator>&lt;</operator> <literal type="number">100</literal></expr>)</condition> <block>{<block_content>
+<return>return <expr><operator>(</operator><name>unsigned</name> <name>long</name><operator>)</operator><operator>(</operator><literal type="number">500.0</literal> <operator>*</operator> <call><name>pow</name><argument_list>(<argument><expr><literal type="number">1.15</literal></expr></argument>, <argument><expr><name><name>server</name><operator>.</operator><name>maxmemory_eviction_tenacity</name></name> <operator>-</operator> <literal type="number">10.0</literal></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name>ULONG_MAX</name></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>int</name></type> <name>performEvictions</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>isSafeToPerformEvictions</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><name>EVICT_OK</name></expr>;</return></block_content></block></if></if_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>keys_freed</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>mem_reported</name></decl>, <decl><type ref="prev"/><name>mem_tofree</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>long</name> <name>long</name></type> <name>mem_freed</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>mstime_t</name></type> <name>latency</name></decl>, <decl><type ref="prev"/><name>eviction_latency</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>long</name> <name>long</name></type> <name>delta</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>slaves</name> <init>= <expr><call><name>listLength</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>slaves</name></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>result</name> <init>= <expr><name>EVICT_FAIL</name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>getMaxmemoryState</name><argument_list>(<argument><expr><operator>&amp;</operator><name>mem_reported</name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>,<argument><expr><operator>&amp;</operator><name>mem_tofree</name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>C_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <name>EVICT_OK</name></expr>;</expr_stmt>
+<goto>goto <name>update_metrics</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>server</name><operator>.</operator><name>maxmemory_policy</name></name> <operator>==</operator> <name>MAXMEMORY_NO_EVICTION</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <name>EVICT_FAIL</name></expr>;</expr_stmt>
+<goto>goto <name>update_metrics</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>long</name></type> <name>eviction_time_limit_us</name> <init>= <expr><call><name>evictionTimeLimitUs</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>mem_freed</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>latencyStartMonitor</name><argument_list>(<argument><expr><name>latency</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>monotime</name></type> <name>evictionTimer</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>elapsedStart</name><argument_list>(<argument><expr><operator>&amp;</operator><name>evictionTimer</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>prev_core_propagates</name> <init>= <expr><name><name>server</name><operator>.</operator><name>core_propagates</name></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>serverAssert</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>also_propagate</name><operator>.</operator><name>numops</name></name> <operator>==</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>core_propagates</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>propagate_no_multi</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<while>while <condition>(<expr><name>mem_freed</name> <operator>&lt;</operator> <operator>(</operator><name>long</name> <name>long</name><operator>)</operator><name>mem_tofree</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>j</name></decl>, <decl><type ref="prev"/><name>k</name></decl>, <decl><type ref="prev"/><name>i</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>unsigned</name> <name>int</name></type> <name>next_db</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>sds</name></type> <name>bestkey</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>bestdbid</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>redisDb</name> <modifier>*</modifier></type><name>db</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>dict</name> <modifier>*</modifier></type><name>dict</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>dictEntry</name> <modifier>*</modifier></type><name>de</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>server</name><operator>.</operator><name>maxmemory_policy</name></name> <operator>&amp;</operator> <operator>(</operator><name>MAXMEMORY_FLAG_LRU</name><operator>|</operator><name>MAXMEMORY_FLAG_LFU</name><operator>)</operator> <operator>||</operator>
+<name><name>server</name><operator>.</operator><name>maxmemory_policy</name></name> <operator>==</operator> <name>MAXMEMORY_VOLATILE_TTL</name></expr>)</condition>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>evictionPoolEntry</name></name> <modifier>*</modifier></type><name>pool</name> <init>= <expr><name>EvictionPoolLRU</name></expr></init></decl>;</decl_stmt>
+<while>while<condition>(<expr><name>bestkey</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name> <name>long</name></type> <name>total_keys</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>, <decl><type ref="prev"/><name>keys</name></decl>;</decl_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name><name>server</name><operator>.</operator><name>dbnum</name></name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>db</name> <operator>=</operator> <name><name>server</name><operator>.</operator><name>db</name></name><operator>+</operator><name>i</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>dict</name> <operator>=</operator> <ternary><condition><expr><operator>(</operator><name><name>server</name><operator>.</operator><name>maxmemory_policy</name></name> <operator>&amp;</operator> <name>MAXMEMORY_FLAG_ALLKEYS</name><operator>)</operator></expr> ?</condition><then>
+<expr><name><name>db</name><operator>-&gt;</operator><name>dict</name></name></expr> </then><else>: <expr><name><name>db</name><operator>-&gt;</operator><name>expires</name></name></expr></else></ternary></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>keys</name> <operator>=</operator> <call><name>dictSize</name><argument_list>(<argument><expr><name>dict</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>evictionPoolPopulate</name><argument_list>(<argument><expr><name>i</name></expr></argument>, <argument><expr><name>dict</name></expr></argument>, <argument><expr><name><name>db</name><operator>-&gt;</operator><name>dict</name></name></expr></argument>, <argument><expr><name>pool</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>total_keys</name> <operator>+=</operator> <name>keys</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>total_keys</name></expr>)</condition><block type="pseudo"><block_content> <break>break;</break></block_content></block></if></if_stmt>
+<for>for <control>(<init><expr><name>k</name> <operator>=</operator> <name>EVPOOL_SIZE</name><operator>-</operator><literal type="number">1</literal></expr>;</init> <condition><expr><name>k</name> <operator>&gt;=</operator> <literal type="number">0</literal></expr>;</condition> <incr><expr><name>k</name><operator>--</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>pool</name><index>[<expr><name>k</name></expr>]</index></name><operator>.</operator><name>key</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content> <continue>continue;</continue></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>bestdbid</name> <operator>=</operator> <name><name>pool</name><index>[<expr><name>k</name></expr>]</index></name><operator>.</operator><name>dbid</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>server</name><operator>.</operator><name>maxmemory_policy</name></name> <operator>&amp;</operator> <name>MAXMEMORY_FLAG_ALLKEYS</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>de</name> <operator>=</operator> <call><name>dictFind</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>db</name><index>[<expr><name>bestdbid</name></expr>]</index></name><operator>.</operator><name>dict</name></expr></argument>,
+<argument><expr><name><name>pool</name><index>[<expr><name>k</name></expr>]</index></name><operator>.</operator><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>de</name> <operator>=</operator> <call><name>dictFind</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>db</name><index>[<expr><name>bestdbid</name></expr>]</index></name><operator>.</operator><name>expires</name></expr></argument>,
+<argument><expr><name><name>pool</name><index>[<expr><name>k</name></expr>]</index></name><operator>.</operator><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>pool</name><index>[<expr><name>k</name></expr>]</index></name><operator>.</operator><name>key</name> <operator>!=</operator> <name><name>pool</name><index>[<expr><name>k</name></expr>]</index></name><operator>.</operator><name>cached</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>sdsfree</name><argument_list>(<argument><expr><name><name>pool</name><index>[<expr><name>k</name></expr>]</index></name><operator>.</operator><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>pool</name><index>[<expr><name>k</name></expr>]</index></name><operator>.</operator><name>key</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>pool</name><index>[<expr><name>k</name></expr>]</index></name><operator>.</operator><name>idle</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>de</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>bestkey</name> <operator>=</operator> <call><name>dictGetKey</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if> <else>else <block>{<block_content>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></while>
+</block_content>}</block></if>
+<if type="elseif">else if <condition>(<expr><name><name>server</name><operator>.</operator><name>maxmemory_policy</name></name> <operator>==</operator> <name>MAXMEMORY_ALLKEYS_RANDOM</name> <operator>||</operator>
+<name><name>server</name><operator>.</operator><name>maxmemory_policy</name></name> <operator>==</operator> <name>MAXMEMORY_VOLATILE_RANDOM</name></expr>)</condition>
+<block>{<block_content>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name><name>server</name><operator>.</operator><name>dbnum</name></name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>j</name> <operator>=</operator> <operator>(</operator><operator>++</operator><name>next_db</name><operator>)</operator> <operator>%</operator> <name><name>server</name><operator>.</operator><name>dbnum</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>db</name> <operator>=</operator> <name><name>server</name><operator>.</operator><name>db</name></name><operator>+</operator><name>j</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>dict</name> <operator>=</operator> <ternary><condition><expr><operator>(</operator><name><name>server</name><operator>.</operator><name>maxmemory_policy</name></name> <operator>==</operator> <name>MAXMEMORY_ALLKEYS_RANDOM</name><operator>)</operator></expr> ?</condition><then>
+<expr><name><name>db</name><operator>-&gt;</operator><name>dict</name></name></expr> </then><else>: <expr><name><name>db</name><operator>-&gt;</operator><name>expires</name></name></expr></else></ternary></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>dictSize</name><argument_list>(<argument><expr><name>dict</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>de</name> <operator>=</operator> <call><name>dictGetRandomKey</name><argument_list>(<argument><expr><name>dict</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>bestkey</name> <operator>=</operator> <call><name>dictGetKey</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>bestdbid</name> <operator>=</operator> <name>j</name></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>bestkey</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>db</name> <operator>=</operator> <name><name>server</name><operator>.</operator><name>db</name></name><operator>+</operator><name>bestdbid</name></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>robj</name> <modifier>*</modifier></type><name>keyobj</name> <init>= <expr><call><name>createStringObject</name><argument_list>(<argument><expr><name>bestkey</name></expr></argument>,<argument><expr><call><name>sdslen</name><argument_list>(<argument><expr><name>bestkey</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>delta</name> <operator>=</operator> <operator>(</operator><name>long</name> <name>long</name><operator>)</operator> <call><name>zmalloc_used_memory</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>latencyStartMonitor</name><argument_list>(<argument><expr><name>eviction_latency</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>server</name><operator>.</operator><name>lazyfree_lazy_eviction</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>dbAsyncDelete</name><argument_list>(<argument><expr><name>db</name></expr></argument>,<argument><expr><name>keyobj</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>dbSyncDelete</name><argument_list>(<argument><expr><name>db</name></expr></argument>,<argument><expr><name>keyobj</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<expr_stmt><expr><call><name>latencyEndMonitor</name><argument_list>(<argument><expr><name>eviction_latency</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>latencyAddSampleIfNeeded</name><argument_list>(<argument><expr><literal type="string">"eviction-del"</literal></expr></argument>,<argument><expr><name>eviction_latency</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>delta</name> <operator>-=</operator> <operator>(</operator><name>long</name> <name>long</name><operator>)</operator> <call><name>zmalloc_used_memory</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>mem_freed</name> <operator>+=</operator> <name>delta</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>stat_evictedkeys</name></name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>signalModifiedKey</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>,<argument><expr><name>db</name></expr></argument>,<argument><expr><name>keyobj</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>notifyKeyspaceEvent</name><argument_list>(<argument><expr><name>NOTIFY_EVICTED</name></expr></argument>, <argument><expr><literal type="string">"evicted"</literal></expr></argument>,
+<argument><expr><name>keyobj</name></expr></argument>, <argument><expr><name><name>db</name><operator>-&gt;</operator><name>id</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>propagateDeletion</name><argument_list>(<argument><expr><name>db</name></expr></argument>,<argument><expr><name>keyobj</name></expr></argument>,<argument><expr><name><name>server</name><operator>.</operator><name>lazyfree_lazy_eviction</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>decrRefCount</name><argument_list>(<argument><expr><name>keyobj</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>keys_freed</name><operator>++</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>keys_freed</name> <operator>%</operator> <literal type="number">16</literal> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>slaves</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><call><name>flushSlavesOutputBuffers</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>server</name><operator>.</operator><name>lazyfree_lazy_eviction</name></name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>getMaxmemoryState</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>C_OK</name></expr>)</condition> <block>{<block_content>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>elapsedUs</name><argument_list>(<argument><expr><name>evictionTimer</name></expr></argument>)</argument_list></call> <operator>&gt;</operator> <name>eviction_time_limit_us</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>startEvictionTimeProc</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<goto>goto <name>cant_free</name>;</goto>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></while>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <ternary><condition><expr><operator>(</operator><name>isEvictionProcRunning</name><operator>)</operator></expr> ?</condition><then> <expr><name>EVICT_RUNNING</name></expr> </then><else>: <expr><name>EVICT_OK</name></expr></else></ternary></expr>;</expr_stmt>
+<label><name>cant_free</name>:</label>
+<if_stmt><if>if <condition>(<expr><name>result</name> <operator>==</operator> <name>EVICT_FAIL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>bioPendingJobsOfType</name><argument_list>(<argument><expr><name>BIO_LAZY_FREE</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>usleep</name><argument_list>(<argument><expr><name>eviction_time_limit_us</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>getMaxmemoryState</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>C_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <name>EVICT_OK</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>serverAssert</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>core_propagates</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>propagatePendingCommands</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>core_propagates</name></name> <operator>=</operator> <name>prev_core_propagates</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>propagate_no_multi</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>latencyEndMonitor</name><argument_list>(<argument><expr><name>latency</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>latencyAddSampleIfNeeded</name><argument_list>(<argument><expr><literal type="string">"eviction-cycle"</literal></expr></argument>,<argument><expr><name>latency</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<label><name>update_metrics</name>:</label>
+<if_stmt><if>if <condition>(<expr><name>result</name> <operator>==</operator> <name>EVICT_RUNNING</name> <operator>||</operator> <name>result</name> <operator>==</operator> <name>EVICT_FAIL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>server</name><operator>.</operator><name>stat_last_eviction_exceeded_time</name></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>elapsedStart</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>server</name><operator>.</operator><name>stat_last_eviction_exceeded_time</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>result</name> <operator>==</operator> <name>EVICT_OK</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>server</name><operator>.</operator><name>stat_last_eviction_exceeded_time</name></name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>stat_total_eviction_exceeded_time</name></name> <operator>+=</operator> <call><name>elapsedUs</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>stat_last_eviction_exceeded_time</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>stat_last_eviction_exceeded_time</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></function>
+</unit>

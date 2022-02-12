@@ -1,0 +1,1951 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/less/search.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"less.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"position.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"charset.h"</cpp:file></cpp:include>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MINPOS</name><parameter_list>(<parameter><type><name>a</name></type></parameter>,<parameter><type><name>b</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>(((a) &lt; (b)) ? (a) : (b))</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MAXPOS</name><parameter_list>(<parameter><type><name>a</name></type></parameter>,<parameter><type><name>b</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>(((a) &gt; (b)) ? (a) : (b))</cpp:value></cpp:define>
+
+<decl_stmt><decl><type><specifier>extern</specifier> <name>int</name></type> <name>sigs</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>int</name></type> <name>how_search</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>int</name></type> <name>caseless</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>int</name></type> <name>linenums</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>int</name></type> <name>sc_height</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>int</name></type> <name>jump_sline</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>int</name></type> <name>bs_mode</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>int</name></type> <name>ctldisp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>int</name></type> <name>status_col</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>void</name> <modifier>*</modifier></type><name>ml_search</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>POSITION</name></type> <name>start_attnpos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>POSITION</name></type> <name>end_attnpos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>int</name></type> <name>utf_mode</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>int</name></type> <name>screen_trashed</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>int</name></type> <name>sc_width</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>int</name></type> <name>sc_height</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>int</name></type> <name>chopline</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>int</name></type> <name>hshift</name></decl>;</decl_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HILITE_SEARCH</name></expr></cpp:if>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>int</name></type> <name>hilite_search</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>int</name></type> <name>size_linebuf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>int</name></type> <name>squished</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>int</name></type> <name>can_goto_line</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>hide_hilite</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>POSITION</name></type> <name>prep_startpos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>POSITION</name></type> <name>prep_endpos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>POSITION</name></type> <name>xxpos</name></decl>;</decl_stmt>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<struct>struct <name>hilite</name>
+<block>{
+<decl_stmt><decl><type><name>POSITION</name></type> <name>hl_startpos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>hl_endpos</name></decl>;</decl_stmt>
+}</block>;</struct>
+<struct>struct <name>hilite_node</name>
+<block>{
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_node</name></name> <modifier>*</modifier></type><name>parent</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_node</name></name> <modifier>*</modifier></type><name>left</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_node</name></name> <modifier>*</modifier></type><name>right</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_node</name></name> <modifier>*</modifier></type><name>prev</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_node</name></name> <modifier>*</modifier></type><name>next</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>red</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite</name></name></type> <name>r</name></decl>;</decl_stmt>
+}</block>;</struct>
+<struct>struct <name>hilite_storage</name>
+<block>{
+<decl_stmt><decl><type><name>int</name></type> <name>capacity</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>used</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_storage</name></name> <modifier>*</modifier></type><name>next</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_node</name></name> <modifier>*</modifier></type><name>nodes</name></decl>;</decl_stmt>
+}</block>;</struct>
+<struct>struct <name>hilite_tree</name>
+<block>{
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_storage</name></name> <modifier>*</modifier></type><name>first</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_storage</name></name> <modifier>*</modifier></type><name>current</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_node</name></name> <modifier>*</modifier></type><name>root</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_node</name></name> <modifier>*</modifier></type><name>lookaside</name></decl>;</decl_stmt>
+}</block>;</struct>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>HILITE_INITIALIZER</name><parameter_list>()</parameter_list></cpp:macro> <cpp:value>{ NULL, NULL, NULL, NULL }</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>HILITE_LOOKASIDE_STEPS</name></cpp:macro> <cpp:value>2</cpp:value></cpp:define>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name><name>struct</name> <name>hilite_tree</name></name></type> <name>hilite_anchor</name> <init>= <expr><call><name>HILITE_INITIALIZER</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name><name>struct</name> <name>hilite_tree</name></name></type> <name>filter_anchor</name> <init>= <expr><call><name>HILITE_INITIALIZER</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name><name>struct</name> <name>pattern_info</name></name> <modifier>*</modifier></type><name>filter_infos</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+
+
+<struct>struct <name>pattern_info</name> <block>{
+<decl_stmt><decl><type><name>PATTERN_TYPE</name></type> <name>compiled</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name><modifier>*</modifier></type> <name>text</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>search_type</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>pattern_info</name></name> <modifier>*</modifier></type><name>next</name></decl>;</decl_stmt>
+}</block>;</struct>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>NO_REGEX</name></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>info_compiled</name><parameter_list>(<parameter><type><name>info</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((void*)0)</cpp:value></cpp:define>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>info_compiled</name><parameter_list>(<parameter><type><name>info</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((info)-&gt;compiled)</cpp:value></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name><name>struct</name> <name>pattern_info</name></name></type> <name>search_info</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>is_ucase_pattern</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>is_caseless</name></decl>;</decl_stmt>
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>is_ucase</name><parameter_list>(<parameter><decl><type><name>str</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>str</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>str_end</name> <init>= <expr><name>str</name> <operator>+</operator> <call><name>strlen</name><argument_list>(<argument><expr><name>str</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>LWCHAR</name></type> <name>ch</name></decl>;</decl_stmt>
+
+<while>while <condition>(<expr><name>str</name> <operator>&lt;</operator> <name>str_end</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>ch</name> <operator>=</operator> <call><name>step_char</name><argument_list>(<argument><expr><operator>&amp;</operator><name>str</name></expr></argument>, <argument><expr><operator>+</operator><literal type="number">1</literal></expr></argument>, <argument><expr><name>str_end</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>IS_UPPER</name><argument_list>(<argument><expr><name>ch</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></while>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>clear_pattern</name><parameter_list>(<parameter><decl><type><name>info</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name><name>struct</name> <name>pattern_info</name></name> <modifier>*</modifier></type><name>info</name></decl>;</decl_stmt>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>info</name><operator>-&gt;</operator><name>text</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>info</name><operator>-&gt;</operator><name>text</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>info</name><operator>-&gt;</operator><name>text</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><name>NO_REGEX</name></expr></cpp:if>
+<expr_stmt><expr><call><name>uncompile_pattern</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>info</name><operator>-&gt;</operator><name>compiled</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>set_pattern</name><parameter_list>(<parameter><decl><type><name>info</name></type></decl></parameter>, <parameter><decl><type><name>pattern</name></type></decl></parameter>, <parameter><decl><type><name>search_type</name></type></decl></parameter>, <parameter><decl><type><name>show_error</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name><name>struct</name> <name>pattern_info</name></name> <modifier>*</modifier></type><name>info</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>pattern</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>search_type</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>show_error</name></decl>;</decl_stmt>
+<block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><name>NO_REGEX</name></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name>pattern</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>SET_NULL_PATTERN</name><argument_list>(<argument><expr><name><name>info</name><operator>-&gt;</operator><name>compiled</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><call><name>compile_pattern</name><argument_list>(<argument><expr><name>pattern</name></expr></argument>, <argument><expr><name>search_type</name></expr></argument>, <argument><expr><name>show_error</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>info</name><operator>-&gt;</operator><name>compiled</name></name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<if_stmt><if>if <condition>(<expr><name><name>info</name><operator>-&gt;</operator><name>text</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>info</name><operator>-&gt;</operator><name>text</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>info</name><operator>-&gt;</operator><name>text</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>pattern</name> <operator>!=</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name><name>info</name><operator>-&gt;</operator><name>text</name></name> <operator>=</operator> <operator>(</operator><name>char</name> <operator>*</operator><operator>)</operator> <call><name>ecalloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name>pattern</name></expr></argument>)</argument_list></call><operator>+</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>strcpy</name><argument_list>(<argument><expr><name><name>info</name><operator>-&gt;</operator><name>text</name></name></expr></argument>, <argument><expr><name>pattern</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>info</name><operator>-&gt;</operator><name>search_type</name></name> <operator>=</operator> <name>search_type</name></expr>;</expr_stmt>
+
+
+
+
+
+<expr_stmt><expr><name>is_ucase_pattern</name> <operator>=</operator> <call><name>is_ucase</name><argument_list>(<argument><expr><name>pattern</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>is_ucase_pattern</name> <operator>&amp;&amp;</operator> <name>caseless</name> <operator>!=</operator> <name>OPT_ONPLUS</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>is_caseless</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>is_caseless</name> <operator>=</operator> <name>caseless</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>init_pattern</name><parameter_list>(<parameter><decl><type><name>info</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name><name>struct</name> <name>pattern_info</name></name> <modifier>*</modifier></type><name>info</name></decl>;</decl_stmt>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SET_NULL_PATTERN</name><argument_list>(<argument><expr><name><name>info</name><operator>-&gt;</operator><name>compiled</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>info</name><operator>-&gt;</operator><name>text</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>info</name><operator>-&gt;</operator><name>search_type</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>info</name><operator>-&gt;</operator><name>next</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>public</name> <name>void</name></type>
+<name>init_search</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>init_pattern</name><argument_list>(<argument><expr><operator>&amp;</operator><name>search_info</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>get_cvt_ops</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>ops</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>is_caseless</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>ops</name> <operator>|=</operator> <name>CVT_TO_LC</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>bs_mode</name> <operator>==</operator> <name>BS_SPECIAL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>ops</name> <operator>|=</operator> <name>CVT_BS</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>bs_mode</name> <operator>!=</operator> <name>BS_CONTROL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>ops</name> <operator>|=</operator> <name>CVT_CRLF</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>ctldisp</name> <operator>==</operator> <name>OPT_ONPLUS</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>ops</name> <operator>|=</operator> <name>CVT_ANSI</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>ops</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>prev_pattern</name><parameter_list>(<parameter><decl><type><name>info</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name><name>struct</name> <name>pattern_info</name></name> <modifier>*</modifier></type><name>info</name></decl>;</decl_stmt>
+<block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><name>NO_REGEX</name></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>info</name><operator>-&gt;</operator><name>search_type</name></name> <operator>&amp;</operator> <name>SRCH_NO_REGEX</name><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>!</operator><call><name>is_null_pattern</name><argument_list>(<argument><expr><name><name>info</name><operator>-&gt;</operator><name>compiled</name></name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<return>return <expr><operator>(</operator><name><name>info</name><operator>-&gt;</operator><name>text</name></name> <operator>!=</operator> <name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HILITE_SEARCH</name></expr></cpp:if>
+
+
+
+
+
+<function><type><name>public</name> <name>void</name></type>
+<name>repaint_hilite</name><parameter_list>(<parameter><decl><type><name>on</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>int</name></type> <name>on</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>sindex</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>pos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>save_hide_hilite</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>squished</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>repaint</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>save_hide_hilite</name> <operator>=</operator> <name>hide_hilite</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>on</name></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>hide_hilite</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>hide_hilite</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>can_goto_line</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>repaint</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>hide_hilite</name> <operator>=</operator> <name>save_hide_hilite</name></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+<for>for <control>(<init><expr><name>sindex</name> <operator>=</operator> <name>TOP</name></expr>;</init> <condition><expr><name>sindex</name> <operator>&lt;</operator> <name>TOP</name> <operator>+</operator> <name>sc_height</name><operator>-</operator><literal type="number">1</literal></expr>;</condition> <incr><expr><name>sindex</name><operator>++</operator></expr></incr>)</control>
+<block>{<block_content>
+<expr_stmt><expr><name>pos</name> <operator>=</operator> <call><name>position</name><argument_list>(<argument><expr><name>sindex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>pos</name> <operator>==</operator> <name>NULL_POSITION</name></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>forw_line</name><argument_list>(<argument><expr><name>pos</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>goto_line</name><argument_list>(<argument><expr><name>sindex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>put_line</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><call><name>lower_left</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>hide_hilite</name> <operator>=</operator> <name>save_hide_hilite</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+
+<function><type><name>public</name> <name>void</name></type>
+<name>clear_attn</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HILITE_SEARCH</name></expr></cpp:if>
+<decl_stmt><decl><type><name>int</name></type> <name>sindex</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>old_start_attnpos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>old_end_attnpos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>pos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>epos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>moved</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>start_attnpos</name> <operator>==</operator> <name>NULL_POSITION</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>old_start_attnpos</name> <operator>=</operator> <name>start_attnpos</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>old_end_attnpos</name> <operator>=</operator> <name>end_attnpos</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>start_attnpos</name> <operator>=</operator> <name>end_attnpos</name> <operator>=</operator> <name>NULL_POSITION</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>can_goto_line</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>repaint</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>squished</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>repaint</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<for>for <control>(<init><expr><name>sindex</name> <operator>=</operator> <name>TOP</name></expr>;</init> <condition><expr><name>sindex</name> <operator>&lt;</operator> <name>TOP</name> <operator>+</operator> <name>sc_height</name><operator>-</operator><literal type="number">1</literal></expr>;</condition> <incr><expr><name>sindex</name><operator>++</operator></expr></incr>)</control>
+<block>{<block_content>
+<expr_stmt><expr><name>pos</name> <operator>=</operator> <call><name>position</name><argument_list>(<argument><expr><name>sindex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>pos</name> <operator>==</operator> <name>NULL_POSITION</name></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>epos</name> <operator>=</operator> <call><name>position</name><argument_list>(<argument><expr><name>sindex</name><operator>+</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>pos</name> <operator>&lt;=</operator> <name>old_end_attnpos</name> <operator>&amp;&amp;</operator>
+<operator>(</operator><name>epos</name> <operator>==</operator> <name>NULL_POSITION</name> <operator>||</operator> <name>epos</name> <operator>&gt;</operator> <name>old_start_attnpos</name><operator>)</operator></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>forw_line</name><argument_list>(<argument><expr><name>pos</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>goto_line</name><argument_list>(<argument><expr><name>sindex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>put_line</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>moved</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+<if_stmt><if>if <condition>(<expr><name>moved</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>lower_left</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>public</name> <name>void</name></type>
+<name>undo_search</name><parameter_list>(<parameter><decl><type><name>clear</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>int</name></type> <name>clear</name></decl>;</decl_stmt>
+<block>{<block_content>
+<expr_stmt><expr><call><name>clear_pattern</name><argument_list>(<argument><expr><operator>&amp;</operator><name>search_info</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HILITE_SEARCH</name></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name>clear</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>clr_hilite</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>hilite_anchor</name><operator>.</operator><name>first</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>error</name><argument_list>(<argument><expr><literal type="string">"No previous regular expression"</literal></expr></argument>, <argument><expr><name>NULL_PARG</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>hide_hilite</name> <operator>=</operator> <operator>!</operator><name>hide_hilite</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><call><name>repaint_hilite</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HILITE_SEARCH</name></expr></cpp:if>
+
+
+
+<function><type><name>public</name> <name>void</name></type>
+<name>clr_hlist</name><parameter_list>(<parameter><decl><type><name>anchor</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_tree</name></name> <modifier>*</modifier></type><name>anchor</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_storage</name></name> <modifier>*</modifier></type><name>hls</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_storage</name></name> <modifier>*</modifier></type><name>nexthls</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>hls</name> <operator>=</operator> <name><name>anchor</name><operator>-&gt;</operator><name>first</name></name></expr>;</init> <condition><expr><name>hls</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>hls</name> <operator>=</operator> <name>nexthls</name></expr></incr>)</control>
+<block>{<block_content>
+<expr_stmt><expr><name>nexthls</name> <operator>=</operator> <name><name>hls</name><operator>-&gt;</operator><name>next</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><operator>(</operator><name>void</name><operator>*</operator><operator>)</operator><name><name>hls</name><operator>-&gt;</operator><name>nodes</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><operator>(</operator><name>void</name><operator>*</operator><operator>)</operator><name>hls</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><name><name>anchor</name><operator>-&gt;</operator><name>first</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>anchor</name><operator>-&gt;</operator><name>current</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>anchor</name><operator>-&gt;</operator><name>root</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>anchor</name><operator>-&gt;</operator><name>lookaside</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>prep_startpos</name> <operator>=</operator> <name>prep_endpos</name> <operator>=</operator> <name>NULL_POSITION</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>public</name> <name>void</name></type>
+<name>clr_hilite</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>clr_hlist</name><argument_list>(<argument><expr><operator>&amp;</operator><name>hilite_anchor</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>public</name> <name>void</name></type>
+<name>clr_filter</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>clr_hlist</name><argument_list>(<argument><expr><operator>&amp;</operator><name>filter_anchor</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name><name>struct</name> <name>hilite_node</name></name><modifier>*</modifier></type>
+<name>hlist_last</name><parameter_list>(<parameter><decl><type><name>anchor</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_tree</name></name> <modifier>*</modifier></type><name>anchor</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_node</name></name> <modifier>*</modifier></type><name>n</name> <init>= <expr><name><name>anchor</name><operator>-&gt;</operator><name>root</name></name></expr></init></decl>;</decl_stmt>
+<while>while <condition>(<expr><name>n</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <name><name>n</name><operator>-&gt;</operator><name>right</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>n</name> <operator>=</operator> <name><name>n</name><operator>-&gt;</operator><name>right</name></name></expr>;</expr_stmt></block_content></block></while>
+<return>return <expr><name>n</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name><name>struct</name> <name>hilite_node</name></name><modifier>*</modifier></type>
+<name>hlist_next</name><parameter_list>(<parameter><decl><type><name>n</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_node</name></name> <modifier>*</modifier></type><name>n</name></decl>;</decl_stmt>
+<block>{<block_content>
+<return>return <expr><name><name>n</name><operator>-&gt;</operator><name>next</name></name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name><name>struct</name> <name>hilite_node</name></name><modifier>*</modifier></type>
+<name>hlist_prev</name><parameter_list>(<parameter><decl><type><name>n</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_node</name></name> <modifier>*</modifier></type><name>n</name></decl>;</decl_stmt>
+<block>{<block_content>
+<return>return <expr><name><name>n</name><operator>-&gt;</operator><name>prev</name></name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+<function><type><name><name>struct</name> <name>hilite_node</name></name><modifier>*</modifier></type>
+<name>hlist_find</name><parameter_list>(<parameter><decl><type><name>anchor</name></type></decl></parameter>, <parameter><decl><type><name>pos</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_tree</name></name> <modifier>*</modifier></type><name>anchor</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>pos</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_node</name></name> <modifier>*</modifier></type><name>n</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>m</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>anchor</name><operator>-&gt;</operator><name>lookaside</name></name></expr>)</condition>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>steps</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>hit</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>n</name> <operator>=</operator> <name><name>anchor</name><operator>-&gt;</operator><name>lookaside</name></name></expr>;</expr_stmt>
+
+<for>for <control>(<init>;</init><condition>;</condition><incr/>)</control>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>pos</name> <operator>&lt;</operator> <name><name>n</name><operator>-&gt;</operator><name>r</name><operator>.</operator><name>hl_endpos</name></name></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>n</name><operator>-&gt;</operator><name>prev</name></name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <name>pos</name> <operator>&gt;=</operator> <name><name>n</name><operator>-&gt;</operator><name>prev</name><operator>-&gt;</operator><name>r</name><operator>.</operator><name>hl_endpos</name></name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>hit</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>n</name><operator>-&gt;</operator><name>next</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>n</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>hit</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>steps</name> <operator>&gt;=</operator> <name>HILITE_LOOKASIDE_STEPS</name></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>steps</name><operator>++</operator></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>pos</name> <operator>&lt;</operator> <name><name>n</name><operator>-&gt;</operator><name>r</name><operator>.</operator><name>hl_endpos</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>anchor</name><operator>-&gt;</operator><name>lookaside</name></name> <operator>=</operator> <name>n</name> <operator>=</operator> <name><name>n</name><operator>-&gt;</operator><name>prev</name></name></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>anchor</name><operator>-&gt;</operator><name>lookaside</name></name> <operator>=</operator> <name>n</name> <operator>=</operator> <name><name>n</name><operator>-&gt;</operator><name>next</name></name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></for>
+
+<if_stmt><if>if <condition>(<expr><name>hit</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>n</name></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>n</name> <operator>=</operator> <name><name>anchor</name><operator>-&gt;</operator><name>root</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>m</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+
+<while>while <condition>(<expr><name>n</name> <operator>!=</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>pos</name> <operator>&lt;</operator> <name><name>n</name><operator>-&gt;</operator><name>r</name><operator>.</operator><name>hl_startpos</name></name></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>n</name><operator>-&gt;</operator><name>left</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>m</name> <operator>=</operator> <name>n</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>n</name> <operator>=</operator> <name><name>n</name><operator>-&gt;</operator><name>left</name></name></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>pos</name> <operator>&gt;=</operator> <name><name>n</name><operator>-&gt;</operator><name>r</name><operator>.</operator><name>hl_endpos</name></name></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>n</name><operator>-&gt;</operator><name>right</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>n</name> <operator>=</operator> <name><name>n</name><operator>-&gt;</operator><name>right</name></name></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>m</name> <operator>!=</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>n</name> <operator>=</operator> <name>m</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+<expr_stmt><expr><name>m</name> <operator>=</operator> <name>n</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>n</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+<break>break;</break>
+</block_content>}</block></while>
+
+<if_stmt><if>if <condition>(<expr><name>n</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>anchor</name><operator>-&gt;</operator><name>lookaside</name></name> <operator>=</operator> <name>n</name></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name>m</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>anchor</name><operator>-&gt;</operator><name>lookaside</name></name> <operator>=</operator> <name>m</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<return>return <expr><name>n</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>is_hilited_range</name><parameter_list>(<parameter><decl><type><name>pos</name></type></decl></parameter>, <parameter><decl><type><name>epos</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>pos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>epos</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_node</name></name> <modifier>*</modifier></type><name>n</name> <init>= <expr><call><name>hlist_find</name><argument_list>(<argument><expr><operator>&amp;</operator><name>hilite_anchor</name></expr></argument>, <argument><expr><name>pos</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<return>return <expr><operator>(</operator><name>n</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <operator>(</operator><name>epos</name> <operator>==</operator> <name>NULL_POSITION</name> <operator>||</operator> <name>epos</name> <operator>&gt;</operator> <name><name>n</name><operator>-&gt;</operator><name>r</name><operator>.</operator><name>hl_startpos</name></name><operator>)</operator><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>public</name> <name>int</name></type>
+<name>is_filtered</name><parameter_list>(<parameter><decl><type><name>pos</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>pos</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_node</name></name> <modifier>*</modifier></type><name>n</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>ch_getflags</name><argument_list>()</argument_list></call> <operator>&amp;</operator> <name>CH_HELPFILE</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>n</name> <operator>=</operator> <call><name>hlist_find</name><argument_list>(<argument><expr><operator>&amp;</operator><name>filter_anchor</name></expr></argument>, <argument><expr><name>pos</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>n</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <name>pos</name> <operator>&gt;=</operator> <name><name>n</name><operator>-&gt;</operator><name>r</name><operator>.</operator><name>hl_startpos</name></name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><name>public</name> <name>POSITION</name></type>
+<name>next_unfiltered</name><parameter_list>(<parameter><decl><type><name>pos</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>pos</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_node</name></name> <modifier>*</modifier></type><name>n</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>ch_getflags</name><argument_list>()</argument_list></call> <operator>&amp;</operator> <name>CH_HELPFILE</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>pos</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>n</name> <operator>=</operator> <call><name>hlist_find</name><argument_list>(<argument><expr><operator>&amp;</operator><name>filter_anchor</name></expr></argument>, <argument><expr><name>pos</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<while>while <condition>(<expr><name>n</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <name>pos</name> <operator>&gt;=</operator> <name><name>n</name><operator>-&gt;</operator><name>r</name><operator>.</operator><name>hl_startpos</name></name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>pos</name> <operator>=</operator> <name><name>n</name><operator>-&gt;</operator><name>r</name><operator>.</operator><name>hl_endpos</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>n</name> <operator>=</operator> <name><name>n</name><operator>-&gt;</operator><name>next</name></name></expr>;</expr_stmt>
+</block_content>}</block></while>
+<return>return <expr><operator>(</operator><name>pos</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><name>public</name> <name>POSITION</name></type>
+<name>prev_unfiltered</name><parameter_list>(<parameter><decl><type><name>pos</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>pos</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_node</name></name> <modifier>*</modifier></type><name>n</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>ch_getflags</name><argument_list>()</argument_list></call> <operator>&amp;</operator> <name>CH_HELPFILE</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>pos</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>n</name> <operator>=</operator> <call><name>hlist_find</name><argument_list>(<argument><expr><operator>&amp;</operator><name>filter_anchor</name></expr></argument>, <argument><expr><name>pos</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<while>while <condition>(<expr><name>n</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <name>pos</name> <operator>&gt;=</operator> <name><name>n</name><operator>-&gt;</operator><name>r</name><operator>.</operator><name>hl_startpos</name></name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>pos</name> <operator>=</operator> <name><name>n</name><operator>-&gt;</operator><name>r</name><operator>.</operator><name>hl_startpos</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>pos</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>pos</name><operator>--</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name>n</name> <operator>=</operator> <name><name>n</name><operator>-&gt;</operator><name>prev</name></name></expr>;</expr_stmt>
+</block_content>}</block></while>
+<return>return <expr><operator>(</operator><name>pos</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+<function><type><name>public</name> <name>int</name></type>
+<name>is_hilited_attr</name><parameter_list>(<parameter><decl><type><name>pos</name></type></decl></parameter>, <parameter><decl><type><name>epos</name></type></decl></parameter>, <parameter><decl><type><name>nohide</name></type></decl></parameter>, <parameter><decl><type><name>p_matches</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>pos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>epos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>nohide</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name> <modifier>*</modifier></type><name>p_matches</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>match</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>p_matches</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>*</operator><name>p_matches</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>status_col</name> <operator>&amp;&amp;</operator>
+<name>start_attnpos</name> <operator>!=</operator> <name>NULL_POSITION</name> <operator>&amp;&amp;</operator>
+<name>pos</name> <operator>&lt;=</operator> <name>end_attnpos</name> <operator>&amp;&amp;</operator>
+<operator>(</operator><name>epos</name> <operator>==</operator> <name>NULL_POSITION</name> <operator>||</operator> <name>epos</name> <operator>&gt;=</operator> <name>start_attnpos</name><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+
+
+
+<return>return <expr><operator>(</operator><name>AT_HILITE</name><operator>|</operator><name>AT_COLOR_ATTN</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>match</name> <operator>=</operator> <call><name>is_hilited_range</name><argument_list>(<argument><expr><name>pos</name></expr></argument>, <argument><expr><name>epos</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>match</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>p_matches</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+
+
+
+
+
+<return>return <expr><operator>(</operator><name>AT_HILITE</name><operator>|</operator><name>AT_COLOR_SEARCH</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+
+
+
+<expr_stmt><expr><operator>*</operator><name>p_matches</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>hilite_search</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+
+
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>nohide</name> <operator>&amp;&amp;</operator> <name>hide_hilite</name></expr>)</condition><block type="pseudo"><block_content>
+
+
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>AT_HILITE</name><operator>|</operator><name>AT_COLOR_SEARCH</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name><name>struct</name> <name>hilite_storage</name></name><modifier>*</modifier></type>
+<name>hlist_getstorage</name><parameter_list>(<parameter><decl><type><name>anchor</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_tree</name></name> <modifier>*</modifier></type><name>anchor</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>capacity</name> <init>= <expr><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_storage</name></name> <modifier>*</modifier></type><name>s</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>anchor</name><operator>-&gt;</operator><name>current</name></name></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>anchor</name><operator>-&gt;</operator><name>current</name><operator>-&gt;</operator><name>used</name></name> <operator>&lt;</operator> <name><name>anchor</name><operator>-&gt;</operator><name>current</name><operator>-&gt;</operator><name>capacity</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name><name>anchor</name><operator>-&gt;</operator><name>current</name></name></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>capacity</name> <operator>=</operator> <name><name>anchor</name><operator>-&gt;</operator><name>current</name><operator>-&gt;</operator><name>capacity</name></name> <operator>*</operator> <literal type="number">2</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>s</name> <operator>=</operator> <operator>(</operator>struct <name>hilite_storage</name> <operator>*</operator><operator>)</operator> <call><name>ecalloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr>struct <name>hilite_storage</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>s</name><operator>-&gt;</operator><name>nodes</name></name> <operator>=</operator> <operator>(</operator>struct <name>hilite_node</name> <operator>*</operator><operator>)</operator> <call><name>ecalloc</name><argument_list>(<argument><expr><name>capacity</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr>struct <name>hilite_node</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>s</name><operator>-&gt;</operator><name>capacity</name></name> <operator>=</operator> <name>capacity</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>s</name><operator>-&gt;</operator><name>used</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>s</name><operator>-&gt;</operator><name>next</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>anchor</name><operator>-&gt;</operator><name>current</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>anchor</name><operator>-&gt;</operator><name>current</name><operator>-&gt;</operator><name>next</name></name> <operator>=</operator> <name>s</name></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>anchor</name><operator>-&gt;</operator><name>first</name></name> <operator>=</operator> <name>s</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<expr_stmt><expr><name><name>anchor</name><operator>-&gt;</operator><name>current</name></name> <operator>=</operator> <name>s</name></expr>;</expr_stmt>
+<return>return <expr><name>s</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name><name>struct</name> <name>hilite_node</name></name><modifier>*</modifier></type>
+<name>hlist_getnode</name><parameter_list>(<parameter><decl><type><name>anchor</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_tree</name></name> <modifier>*</modifier></type><name>anchor</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_storage</name></name> <modifier>*</modifier></type><name>s</name> <init>= <expr><call><name>hlist_getstorage</name><argument_list>(<argument><expr><name>anchor</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<return>return <expr><operator>&amp;</operator><name><name>s</name><operator>-&gt;</operator><name>nodes</name><index>[<expr><name><name>s</name><operator>-&gt;</operator><name>used</name></name><operator>++</operator></expr>]</index></name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>hlist_rotate_left</name><parameter_list>(<parameter><decl><type><name>anchor</name></type></decl></parameter>, <parameter><decl><type><name>n</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_tree</name></name> <modifier>*</modifier></type><name>anchor</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_node</name></name> <modifier>*</modifier></type><name>n</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_node</name></name> <modifier>*</modifier></type><name>np</name> <init>= <expr><name><name>n</name><operator>-&gt;</operator><name>parent</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_node</name></name> <modifier>*</modifier></type><name>nr</name> <init>= <expr><name><name>n</name><operator>-&gt;</operator><name>right</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_node</name></name> <modifier>*</modifier></type><name>nrl</name> <init>= <expr><name><name>n</name><operator>-&gt;</operator><name>right</name><operator>-&gt;</operator><name>left</name></name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>np</name> <operator>!=</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>n</name> <operator>==</operator> <name><name>np</name><operator>-&gt;</operator><name>left</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>np</name><operator>-&gt;</operator><name>left</name></name> <operator>=</operator> <name>nr</name></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>np</name><operator>-&gt;</operator><name>right</name></name> <operator>=</operator> <name>nr</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+<expr_stmt><expr><name><name>anchor</name><operator>-&gt;</operator><name>root</name></name> <operator>=</operator> <name>nr</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><name><name>nr</name><operator>-&gt;</operator><name>left</name></name> <operator>=</operator> <name>n</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>n</name><operator>-&gt;</operator><name>right</name></name> <operator>=</operator> <name>nrl</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>nr</name><operator>-&gt;</operator><name>parent</name></name> <operator>=</operator> <name>np</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>n</name><operator>-&gt;</operator><name>parent</name></name> <operator>=</operator> <name>nr</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>nrl</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>nrl</name><operator>-&gt;</operator><name>parent</name></name> <operator>=</operator> <name>n</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>hlist_rotate_right</name><parameter_list>(<parameter><decl><type><name>anchor</name></type></decl></parameter>, <parameter><decl><type><name>n</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_tree</name></name> <modifier>*</modifier></type><name>anchor</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_node</name></name> <modifier>*</modifier></type><name>n</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_node</name></name> <modifier>*</modifier></type><name>np</name> <init>= <expr><name><name>n</name><operator>-&gt;</operator><name>parent</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_node</name></name> <modifier>*</modifier></type><name>nl</name> <init>= <expr><name><name>n</name><operator>-&gt;</operator><name>left</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_node</name></name> <modifier>*</modifier></type><name>nlr</name> <init>= <expr><name><name>n</name><operator>-&gt;</operator><name>left</name><operator>-&gt;</operator><name>right</name></name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>np</name> <operator>!=</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>n</name> <operator>==</operator> <name><name>np</name><operator>-&gt;</operator><name>right</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>np</name><operator>-&gt;</operator><name>right</name></name> <operator>=</operator> <name>nl</name></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>np</name><operator>-&gt;</operator><name>left</name></name> <operator>=</operator> <name>nl</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+<expr_stmt><expr><name><name>anchor</name><operator>-&gt;</operator><name>root</name></name> <operator>=</operator> <name>nl</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><name><name>nl</name><operator>-&gt;</operator><name>right</name></name> <operator>=</operator> <name>n</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>n</name><operator>-&gt;</operator><name>left</name></name> <operator>=</operator> <name>nlr</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>nl</name><operator>-&gt;</operator><name>parent</name></name> <operator>=</operator> <name>np</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>n</name><operator>-&gt;</operator><name>parent</name></name> <operator>=</operator> <name>nl</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>nlr</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>nlr</name><operator>-&gt;</operator><name>parent</name></name> <operator>=</operator> <name>n</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>add_hilite</name><parameter_list>(<parameter><decl><type><name>anchor</name></type></decl></parameter>, <parameter><decl><type><name>hl</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_tree</name></name> <modifier>*</modifier></type><name>anchor</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite</name></name> <modifier>*</modifier></type><name>hl</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite_node</name></name> <modifier>*</modifier></type><name>p</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>n</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>u</name></decl>;</decl_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>hl</name><operator>-&gt;</operator><name>hl_startpos</name></name> <operator>&gt;=</operator> <name><name>hl</name><operator>-&gt;</operator><name>hl_endpos</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>p</name> <operator>=</operator> <name><name>anchor</name><operator>-&gt;</operator><name>root</name></name></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>p</name> <operator>==</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>n</name> <operator>=</operator> <call><name>hlist_getnode</name><argument_list>(<argument><expr><name>anchor</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>n</name><operator>-&gt;</operator><name>r</name></name> <operator>=</operator> <operator>*</operator><name>hl</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>anchor</name><operator>-&gt;</operator><name>root</name></name> <operator>=</operator> <name>n</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>anchor</name><operator>-&gt;</operator><name>lookaside</name></name> <operator>=</operator> <name>n</name></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+
+<for>for <control>(<init>;</init><condition>;</condition><incr/>)</control>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>hl</name><operator>-&gt;</operator><name>hl_startpos</name></name> <operator>&lt;</operator> <name><name>p</name><operator>-&gt;</operator><name>r</name><operator>.</operator><name>hl_startpos</name></name></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>hl</name><operator>-&gt;</operator><name>hl_endpos</name></name> <operator>&gt;</operator> <name><name>p</name><operator>-&gt;</operator><name>r</name><operator>.</operator><name>hl_startpos</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>hl</name><operator>-&gt;</operator><name>hl_endpos</name></name> <operator>=</operator> <name><name>p</name><operator>-&gt;</operator><name>r</name><operator>.</operator><name>hl_startpos</name></name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>p</name><operator>-&gt;</operator><name>left</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>p</name> <operator>=</operator> <name><name>p</name><operator>-&gt;</operator><name>left</name></name></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>hl</name><operator>-&gt;</operator><name>hl_startpos</name></name> <operator>&lt;</operator> <name><name>p</name><operator>-&gt;</operator><name>r</name><operator>.</operator><name>hl_endpos</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>hl</name><operator>-&gt;</operator><name>hl_startpos</name></name> <operator>=</operator> <name><name>p</name><operator>-&gt;</operator><name>r</name><operator>.</operator><name>hl_endpos</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>hl</name><operator>-&gt;</operator><name>hl_startpos</name></name> <operator>&gt;=</operator> <name><name>hl</name><operator>-&gt;</operator><name>hl_endpos</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>p</name><operator>-&gt;</operator><name>right</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>p</name> <operator>=</operator> <name><name>p</name><operator>-&gt;</operator><name>right</name></name></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+<break>break;</break>
+</block_content>}</block></for>
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>hl</name><operator>-&gt;</operator><name>hl_startpos</name></name> <operator>&lt;</operator> <name><name>p</name><operator>-&gt;</operator><name>r</name><operator>.</operator><name>hl_startpos</name></name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>hl</name><operator>-&gt;</operator><name>hl_endpos</name></name> <operator>==</operator> <name><name>p</name><operator>-&gt;</operator><name>r</name><operator>.</operator><name>hl_startpos</name></name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name><name>p</name><operator>-&gt;</operator><name>r</name><operator>.</operator><name>hl_startpos</name></name> <operator>=</operator> <name><name>hl</name><operator>-&gt;</operator><name>hl_startpos</name></name></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>p</name><operator>-&gt;</operator><name>prev</name></name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <name><name>p</name><operator>-&gt;</operator><name>prev</name><operator>-&gt;</operator><name>r</name><operator>.</operator><name>hl_endpos</name></name> <operator>==</operator> <name><name>hl</name><operator>-&gt;</operator><name>hl_startpos</name></name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name><name>p</name><operator>-&gt;</operator><name>prev</name><operator>-&gt;</operator><name>r</name><operator>.</operator><name>hl_endpos</name></name> <operator>=</operator> <name><name>hl</name><operator>-&gt;</operator><name>hl_endpos</name></name></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>p</name><operator>-&gt;</operator><name>left</name></name> <operator>=</operator> <name>n</name> <operator>=</operator> <call><name>hlist_getnode</name><argument_list>(<argument><expr><name>anchor</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>n</name><operator>-&gt;</operator><name>next</name></name> <operator>=</operator> <name>p</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>p</name><operator>-&gt;</operator><name>prev</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name><name>n</name><operator>-&gt;</operator><name>prev</name></name> <operator>=</operator> <name><name>p</name><operator>-&gt;</operator><name>prev</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>p</name><operator>-&gt;</operator><name>prev</name><operator>-&gt;</operator><name>next</name></name> <operator>=</operator> <name>n</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>p</name><operator>-&gt;</operator><name>prev</name></name> <operator>=</operator> <name>n</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>p</name><operator>-&gt;</operator><name>r</name><operator>.</operator><name>hl_endpos</name></name> <operator>==</operator> <name><name>hl</name><operator>-&gt;</operator><name>hl_startpos</name></name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name><name>p</name><operator>-&gt;</operator><name>r</name><operator>.</operator><name>hl_endpos</name></name> <operator>=</operator> <name><name>hl</name><operator>-&gt;</operator><name>hl_endpos</name></name></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>p</name><operator>-&gt;</operator><name>next</name></name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <name><name>hl</name><operator>-&gt;</operator><name>hl_endpos</name></name> <operator>==</operator> <name><name>p</name><operator>-&gt;</operator><name>next</name><operator>-&gt;</operator><name>r</name><operator>.</operator><name>hl_startpos</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>p</name><operator>-&gt;</operator><name>next</name><operator>-&gt;</operator><name>r</name><operator>.</operator><name>hl_startpos</name></name> <operator>=</operator> <name><name>hl</name><operator>-&gt;</operator><name>hl_startpos</name></name></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>p</name><operator>-&gt;</operator><name>right</name></name> <operator>=</operator> <name>n</name> <operator>=</operator> <call><name>hlist_getnode</name><argument_list>(<argument><expr><name>anchor</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>n</name><operator>-&gt;</operator><name>prev</name></name> <operator>=</operator> <name>p</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>p</name><operator>-&gt;</operator><name>next</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name><name>n</name><operator>-&gt;</operator><name>next</name></name> <operator>=</operator> <name><name>p</name><operator>-&gt;</operator><name>next</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>p</name><operator>-&gt;</operator><name>next</name><operator>-&gt;</operator><name>prev</name></name> <operator>=</operator> <name>n</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>p</name><operator>-&gt;</operator><name>next</name></name> <operator>=</operator> <name>n</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><name><name>n</name><operator>-&gt;</operator><name>parent</name></name> <operator>=</operator> <name>p</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>n</name><operator>-&gt;</operator><name>red</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>n</name><operator>-&gt;</operator><name>r</name></name> <operator>=</operator> <operator>*</operator><name>hl</name></expr>;</expr_stmt>
+
+
+
+
+
+
+<for>for <control>(<init>;</init><condition>;</condition><incr/>)</control>
+<block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><name><name>n</name><operator>-&gt;</operator><name>parent</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name><name>n</name><operator>-&gt;</operator><name>red</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>n</name><operator>-&gt;</operator><name>parent</name><operator>-&gt;</operator><name>red</name></name></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+
+
+
+
+
+
+
+
+
+
+
+<expr_stmt><expr><name>u</name> <operator>=</operator> <name><name>n</name><operator>-&gt;</operator><name>parent</name><operator>-&gt;</operator><name>parent</name><operator>-&gt;</operator><name>left</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>n</name><operator>-&gt;</operator><name>parent</name></name> <operator>==</operator> <name>u</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>u</name> <operator>=</operator> <name><name>n</name><operator>-&gt;</operator><name>parent</name><operator>-&gt;</operator><name>parent</name><operator>-&gt;</operator><name>right</name></name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>u</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <name><name>u</name><operator>-&gt;</operator><name>red</name></name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name><name>n</name><operator>-&gt;</operator><name>parent</name><operator>-&gt;</operator><name>red</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>u</name><operator>-&gt;</operator><name>red</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>n</name> <operator>=</operator> <name><name>n</name><operator>-&gt;</operator><name>parent</name><operator>-&gt;</operator><name>parent</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>n</name><operator>-&gt;</operator><name>red</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>n</name> <operator>==</operator> <name><name>n</name><operator>-&gt;</operator><name>parent</name><operator>-&gt;</operator><name>right</name></name> <operator>&amp;&amp;</operator>
+<name><name>n</name><operator>-&gt;</operator><name>parent</name></name> <operator>==</operator> <name><name>n</name><operator>-&gt;</operator><name>parent</name><operator>-&gt;</operator><name>parent</name><operator>-&gt;</operator><name>left</name></name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>hlist_rotate_left</name><argument_list>(<argument><expr><name>anchor</name></expr></argument>, <argument><expr><name><name>n</name><operator>-&gt;</operator><name>parent</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>n</name> <operator>=</operator> <name><name>n</name><operator>-&gt;</operator><name>left</name></name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>n</name> <operator>==</operator> <name><name>n</name><operator>-&gt;</operator><name>parent</name><operator>-&gt;</operator><name>left</name></name> <operator>&amp;&amp;</operator>
+<name><name>n</name><operator>-&gt;</operator><name>parent</name></name> <operator>==</operator> <name><name>n</name><operator>-&gt;</operator><name>parent</name><operator>-&gt;</operator><name>parent</name><operator>-&gt;</operator><name>right</name></name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>hlist_rotate_right</name><argument_list>(<argument><expr><name>anchor</name></expr></argument>, <argument><expr><name><name>n</name><operator>-&gt;</operator><name>parent</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>n</name> <operator>=</operator> <name><name>n</name><operator>-&gt;</operator><name>right</name></name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<expr_stmt><expr><name><name>n</name><operator>-&gt;</operator><name>parent</name><operator>-&gt;</operator><name>red</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>n</name><operator>-&gt;</operator><name>parent</name><operator>-&gt;</operator><name>parent</name><operator>-&gt;</operator><name>red</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>n</name> <operator>==</operator> <name><name>n</name><operator>-&gt;</operator><name>parent</name><operator>-&gt;</operator><name>left</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>hlist_rotate_right</name><argument_list>(<argument><expr><name>anchor</name></expr></argument>, <argument><expr><name><name>n</name><operator>-&gt;</operator><name>parent</name><operator>-&gt;</operator><name>parent</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>hlist_rotate_left</name><argument_list>(<argument><expr><name>anchor</name></expr></argument>, <argument><expr><name><name>n</name><operator>-&gt;</operator><name>parent</name><operator>-&gt;</operator><name>parent</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<break>break;</break>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>create_hilites</name><parameter_list>(<parameter><decl><type><name>linepos</name></type></decl></parameter>, <parameter><decl><type><name>start_index</name></type></decl></parameter>, <parameter><decl><type><name>end_index</name></type></decl></parameter>, <parameter><decl><type><name>chpos</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>linepos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>start_index</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>end_index</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name> <modifier>*</modifier></type><name>chpos</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite</name></name></type> <name>hl</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+
+
+<expr_stmt><expr><name><name>hl</name><operator>.</operator><name>hl_startpos</name></name> <operator>=</operator> <name>linepos</name> <operator>+</operator> <name><name>chpos</name><index>[<expr><name>start_index</name></expr>]</index></name></expr>;</expr_stmt>
+
+
+
+
+
+
+
+
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <name>start_index</name><operator>+</operator><literal type="number">1</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;=</operator> <name>end_index</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>chpos</name><index>[<expr><name>i</name></expr>]</index></name> <operator>!=</operator> <name><name>chpos</name><index>[<expr><name>i</name><operator>-</operator><literal type="number">1</literal></expr>]</index></name> <operator>+</operator> <literal type="number">1</literal> <operator>||</operator> <name>i</name> <operator>==</operator> <name>end_index</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name><name>hl</name><operator>.</operator><name>hl_endpos</name></name> <operator>=</operator> <name>linepos</name> <operator>+</operator> <name><name>chpos</name><index>[<expr><name>i</name><operator>-</operator><literal type="number">1</literal></expr>]</index></name> <operator>+</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>add_hilite</name><argument_list>(<argument><expr><operator>&amp;</operator><name>hilite_anchor</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>hl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>i</name> <operator>&lt;</operator> <name>end_index</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name><name>hl</name><operator>.</operator><name>hl_startpos</name></name> <operator>=</operator> <name>linepos</name> <operator>+</operator> <name><name>chpos</name><index>[<expr><name>i</name></expr>]</index></name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>hilite_line</name><parameter_list>(<parameter><decl><type><name>linepos</name></type></decl></parameter>, <parameter><decl><type><name>line</name></type></decl></parameter>, <parameter><decl><type><name>line_len</name></type></decl></parameter>, <parameter><decl><type><name>chpos</name></type></decl></parameter>, <parameter><decl><type><name>sp</name></type></decl></parameter>, <parameter><decl><type><name>ep</name></type></decl></parameter>, <parameter><decl><type><name>cvt_ops</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>linepos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>line</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>line_len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name> <modifier>*</modifier></type><name>chpos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>sp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>ep</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>cvt_ops</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>searchp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>line_end</name> <init>= <expr><name>line</name> <operator>+</operator> <name>line_len</name></expr></init></decl>;</decl_stmt>
+
+
+
+
+
+
+
+
+
+
+
+<expr_stmt><expr><name>searchp</name> <operator>=</operator> <name>line</name></expr>;</expr_stmt>
+<do>do <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>sp</name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <name>ep</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>create_hilites</name><argument_list>(<argument><expr><name>linepos</name></expr></argument>, <argument><expr><name>sp</name><operator>-</operator><name>line</name></expr></argument>, <argument><expr><name>ep</name><operator>-</operator><name>line</name></expr></argument>, <argument><expr><name>chpos</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>ep</name> <operator>&gt;</operator> <name>searchp</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>searchp</name> <operator>=</operator> <name>ep</name></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name>searchp</name> <operator>!=</operator> <name>line_end</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>searchp</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<break>break;</break></block_content></block></else></if_stmt>
+</block_content>}</block> while <condition>(<expr><call><name>match_pattern</name><argument_list>(<argument><expr><call><name>info_compiled</name><argument_list>(<argument><expr><operator>&amp;</operator><name>search_info</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name><name>search_info</name><operator>.</operator><name>text</name></name></expr></argument>,
+<argument><expr><name>searchp</name></expr></argument>, <argument><expr><name>line_end</name> <operator>-</operator> <name>searchp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>sp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ep</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name><name>search_info</name><operator>.</operator><name>search_type</name></name></expr></argument>)</argument_list></call></expr>)</condition>;</do>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HILITE_SEARCH</name></expr></cpp:if>
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>hilite_screen</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>scrpos</name></name></type> <name>scrpos</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>get_scrpos</name><argument_list>(<argument><expr><operator>&amp;</operator><name>scrpos</name></expr></argument>, <argument><expr><name>TOP</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>scrpos</name><operator>.</operator><name>pos</name></name> <operator>==</operator> <name>NULL_POSITION</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>prep_hilite</name><argument_list>(<argument><expr><name><name>scrpos</name><operator>.</operator><name>pos</name></name></expr></argument>, <argument><expr><call><name>position</name><argument_list>(<argument><expr><name>BOTTOM_PLUS_ONE</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>repaint_hilite</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>public</name> <name>void</name></type>
+<name>chg_hilite</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+
+
+<expr_stmt><expr><call><name>clr_hilite</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>hide_hilite</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>hilite_search</name> <operator>==</operator> <name>OPT_ONPLUS</name></expr>)</condition><block type="pseudo"><block_content>
+
+
+
+<expr_stmt><expr><call><name>hilite_screen</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+
+<function><type><specifier>static</specifier> <name>POSITION</name></type>
+<name>search_pos</name><parameter_list>(<parameter><decl><type><name>search_type</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>int</name></type> <name>search_type</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>pos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>sindex</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>empty_screen</name><argument_list>()</argument_list></call></expr>)</condition>
+<block>{<block_content>
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>search_type</name> <operator>&amp;</operator> <name>SRCH_FORW</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>pos</name> <operator>=</operator> <call><name>ch_zero</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+<expr_stmt><expr><name>pos</name> <operator>=</operator> <call><name>ch_length</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>pos</name> <operator>==</operator> <name>NULL_POSITION</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>ch_end_seek</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>pos</name> <operator>=</operator> <call><name>ch_length</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><name>sindex</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>add_one</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>how_search</name> <operator>==</operator> <name>OPT_ON</name></expr>)</condition>
+<block>{<block_content>
+
+
+
+<if_stmt><if>if <condition>(<expr><name>search_type</name> <operator>&amp;</operator> <name>SRCH_FORW</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>sindex</name> <operator>=</operator> <name>sc_height</name><operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>sindex</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>how_search</name> <operator>==</operator> <name>OPT_ONPLUS</name> <operator>&amp;&amp;</operator> <operator>!</operator><operator>(</operator><name>search_type</name> <operator>&amp;</operator> <name>SRCH_AFTER_TARGET</name><operator>)</operator></expr>)</condition>
+<block>{<block_content>
+
+
+
+<if_stmt><if>if <condition>(<expr><name>search_type</name> <operator>&amp;</operator> <name>SRCH_FORW</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>sindex</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>sindex</name> <operator>=</operator> <name>sc_height</name><operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+
+
+
+
+
+<expr_stmt><expr><name>sindex</name> <operator>=</operator> <call><name>sindex_from_sline</name><argument_list>(<argument><expr><name>jump_sline</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>search_type</name> <operator>&amp;</operator> <name>SRCH_FORW</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>add_one</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><name>pos</name> <operator>=</operator> <call><name>position</name><argument_list>(<argument><expr><name>sindex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>add_one</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>pos</name> <operator>=</operator> <call><name>forw_raw_line</name><argument_list>(<argument><expr><name>pos</name></expr></argument>, <argument><expr><operator>(</operator><name>char</name> <operator>*</operator><operator>*</operator><operator>)</operator><name>NULL</name></expr></argument>, <argument><expr><operator>(</operator><name>int</name> <operator>*</operator><operator>)</operator><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>search_type</name> <operator>&amp;</operator> <name>SRCH_FORW</name></expr>)</condition>
+<block>{<block_content>
+<while>while <condition>(<expr><name>pos</name> <operator>==</operator> <name>NULL_POSITION</name></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>++</operator><name>sindex</name> <operator>&gt;=</operator> <name>sc_height</name></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>pos</name> <operator>=</operator> <call><name>position</name><argument_list>(<argument><expr><name>sindex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></while>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+<while>while <condition>(<expr><name>pos</name> <operator>==</operator> <name>NULL_POSITION</name></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>--</operator><name>sindex</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>pos</name> <operator>=</operator> <call><name>position</name><argument_list>(<argument><expr><name>sindex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></while>
+</block_content>}</block></else></if_stmt>
+<return>return <expr><operator>(</operator><name>pos</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HILITE_SEARCH</name></expr></cpp:if>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>matches_filters</name><parameter_list>(<parameter><decl><type><name>pos</name></type></decl></parameter>, <parameter><decl><type><name>cline</name></type></decl></parameter>, <parameter><decl><type><name>line_len</name></type></decl></parameter>, <parameter><decl><type><name>chpos</name></type></decl></parameter>, <parameter><decl><type><name>linepos</name></type></decl></parameter>, <parameter><decl><type><name>sp</name></type></decl></parameter>, <parameter><decl><type><name>ep</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>pos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>cline</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>line_len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name> <modifier>*</modifier></type><name>chpos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>linepos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>sp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>ep</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>pattern_info</name></name> <modifier>*</modifier></type><name>filter</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>filter</name> <operator>=</operator> <name>filter_infos</name></expr>;</init> <condition><expr><name>filter</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>filter</name> <operator>=</operator> <name><name>filter</name><operator>-&gt;</operator><name>next</name></name></expr></incr>)</control>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>line_filter</name> <init>= <expr><call><name>match_pattern</name><argument_list>(<argument><expr><call><name>info_compiled</name><argument_list>(<argument><expr><name>filter</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name><name>filter</name><operator>-&gt;</operator><name>text</name></name></expr></argument>,
+<argument><expr><name>cline</name></expr></argument>, <argument><expr><name>line_len</name></expr></argument>, <argument><expr><name>sp</name></expr></argument>, <argument><expr><name>ep</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name><name>filter</name><operator>-&gt;</operator><name>search_type</name></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>line_filter</name></expr>)</condition>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>hilite</name></name></type> <name>hl</name></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>hl</name><operator>.</operator><name>hl_startpos</name></name> <operator>=</operator> <name>linepos</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>hl</name><operator>.</operator><name>hl_endpos</name></name> <operator>=</operator> <name>pos</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>add_hilite</name><argument_list>(<argument><expr><operator>&amp;</operator><name>filter_anchor</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>hl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>cline</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>chpos</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>POSITION</name></type>
+<name>get_lastlinepos</name><parameter_list>(<parameter><decl><type><name>pos</name></type></decl></parameter>, <parameter><decl><type><name>tpos</name></type></decl></parameter>, <parameter><decl><type><name>sheight</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>pos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>tpos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>sheight</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>nlines</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>nlines</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init><condition>;</condition> <incr><expr><name>nlines</name><operator>++</operator></expr></incr>)</control>
+<block>{<block_content>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>npos</name> <init>= <expr><call><name>forw_line</name><argument_list>(<argument><expr><name>pos</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>npos</name> <operator>&gt;</operator> <name>tpos</name></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>nlines</name> <operator>&lt;</operator> <name>sheight</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>NULL_POSITION</name></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><name>pos</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>pos</name> <operator>=</operator> <name>npos</name></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>get_seg</name><parameter_list>(<parameter><decl><type><name>pos</name></type></decl></parameter>, <parameter><decl><type><name>tpos</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>pos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>tpos</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>seg</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>seg</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init><condition>;</condition> <incr><expr><name>seg</name><operator>++</operator></expr></incr>)</control>
+<block>{<block_content>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>npos</name> <init>= <expr><call><name>forw_line_seg</name><argument_list>(<argument><expr><name>pos</name></expr></argument>, <argument><expr><name>TRUE</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>npos</name> <operator>&gt;</operator> <name>tpos</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>seg</name></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>pos</name> <operator>=</operator> <name>npos</name></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>search_range</name><parameter_list>(<parameter><decl><type><name>pos</name></type></decl></parameter>, <parameter><decl><type><name>endpos</name></type></decl></parameter>, <parameter><decl><type><name>search_type</name></type></decl></parameter>, <parameter><decl><type><name>matches</name></type></decl></parameter>, <parameter><decl><type><name>maxlines</name></type></decl></parameter>, <parameter><decl><type><name>plinepos</name></type></decl></parameter>, <parameter><decl><type><name>pendpos</name></type></decl></parameter>, <parameter><decl><type><name>plastlinepos</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>pos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>endpos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>search_type</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>matches</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>maxlines</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>POSITION</name> <modifier>*</modifier></type><name>plinepos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>POSITION</name> <modifier>*</modifier></type><name>pendpos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>POSITION</name> <modifier>*</modifier></type><name>plastlinepos</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>line</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>cline</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>line_len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>LINENUM</name></type> <name>linenum</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>sp</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>ep</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>line_match</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>cvt_ops</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>cvt_len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name> <modifier>*</modifier></type><name>chpos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>linepos</name></decl>, <decl><type ref="prev"/><name>oldpos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>swidth</name> <init>= <expr><name>sc_width</name> <operator>-</operator> <call><name>line_pfx_width</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>sheight</name> <init>= <expr><name>sc_height</name> <operator>-</operator> <call><name>sindex_from_sline</name><argument_list>(<argument><expr><name>jump_sline</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>linenum</name> <operator>=</operator> <call><name>find_linenum</name><argument_list>(<argument><expr><name>pos</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>oldpos</name> <operator>=</operator> <name>pos</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>search_type</name> <operator>&amp;</operator> <name>SRCH_WRAP</name><operator>)</operator> <operator>&amp;&amp;</operator> <name>endpos</name> <operator>==</operator> <name>NULL_POSITION</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>endpos</name> <operator>=</operator> <name>pos</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<for>for <control>(<init>;</init><condition>;</condition><incr/>)</control>
+<block>{<block_content>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>ABORT_SIGS</name><argument_list>()</argument_list></call></expr>)</condition>
+<block>{<block_content>
+
+
+
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>endpos</name> <operator>!=</operator> <name>NULL_POSITION</name> <operator>&amp;&amp;</operator> <operator>!</operator><operator>(</operator><name>search_type</name> <operator>&amp;</operator> <name>SRCH_WRAP</name><operator>)</operator> <operator>&amp;&amp;</operator>
+<operator>(</operator><operator>(</operator><operator>(</operator><name>search_type</name> <operator>&amp;</operator> <name>SRCH_FORW</name><operator>)</operator> <operator>&amp;&amp;</operator> <name>pos</name> <operator>&gt;=</operator> <name>endpos</name><operator>)</operator> <operator>||</operator>
+<operator>(</operator><operator>(</operator><name>search_type</name> <operator>&amp;</operator> <name>SRCH_BACK</name><operator>)</operator> <operator>&amp;&amp;</operator> <name>pos</name> <operator>&lt;=</operator> <name>endpos</name><operator>)</operator><operator>)</operator><operator>)</operator> <operator>||</operator> <name>maxlines</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition>
+<block>{<block_content>
+
+
+
+<if_stmt><if>if <condition>(<expr><name>pendpos</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>*</operator><name>pendpos</name> <operator>=</operator> <name>pos</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>matches</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>maxlines</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>maxlines</name><operator>--</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>search_type</name> <operator>&amp;</operator> <name>SRCH_FORW</name></expr>)</condition>
+<block>{<block_content>
+
+
+
+
+<expr_stmt><expr><name>linepos</name> <operator>=</operator> <name>pos</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>pos</name> <operator>=</operator> <call><name>forw_raw_line</name><argument_list>(<argument><expr><name>pos</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>line</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>line_len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>linenum</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>linenum</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+
+
+
+
+<expr_stmt><expr><name>pos</name> <operator>=</operator> <call><name>back_raw_line</name><argument_list>(<argument><expr><name>pos</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>line</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>line_len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>linepos</name> <operator>=</operator> <name>pos</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>linenum</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>linenum</name><operator>--</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>pos</name> <operator>==</operator> <name>NULL_POSITION</name></expr>)</condition>
+<block>{<block_content>
+
+
+
+<if_stmt><if>if <condition>(<expr><name>search_type</name> <operator>&amp;</operator> <name>SRCH_WRAP</name></expr>)</condition>
+<block>{<block_content>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>search_type</name> <operator>&amp;</operator> <name>SRCH_FORW</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>pos</name> <operator>=</operator> <call><name>ch_zero</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+<expr_stmt><expr><name>pos</name> <operator>=</operator> <call><name>ch_length</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>pos</name> <operator>==</operator> <name>NULL_POSITION</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>ch_end_seek</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>pos</name> <operator>=</operator> <call><name>ch_length</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>pos</name> <operator>!=</operator> <name>NULL_POSITION</name></expr>)</condition> <block>{<block_content>
+
+
+
+
+
+<expr_stmt><expr><name>search_type</name> <operator>&amp;=</operator> <operator>~</operator><name>SRCH_WRAP</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>linenum</name> <operator>=</operator> <call><name>find_linenum</name><argument_list>(<argument><expr><name>pos</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>pendpos</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>*</operator><name>pendpos</name> <operator>=</operator> <name>oldpos</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>matches</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>linenums</name> <operator>&amp;&amp;</operator> <call><name>abs</name><argument_list>(<argument><expr><operator>(</operator><name>int</name><operator>)</operator><operator>(</operator><name>pos</name> <operator>-</operator> <name>oldpos</name><operator>)</operator></expr></argument>)</argument_list></call> <operator>&gt;</operator> <literal type="number">2048</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>add_lnum</name><argument_list>(<argument><expr><name>linenum</name></expr></argument>, <argument><expr><name>pos</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>oldpos</name> <operator>=</operator> <name>pos</name></expr>;</expr_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HILITE_SEARCH</name></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><call><name>is_filtered</name><argument_list>(<argument><expr><name>linepos</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+
+
+<expr_stmt><expr><name>cvt_ops</name> <operator>=</operator> <call><name>get_cvt_ops</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>cvt_len</name> <operator>=</operator> <call><name>cvt_length</name><argument_list>(<argument><expr><name>line_len</name></expr></argument>, <argument><expr><name>cvt_ops</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>cline</name> <operator>=</operator> <operator>(</operator><name>char</name> <operator>*</operator><operator>)</operator> <call><name>ecalloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>cvt_len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>chpos</name> <operator>=</operator> <call><name>cvt_alloc_chpos</name><argument_list>(<argument><expr><name>cvt_len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>cvt_text</name><argument_list>(<argument><expr><name>cline</name></expr></argument>, <argument><expr><name>line</name></expr></argument>, <argument><expr><name>chpos</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>line_len</name></expr></argument>, <argument><expr><name>cvt_ops</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HILITE_SEARCH</name></expr></cpp:if>
+
+
+
+<if_stmt><if>if <condition>(<expr><name>filter_infos</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator>
+<operator>(</operator><operator>(</operator><name>search_type</name> <operator>&amp;</operator> <name>SRCH_FIND_ALL</name><operator>)</operator> <operator>||</operator>
+<name>prep_startpos</name> <operator>==</operator> <name>NULL_POSITION</name> <operator>||</operator>
+<name>linepos</name> <operator>&lt;</operator> <name>prep_startpos</name> <operator>||</operator> <name>linepos</name> <operator>&gt;=</operator> <name>prep_endpos</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>matches_filters</name><argument_list>(<argument><expr><name>pos</name></expr></argument>, <argument><expr><name>cline</name></expr></argument>, <argument><expr><name>line_len</name></expr></argument>, <argument><expr><name>chpos</name></expr></argument>, <argument><expr><name>linepos</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>sp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ep</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>prev_pattern</name><argument_list>(<argument><expr><operator>&amp;</operator><name>search_info</name></expr></argument>)</argument_list></call></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>line_match</name> <operator>=</operator> <call><name>match_pattern</name><argument_list>(<argument><expr><call><name>info_compiled</name><argument_list>(<argument><expr><operator>&amp;</operator><name>search_info</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name><name>search_info</name><operator>.</operator><name>text</name></name></expr></argument>,
+<argument><expr><name>cline</name></expr></argument>, <argument><expr><name>line_len</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>sp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ep</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>search_type</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>line_match</name></expr>)</condition>
+<block>{<block_content>
+
+
+
+<if_stmt><if>if <condition>(<expr><name>search_type</name> <operator>&amp;</operator> <name>SRCH_FIND_ALL</name></expr>)</condition>
+<block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HILITE_SEARCH</name></expr></cpp:if>
+
+
+
+
+
+<expr_stmt><expr><call><name>hilite_line</name><argument_list>(<argument><expr><name>linepos</name></expr></argument>, <argument><expr><name>cline</name></expr></argument>, <argument><expr><name>line_len</name></expr></argument>, <argument><expr><name>chpos</name></expr></argument>, <argument><expr><name>sp</name></expr></argument>, <argument><expr><name>ep</name></expr></argument>, <argument><expr><name>cvt_ops</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>--</operator><name>matches</name> <operator>&lt;=</operator> <literal type="number">0</literal></expr>)</condition>
+<block>{<block_content>
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HILITE_SEARCH</name></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name>hilite_search</name> <operator>==</operator> <name>OPT_ON</name></expr>)</condition>
+<block>{<block_content>
+
+
+
+
+<expr_stmt><expr><call><name>clr_hilite</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>hilite_line</name><argument_list>(<argument><expr><name>linepos</name></expr></argument>, <argument><expr><name>cline</name></expr></argument>, <argument><expr><name>line_len</name></expr></argument>, <argument><expr><name>chpos</name></expr></argument>, <argument><expr><name>sp</name></expr></argument>, <argument><expr><name>ep</name></expr></argument>, <argument><expr><name>cvt_ops</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<if_stmt><if>if <condition>(<expr><name>chopline</name></expr>)</condition>
+<block>{<block_content>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>sp</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <name>ep</name> <operator>!=</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>start_off</name> <init>= <expr><name>sp</name> <operator>-</operator> <name>cline</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>end_off</name> <init>= <expr><name>ep</name> <operator>-</operator> <name>cline</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>save_hshift</name> <init>= <expr><name>hshift</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>sshift</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>eshift</name></decl>;</decl_stmt>
+<expr_stmt><expr><name>hshift</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>chopline</name> <operator>=</operator> <name>FALSE</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>sshift</name> <operator>=</operator> <name>swidth</name> <operator>*</operator> <call><name>get_seg</name><argument_list>(<argument><expr><name>linepos</name></expr></argument>, <argument><expr><name>linepos</name> <operator>+</operator> <name><name>chpos</name><index>[<expr><name>start_off</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>eshift</name> <operator>=</operator> <name>swidth</name> <operator>*</operator> <call><name>get_seg</name><argument_list>(<argument><expr><name>linepos</name></expr></argument>, <argument><expr><name>linepos</name> <operator>+</operator> <name><name>chpos</name><index>[<expr><name>end_off</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>chopline</name> <operator>=</operator> <name>TRUE</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>sshift</name> <operator>&gt;=</operator> <name>save_hshift</name> <operator>&amp;&amp;</operator> <name>eshift</name> <operator>&lt;=</operator> <name>save_hshift</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>hshift</name> <operator>=</operator> <name>save_hshift</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+<expr_stmt><expr><name>hshift</name> <operator>=</operator> <name>sshift</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>screen_trashed</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>plastlinepos</name> <operator>!=</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>ep</name> <operator>!=</operator> <name>NULL</name></expr>)</condition>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>end_off</name> <init>= <expr><name>ep</name> <operator>-</operator> <name>cline</name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>end_off</name> <operator>&gt;=</operator> <name>swidth</name> <operator>*</operator> <name>sheight</name> <operator>/</operator> <literal type="number">4</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>*</operator><name>plastlinepos</name> <operator>=</operator> <call><name>get_lastlinepos</name><argument_list>(<argument><expr><name>linepos</name></expr></argument>, <argument><expr><name>linepos</name> <operator>+</operator> <name><name>chpos</name><index>[<expr><name>end_off</name></expr>]</index></name></expr></argument>, <argument><expr><name>sheight</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>cline</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>chpos</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>plinepos</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>*</operator><name>plinepos</name> <operator>=</operator> <name>linepos</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>cline</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>chpos</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>hist_pattern</name><parameter_list>(<parameter><decl><type><name>search_type</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>int</name></type> <name>search_type</name></decl>;</decl_stmt>
+<block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>CMD_HISTORY</name></expr></cpp:if>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>pattern</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>set_mlist</name><argument_list>(<argument><expr><name>ml_search</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>pattern</name> <operator>=</operator> <call><name>cmd_lastpattern</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>pattern</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>set_pattern</name><argument_list>(<argument><expr><operator>&amp;</operator><name>search_info</name></expr></argument>, <argument><expr><name>pattern</name></expr></argument>, <argument><expr><name>search_type</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HILITE_SEARCH</name></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name>hilite_search</name> <operator>==</operator> <name>OPT_ONPLUS</name> <operator>&amp;&amp;</operator> <operator>!</operator><name>hide_hilite</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>hilite_screen</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><name>public</name> <name>void</name></type>
+<name>chg_caseless</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>is_ucase_pattern</name></expr>)</condition><block type="pseudo"><block_content>
+
+
+
+
+<expr_stmt><expr><name>is_caseless</name> <operator>=</operator> <name>caseless</name></expr>;</expr_stmt></block_content></block></if>
+<else>else
+<block>{<block_content>
+
+
+
+
+<expr_stmt><expr><call><name>clear_pattern</name><argument_list>(<argument><expr><operator>&amp;</operator><name>search_info</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>hist_pattern</name><argument_list>(<argument><expr><name><name>search_info</name><operator>.</operator><name>search_type</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+<function><type><name>public</name> <name>int</name></type>
+<name>search</name><parameter_list>(<parameter><decl><type><name>search_type</name></type></decl></parameter>, <parameter><decl><type><name>pattern</name></type></decl></parameter>, <parameter><decl><type><name>n</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>int</name></type> <name>search_type</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>pattern</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>n</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>pos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>opos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>lastlinepos</name> <init>= <expr><name>NULL_POSITION</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>pattern</name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <operator>*</operator><name>pattern</name> <operator>==</operator> <literal type="char">'\0'</literal></expr>)</condition>
+<block>{<block_content>
+
+
+
+<expr_stmt><expr><name>search_type</name> <operator>|=</operator> <name>SRCH_AFTER_TARGET</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>prev_pattern</name><argument_list>(<argument><expr><operator>&amp;</operator><name>search_info</name></expr></argument>)</argument_list></call></expr>)</condition>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name> <init>= <expr><call><name>hist_pattern</name><argument_list>(<argument><expr><name>search_type</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>r</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>error</name><argument_list>(<argument><expr><literal type="string">"No previous regular expression"</literal></expr></argument>, <argument><expr><name>NULL_PARG</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>r</name> <operator>&lt;=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>search_type</name> <operator>&amp;</operator> <name>SRCH_NO_REGEX</name><operator>)</operator> <operator>!=</operator>
+<operator>(</operator><name><name>search_info</name><operator>.</operator><name>search_type</name></name> <operator>&amp;</operator> <name>SRCH_NO_REGEX</name><operator>)</operator></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>error</name><argument_list>(<argument><expr><literal type="string">"Please re-enter search pattern"</literal></expr></argument>, <argument><expr><name>NULL_PARG</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HILITE_SEARCH</name></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name>hilite_search</name> <operator>==</operator> <name>OPT_ON</name> <operator>||</operator> <name>status_col</name></expr>)</condition>
+<block>{<block_content>
+
+
+
+
+<expr_stmt><expr><call><name>repaint_hilite</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>hilite_search</name> <operator>==</operator> <name>OPT_ONPLUS</name> <operator>&amp;&amp;</operator> <name>hide_hilite</name></expr>)</condition>
+<block>{<block_content>
+
+
+
+
+<expr_stmt><expr><name>hide_hilite</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>hilite_screen</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>hide_hilite</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+
+
+
+<decl_stmt><decl><type><name>int</name></type> <name>show_error</name> <init>= <expr><operator>!</operator><operator>(</operator><name>search_type</name> <operator>&amp;</operator> <name>SRCH_INCR</name><operator>)</operator></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>set_pattern</name><argument_list>(<argument><expr><operator>&amp;</operator><name>search_info</name></expr></argument>, <argument><expr><name>pattern</name></expr></argument>, <argument><expr><name>search_type</name></expr></argument>, <argument><expr><name>show_error</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HILITE_SEARCH</name></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name>hilite_search</name> <operator>||</operator> <name>status_col</name></expr>)</condition>
+<block>{<block_content>
+
+
+
+
+<expr_stmt><expr><call><name>repaint_hilite</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>hide_hilite</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>clr_hilite</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>hilite_search</name> <operator>==</operator> <name>OPT_ONPLUS</name> <operator>||</operator> <name>status_col</name></expr>)</condition>
+<block>{<block_content>
+
+
+
+
+<expr_stmt><expr><call><name>hilite_screen</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></else></if_stmt>
+
+
+
+
+<expr_stmt><expr><name>pos</name> <operator>=</operator> <call><name>search_pos</name><argument_list>(<argument><expr><name>search_type</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>opos</name> <operator>=</operator> <call><name>position</name><argument_list>(<argument><expr><call><name>sindex_from_sline</name><argument_list>(<argument><expr><name>jump_sline</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>pos</name> <operator>==</operator> <name>NULL_POSITION</name></expr>)</condition>
+<block>{<block_content>
+
+
+
+<if_stmt><if>if <condition>(<expr><name>search_type</name> <operator>&amp;</operator> <name>SRCH_PAST_EOF</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>n</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HILITE_SEARCH</name></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name>hilite_search</name> <operator>==</operator> <name>OPT_ON</name> <operator>||</operator> <name>status_col</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>repaint_hilite</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<expr_stmt><expr><call><name>error</name><argument_list>(<argument><expr><literal type="string">"Nothing to search"</literal></expr></argument>, <argument><expr><name>NULL_PARG</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>n</name> <operator>=</operator> <call><name>search_range</name><argument_list>(<argument><expr><name>pos</name></expr></argument>, <argument><expr><name>NULL_POSITION</name></expr></argument>, <argument><expr><name>search_type</name></expr></argument>, <argument><expr><name>n</name></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>pos</name></expr></argument>, <argument><expr><operator>(</operator><name>POSITION</name><operator>*</operator><operator>)</operator><name>NULL</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>lastlinepos</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>n</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition>
+<block>{<block_content>
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HILITE_SEARCH</name></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>hilite_search</name> <operator>==</operator> <name>OPT_ON</name> <operator>||</operator> <name>status_col</name><operator>)</operator> <operator>&amp;&amp;</operator> <name>n</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+
+
+
+<expr_stmt><expr><call><name>repaint_hilite</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<return>return <expr><operator>(</operator><name>n</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name>search_type</name> <operator>&amp;</operator> <name>SRCH_NO_MOVE</name><operator>)</operator></expr>)</condition>
+<block>{<block_content>
+
+
+
+<if_stmt><if>if <condition>(<expr><name>lastlinepos</name> <operator>!=</operator> <name>NULL_POSITION</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>jump_loc</name><argument_list>(<argument><expr><name>lastlinepos</name></expr></argument>, <argument><expr><name>BOTTOM</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name>pos</name> <operator>!=</operator> <name>opos</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>jump_loc</name><argument_list>(<argument><expr><name>pos</name></expr></argument>, <argument><expr><name>jump_sline</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HILITE_SEARCH</name></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name>hilite_search</name> <operator>==</operator> <name>OPT_ON</name> <operator>||</operator> <name>status_col</name></expr>)</condition><block type="pseudo"><block_content>
+
+
+
+<expr_stmt><expr><call><name>repaint_hilite</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HILITE_SEARCH</name></expr></cpp:if>
+
+
+
+
+
+
+
+
+
+
+<function><type><name>public</name> <name>void</name></type>
+<name>prep_hilite</name><parameter_list>(<parameter><decl><type><name>spos</name></type></decl></parameter>, <parameter><decl><type><name>epos</name></type></decl></parameter>, <parameter><decl><type><name>maxlines</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>spos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>epos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>maxlines</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>nprep_startpos</name> <init>= <expr><name>prep_startpos</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>nprep_endpos</name> <init>= <expr><name>prep_endpos</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>new_epos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>POSITION</name></type> <name>max_epos</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>result</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>SEARCH_MORE</name></cpp:macro> <cpp:value>(3*size_linebuf)</cpp:value></cpp:define>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>prev_pattern</name><argument_list>(<argument><expr><operator>&amp;</operator><name>search_info</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <operator>!</operator><call><name>is_filtering</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+
+
+
+
+<expr_stmt><expr><name>spos</name> <operator>=</operator> <call><name>back_raw_line</name><argument_list>(<argument><expr><name>spos</name><operator>+</operator><literal type="number">1</literal></expr></argument>, <argument><expr><operator>(</operator><name>char</name> <operator>*</operator><operator>*</operator><operator>)</operator><name>NULL</name></expr></argument>, <argument><expr><operator>(</operator><name>int</name> <operator>*</operator><operator>)</operator><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>maxlines</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>max_epos</name> <operator>=</operator> <name>NULL_POSITION</name></expr>;</expr_stmt></block_content></block></if>
+<else>else
+<block>{<block_content>
+<expr_stmt><expr><name>max_epos</name> <operator>=</operator> <name>spos</name></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>maxlines</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><name>max_epos</name> <operator>=</operator> <call><name>forw_raw_line</name><argument_list>(<argument><expr><name>max_epos</name></expr></argument>, <argument><expr><operator>(</operator><name>char</name> <operator>*</operator><operator>*</operator><operator>)</operator><name>NULL</name></expr></argument>, <argument><expr><operator>(</operator><name>int</name> <operator>*</operator><operator>)</operator><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+</block_content>}</block></else></if_stmt>
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>prep_startpos</name> <operator>==</operator> <name>NULL_POSITION</name> <operator>||</operator>
+<operator>(</operator><name>epos</name> <operator>!=</operator> <name>NULL_POSITION</name> <operator>&amp;&amp;</operator> <name>epos</name> <operator>&lt;</operator> <name>prep_startpos</name><operator>)</operator> <operator>||</operator>
+<name>spos</name> <operator>&gt;</operator> <name>prep_endpos</name></expr>)</condition>
+<block>{<block_content>
+
+
+
+
+<expr_stmt><expr><call><name>clr_hilite</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>clr_filter</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>epos</name> <operator>!=</operator> <name>NULL_POSITION</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>epos</name> <operator>+=</operator> <name>SEARCH_MORE</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>nprep_startpos</name> <operator>=</operator> <name>spos</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+
+
+
+<if_stmt><if>if <condition>(<expr><name>epos</name> <operator>==</operator> <name>NULL_POSITION</name></expr>)</condition>
+<block>{<block_content>
+
+
+
+<empty_stmt>;</empty_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>epos</name> <operator>&gt;</operator> <name>prep_endpos</name></expr>)</condition>
+<block>{<block_content>
+
+
+
+
+<expr_stmt><expr><name>epos</name> <operator>+=</operator> <name>SEARCH_MORE</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+
+
+
+
+<expr_stmt><expr><name>epos</name> <operator>=</operator> <name>prep_startpos</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>spos</name> <operator>&lt;</operator> <name>prep_startpos</name></expr>)</condition>
+<block>{<block_content>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>spos</name> <operator>&lt;</operator> <name>SEARCH_MORE</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>spos</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>spos</name> <operator>-=</operator> <name>SEARCH_MORE</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<expr_stmt><expr><name>nprep_startpos</name> <operator>=</operator> <name>spos</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+
+
+
+
+<expr_stmt><expr><name>spos</name> <operator>=</operator> <name>prep_endpos</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>epos</name> <operator>!=</operator> <name>NULL_POSITION</name> <operator>&amp;&amp;</operator> <name>max_epos</name> <operator>!=</operator> <name>NULL_POSITION</name> <operator>&amp;&amp;</operator>
+<name>epos</name> <operator>&gt;</operator> <name>max_epos</name></expr>)</condition><block type="pseudo"><block_content>
+
+
+
+<expr_stmt><expr><name>epos</name> <operator>=</operator> <name>max_epos</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>epos</name> <operator>==</operator> <name>NULL_POSITION</name> <operator>||</operator> <name>epos</name> <operator>&gt;</operator> <name>spos</name></expr>)</condition>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>search_type</name> <init>= <expr><name>SRCH_FORW</name> <operator>|</operator> <name>SRCH_FIND_ALL</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>search_type</name> <operator>|=</operator> <operator>(</operator><name><name>search_info</name><operator>.</operator><name>search_type</name></name> <operator>&amp;</operator> <name>SRCH_NO_REGEX</name><operator>)</operator></expr>;</expr_stmt>
+<for>for <control>(<init>;</init><condition>;</condition><incr/>)</control>
+<block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <call><name>search_range</name><argument_list>(<argument><expr><name>spos</name></expr></argument>, <argument><expr><name>epos</name></expr></argument>, <argument><expr><name>search_type</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>maxlines</name></expr></argument>, <argument><expr><operator>(</operator><name>POSITION</name><operator>*</operator><operator>)</operator><name>NULL</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>new_epos</name></expr></argument>, <argument><expr><operator>(</operator><name>POSITION</name><operator>*</operator><operator>)</operator><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>result</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>prep_endpos</name> <operator>==</operator> <name>NULL_POSITION</name> <operator>||</operator> <name>new_epos</name> <operator>&gt;</operator> <name>prep_endpos</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>nprep_endpos</name> <operator>=</operator> <name>new_epos</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>prep_endpos</name> <operator>==</operator> <name>NULL_POSITION</name> <operator>||</operator> <name>nprep_endpos</name> <operator>&gt;</operator> <name>prep_endpos</name></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>new_epos</name> <operator>&gt;=</operator> <name>nprep_endpos</name> <operator>&amp;&amp;</operator> <call><name>is_filtered</name><argument_list>(<argument><expr><name>new_epos</name><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>spos</name> <operator>=</operator> <name>nprep_endpos</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>epos</name> <operator>=</operator> <call><name>forw_raw_line</name><argument_list>(<argument><expr><name>nprep_endpos</name></expr></argument>, <argument><expr><operator>(</operator><name>char</name> <operator>*</operator><operator>*</operator><operator>)</operator><name>NULL</name></expr></argument>, <argument><expr><operator>(</operator><name>int</name> <operator>*</operator><operator>)</operator><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>epos</name> <operator>==</operator> <name>NULL_POSITION</name></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>maxlines</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>prep_startpos</name> <operator>==</operator> <name>NULL_POSITION</name> <operator>||</operator> <name>nprep_startpos</name> <operator>&lt;</operator> <name>prep_startpos</name></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>nprep_startpos</name> <operator>&gt;</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <call><name>is_filtered</name><argument_list>(<argument><expr><name>nprep_startpos</name></expr></argument>)</argument_list></call></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>epos</name> <operator>=</operator> <name>nprep_startpos</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>spos</name> <operator>=</operator> <call><name>back_raw_line</name><argument_list>(<argument><expr><name>nprep_startpos</name></expr></argument>, <argument><expr><operator>(</operator><name>char</name> <operator>*</operator><operator>*</operator><operator>)</operator><name>NULL</name></expr></argument>, <argument><expr><operator>(</operator><name>int</name> <operator>*</operator><operator>)</operator><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>spos</name> <operator>==</operator> <name>NULL_POSITION</name></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>nprep_startpos</name> <operator>=</operator> <name>spos</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>maxlines</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<break>break;</break>
+</block_content>}</block></for>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>prep_startpos</name> <operator>=</operator> <name>nprep_startpos</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>prep_endpos</name> <operator>=</operator> <name>nprep_endpos</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>public</name> <name>void</name></type>
+<name>set_filter_pattern</name><parameter_list>(<parameter><decl><type><name>pattern</name></type></decl></parameter>, <parameter><decl><type><name>search_type</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>pattern</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>search_type</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>pattern_info</name></name> <modifier>*</modifier></type><name>filter</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>clr_filter</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>pattern</name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <operator>*</operator><name>pattern</name> <operator>==</operator> <literal type="char">'\0'</literal></expr>)</condition>
+<block>{<block_content>
+
+<for>for <control>(<init><expr><name>filter</name> <operator>=</operator> <name>filter_infos</name></expr>;</init> <condition><expr><name>filter</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr/>)</control>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>pattern_info</name></name> <modifier>*</modifier></type><name>next_filter</name> <init>= <expr><name><name>filter</name><operator>-&gt;</operator><name>next</name></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>clear_pattern</name><argument_list>(<argument><expr><name>filter</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>filter</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>filter</name> <operator>=</operator> <name>next_filter</name></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><name>filter_infos</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else
+<block>{<block_content>
+
+<expr_stmt><expr><name>filter</name> <operator>=</operator> <call><name>ecalloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr>struct <name>pattern_info</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>init_pattern</name><argument_list>(<argument><expr><name>filter</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>set_pattern</name><argument_list>(<argument><expr><name>filter</name></expr></argument>, <argument><expr><name>pattern</name></expr></argument>, <argument><expr><name>search_type</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>filter</name><operator>-&gt;</operator><name>next</name></name> <operator>=</operator> <name>filter_infos</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>filter_infos</name> <operator>=</operator> <name>filter</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><name>screen_trashed</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>public</name> <name>int</name></type>
+<name>is_filtering</name><parameter_list>(<parameter><decl><type><name>VOID_PARAM</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>ch_getflags</name><argument_list>()</argument_list></call> <operator>&amp;</operator> <name>CH_HELPFILE</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>filter_infos</name> <operator>!=</operator> <name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HAVE_V8_REGCOMP</name></expr></cpp:if>
+
+
+
+
+<decl_stmt><decl><type><name>public</name> <name>int</name></type> <name>reg_show_error</name> <init>= <expr><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+<function><type><name>void</name></type>
+<name>regerror</name><parameter_list>(<parameter><decl><type><name>s</name></type></decl></parameter>)</parameter_list>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>s</name></decl>;</decl_stmt>
+<block>{<block_content>
+<decl_stmt><decl><type><name>PARG</name></type> <name>parg</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>reg_show_error</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>parg</name><operator>.</operator><name>p_string</name></name> <operator>=</operator> <name>s</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>error</name><argument_list>(<argument><expr><literal type="string">"%s"</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>parg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+</unit>

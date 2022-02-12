@@ -1,0 +1,1501 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/libarchive/libarchive/archive_digest.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"archive_platform.h"</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"archive.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"archive_digest_private.h"</cpp:file></cpp:include>
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_OPENSSL</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_LIBMD</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:error>#<cpp:directive>error</cpp:directive> Cannot use both OpenSSL and libmd.</cpp:error>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_MD5_WIN</name></expr></argument>)</argument_list></call> <operator>||</operator><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA1_WIN</name></expr></argument>)</argument_list></call> <operator>||</operator><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA256_WIN</name></expr></argument>)</argument_list></call> <operator>||</operator><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA384_WIN</name></expr></argument>)</argument_list></call> <operator>||</operator><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA512_WIN</name></expr></argument>)</argument_list></call></expr></cpp:if>
+
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>win_crypto_init</name><parameter_list>(<parameter><decl><type><name>Digest_CTX</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>ALG_ID</name></type> <name>algId</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+<expr_stmt><expr><name><name>ctx</name><operator>-&gt;</operator><name>valid</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>CryptAcquireContext</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>ctx</name><operator>-&gt;</operator><name>cryptProv</name></name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>,
+<argument><expr><name>PROV_RSA_FULL</name></expr></argument>, <argument><expr><name>CRYPT_VERIFYCONTEXT</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>GetLastError</name><argument_list>()</argument_list></call> <operator>!=</operator> <operator>(</operator><name>DWORD</name><operator>)</operator><name>NTE_BAD_KEYSET</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>CryptAcquireContext</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>ctx</name><operator>-&gt;</operator><name>cryptProv</name></name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>,
+<argument><expr><name>PROV_RSA_FULL</name></expr></argument>, <argument><expr><name>CRYPT_NEWKEYSET</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>CryptCreateHash</name><argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>cryptProv</name></name></expr></argument>, <argument><expr><name>algId</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>ctx</name><operator>-&gt;</operator><name>hash</name></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>CryptReleaseContext</name><argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>cryptProv</name></name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>ctx</name><operator>-&gt;</operator><name>valid</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>win_crypto_Update</name><parameter_list>(<parameter><decl><type><name>Digest_CTX</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>len</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>ctx</name><operator>-&gt;</operator><name>valid</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>CryptHashData</name><argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>hash</name></name></expr></argument>,
+<argument><expr><operator>(</operator><name>unsigned</name> <name>char</name> <operator>*</operator><operator>)</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><name>buf</name></expr></argument>,
+<argument><expr><operator>(</operator><name>DWORD</name><operator>)</operator><name>len</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>win_crypto_Final</name><parameter_list>(<parameter><decl><type><name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>bufsize</name></decl></parameter>, <parameter><decl><type><name>Digest_CTX</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>DWORD</name></type> <name>siglen</name> <init>= <expr><operator>(</operator><name>DWORD</name><operator>)</operator><name>bufsize</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>ctx</name><operator>-&gt;</operator><name>valid</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>CryptGetHashParam</name><argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>hash</name></name></expr></argument>, <argument><expr><name>HP_HASHVAL</name></expr></argument>, <argument><expr><name>buf</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>siglen</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>CryptDestroyHash</name><argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>hash</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>CryptReleaseContext</name><argument_list>(<argument><expr><name><name>ctx</name><operator>-&gt;</operator><name>cryptProv</name></name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ctx</name><operator>-&gt;</operator><name>valid</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_MD5_LIBC</name></expr></argument>)</argument_list></call></expr></cpp:if>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_md5init</name><parameter_list>(<parameter><decl><type><name>archive_md5_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>MD5Init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_md5update</name><parameter_list>(<parameter><decl><type><name>archive_md5_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>MD5Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_md5final</name><parameter_list>(<parameter><decl><type><name>archive_md5_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>MD5Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_MD5_LIBMD</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_md5init</name><parameter_list>(<parameter><decl><type><name>archive_md5_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>MD5Init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_md5update</name><parameter_list>(<parameter><decl><type><name>archive_md5_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>MD5Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_md5final</name><parameter_list>(<parameter><decl><type><name>archive_md5_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>MD5Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_MD5_LIBSYSTEM</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_md5init</name><parameter_list>(<parameter><decl><type><name>archive_md5_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>CC_MD5_Init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_md5update</name><parameter_list>(<parameter><decl><type><name>archive_md5_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>CC_MD5_Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_md5final</name><parameter_list>(<parameter><decl><type><name>archive_md5_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>CC_MD5_Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_MD5_MBEDTLS</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_md5init</name><parameter_list>(<parameter><decl><type><name>archive_md5_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>mbedtls_md5_init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>mbedtls_md5_starts_ret</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FATAL</name><operator>)</operator></expr>;</return></block_content></block></else></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_md5update</name><parameter_list>(<parameter><decl><type><name>archive_md5_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>mbedtls_md5_update_ret</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FATAL</name><operator>)</operator></expr>;</return></block_content></block></else></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_md5final</name><parameter_list>(<parameter><decl><type><name>archive_md5_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>mbedtls_md5_finish_ret</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>md</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>mbedtls_md5_free</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>mbedtls_md5_free</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FATAL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_MD5_NETTLE</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_md5init</name><parameter_list>(<parameter><decl><type><name>archive_md5_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>md5_init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_md5update</name><parameter_list>(<parameter><decl><type><name>archive_md5_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>md5_update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_md5final</name><parameter_list>(<parameter><decl><type><name>archive_md5_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>md5_digest</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>MD5_DIGEST_SIZE</name></expr></argument>, <argument><expr><name>md</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_MD5_OPENSSL</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_md5init</name><parameter_list>(<parameter><decl><type><name>archive_md5_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><operator>*</operator><name>ctx</name> <operator>=</operator> <call><name>EVP_MD_CTX_new</name><argument_list>()</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>EVP_DigestInit</name><argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>, <argument><expr><call><name>EVP_md5</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_md5update</name><parameter_list>(<parameter><decl><type><name>archive_md5_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>EVP_DigestUpdate</name><argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_md5final</name><parameter_list>(<parameter><decl><type><name>archive_md5_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>ctx</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>EVP_DigestFinal</name><argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>, <argument><expr><name>md</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>EVP_MD_CTX_free</name><argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>ctx</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_MD5_WIN</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_md5init</name><parameter_list>(<parameter><decl><type><name>archive_md5_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><call><name>win_crypto_init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>CALG_MD5</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_md5update</name><parameter_list>(<parameter><decl><type><name>archive_md5_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><call><name>win_crypto_Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_md5final</name><parameter_list>(<parameter><decl><type><name>archive_md5_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><call><name>win_crypto_Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><literal type="number">16</literal></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_md5init</name><parameter_list>(<parameter><decl><type><name>archive_md5_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>ctx</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_md5update</name><parameter_list>(<parameter><decl><type><name>archive_md5_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>ctx</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>indata</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>insize</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_md5final</name><parameter_list>(<parameter><decl><type><name>archive_md5_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>ctx</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>md</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_RMD160_LIBC</name></expr></argument>)</argument_list></call></expr></cpp:if>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_ripemd160init</name><parameter_list>(<parameter><decl><type><name>archive_rmd160_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>RMD160Init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_ripemd160update</name><parameter_list>(<parameter><decl><type><name>archive_rmd160_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>RMD160Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_ripemd160final</name><parameter_list>(<parameter><decl><type><name>archive_rmd160_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>RMD160Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_RMD160_LIBMD</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_ripemd160init</name><parameter_list>(<parameter><decl><type><name>archive_rmd160_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>RIPEMD160_Init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_ripemd160update</name><parameter_list>(<parameter><decl><type><name>archive_rmd160_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>RIPEMD160_Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_ripemd160final</name><parameter_list>(<parameter><decl><type><name>archive_rmd160_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>RIPEMD160_Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_RMD160_MBEDTLS</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_ripemd160init</name><parameter_list>(<parameter><decl><type><name>archive_rmd160_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>mbedtls_ripemd160_init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>mbedtls_ripemd160_starts_ret</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FATAL</name><operator>)</operator></expr>;</return></block_content></block></else></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_ripemd160update</name><parameter_list>(<parameter><decl><type><name>archive_rmd160_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>mbedtls_ripemd160_update_ret</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FATAL</name><operator>)</operator></expr>;</return></block_content></block></else></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_ripemd160final</name><parameter_list>(<parameter><decl><type><name>archive_rmd160_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>mbedtls_ripemd160_finish_ret</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>md</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>mbedtls_ripemd160_free</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>mbedtls_ripemd160_free</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FATAL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_RMD160_NETTLE</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_ripemd160init</name><parameter_list>(<parameter><decl><type><name>archive_rmd160_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>ripemd160_init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_ripemd160update</name><parameter_list>(<parameter><decl><type><name>archive_rmd160_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>ripemd160_update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_ripemd160final</name><parameter_list>(<parameter><decl><type><name>archive_rmd160_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>ripemd160_digest</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>RIPEMD160_DIGEST_SIZE</name></expr></argument>, <argument><expr><name>md</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_RMD160_OPENSSL</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_ripemd160init</name><parameter_list>(<parameter><decl><type><name>archive_rmd160_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><operator>*</operator><name>ctx</name> <operator>=</operator> <call><name>EVP_MD_CTX_new</name><argument_list>()</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>EVP_DigestInit</name><argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>, <argument><expr><call><name>EVP_ripemd160</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_ripemd160update</name><parameter_list>(<parameter><decl><type><name>archive_rmd160_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>EVP_DigestUpdate</name><argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_ripemd160final</name><parameter_list>(<parameter><decl><type><name>archive_rmd160_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>ctx</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>EVP_DigestFinal</name><argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>, <argument><expr><name>md</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>EVP_MD_CTX_free</name><argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>ctx</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_ripemd160init</name><parameter_list>(<parameter><decl><type><name>archive_rmd160_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>ctx</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_ripemd160update</name><parameter_list>(<parameter><decl><type><name>archive_rmd160_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>ctx</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>indata</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>insize</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_ripemd160final</name><parameter_list>(<parameter><decl><type><name>archive_rmd160_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>ctx</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>md</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA1_LIBC</name></expr></argument>)</argument_list></call></expr></cpp:if>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha1init</name><parameter_list>(<parameter><decl><type><name>archive_sha1_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA1Init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha1update</name><parameter_list>(<parameter><decl><type><name>archive_sha1_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA1Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha1final</name><parameter_list>(<parameter><decl><type><name>archive_sha1_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA1Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA1_LIBMD</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha1init</name><parameter_list>(<parameter><decl><type><name>archive_sha1_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA1_Init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha1update</name><parameter_list>(<parameter><decl><type><name>archive_sha1_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA1_Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha1final</name><parameter_list>(<parameter><decl><type><name>archive_sha1_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA1_Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA1_LIBSYSTEM</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha1init</name><parameter_list>(<parameter><decl><type><name>archive_sha1_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>CC_SHA1_Init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha1update</name><parameter_list>(<parameter><decl><type><name>archive_sha1_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>CC_SHA1_Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha1final</name><parameter_list>(<parameter><decl><type><name>archive_sha1_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>CC_SHA1_Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA1_MBEDTLS</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha1init</name><parameter_list>(<parameter><decl><type><name>archive_sha1_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>mbedtls_sha1_init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>mbedtls_sha1_starts_ret</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FATAL</name><operator>)</operator></expr>;</return></block_content></block></else></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha1update</name><parameter_list>(<parameter><decl><type><name>archive_sha1_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>mbedtls_sha1_update_ret</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FATAL</name><operator>)</operator></expr>;</return></block_content></block></else></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha1final</name><parameter_list>(<parameter><decl><type><name>archive_sha1_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>mbedtls_sha1_finish_ret</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>md</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>mbedtls_sha1_free</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>mbedtls_sha1_free</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FATAL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA1_NETTLE</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha1init</name><parameter_list>(<parameter><decl><type><name>archive_sha1_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>sha1_init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha1update</name><parameter_list>(<parameter><decl><type><name>archive_sha1_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>sha1_update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha1final</name><parameter_list>(<parameter><decl><type><name>archive_sha1_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>sha1_digest</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>SHA1_DIGEST_SIZE</name></expr></argument>, <argument><expr><name>md</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA1_OPENSSL</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha1init</name><parameter_list>(<parameter><decl><type><name>archive_sha1_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><operator>*</operator><name>ctx</name> <operator>=</operator> <call><name>EVP_MD_CTX_new</name><argument_list>()</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>EVP_DigestInit</name><argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>, <argument><expr><call><name>EVP_sha1</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha1update</name><parameter_list>(<parameter><decl><type><name>archive_sha1_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>EVP_DigestUpdate</name><argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha1final</name><parameter_list>(<parameter><decl><type><name>archive_sha1_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>ctx</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>EVP_DigestFinal</name><argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>, <argument><expr><name>md</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>EVP_MD_CTX_free</name><argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>ctx</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA1_WIN</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha1init</name><parameter_list>(<parameter><decl><type><name>archive_sha1_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><call><name>win_crypto_init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>CALG_SHA1</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha1update</name><parameter_list>(<parameter><decl><type><name>archive_sha1_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><call><name>win_crypto_Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha1final</name><parameter_list>(<parameter><decl><type><name>archive_sha1_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><call><name>win_crypto_Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><literal type="number">20</literal></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha1init</name><parameter_list>(<parameter><decl><type><name>archive_sha1_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>ctx</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha1update</name><parameter_list>(<parameter><decl><type><name>archive_sha1_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>ctx</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>indata</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>insize</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha1final</name><parameter_list>(<parameter><decl><type><name>archive_sha1_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>ctx</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>md</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA256_LIBC</name></expr></argument>)</argument_list></call></expr></cpp:if>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256init</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA256_Init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256update</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA256_Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256final</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA256_Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA256_LIBC2</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256init</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA256Init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256update</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA256Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256final</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA256Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA256_LIBC3</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256init</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA256Init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256update</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA256Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256final</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA256Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA256_LIBMD</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256init</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA256_Init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256update</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA256_Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256final</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA256_Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA256_LIBSYSTEM</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256init</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>CC_SHA256_Init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256update</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>CC_SHA256_Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256final</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>CC_SHA256_Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA256_MBEDTLS</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256init</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>mbedtls_sha256_init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>mbedtls_sha256_starts_ret</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FATAL</name><operator>)</operator></expr>;</return></block_content></block></else></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256update</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>mbedtls_sha256_update_ret</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FATAL</name><operator>)</operator></expr>;</return></block_content></block></else></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256final</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>mbedtls_sha256_finish_ret</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>md</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>mbedtls_sha256_free</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>mbedtls_sha256_free</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FATAL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA256_NETTLE</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256init</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>sha256_init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256update</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>sha256_update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256final</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>sha256_digest</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>SHA256_DIGEST_SIZE</name></expr></argument>, <argument><expr><name>md</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA256_OPENSSL</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256init</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><operator>*</operator><name>ctx</name> <operator>=</operator> <call><name>EVP_MD_CTX_new</name><argument_list>()</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>EVP_DigestInit</name><argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>, <argument><expr><call><name>EVP_sha256</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256update</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>EVP_DigestUpdate</name><argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256final</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>ctx</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>EVP_DigestFinal</name><argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>, <argument><expr><name>md</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>EVP_MD_CTX_free</name><argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>ctx</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA256_WIN</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256init</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><call><name>win_crypto_init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>CALG_SHA_256</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256update</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><call><name>win_crypto_Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256final</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><call><name>win_crypto_Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><literal type="number">32</literal></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256init</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>ctx</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256update</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>ctx</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>indata</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>insize</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha256final</name><parameter_list>(<parameter><decl><type><name>archive_sha256_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>ctx</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>md</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA384_LIBC</name></expr></argument>)</argument_list></call></expr></cpp:if>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384init</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA384_Init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384update</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA384_Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384final</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA384_Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA384_LIBC2</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384init</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA384Init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384update</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA384Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384final</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA384Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA384_LIBC3</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384init</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA384Init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384update</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA384Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384final</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA384Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA384_LIBSYSTEM</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384init</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>CC_SHA384_Init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384update</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>CC_SHA384_Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384final</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>CC_SHA384_Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA384_MBEDTLS</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384init</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>mbedtls_sha512_init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>mbedtls_sha512_starts_ret</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FATAL</name><operator>)</operator></expr>;</return></block_content></block></else></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384update</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>mbedtls_sha512_update_ret</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FATAL</name><operator>)</operator></expr>;</return></block_content></block></else></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384final</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>mbedtls_sha512_finish_ret</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>md</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>mbedtls_sha512_free</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>mbedtls_sha512_free</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FATAL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA384_NETTLE</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384init</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>sha384_init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384update</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>sha384_update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384final</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>sha384_digest</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>SHA384_DIGEST_SIZE</name></expr></argument>, <argument><expr><name>md</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA384_OPENSSL</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384init</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><operator>*</operator><name>ctx</name> <operator>=</operator> <call><name>EVP_MD_CTX_new</name><argument_list>()</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>EVP_DigestInit</name><argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>, <argument><expr><call><name>EVP_sha384</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384update</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>EVP_DigestUpdate</name><argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384final</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>ctx</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>EVP_DigestFinal</name><argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>, <argument><expr><name>md</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>EVP_MD_CTX_free</name><argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>ctx</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA384_WIN</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384init</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><call><name>win_crypto_init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>CALG_SHA_384</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384update</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><call><name>win_crypto_Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384final</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><call><name>win_crypto_Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><literal type="number">48</literal></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384init</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>ctx</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384update</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>ctx</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>indata</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>insize</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha384final</name><parameter_list>(<parameter><decl><type><name>archive_sha384_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>ctx</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>md</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA512_LIBC</name></expr></argument>)</argument_list></call></expr></cpp:if>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512init</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA512_Init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512update</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA512_Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512final</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA512_Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA512_LIBC2</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512init</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA512Init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512update</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA512Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512final</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA512Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA512_LIBC3</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512init</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA512Init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512update</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA512Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512final</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA512Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA512_LIBMD</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512init</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA512_Init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512update</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA512_Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512final</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>SHA512_Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA512_LIBSYSTEM</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512init</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>CC_SHA512_Init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512update</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>CC_SHA512_Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512final</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>CC_SHA512_Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA512_MBEDTLS</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512init</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>mbedtls_sha512_init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>mbedtls_sha512_starts_ret</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FATAL</name><operator>)</operator></expr>;</return></block_content></block></else></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512update</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>mbedtls_sha512_update_ret</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FATAL</name><operator>)</operator></expr>;</return></block_content></block></else></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512final</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>mbedtls_sha512_finish_ret</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>md</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>mbedtls_sha512_free</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>mbedtls_sha512_free</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FATAL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA512_NETTLE</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512init</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>sha512_init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512update</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>sha512_update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512final</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>sha512_digest</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>SHA512_DIGEST_SIZE</name></expr></argument>, <argument><expr><name>md</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA512_OPENSSL</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512init</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><operator>*</operator><name>ctx</name> <operator>=</operator> <call><name>EVP_MD_CTX_new</name><argument_list>()</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>EVP_DigestInit</name><argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>, <argument><expr><call><name>EVP_sha512</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512update</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>EVP_DigestUpdate</name><argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512final</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>ctx</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>EVP_DigestFinal</name><argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>, <argument><expr><name>md</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>EVP_MD_CTX_free</name><argument_list>(<argument><expr><operator>*</operator><name>ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>ctx</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>ARCHIVE_CRYPTO_SHA512_WIN</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512init</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><call><name>win_crypto_init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>CALG_SHA_512</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512update</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><call><name>win_crypto_Update</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>indata</name></expr></argument>, <argument><expr><name>insize</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512final</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><call><name>win_crypto_Final</name><argument_list>(<argument><expr><name>md</name></expr></argument>, <argument><expr><literal type="number">64</literal></expr></argument>, <argument><expr><name>ctx</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512init</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>ctx</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512update</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>indata</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>insize</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>ctx</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>indata</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>insize</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>__archive_sha512final</name><parameter_list>(<parameter><decl><type><name>archive_sha512_ctx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>md</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>ctx</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator><name>md</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ARCHIVE_FAILED</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+
+
+
+
+
+
+
+
+
+<decl_stmt><decl><type><specifier>const</specifier> <name><name>struct</name> <name>archive_digest</name></name></type> <name>__archive_digest</name> <init>=
+<expr><block>{
+
+<expr><operator>&amp;</operator><name>__archive_md5init</name></expr>,
+<expr><operator>&amp;</operator><name>__archive_md5update</name></expr>,
+<expr><operator>&amp;</operator><name>__archive_md5final</name></expr>,
+
+
+<expr><operator>&amp;</operator><name>__archive_ripemd160init</name></expr>,
+<expr><operator>&amp;</operator><name>__archive_ripemd160update</name></expr>,
+<expr><operator>&amp;</operator><name>__archive_ripemd160final</name></expr>,
+
+
+<expr><operator>&amp;</operator><name>__archive_sha1init</name></expr>,
+<expr><operator>&amp;</operator><name>__archive_sha1update</name></expr>,
+<expr><operator>&amp;</operator><name>__archive_sha1final</name></expr>,
+
+
+<expr><operator>&amp;</operator><name>__archive_sha256init</name></expr>,
+<expr><operator>&amp;</operator><name>__archive_sha256update</name></expr>,
+<expr><operator>&amp;</operator><name>__archive_sha256final</name></expr>,
+
+
+<expr><operator>&amp;</operator><name>__archive_sha384init</name></expr>,
+<expr><operator>&amp;</operator><name>__archive_sha384update</name></expr>,
+<expr><operator>&amp;</operator><name>__archive_sha384final</name></expr>,
+
+
+<expr><operator>&amp;</operator><name>__archive_sha512init</name></expr>,
+<expr><operator>&amp;</operator><name>__archive_sha512update</name></expr>,
+<expr><operator>&amp;</operator><name>__archive_sha512final</name></expr>
+}</block></expr></init></decl>;</decl_stmt>
+</unit>

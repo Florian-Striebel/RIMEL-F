@@ -1,0 +1,1215 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/elftoolchain/elfcopy/symbols.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/param.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;assert.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;err.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;fnmatch.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdio.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;string.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"elfcopy.h"</cpp:file></cpp:include>
+
+<expr_stmt><expr><call><name>ELFTC_VCSID</name><argument_list>(<argument><expr><literal type="string">"$Id: symbols.c 3520 2017-04-17 01:47:52Z kaiwang27 $"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>STB_GNU_UNIQUE</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>STB_GNU_UNIQUE</name></cpp:macro> <cpp:value>10</cpp:value></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+<struct>struct <name>symbuf</name> <block>{
+<decl_stmt><decl><type><name>Elf32_Sym</name> <modifier>*</modifier></type><name>l32</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf32_Sym</name> <modifier>*</modifier></type><name>g32</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf64_Sym</name> <modifier>*</modifier></type><name>l64</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf64_Sym</name> <modifier>*</modifier></type><name>g64</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>ngs</name></decl>, <decl><type ref="prev"/><name>nls</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>gcap</name></decl>, <decl><type ref="prev"/><name>lcap</name></decl>;</decl_stmt>
+}</block>;</struct>
+
+<struct>struct <name>sthash</name> <block>{
+<macro><name>LIST_ENTRY</name><argument_list>(<argument>sthash</argument>)</argument_list></macro> <expr_stmt><expr><name>sh_next</name></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>sh_off</name></decl>;</decl_stmt>
+}</block>;</struct>
+<typedef>typedef <macro><name>LIST_HEAD</name><argument_list>(<argument/>,<argument>sthash</argument>)</argument_list></macro> <expr_stmt><expr><name>hash_head</name></expr>;</expr_stmt></typedef>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>STHASHSIZE</name></cpp:macro> <cpp:value>65536</cpp:value></cpp:define>
+
+<struct>struct <name>strimpl</name> <block>{
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>buf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>sz</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>cap</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>hash_head</name></type> <name><name>hash</name><index>[<expr><name>STHASHSIZE</name></expr>]</index></name></decl>;</decl_stmt>
+}</block>;</struct>
+
+
+
+<struct>struct <name>strbuf</name> <block>{
+<decl_stmt><decl><type><name><name>struct</name> <name>strimpl</name></name></type> <name>l</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>strimpl</name></name></type> <name>g</name></decl>;</decl_stmt>
+}</block>;</struct>
+
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>is_debug_symbol</name><parameter_list>(<parameter><decl><type><name>unsigned</name> <name>char</name></type> <name>st_info</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>is_global_symbol</name><parameter_list>(<parameter><decl><type><name>unsigned</name> <name>char</name></type> <name>st_info</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>is_local_symbol</name><parameter_list>(<parameter><decl><type><name>unsigned</name> <name>char</name></type> <name>st_info</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>is_local_label</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>name</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>is_needed_symbol</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>elfcopy</name></name> <modifier>*</modifier></type><name>ecp</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>i</name></decl></parameter>, <parameter><decl><type><name>GElf_Sym</name> <modifier>*</modifier></type><name>s</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>is_remove_symbol</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>elfcopy</name></name> <modifier>*</modifier></type><name>ecp</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>sc</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>i</name></decl></parameter>,
+<parameter><decl><type><name>GElf_Sym</name> <modifier>*</modifier></type><name>s</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>name</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>is_weak_symbol</name><parameter_list>(<parameter><decl><type><name>unsigned</name> <name>char</name></type> <name>st_info</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>lookup_exact_string</name><parameter_list>(<parameter><decl><type><name>hash_head</name> <modifier>*</modifier></type><name>hash</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>s</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>generate_symbols</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>elfcopy</name></name> <modifier>*</modifier></type><name>ecp</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>void</name></type> <name>mark_reloc_symbols</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>elfcopy</name></name> <modifier>*</modifier></type><name>ecp</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>sc</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>void</name></type> <name>mark_section_group_symbols</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>elfcopy</name></name> <modifier>*</modifier></type><name>ecp</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>sc</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><name>uint32_t</name></type> <name>str_hash</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>s</name></decl></parameter>)</parameter_list>;</function_decl>
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>BIT_SET</name><parameter_list>(<parameter><type><name>v</name></type></parameter>, <parameter><type><name>n</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>(v[(n)&gt;&gt;3] |= 1U &lt;&lt; ((n) &amp; 7))</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>BIT_CLR</name><parameter_list>(<parameter><type><name>v</name></type></parameter>, <parameter><type><name>n</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>(v[(n)&gt;&gt;3] &amp;= ~(1U &lt;&lt; ((n) &amp; 7)))</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>BIT_ISSET</name><parameter_list>(<parameter><type><name>v</name></type></parameter>, <parameter><type><name>n</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>(v[(n)&gt;&gt;3] &amp; (1U &lt;&lt; ((n) &amp; 7)))</cpp:value></cpp:define>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>is_debug_symbol</name><parameter_list>(<parameter><decl><type><name>unsigned</name> <name>char</name></type> <name>st_info</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><call><name>GELF_ST_TYPE</name><argument_list>(<argument><expr><name>st_info</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>STT_SECTION</name> <operator>||</operator>
+<call><name>GELF_ST_TYPE</name><argument_list>(<argument><expr><name>st_info</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>STT_FILE</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>is_global_symbol</name><parameter_list>(<parameter><decl><type><name>unsigned</name> <name>char</name></type> <name>st_info</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><call><name>GELF_ST_BIND</name><argument_list>(<argument><expr><name>st_info</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>STB_GLOBAL</name> <operator>||</operator>
+<call><name>GELF_ST_BIND</name><argument_list>(<argument><expr><name>st_info</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>STB_GNU_UNIQUE</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>is_weak_symbol</name><parameter_list>(<parameter><decl><type><name>unsigned</name> <name>char</name></type> <name>st_info</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><call><name>GELF_ST_BIND</name><argument_list>(<argument><expr><name>st_info</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>STB_WEAK</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>is_local_symbol</name><parameter_list>(<parameter><decl><type><name>unsigned</name> <name>char</name></type> <name>st_info</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><call><name>GELF_ST_BIND</name><argument_list>(<argument><expr><name>st_info</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>STB_LOCAL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>is_hidden_symbol</name><parameter_list>(<parameter><decl><type><name>unsigned</name> <name>char</name></type> <name>st_other</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><call><name>GELF_ST_VISIBILITY</name><argument_list>(<argument><expr><name>st_other</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>STV_HIDDEN</name> <operator>||</operator>
+<call><name>GELF_ST_VISIBILITY</name><argument_list>(<argument><expr><name>st_other</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>STV_INTERNAL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>is_local_label</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>name</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>name</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'.'</literal> <operator>&amp;&amp;</operator> <name><name>name</name><index>[<expr><literal type="number">1</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'L'</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>is_needed_symbol</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>elfcopy</name></name> <modifier>*</modifier></type><name>ecp</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>i</name></decl></parameter>, <parameter><decl><type><name>GElf_Sym</name> <modifier>*</modifier></type><name>s</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>BIT_ISSET</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>v_rel</name></name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>BIT_ISSET</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>v_grp</name></name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>ecp</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>RELOCATABLE</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>is_global_symbol</name><argument_list>(<argument><expr><name><name>s</name><operator>-&gt;</operator><name>st_info</name></name></expr></argument>)</argument_list></call> <operator>||</operator> <call><name>is_weak_symbol</name><argument_list>(<argument><expr><name><name>s</name><operator>-&gt;</operator><name>st_info</name></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>is_remove_symbol</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>elfcopy</name></name> <modifier>*</modifier></type><name>ecp</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>sc</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>i</name></decl></parameter>, <parameter><decl><type><name>GElf_Sym</name> <modifier>*</modifier></type><name>s</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>name</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>GElf_Sym</name></type> <name>sym0</name> <init>= <expr><block>{
+<expr><literal type="number">0</literal></expr>,
+<expr><literal type="number">0</literal></expr>,
+<expr><literal type="number">0</literal></expr>,
+<expr><literal type="number">0</literal></expr>,
+<expr><literal type="number">0</literal></expr>,
+<expr><name>SHN_UNDEF</name></expr>,
+}</block></expr></init></decl>;</decl_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>i</name> <operator>==</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <operator>!</operator><call><name>memcmp</name><argument_list>(<argument><expr><name>s</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>sym0</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>GElf_Sym</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>s</name><operator>-&gt;</operator><name>st_shndx</name></name> <operator>!=</operator> <name>SHN_UNDEF</name> <operator>&amp;&amp;</operator> <name><name>s</name><operator>-&gt;</operator><name>st_shndx</name></name> <operator>&lt;</operator> <name>SHN_LORESERVE</name> <operator>&amp;&amp;</operator>
+<name><name>ecp</name><operator>-&gt;</operator><name>secndx</name><index>[<expr><name><name>s</name><operator>-&gt;</operator><name>st_shndx</name></name></expr>]</index></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>lookup_symop_list</name><argument_list>(<argument><expr><name>ecp</name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><name>SYMOP_KEEP</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>ecp</name><operator>-&gt;</operator><name>strip</name></name> <operator>==</operator> <name>STRIP_ALL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>ecp</name><operator>-&gt;</operator><name>v_rel</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>mark_reloc_symbols</name><argument_list>(<argument><expr><name>ecp</name></expr></argument>, <argument><expr><name>sc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>ecp</name><operator>-&gt;</operator><name>v_grp</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>mark_section_group_symbols</name><argument_list>(<argument><expr><name>ecp</name></expr></argument>, <argument><expr><name>sc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>lookup_symop_list</name><argument_list>(<argument><expr><name>ecp</name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><name>SYMOP_STRIP</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>BIT_ISSET</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>v_rel</name></name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"not stripping symbol `%s' because it is named"</literal>
+<literal type="string">" in a relocation"</literal></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>is_needed_symbol</name><argument_list>(<argument><expr><name>ecp</name></expr></argument>, <argument><expr><name>i</name></expr></argument>, <argument><expr><name>s</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>ecp</name><operator>-&gt;</operator><name>strip</name></name> <operator>==</operator> <name>STRIP_UNNEEDED</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>ecp</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>DISCARD_LOCAL</name><operator>)</operator> <operator>&amp;&amp;</operator> <call><name>is_local_symbol</name><argument_list>(<argument><expr><name><name>s</name><operator>-&gt;</operator><name>st_info</name></name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator>
+<operator>!</operator><call><name>is_debug_symbol</name><argument_list>(<argument><expr><name><name>s</name><operator>-&gt;</operator><name>st_info</name></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>ecp</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>DISCARD_LLABEL</name><operator>)</operator> <operator>&amp;&amp;</operator> <call><name>is_local_symbol</name><argument_list>(<argument><expr><name><name>s</name><operator>-&gt;</operator><name>st_info</name></name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator>
+<operator>!</operator><call><name>is_debug_symbol</name><argument_list>(<argument><expr><name><name>s</name><operator>-&gt;</operator><name>st_info</name></name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <call><name>is_local_label</name><argument_list>(<argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>ecp</name><operator>-&gt;</operator><name>strip</name></name> <operator>==</operator> <name>STRIP_DEBUG</name> <operator>&amp;&amp;</operator> <call><name>is_debug_symbol</name><argument_list>(<argument><expr><name><name>s</name><operator>-&gt;</operator><name>st_info</name></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>mark_reloc_symbols</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>elfcopy</name></name> <modifier>*</modifier></type><name>ecp</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>sc</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>name</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf_Data</name> <modifier>*</modifier></type><name>d</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf_Scn</name> <modifier>*</modifier></type><name>s</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>GElf_Rel</name></type> <name>r</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>GElf_Rela</name></type> <name>ra</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>GElf_Shdr</name></type> <name>sh</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>n</name></decl>, <decl><type ref="prev"/><name>indx</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>elferr</name></decl>, <decl><type ref="prev"/><name>i</name></decl>, <decl><type ref="prev"/><name>len</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>v_rel</name></name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><operator>(</operator><name>sc</name> <operator>+</operator> <literal type="number">7</literal><operator>)</operator> <operator>/</operator> <literal type="number">8</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>ecp</name><operator>-&gt;</operator><name>v_rel</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"calloc failed"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>elf_getshstrndx</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>ein</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>indx</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"elf_getshstrndx failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>s</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<while>while <condition>(<expr><operator>(</operator><name>s</name> <operator>=</operator> <call><name>elf_nextscn</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>ein</name></name></expr></argument>, <argument><expr><name>s</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>gelf_getshdr</name><argument_list>(<argument><expr><name>s</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>sh</name></expr></argument>)</argument_list></call> <operator>!=</operator> <operator>&amp;</operator><name>sh</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"elf_getshdr failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>sh</name><operator>.</operator><name>sh_type</name></name> <operator>!=</operator> <name>SHT_REL</name> <operator>&amp;&amp;</operator> <name><name>sh</name><operator>.</operator><name>sh_type</name></name> <operator>!=</operator> <name>SHT_RELA</name></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>name</name> <operator>=</operator> <call><name>elf_strptr</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>ein</name></name></expr></argument>, <argument><expr><name>indx</name></expr></argument>, <argument><expr><name><name>sh</name><operator>.</operator><name>sh_name</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"elf_strptr failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>is_remove_section</name><argument_list>(<argument><expr><name>ecp</name></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call> <operator>||</operator>
+<call><name>is_remove_reloc_sec</name><argument_list>(<argument><expr><name>ecp</name></expr></argument>, <argument><expr><name><name>sh</name><operator>.</operator><name>sh_info</name></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>sh</name><operator>.</operator><name>sh_link</name></name> <operator>!=</operator> <call><name>elf_ndxscn</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>symtab</name><operator>-&gt;</operator><name>is</name></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>d</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>n</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<while>while <condition>(<expr><name>n</name> <operator>&lt;</operator> <name><name>sh</name><operator>.</operator><name>sh_size</name></name> <operator>&amp;&amp;</operator> <operator>(</operator><name>d</name> <operator>=</operator> <call><name>elf_getdata</name><argument_list>(<argument><expr><name>s</name></expr></argument>, <argument><expr><name>d</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>len</name> <operator>=</operator> <name><name>d</name><operator>-&gt;</operator><name>d_size</name></name> <operator>/</operator> <name><name>sh</name><operator>.</operator><name>sh_entsize</name></name></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>len</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>sh</name><operator>.</operator><name>sh_type</name></name> <operator>==</operator> <name>SHT_REL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>gelf_getrel</name><argument_list>(<argument><expr><name>d</name></expr></argument>, <argument><expr><name>i</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>r</name></expr></argument>)</argument_list></call> <operator>!=</operator> <operator>&amp;</operator><name>r</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>,
+<argument><expr><literal type="string">"elf_getrel failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>n</name> <operator>=</operator> <call><name>GELF_R_SYM</name><argument_list>(<argument><expr><name><name>r</name><operator>.</operator><name>r_info</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>gelf_getrela</name><argument_list>(<argument><expr><name>d</name></expr></argument>, <argument><expr><name>i</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ra</name></expr></argument>)</argument_list></call> <operator>!=</operator> <operator>&amp;</operator><name>ra</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>,
+<argument><expr><literal type="string">"elf_getrela failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>n</name> <operator>=</operator> <call><name>GELF_R_SYM</name><argument_list>(<argument><expr><name><name>ra</name><operator>.</operator><name>r_info</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>n</name> <operator>&gt;</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name>n</name> <operator>&lt;</operator> <name>sc</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>BIT_SET</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>v_rel</name></name></expr></argument>, <argument><expr><name>n</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name>n</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"invalid symbox index"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></while>
+<expr_stmt><expr><name>elferr</name> <operator>=</operator> <call><name>elf_errno</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>elferr</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"elf_getdata failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><name>elferr</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></while>
+<expr_stmt><expr><name>elferr</name> <operator>=</operator> <call><name>elf_errno</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>elferr</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"elf_nextscn failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><name>elferr</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>mark_section_group_symbols</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>elfcopy</name></name> <modifier>*</modifier></type><name>ecp</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>sc</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>name</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf_Scn</name> <modifier>*</modifier></type><name>s</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>GElf_Shdr</name></type> <name>sh</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>indx</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>elferr</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>v_grp</name></name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><operator>(</operator><name>sc</name> <operator>+</operator> <literal type="number">7</literal><operator>)</operator> <operator>/</operator> <literal type="number">8</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>ecp</name><operator>-&gt;</operator><name>v_grp</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"calloc failed"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>elf_getshstrndx</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>ein</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>indx</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"elf_getshstrndx failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>s</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<while>while <condition>(<expr><operator>(</operator><name>s</name> <operator>=</operator> <call><name>elf_nextscn</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>ein</name></name></expr></argument>, <argument><expr><name>s</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>gelf_getshdr</name><argument_list>(<argument><expr><name>s</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>sh</name></expr></argument>)</argument_list></call> <operator>!=</operator> <operator>&amp;</operator><name>sh</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"elf_getshdr failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>sh</name><operator>.</operator><name>sh_type</name></name> <operator>!=</operator> <name>SHT_GROUP</name></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>name</name> <operator>=</operator> <call><name>elf_strptr</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>ein</name></name></expr></argument>, <argument><expr><name>indx</name></expr></argument>, <argument><expr><name><name>sh</name><operator>.</operator><name>sh_name</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"elf_strptr failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>is_remove_section</name><argument_list>(<argument><expr><name>ecp</name></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>sh</name><operator>.</operator><name>sh_info</name></name> <operator>&gt;</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name><name>sh</name><operator>.</operator><name>sh_info</name></name> <operator>&lt;</operator> <name>sc</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>BIT_SET</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>v_grp</name></name></expr></argument>, <argument><expr><name><name>sh</name><operator>.</operator><name>sh_info</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name><name>sh</name><operator>.</operator><name>sh_info</name></name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"invalid symbox index"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></while>
+<expr_stmt><expr><name>elferr</name> <operator>=</operator> <call><name>elf_errno</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>elferr</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"elf_nextscn failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><name>elferr</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>generate_symbols</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>elfcopy</name></name> <modifier>*</modifier></type><name>ecp</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>section</name></name> <modifier>*</modifier></type><name>s</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>symop</name></name> <modifier>*</modifier></type><name>sp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>symbuf</name></name> <modifier>*</modifier></type><name>sy_buf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>strbuf</name></name> <modifier>*</modifier></type><name>st_buf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>name</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>newname</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>gsym</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>GElf_Shdr</name></type> <name>ish</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>GElf_Sym</name></type> <name>sym</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf_Data</name><modifier>*</modifier></type> <name>id</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf_Scn</name> <modifier>*</modifier></type><name>is</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>ishstrndx</name></decl>, <decl><type ref="prev"/><name>namelen</name></decl>, <decl><type ref="prev"/><name>ndx</name></decl>, <decl><type ref="prev"/><name>sc</name></decl>, <decl><type ref="prev"/><name>symndx</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ec</name></decl>, <decl><type ref="prev"/><name>elferr</name></decl>, <decl><type ref="prev"/><name>i</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>elf_getshstrndx</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>ein</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ishstrndx</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"elf_getshstrndx failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>ec</name> <operator>=</operator> <call><name>gelf_getclass</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>eout</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>ELFCLASSNONE</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"gelf_getclass failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>sy_buf</name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>sy_buf</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"calloc failed"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>st_buf</name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>st_buf</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"calloc failed"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>sy_buf</name><operator>-&gt;</operator><name>gcap</name></name> <operator>=</operator> <name><name>sy_buf</name><operator>-&gt;</operator><name>lcap</name></name> <operator>=</operator> <literal type="number">64</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>st_buf</name><operator>-&gt;</operator><name>g</name><operator>.</operator><name>cap</name></name> <operator>=</operator> <literal type="number">256</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>st_buf</name><operator>-&gt;</operator><name>l</name><operator>.</operator><name>cap</name></name> <operator>=</operator> <literal type="number">64</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>st_buf</name><operator>-&gt;</operator><name>l</name><operator>.</operator><name>sz</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>st_buf</name><operator>-&gt;</operator><name>g</name><operator>.</operator><name>sz</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>symtab</name><operator>-&gt;</operator><name>sz</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>strtab</name><operator>-&gt;</operator><name>sz</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>symtab</name><operator>-&gt;</operator><name>buf</name></name> <operator>=</operator> <name>sy_buf</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>strtab</name><operator>-&gt;</operator><name>buf</name></name> <operator>=</operator> <name>st_buf</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>gsym</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+
+
+
+
+
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>v_secsym</name></name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><operator>(</operator><name><name>ecp</name><operator>-&gt;</operator><name>nos</name></name> <operator>+</operator> <literal type="number">7</literal><operator>)</operator> <operator>/</operator> <literal type="number">8</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>ecp</name><operator>-&gt;</operator><name>v_secsym</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"calloc failed"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+<expr_stmt><expr><name>symndx</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>name</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>is</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<while>while <condition>(<expr><operator>(</operator><name>is</name> <operator>=</operator> <call><name>elf_nextscn</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>ein</name></name></expr></argument>, <argument><expr><name>is</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>gelf_getshdr</name><argument_list>(<argument><expr><name>is</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ish</name></expr></argument>)</argument_list></call> <operator>!=</operator> <operator>&amp;</operator><name>ish</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"elf_getshdr failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>name</name> <operator>=</operator> <call><name>elf_strptr</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>ein</name></name></expr></argument>, <argument><expr><name>ishstrndx</name></expr></argument>, <argument><expr><name><name>ish</name><operator>.</operator><name>sh_name</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator>
+<name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"elf_strptr failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>strcmp</name><argument_list>(<argument><expr><name>name</name></expr></argument>, <argument><expr><literal type="string">".strtab"</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>symndx</name> <operator>=</operator> <call><name>elf_ndxscn</name><argument_list>(<argument><expr><name>is</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></while>
+<expr_stmt><expr><name>elferr</name> <operator>=</operator> <call><name>elf_errno</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>elferr</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"elf_nextscn failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><name>elferr</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>symndx</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"can't find .strtab section"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>clean</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><name>is</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<while>while <condition>(<expr><operator>(</operator><name>is</name> <operator>=</operator> <call><name>elf_nextscn</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>ein</name></name></expr></argument>, <argument><expr><name>is</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>gelf_getshdr</name><argument_list>(<argument><expr><name>is</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ish</name></expr></argument>)</argument_list></call> <operator>!=</operator> <operator>&amp;</operator><name>ish</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"elf_getshdr failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>name</name> <operator>=</operator> <call><name>elf_strptr</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>ein</name></name></expr></argument>, <argument><expr><name>ishstrndx</name></expr></argument>, <argument><expr><name><name>ish</name><operator>.</operator><name>sh_name</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator>
+<name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"elf_strptr failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>strcmp</name><argument_list>(<argument><expr><name>name</name></expr></argument>, <argument><expr><literal type="string">".symtab"</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+</block_content>}</block></while>
+<expr_stmt><expr><name>elferr</name> <operator>=</operator> <call><name>elf_errno</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>elferr</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"elf_nextscn failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><name>elferr</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>is</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"can't find .strtab section"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+
+
+
+
+
+<expr_stmt><expr><name>sc</name> <operator>=</operator> <name><name>ish</name><operator>.</operator><name>sh_size</name></name> <operator>/</operator> <name><name>ish</name><operator>.</operator><name>sh_entsize</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>sc</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>symndx</name></name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><name>sc</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name><name>ecp</name><operator>-&gt;</operator><name>symndx</name></name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>ecp</name><operator>-&gt;</operator><name>symndx</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"calloc failed"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>gsym</name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><operator>(</operator><name>sc</name> <operator>+</operator> <literal type="number">7</literal><operator>)</operator> <operator>/</operator> <literal type="number">8</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>gsym</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>gsym</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"calloc failed"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>id</name> <operator>=</operator> <call><name>elf_getdata</name><argument_list>(<argument><expr><name>is</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>elferr</name> <operator>=</operator> <call><name>elf_errno</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>elferr</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"elf_getdata failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><name>elferr</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<goto>goto <name>clean</name>;</goto>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></else></if_stmt>
+
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><operator>(</operator><name>size_t</name><operator>)</operator><name>i</name> <operator>&lt;</operator> <name>sc</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>gelf_getsym</name><argument_list>(<argument><expr><name>id</name></expr></argument>, <argument><expr><name>i</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>sym</name></expr></argument>)</argument_list></call> <operator>!=</operator> <operator>&amp;</operator><name>sym</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"gelf_getsym failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>name</name> <operator>=</operator> <call><name>elf_strptr</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>ein</name></name></expr></argument>, <argument><expr><name>symndx</name></expr></argument>, <argument><expr><name><name>sym</name><operator>.</operator><name>st_name</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"elf_strptr failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>is_remove_symbol</name><argument_list>(<argument><expr><name>ecp</name></expr></argument>, <argument><expr><name>sc</name></expr></argument>, <argument><expr><name>i</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>sym</name></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>is_global_symbol</name><argument_list>(<argument><expr><name><name>sym</name><operator>.</operator><name>st_info</name></name></expr></argument>)</argument_list></call> <operator>||</operator>
+<call><name>is_weak_symbol</name><argument_list>(<argument><expr><name><name>sym</name><operator>.</operator><name>st_info</name></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>ecp</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>WEAKEN_ALL</name> <operator>||</operator>
+<call><name>lookup_symop_list</name><argument_list>(<argument><expr><name>ecp</name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><name>SYMOP_WEAKEN</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>sym</name><operator>.</operator><name>st_info</name></name> <operator>=</operator> <call><name>GELF_ST_INFO</name><argument_list>(<argument><expr><name>STB_WEAK</name></expr></argument>,
+<argument><expr><call><name>GELF_ST_TYPE</name><argument_list>(<argument><expr><name><name>sym</name><operator>.</operator><name>st_info</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>sym</name><operator>.</operator><name>st_shndx</name></name> <operator>!=</operator> <name>SHN_UNDEF</name> <operator>&amp;&amp;</operator>
+<call><name>lookup_symop_list</name><argument_list>(<argument><expr><name>ecp</name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><name>SYMOP_LOCALIZE</name></expr></argument>)</argument_list></call> <operator>!=</operator>
+<name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>sym</name><operator>.</operator><name>st_info</name></name> <operator>=</operator> <call><name>GELF_ST_INFO</name><argument_list>(<argument><expr><name>STB_LOCAL</name></expr></argument>,
+<argument><expr><call><name>GELF_ST_TYPE</name><argument_list>(<argument><expr><name><name>sym</name><operator>.</operator><name>st_info</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>ecp</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>KEEP_GLOBAL</name> <operator>&amp;&amp;</operator>
+<name><name>sym</name><operator>.</operator><name>st_shndx</name></name> <operator>!=</operator> <name>SHN_UNDEF</name> <operator>&amp;&amp;</operator>
+<call><name>lookup_symop_list</name><argument_list>(<argument><expr><name>ecp</name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><name>SYMOP_KEEPG</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>sym</name><operator>.</operator><name>st_info</name></name> <operator>=</operator> <call><name>GELF_ST_INFO</name><argument_list>(<argument><expr><name>STB_LOCAL</name></expr></argument>,
+<argument><expr><call><name>GELF_ST_TYPE</name><argument_list>(<argument><expr><name><name>sym</name><operator>.</operator><name>st_info</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>ecp</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>LOCALIZE_HIDDEN</name> <operator>&amp;&amp;</operator>
+<name><name>sym</name><operator>.</operator><name>st_shndx</name></name> <operator>!=</operator> <name>SHN_UNDEF</name> <operator>&amp;&amp;</operator>
+<call><name>is_hidden_symbol</name><argument_list>(<argument><expr><name><name>sym</name><operator>.</operator><name>st_other</name></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>sym</name><operator>.</operator><name>st_info</name></name> <operator>=</operator> <call><name>GELF_ST_INFO</name><argument_list>(<argument><expr><name>STB_LOCAL</name></expr></argument>,
+<argument><expr><call><name>GELF_ST_TYPE</name><argument_list>(<argument><expr><name><name>sym</name><operator>.</operator><name>st_info</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><call><name>lookup_symop_list</name><argument_list>(<argument><expr><name>ecp</name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><name>SYMOP_GLOBALIZE</name></expr></argument>)</argument_list></call> <operator>!=</operator>
+<name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>sym</name><operator>.</operator><name>st_info</name></name> <operator>=</operator> <call><name>GELF_ST_INFO</name><argument_list>(<argument><expr><name>STB_GLOBAL</name></expr></argument>,
+<argument><expr><call><name>GELF_ST_TYPE</name><argument_list>(<argument><expr><name><name>sym</name><operator>.</operator><name>st_info</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+</block_content>}</block></else></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>sp</name> <operator>=</operator> <call><name>lookup_symop_list</name><argument_list>(<argument><expr><name>ecp</name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><name>SYMOP_REDEF</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>name</name> <operator>=</operator> <name><name>sp</name><operator>-&gt;</operator><name>newname</name></name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+<expr_stmt><expr><name>newname</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>ecp</name><operator>-&gt;</operator><name>prefix_sym</name></name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <name>name</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <operator>*</operator><name>name</name> <operator>!=</operator> <literal type="char">'\0'</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>namelen</name> <operator>=</operator> <call><name>strlen</name><argument_list>(<argument><expr><name>name</name></expr></argument>)</argument_list></call> <operator>+</operator> <call><name>strlen</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>prefix_sym</name></name></expr></argument>)</argument_list></call> <operator>+</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>newname</name> <operator>=</operator> <call><name>malloc</name><argument_list>(<argument><expr><name>namelen</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"malloc failed"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>snprintf</name><argument_list>(<argument><expr><name>newname</name></expr></argument>, <argument><expr><name>namelen</name></expr></argument>, <argument><expr><literal type="string">"%s%s"</literal></expr></argument>, <argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>prefix_sym</name></name></expr></argument>,
+<argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>name</name> <operator>=</operator> <name>newname</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>is_global_symbol</name><argument_list>(<argument><expr><name><name>sym</name><operator>.</operator><name>st_info</name></name></expr></argument>)</argument_list></call> <operator>||</operator>
+<call><name>is_weak_symbol</name><argument_list>(<argument><expr><name><name>sym</name><operator>.</operator><name>st_info</name></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>BIT_SET</name><argument_list>(<argument><expr><name>gsym</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>symndx</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <name><name>sy_buf</name><operator>-&gt;</operator><name>ngs</name></name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>symndx</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <name><name>sy_buf</name><operator>-&gt;</operator><name>nls</name></name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<expr_stmt><expr><call><name>add_to_symtab</name><argument_list>(<argument><expr><name>ecp</name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><name><name>sym</name><operator>.</operator><name>st_value</name></name></expr></argument>, <argument><expr><name><name>sym</name><operator>.</operator><name>st_size</name></name></expr></argument>,
+<argument><expr><name><name>sym</name><operator>.</operator><name>st_shndx</name></name></expr></argument>, <argument><expr><name><name>sym</name><operator>.</operator><name>st_info</name></name></expr></argument>, <argument><expr><name><name>sym</name><operator>.</operator><name>st_other</name></name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>newname</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>newname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>GELF_ST_TYPE</name><argument_list>(<argument><expr><name><name>sym</name><operator>.</operator><name>st_info</name></name></expr></argument>)</argument_list></call> <operator>==</operator> <name>STT_SECTION</name> <operator>&amp;&amp;</operator>
+<name><name>sym</name><operator>.</operator><name>st_shndx</name></name> <operator>&lt;</operator> <name>SHN_LORESERVE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>secndx</name><index>[<expr><name><name>sym</name><operator>.</operator><name>st_shndx</name></name></expr>]</index></name> <operator>&lt;</operator> <operator>(</operator><name>uint64_t</name><operator>)</operator><name><name>ecp</name><operator>-&gt;</operator><name>nos</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>BIT_SET</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>v_secsym</name></name></expr></argument>, <argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>secndx</name><index>[<expr><name><name>sym</name><operator>.</operator><name>st_shndx</name></name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>sy_buf</name><operator>-&gt;</operator><name>nls</name></name> <operator>&lt;=</operator> <literal type="number">1</literal> <operator>&amp;&amp;</operator> <name><name>sy_buf</name><operator>-&gt;</operator><name>ngs</name></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>clean</name>;</goto></block_content></block></if></if_stmt>
+
+
+
+
+
+
+<macro><name>TAILQ_FOREACH</name><argument_list>(<argument>s</argument>, <argument>&amp;ecp-&gt;v_sec</argument>, <argument>sec_list</argument>)</argument_list></macro> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>s</name><operator>-&gt;</operator><name>pseudo</name></name></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>strcmp</name><argument_list>(<argument><expr><name><name>s</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><literal type="string">".symtab"</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>strcmp</name><argument_list>(<argument><expr><name><name>s</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><literal type="string">".strtab"</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>strcmp</name><argument_list>(<argument><expr><name><name>s</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><literal type="string">".shstrtab"</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>ecp</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>RELOCATABLE</name><operator>)</operator> <operator>!=</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator>
+<operator>(</operator><operator>(</operator><name><name>s</name><operator>-&gt;</operator><name>type</name></name> <operator>==</operator> <name>SHT_REL</name><operator>)</operator> <operator>||</operator> <operator>(</operator><name><name>s</name><operator>-&gt;</operator><name>type</name></name> <operator>==</operator> <name>SHT_RELA</name><operator>)</operator><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>ndx</name> <operator>=</operator> <call><name>elf_ndxscn</name><argument_list>(<argument><expr><name><name>s</name><operator>-&gt;</operator><name>os</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>SHN_UNDEF</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"elf_ndxscn failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>BIT_ISSET</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>v_secsym</name></name></expr></argument>, <argument><expr><name>ndx</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>sym</name><operator>.</operator><name>st_name</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>sym</name><operator>.</operator><name>st_value</name></name> <operator>=</operator> <name><name>s</name><operator>-&gt;</operator><name>vma</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>sym</name><operator>.</operator><name>st_size</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>sym</name><operator>.</operator><name>st_info</name></name> <operator>=</operator> <call><name>GELF_ST_INFO</name><argument_list>(<argument><expr><name>STB_LOCAL</name></expr></argument>, <argument><expr><name>STT_SECTION</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>sym</name><operator>.</operator><name>st_other</name></name> <operator>=</operator> <name>STV_DEFAULT</name></expr>;</expr_stmt>
+
+
+
+
+<expr_stmt><expr><call><name>add_to_symtab</name><argument_list>(<argument><expr><name>ecp</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name><name>sym</name><operator>.</operator><name>st_value</name></name></expr></argument>, <argument><expr><name><name>sym</name><operator>.</operator><name>st_size</name></name></expr></argument>,
+<argument><expr><name>ndx</name></expr></argument>, <argument><expr><name><name>sym</name><operator>.</operator><name>st_info</name></name></expr></argument>, <argument><expr><name><name>sym</name><operator>.</operator><name>st_other</name></name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>gsym</name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<for>for<control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><operator>(</operator><name>size_t</name><operator>)</operator> <name>i</name> <operator>&lt;</operator> <name>sc</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>BIT_ISSET</name><argument_list>(<argument><expr><name>gsym</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>ec</name> <operator>==</operator> <name>ELFCLASS32</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>sy_buf</name><operator>-&gt;</operator><name>g32</name><index>[<expr><name><name>ecp</name><operator>-&gt;</operator><name>symndx</name><index>[<expr><name>i</name></expr>]</index></name></expr>]</index></name><operator>.</operator><name>st_name</name> <operator>+=</operator>
+<name><name>st_buf</name><operator>-&gt;</operator><name>l</name><operator>.</operator><name>sz</name></name></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>sy_buf</name><operator>-&gt;</operator><name>g64</name><index>[<expr><name><name>ecp</name><operator>-&gt;</operator><name>symndx</name><index>[<expr><name>i</name></expr>]</index></name></expr>]</index></name><operator>.</operator><name>st_name</name> <operator>+=</operator>
+<name><name>st_buf</name><operator>-&gt;</operator><name>l</name><operator>.</operator><name>sz</name></name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>symndx</name><index>[<expr><name>i</name></expr>]</index></name> <operator>+=</operator> <name><name>sy_buf</name><operator>-&gt;</operator><name>nls</name></name></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>gsym</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+
+<label><name>clean</name>:</label>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>gsym</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free_symtab</name><argument_list>(<argument><expr><name>ecp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type>
+<name>create_symtab</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>elfcopy</name></name> <modifier>*</modifier></type><name>ecp</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>section</name></name> <modifier>*</modifier></type><name>s</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>sy</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>st</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>maxndx</name></decl>, <decl><type ref="prev"/><name>ndx</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>sy</name> <operator>=</operator> <name><name>ecp</name><operator>-&gt;</operator><name>symtab</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>st</name> <operator>=</operator> <name><name>ecp</name><operator>-&gt;</operator><name>strtab</name></name></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>sy</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <name>st</name> <operator>!=</operator> <name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+
+
+
+
+<expr_stmt><expr><name>maxndx</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<macro><name>TAILQ_FOREACH</name><argument_list>(<argument>s</argument>, <argument>&amp;ecp-&gt;v_sec</argument>, <argument>sec_list</argument>)</argument_list></macro> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>s</name><operator>-&gt;</operator><name>os</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>ndx</name> <operator>=</operator> <call><name>elf_ndxscn</name><argument_list>(<argument><expr><name><name>s</name><operator>-&gt;</operator><name>os</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>SHN_UNDEF</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"elf_ndxscn failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>ndx</name> <operator>&gt;</operator> <name>maxndx</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>maxndx</name> <operator>=</operator> <name>ndx</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block>
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>secndx</name><index>[<expr><call><name>elf_ndxscn</name><argument_list>(<argument><expr><name><name>sy</name><operator>-&gt;</operator><name>is</name></name></expr></argument>)</argument_list></call></expr>]</index></name> <operator>=</operator> <name>maxndx</name> <operator>+</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>secndx</name><index>[<expr><call><name>elf_ndxscn</name><argument_list>(<argument><expr><name><name>st</name><operator>-&gt;</operator><name>is</name></name></expr></argument>)</argument_list></call></expr>]</index></name> <operator>=</operator> <name>maxndx</name> <operator>+</operator> <literal type="number">2</literal></expr>;</expr_stmt>
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><operator>(</operator><name><name>ecp</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>SYMTAB_INTACT</name><operator>)</operator> <operator>==</operator> <literal type="number">0</literal><operator>)</operator> <operator>&amp;&amp;</operator> <operator>!</operator><call><name>generate_symbols</name><argument_list>(<argument><expr><name>ecp</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>TAILQ_REMOVE</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>ecp</name><operator>-&gt;</operator><name>v_sec</name></name></expr></argument>, <argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>symtab</name></name></expr></argument>, <argument><expr><name>sec_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>TAILQ_REMOVE</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>ecp</name><operator>-&gt;</operator><name>v_sec</name></name></expr></argument>, <argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>strtab</name></name></expr></argument>, <argument><expr><name>sec_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>symtab</name><operator>-&gt;</operator><name>buf</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>symtab</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>strtab</name><operator>-&gt;</operator><name>buf</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>strtab</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>symtab</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>strtab</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;=</operator> <operator>~</operator><name>SYMTAB_EXIST</name></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>sy</name><operator>-&gt;</operator><name>os</name></name> <operator>=</operator> <call><name>elf_newscn</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>eout</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<operator>(</operator><name><name>st</name><operator>-&gt;</operator><name>os</name></name> <operator>=</operator> <call><name>elf_newscn</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>eout</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"elf_newscn failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>secndx</name><index>[<expr><call><name>elf_ndxscn</name><argument_list>(<argument><expr><name><name>sy</name><operator>-&gt;</operator><name>is</name></name></expr></argument>)</argument_list></call></expr>]</index></name> <operator>=</operator> <call><name>elf_ndxscn</name><argument_list>(<argument><expr><name><name>sy</name><operator>-&gt;</operator><name>os</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>secndx</name><index>[<expr><call><name>elf_ndxscn</name><argument_list>(<argument><expr><name><name>st</name><operator>-&gt;</operator><name>is</name></name></expr></argument>)</argument_list></call></expr>]</index></name> <operator>=</operator> <call><name>elf_ndxscn</name><argument_list>(<argument><expr><name><name>st</name><operator>-&gt;</operator><name>os</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+<expr_stmt><expr><call><name>copy_shdr</name><argument_list>(<argument><expr><name>ecp</name></expr></argument>, <argument><expr><name>sy</name></expr></argument>, <argument><expr><literal type="string">".symtab"</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>copy_shdr</name><argument_list>(<argument><expr><name>ecp</name></expr></argument>, <argument><expr><name>st</name></expr></argument>, <argument><expr><literal type="string">".strtab"</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>ecp</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>SYMTAB_INTACT</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>copy_data</name><argument_list>(<argument><expr><name>sy</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>copy_data</name><argument_list>(<argument><expr><name>st</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>create_symtab_data</name><argument_list>(<argument><expr><name>ecp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type>
+<name>free_symtab</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>elfcopy</name></name> <modifier>*</modifier></type><name>ecp</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>symbuf</name></name> <modifier>*</modifier></type><name>sy_buf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>strbuf</name></name> <modifier>*</modifier></type><name>st_buf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>sthash</name></name> <modifier>*</modifier></type><name>sh</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>shtmp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>ecp</name><operator>-&gt;</operator><name>symtab</name></name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <name><name>ecp</name><operator>-&gt;</operator><name>symtab</name><operator>-&gt;</operator><name>buf</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>sy_buf</name> <operator>=</operator> <name><name>ecp</name><operator>-&gt;</operator><name>symtab</name><operator>-&gt;</operator><name>buf</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>sy_buf</name><operator>-&gt;</operator><name>l32</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>sy_buf</name><operator>-&gt;</operator><name>l32</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>sy_buf</name><operator>-&gt;</operator><name>g32</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>sy_buf</name><operator>-&gt;</operator><name>g32</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>sy_buf</name><operator>-&gt;</operator><name>l64</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>sy_buf</name><operator>-&gt;</operator><name>l64</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>sy_buf</name><operator>-&gt;</operator><name>g64</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>sy_buf</name><operator>-&gt;</operator><name>g64</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>ecp</name><operator>-&gt;</operator><name>strtab</name></name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <name><name>ecp</name><operator>-&gt;</operator><name>strtab</name><operator>-&gt;</operator><name>buf</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>st_buf</name> <operator>=</operator> <name><name>ecp</name><operator>-&gt;</operator><name>strtab</name><operator>-&gt;</operator><name>buf</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>st_buf</name><operator>-&gt;</operator><name>l</name><operator>.</operator><name>buf</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>st_buf</name><operator>-&gt;</operator><name>l</name><operator>.</operator><name>buf</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>st_buf</name><operator>-&gt;</operator><name>g</name><operator>.</operator><name>buf</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>st_buf</name><operator>-&gt;</operator><name>g</name><operator>.</operator><name>buf</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>STHASHSIZE</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<macro><name>LIST_FOREACH_SAFE</name><argument_list>(<argument>sh</argument>, <argument>&amp;st_buf-&gt;l.hash[i]</argument>, <argument>sh_next</argument>,
+<argument>shtmp</argument>)</argument_list></macro> <block>{<block_content>
+<expr_stmt><expr><call><name>LIST_REMOVE</name><argument_list>(<argument><expr><name>sh</name></expr></argument>, <argument><expr><name>sh_next</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>sh</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block>
+<macro><name>LIST_FOREACH_SAFE</name><argument_list>(<argument>sh</argument>, <argument>&amp;st_buf-&gt;g.hash[i]</argument>, <argument>sh_next</argument>,
+<argument>shtmp</argument>)</argument_list></macro> <block>{<block_content>
+<expr_stmt><expr><call><name>LIST_REMOVE</name><argument_list>(<argument><expr><name>sh</name></expr></argument>, <argument><expr><name>sh_next</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>sh</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block>
+</block_content>}</block></for>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>ecp</name><operator>-&gt;</operator><name>symndx</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>symndx</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>symndx</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>ecp</name><operator>-&gt;</operator><name>v_rel</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>v_rel</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>v_rel</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>ecp</name><operator>-&gt;</operator><name>v_grp</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>v_grp</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>v_grp</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>ecp</name><operator>-&gt;</operator><name>v_secsym</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>v_secsym</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>v_secsym</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type>
+<name>create_external_symtab</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>elfcopy</name></name> <modifier>*</modifier></type><name>ecp</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>section</name></name> <modifier>*</modifier></type><name>s</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>symbuf</name></name> <modifier>*</modifier></type><name>sy_buf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>strbuf</name></name> <modifier>*</modifier></type><name>st_buf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>GElf_Shdr</name></type> <name>sh</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>ndx</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>ecp</name><operator>-&gt;</operator><name>oec</name></name> <operator>==</operator> <name>ELFCLASS32</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>symtab</name></name> <operator>=</operator> <call><name>create_external_section</name><argument_list>(<argument><expr><name>ecp</name></expr></argument>, <argument><expr><literal type="string">".symtab"</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>,
+<argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>SHT_SYMTAB</name></expr></argument>, <argument><expr><name>ELF_T_SYM</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">4</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>symtab</name></name> <operator>=</operator> <call><name>create_external_section</name><argument_list>(<argument><expr><name>ecp</name></expr></argument>, <argument><expr><literal type="string">".symtab"</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>,
+<argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>SHT_SYMTAB</name></expr></argument>, <argument><expr><name>ELF_T_SYM</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">8</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>strtab</name></name> <operator>=</operator> <call><name>create_external_section</name><argument_list>(<argument><expr><name>ecp</name></expr></argument>, <argument><expr><literal type="string">".strtab"</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>,
+<argument><expr><name>SHT_STRTAB</name></expr></argument>, <argument><expr><name>ELF_T_BYTE</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>gelf_getshdr</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>symtab</name><operator>-&gt;</operator><name>os</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>sh</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"gelf_getshdr() failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>sh</name><operator>.</operator><name>sh_link</name></name> <operator>=</operator> <call><name>elf_ndxscn</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>strtab</name><operator>-&gt;</operator><name>os</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>gelf_update_shdr</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>symtab</name><operator>-&gt;</operator><name>os</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>sh</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"gelf_update_shdr() failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>sy_buf</name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>sy_buf</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"calloc failed"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>st_buf</name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>st_buf</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"calloc failed"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>sy_buf</name><operator>-&gt;</operator><name>gcap</name></name> <operator>=</operator> <name><name>sy_buf</name><operator>-&gt;</operator><name>lcap</name></name> <operator>=</operator> <literal type="number">64</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>st_buf</name><operator>-&gt;</operator><name>g</name><operator>.</operator><name>cap</name></name> <operator>=</operator> <literal type="number">256</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>st_buf</name><operator>-&gt;</operator><name>l</name><operator>.</operator><name>cap</name></name> <operator>=</operator> <literal type="number">64</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>st_buf</name><operator>-&gt;</operator><name>l</name><operator>.</operator><name>sz</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>st_buf</name><operator>-&gt;</operator><name>g</name><operator>.</operator><name>sz</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>symtab</name><operator>-&gt;</operator><name>sz</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>strtab</name><operator>-&gt;</operator><name>sz</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>symtab</name><operator>-&gt;</operator><name>buf</name></name> <operator>=</operator> <name>sy_buf</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>strtab</name><operator>-&gt;</operator><name>buf</name></name> <operator>=</operator> <name>st_buf</name></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><call><name>add_to_symtab</name><argument_list>(<argument><expr><name>ecp</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>SHN_UNDEF</name></expr></argument>,
+<argument><expr><call><name>ELF32_ST_INFO</name><argument_list>(<argument><expr><name>STB_LOCAL</name></expr></argument>, <argument><expr><name>STT_NOTYPE</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<macro><name>TAILQ_FOREACH</name><argument_list>(<argument>s</argument>, <argument>&amp;ecp-&gt;v_sec</argument>, <argument>sec_list</argument>)</argument_list></macro> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>s</name><operator>-&gt;</operator><name>pseudo</name></name></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>strcmp</name><argument_list>(<argument><expr><name><name>s</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><literal type="string">".symtab"</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>strcmp</name><argument_list>(<argument><expr><name><name>s</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><literal type="string">".strtab"</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>strcmp</name><argument_list>(<argument><expr><name><name>s</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><literal type="string">".shstrtab"</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>elf_errno</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>ndx</name> <operator>=</operator> <call><name>elf_ndxscn</name><argument_list>(<argument><expr><name><name>s</name><operator>-&gt;</operator><name>os</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>SHN_UNDEF</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"elf_ndxscn failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>add_to_symtab</name><argument_list>(<argument><expr><name>ecp</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>ndx</name></expr></argument>,
+<argument><expr><call><name>GELF_ST_INFO</name><argument_list>(<argument><expr><name>STB_LOCAL</name></expr></argument>, <argument><expr><name>STT_SECTION</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type>
+<name>add_to_symtab</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>elfcopy</name></name> <modifier>*</modifier></type><name>ecp</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>name</name></decl></parameter>, <parameter><decl><type><name>uint64_t</name></type> <name>st_value</name></decl></parameter>,
+<parameter><decl><type><name>uint64_t</name></type> <name>st_size</name></decl></parameter>, <parameter><decl><type><name>uint16_t</name></type> <name>st_shndx</name></decl></parameter>, <parameter><decl><type><name>unsigned</name> <name>char</name></type> <name>st_info</name></decl></parameter>,
+<parameter><decl><type><name>unsigned</name> <name>char</name></type> <name>st_other</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ndx_known</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>symbuf</name></name> <modifier>*</modifier></type><name>sy_buf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>strbuf</name></name> <modifier>*</modifier></type><name>st_buf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>sthash</name></name> <modifier>*</modifier></type><name>sh</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>hash</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>pos</name></decl>;</decl_stmt>
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>_ST_NAME_EMPTY_l</name></cpp:macro> <cpp:value>0</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>_ST_NAME_EMPTY_g</name></cpp:macro> <cpp:value>-1</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>_ADDSYM</name><parameter_list>(<parameter><type><name>B</name></type></parameter>, <parameter><type><name>SZ</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>do { if (sy_buf-&gt;B##SZ == NULL) { sy_buf-&gt;B##SZ = malloc(sy_buf-&gt;B##cap * sizeof(Elf##SZ##_Sym)); if (sy_buf-&gt;B##SZ == NULL) err(EXIT_FAILURE, "malloc failed"); } else if (sy_buf-&gt;n##B##s &gt;= sy_buf-&gt;B##cap) { sy_buf-&gt;B##cap *= 2; sy_buf-&gt;B##SZ = realloc(sy_buf-&gt;B##SZ, sy_buf-&gt;B##cap * sizeof(Elf##SZ##_Sym)); if (sy_buf-&gt;B##SZ == NULL) err(EXIT_FAILURE, "realloc failed"); } sy_buf-&gt;B##SZ[sy_buf-&gt;n##B##s].st_info = st_info; sy_buf-&gt;B##SZ[sy_buf-&gt;n##B##s].st_other = st_other; sy_buf-&gt;B##SZ[sy_buf-&gt;n##B##s].st_value = st_value; sy_buf-&gt;B##SZ[sy_buf-&gt;n##B##s].st_size = st_size; if (ndx_known) sy_buf-&gt;B##SZ[sy_buf-&gt;n##B##s].st_shndx = st_shndx; else if (st_shndx == SHN_UNDEF || st_shndx &gt;= SHN_LORESERVE) sy_buf-&gt;B##SZ[sy_buf-&gt;n##B##s].st_shndx = st_shndx; else sy_buf-&gt;B##SZ[sy_buf-&gt;n##B##s].st_shndx = ecp-&gt;secndx[st_shndx]; if (st_buf-&gt;B.buf == NULL) { st_buf-&gt;B.buf = calloc(st_buf-&gt;B.cap, sizeof(*st_buf-&gt;B.buf)); if (st_buf-&gt;B.buf == NULL) err(EXIT_FAILURE, "malloc failed"); } if (name != NULL &amp;&amp; *name != '\0') { pos = lookup_exact_string(st_buf-&gt;B.hash, st_buf-&gt;B.buf,name); if (pos != -1) sy_buf-&gt;B##SZ[sy_buf-&gt;n##B##s].st_name = pos; else { sy_buf-&gt;B##SZ[sy_buf-&gt;n##B##s].st_name = st_buf-&gt;B.sz; while (st_buf-&gt;B.sz + strlen(name) &gt;= st_buf-&gt;B.cap - 1) { st_buf-&gt;B.cap *= 2; st_buf-&gt;B.buf = realloc(st_buf-&gt;B.buf, st_buf-&gt;B.cap); if (st_buf-&gt;B.buf == NULL) err(EXIT_FAILURE, "realloc failed"); } if ((sh = malloc(sizeof(*sh))) == NULL) err(EXIT_FAILURE, "malloc failed"); sh-&gt;sh_off = st_buf-&gt;B.sz; hash = str_hash(name); LIST_INSERT_HEAD(&amp;st_buf-&gt;B.hash[hash], sh, sh_next); strncpy(&amp;st_buf-&gt;B.buf[st_buf-&gt;B.sz], name, strlen(name)); st_buf-&gt;B.buf[st_buf-&gt;B.sz + strlen(name)] = '\0'; st_buf-&gt;B.sz += strlen(name) + 1; } } else sy_buf-&gt;B##SZ[sy_buf-&gt;n##B##s].st_name = (Elf##SZ##_Word)_ST_NAME_EMPTY_##B; sy_buf-&gt;n##B##s++; } while (0)</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<expr_stmt><expr><name>sy_buf</name> <operator>=</operator> <name><name>ecp</name><operator>-&gt;</operator><name>symtab</name><operator>-&gt;</operator><name>buf</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>st_buf</name> <operator>=</operator> <name><name>ecp</name><operator>-&gt;</operator><name>strtab</name><operator>-&gt;</operator><name>buf</name></name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>ecp</name><operator>-&gt;</operator><name>oec</name></name> <operator>==</operator> <name>ELFCLASS32</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>is_local_symbol</name><argument_list>(<argument><expr><name>st_info</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>_ADDSYM</name><argument_list>(<argument><expr><name>l</name></expr></argument>, <argument><expr><literal type="number">32</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>_ADDSYM</name><argument_list>(<argument><expr><name>g</name></expr></argument>, <argument><expr><literal type="number">32</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>is_local_symbol</name><argument_list>(<argument><expr><name>st_info</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>_ADDSYM</name><argument_list>(<argument><expr><name>l</name></expr></argument>, <argument><expr><literal type="number">64</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>_ADDSYM</name><argument_list>(<argument><expr><name>g</name></expr></argument>, <argument><expr><literal type="number">64</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></else></if_stmt>
+
+
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>symtab</name><operator>-&gt;</operator><name>sz</name></name> <operator>=</operator> <operator>(</operator><name><name>sy_buf</name><operator>-&gt;</operator><name>nls</name></name> <operator>+</operator> <name><name>sy_buf</name><operator>-&gt;</operator><name>ngs</name></name><operator>)</operator> <operator>*</operator>
+<operator>(</operator><ternary><condition><expr><name><name>ecp</name><operator>-&gt;</operator><name>oec</name></name> <operator>==</operator> <name>ELFCLASS32</name></expr> ?</condition><then> <expr><sizeof>sizeof<argument_list>(<argument><expr><name>Elf32_Sym</name></expr></argument>)</argument_list></sizeof></expr> </then><else>: <expr><sizeof>sizeof<argument_list>(<argument><expr><name>Elf64_Sym</name></expr></argument>)</argument_list></sizeof></expr></else></ternary><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ecp</name><operator>-&gt;</operator><name>strtab</name><operator>-&gt;</operator><name>sz</name></name> <operator>=</operator> <name><name>st_buf</name><operator>-&gt;</operator><name>l</name><operator>.</operator><name>sz</name></name> <operator>+</operator> <name><name>st_buf</name><operator>-&gt;</operator><name>g</name><operator>.</operator><name>sz</name></name></expr>;</expr_stmt>
+
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>_ADDSYM</name></cpp:undef>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>_ST_NAME_EMPTY_l</name></cpp:undef>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>_ST_NAME_EMPTY_g</name></cpp:undef>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type>
+<name>finalize_external_symtab</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>elfcopy</name></name> <modifier>*</modifier></type><name>ecp</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>symbuf</name></name> <modifier>*</modifier></type><name>sy_buf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>strbuf</name></name> <modifier>*</modifier></type><name>st_buf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+
+
+
+
+
+<expr_stmt><expr><name>sy_buf</name> <operator>=</operator> <name><name>ecp</name><operator>-&gt;</operator><name>symtab</name><operator>-&gt;</operator><name>buf</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>st_buf</name> <operator>=</operator> <name><name>ecp</name><operator>-&gt;</operator><name>strtab</name><operator>-&gt;</operator><name>buf</name></name></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><operator>(</operator><name>size_t</name><operator>)</operator> <name>i</name> <operator>&lt;</operator> <name><name>sy_buf</name><operator>-&gt;</operator><name>ngs</name></name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>ecp</name><operator>-&gt;</operator><name>oec</name></name> <operator>==</operator> <name>ELFCLASS32</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>sy_buf</name><operator>-&gt;</operator><name>g32</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>st_name</name> <operator>==</operator> <operator>(</operator><name>Elf32_Word</name><operator>)</operator><operator>-</operator><literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>sy_buf</name><operator>-&gt;</operator><name>g32</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>st_name</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>sy_buf</name><operator>-&gt;</operator><name>g32</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>st_name</name> <operator>+=</operator> <name><name>st_buf</name><operator>-&gt;</operator><name>l</name><operator>.</operator><name>sz</name></name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>sy_buf</name><operator>-&gt;</operator><name>g64</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>st_name</name> <operator>==</operator> <operator>(</operator><name>Elf64_Word</name><operator>)</operator><operator>-</operator><literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>sy_buf</name><operator>-&gt;</operator><name>g64</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>st_name</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>sy_buf</name><operator>-&gt;</operator><name>g64</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>st_name</name> <operator>+=</operator> <name><name>st_buf</name><operator>-&gt;</operator><name>l</name><operator>.</operator><name>sz</name></name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type>
+<name>create_symtab_data</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>elfcopy</name></name> <modifier>*</modifier></type><name>ecp</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>section</name></name> <modifier>*</modifier></type><name>sy</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>st</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>symbuf</name></name> <modifier>*</modifier></type><name>sy_buf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>strbuf</name></name> <modifier>*</modifier></type><name>st_buf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf_Data</name> <modifier>*</modifier></type><name>gsydata</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>lsydata</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>gstdata</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>lstdata</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>GElf_Shdr</name></type> <name>shy</name></decl>, <decl><type ref="prev"/><name>sht</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>sy</name> <operator>=</operator> <name><name>ecp</name><operator>-&gt;</operator><name>symtab</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>st</name> <operator>=</operator> <name><name>ecp</name><operator>-&gt;</operator><name>strtab</name></name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>gelf_getshdr</name><argument_list>(<argument><expr><name><name>sy</name><operator>-&gt;</operator><name>os</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>shy</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"gelf_getshdr() failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>gelf_getshdr</name><argument_list>(<argument><expr><name><name>st</name><operator>-&gt;</operator><name>os</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>sht</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"gelf_getshdr() failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+
+
+
+
+<expr_stmt><expr><name>sy_buf</name> <operator>=</operator> <name><name>sy</name><operator>-&gt;</operator><name>buf</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>sy_buf</name><operator>-&gt;</operator><name>nls</name></name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>lsydata</name> <operator>=</operator> <call><name>elf_newdata</name><argument_list>(<argument><expr><name><name>sy</name><operator>-&gt;</operator><name>os</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"elf_newdata() failed: %s."</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>ecp</name><operator>-&gt;</operator><name>oec</name></name> <operator>==</operator> <name>ELFCLASS32</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>lsydata</name><operator>-&gt;</operator><name>d_align</name></name> <operator>=</operator> <literal type="number">4</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>lsydata</name><operator>-&gt;</operator><name>d_off</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>lsydata</name><operator>-&gt;</operator><name>d_buf</name></name> <operator>=</operator> <name><name>sy_buf</name><operator>-&gt;</operator><name>l32</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>lsydata</name><operator>-&gt;</operator><name>d_size</name></name> <operator>=</operator> <name><name>sy_buf</name><operator>-&gt;</operator><name>nls</name></name> <operator>*</operator>
+<sizeof>sizeof<argument_list>(<argument><expr><name>Elf32_Sym</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>lsydata</name><operator>-&gt;</operator><name>d_type</name></name> <operator>=</operator> <name>ELF_T_SYM</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>lsydata</name><operator>-&gt;</operator><name>d_version</name></name> <operator>=</operator> <name>EV_CURRENT</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name><name>lsydata</name><operator>-&gt;</operator><name>d_align</name></name> <operator>=</operator> <literal type="number">8</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>lsydata</name><operator>-&gt;</operator><name>d_off</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>lsydata</name><operator>-&gt;</operator><name>d_buf</name></name> <operator>=</operator> <name><name>sy_buf</name><operator>-&gt;</operator><name>l64</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>lsydata</name><operator>-&gt;</operator><name>d_size</name></name> <operator>=</operator> <name><name>sy_buf</name><operator>-&gt;</operator><name>nls</name></name> <operator>*</operator>
+<sizeof>sizeof<argument_list>(<argument><expr><name>Elf64_Sym</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>lsydata</name><operator>-&gt;</operator><name>d_type</name></name> <operator>=</operator> <name>ELF_T_SYM</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>lsydata</name><operator>-&gt;</operator><name>d_version</name></name> <operator>=</operator> <name>EV_CURRENT</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>sy_buf</name><operator>-&gt;</operator><name>ngs</name></name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>gsydata</name> <operator>=</operator> <call><name>elf_newdata</name><argument_list>(<argument><expr><name><name>sy</name><operator>-&gt;</operator><name>os</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"elf_newdata() failed: %s."</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>ecp</name><operator>-&gt;</operator><name>oec</name></name> <operator>==</operator> <name>ELFCLASS32</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>gsydata</name><operator>-&gt;</operator><name>d_align</name></name> <operator>=</operator> <literal type="number">4</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>gsydata</name><operator>-&gt;</operator><name>d_off</name></name> <operator>=</operator> <name><name>sy_buf</name><operator>-&gt;</operator><name>nls</name></name> <operator>*</operator>
+<sizeof>sizeof<argument_list>(<argument><expr><name>Elf32_Sym</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>gsydata</name><operator>-&gt;</operator><name>d_buf</name></name> <operator>=</operator> <name><name>sy_buf</name><operator>-&gt;</operator><name>g32</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>gsydata</name><operator>-&gt;</operator><name>d_size</name></name> <operator>=</operator> <name><name>sy_buf</name><operator>-&gt;</operator><name>ngs</name></name> <operator>*</operator>
+<sizeof>sizeof<argument_list>(<argument><expr><name>Elf32_Sym</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>gsydata</name><operator>-&gt;</operator><name>d_type</name></name> <operator>=</operator> <name>ELF_T_SYM</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>gsydata</name><operator>-&gt;</operator><name>d_version</name></name> <operator>=</operator> <name>EV_CURRENT</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name><name>gsydata</name><operator>-&gt;</operator><name>d_align</name></name> <operator>=</operator> <literal type="number">8</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>gsydata</name><operator>-&gt;</operator><name>d_off</name></name> <operator>=</operator> <name><name>sy_buf</name><operator>-&gt;</operator><name>nls</name></name> <operator>*</operator>
+<sizeof>sizeof<argument_list>(<argument><expr><name>Elf64_Sym</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>gsydata</name><operator>-&gt;</operator><name>d_buf</name></name> <operator>=</operator> <name><name>sy_buf</name><operator>-&gt;</operator><name>g64</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>gsydata</name><operator>-&gt;</operator><name>d_size</name></name> <operator>=</operator> <name><name>sy_buf</name><operator>-&gt;</operator><name>ngs</name></name> <operator>*</operator>
+<sizeof>sizeof<argument_list>(<argument><expr><name>Elf64_Sym</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>gsydata</name><operator>-&gt;</operator><name>d_type</name></name> <operator>=</operator> <name>ELF_T_SYM</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>gsydata</name><operator>-&gt;</operator><name>d_version</name></name> <operator>=</operator> <name>EV_CURRENT</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+
+<expr_stmt><expr><name>st_buf</name> <operator>=</operator> <name><name>st</name><operator>-&gt;</operator><name>buf</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>lstdata</name> <operator>=</operator> <call><name>elf_newdata</name><argument_list>(<argument><expr><name><name>st</name><operator>-&gt;</operator><name>os</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"elf_newdata() failed: %s."</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>lstdata</name><operator>-&gt;</operator><name>d_align</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>lstdata</name><operator>-&gt;</operator><name>d_off</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>lstdata</name><operator>-&gt;</operator><name>d_buf</name></name> <operator>=</operator> <name><name>st_buf</name><operator>-&gt;</operator><name>l</name><operator>.</operator><name>buf</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>lstdata</name><operator>-&gt;</operator><name>d_size</name></name> <operator>=</operator> <name><name>st_buf</name><operator>-&gt;</operator><name>l</name><operator>.</operator><name>sz</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>lstdata</name><operator>-&gt;</operator><name>d_type</name></name> <operator>=</operator> <name>ELF_T_BYTE</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>lstdata</name><operator>-&gt;</operator><name>d_version</name></name> <operator>=</operator> <name>EV_CURRENT</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>st_buf</name><operator>-&gt;</operator><name>g</name><operator>.</operator><name>sz</name></name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>gstdata</name> <operator>=</operator> <call><name>elf_newdata</name><argument_list>(<argument><expr><name><name>st</name><operator>-&gt;</operator><name>os</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"elf_newdata() failed: %s."</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>gstdata</name><operator>-&gt;</operator><name>d_align</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>gstdata</name><operator>-&gt;</operator><name>d_off</name></name> <operator>=</operator> <name><name>lstdata</name><operator>-&gt;</operator><name>d_size</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>gstdata</name><operator>-&gt;</operator><name>d_buf</name></name> <operator>=</operator> <name><name>st_buf</name><operator>-&gt;</operator><name>g</name><operator>.</operator><name>buf</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>gstdata</name><operator>-&gt;</operator><name>d_size</name></name> <operator>=</operator> <name><name>st_buf</name><operator>-&gt;</operator><name>g</name><operator>.</operator><name>sz</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>gstdata</name><operator>-&gt;</operator><name>d_type</name></name> <operator>=</operator> <name>ELF_T_BYTE</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>gstdata</name><operator>-&gt;</operator><name>d_version</name></name> <operator>=</operator> <name>EV_CURRENT</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>shy</name><operator>.</operator><name>sh_addr</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>shy</name><operator>.</operator><name>sh_addralign</name></name> <operator>=</operator> <operator>(</operator><ternary><condition><expr><name><name>ecp</name><operator>-&gt;</operator><name>oec</name></name> <operator>==</operator> <name>ELFCLASS32</name></expr> ?</condition><then> <expr><literal type="number">4</literal></expr> </then><else>: <expr><literal type="number">8</literal></expr></else></ternary><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>shy</name><operator>.</operator><name>sh_size</name></name> <operator>=</operator> <name><name>sy</name><operator>-&gt;</operator><name>sz</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>shy</name><operator>.</operator><name>sh_type</name></name> <operator>=</operator> <name>SHT_SYMTAB</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>shy</name><operator>.</operator><name>sh_flags</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>shy</name><operator>.</operator><name>sh_entsize</name></name> <operator>=</operator> <call><name>gelf_fsize</name><argument_list>(<argument><expr><name><name>ecp</name><operator>-&gt;</operator><name>eout</name></name></expr></argument>, <argument><expr><name>ELF_T_SYM</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>,
+<argument><expr><name>EV_CURRENT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+<expr_stmt><expr><name><name>shy</name><operator>.</operator><name>sh_info</name></name> <operator>=</operator> <name><name>sy_buf</name><operator>-&gt;</operator><name>nls</name></name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>sht</name><operator>.</operator><name>sh_addr</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>sht</name><operator>.</operator><name>sh_addralign</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>sht</name><operator>.</operator><name>sh_size</name></name> <operator>=</operator> <name><name>st</name><operator>-&gt;</operator><name>sz</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>sht</name><operator>.</operator><name>sh_type</name></name> <operator>=</operator> <name>SHT_STRTAB</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>sht</name><operator>.</operator><name>sh_flags</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>sht</name><operator>.</operator><name>sh_entsize</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>sht</name><operator>.</operator><name>sh_info</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>sht</name><operator>.</operator><name>sh_link</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>gelf_update_shdr</name><argument_list>(<argument><expr><name><name>sy</name><operator>-&gt;</operator><name>os</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>shy</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"gelf_update_shdr() failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>gelf_update_shdr</name><argument_list>(<argument><expr><name><name>st</name><operator>-&gt;</operator><name>os</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>sht</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"gelf_update_shdr() failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type>
+<name>add_to_symop_list</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>elfcopy</name></name> <modifier>*</modifier></type><name>ecp</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>name</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>newname</name></decl></parameter>,
+<parameter><decl><type><name>unsigned</name> <name>int</name></type> <name>op</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>symop</name></name> <modifier>*</modifier></type><name>s</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>assert</name> <argument_list>(<argument><expr><name>name</name> <operator>!=</operator> <name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<macro><name>STAILQ_FOREACH</name><argument_list>(<argument>s</argument>, <argument>&amp;ecp-&gt;v_symop</argument>, <argument>symop_list</argument>)</argument_list></macro>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>strcmp</name><argument_list>(<argument><expr><name>name</name></expr></argument>, <argument><expr><name><name>s</name><operator>-&gt;</operator><name>name</name></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>found</name>;</goto></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>s</name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>s</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"not enough memory"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>STAILQ_INSERT_TAIL</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>ecp</name><operator>-&gt;</operator><name>v_symop</name></name></expr></argument>, <argument><expr><name>s</name></expr></argument>, <argument><expr><name>symop_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>s</name><operator>-&gt;</operator><name>name</name></name> <operator>=</operator> <name>name</name></expr>;</expr_stmt>
+<label><name>found</name>:</label>
+<if_stmt><if>if <condition>(<expr><name>op</name> <operator>==</operator> <name>SYMOP_REDEF</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>s</name><operator>-&gt;</operator><name>newname</name></name> <operator>=</operator> <name>newname</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>s</name><operator>-&gt;</operator><name>op</name></name> <operator>|=</operator> <name>op</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name><name>struct</name> <name>symop</name></name> <modifier>*</modifier></type>
+<name>lookup_symop_list</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>elfcopy</name></name> <modifier>*</modifier></type><name>ecp</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>name</name></decl></parameter>, <parameter><decl><type><name>unsigned</name> <name>int</name></type> <name>op</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>symop</name></name> <modifier>*</modifier></type><name>s</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>ret</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>pattern</name></decl>;</decl_stmt>
+
+<macro><name>STAILQ_FOREACH</name><argument_list>(<argument>s</argument>, <argument>&amp;ecp-&gt;v_symop</argument>, <argument>symop_list</argument>)</argument_list></macro> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>s</name><operator>-&gt;</operator><name>op</name></name> <operator>&amp;</operator> <name>op</name><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>name</name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <operator>!</operator><call><name>strcmp</name><argument_list>(<argument><expr><name>name</name></expr></argument>, <argument><expr><name><name>s</name><operator>-&gt;</operator><name>name</name></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>s</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>ecp</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>WILDCARD</name><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+
+
+<expr_stmt><expr><name>pattern</name> <operator>=</operator> <name><name>s</name><operator>-&gt;</operator><name>name</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>pattern</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>==</operator> <literal type="char">'!'</literal></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><name>pattern</name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <name>s</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>fnmatch</name><argument_list>(<argument><expr><name>pattern</name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ret</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block>
+
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>lookup_exact_string</name><parameter_list>(<parameter><decl><type><name>hash_head</name> <modifier>*</modifier></type><name>buckets</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>s</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>sthash</name></name> <modifier>*</modifier></type><name>sh</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>hash</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>hash</name> <operator>=</operator> <call><name>str_hash</name><argument_list>(<argument><expr><name>s</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<macro><name>LIST_FOREACH</name><argument_list>(<argument>sh</argument>, <argument>&amp;buckets[hash]</argument>, <argument>sh_next</argument>)</argument_list></macro>
+<if_stmt><if>if <condition>(<expr><call><name>strcmp</name><argument_list>(<argument><expr><name>buf</name> <operator>+</operator> <name><name>sh</name><operator>-&gt;</operator><name>sh_off</name></name></expr></argument>, <argument><expr><name>s</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name><name>sh</name><operator>-&gt;</operator><name>sh_off</name></name></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>uint32_t</name></type>
+<name>str_hash</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>s</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>hash</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>hash</name> <operator>=</operator> <literal type="number">2166136261UL</literal></expr>;</init> <condition><expr><operator>*</operator><name>s</name></expr>;</condition> <incr><expr><name>s</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><name>hash</name> <operator>=</operator> <operator>(</operator><name>hash</name> <operator>^</operator> <operator>*</operator><name>s</name><operator>)</operator> <operator>*</operator> <literal type="number">16777619</literal></expr>;</expr_stmt></block_content></block></for>
+
+<return>return <expr><operator>(</operator><name>hash</name> <operator>&amp;</operator> <operator>(</operator><name>STHASHSIZE</name> <operator>-</operator> <literal type="number">1</literal><operator>)</operator><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+</unit>

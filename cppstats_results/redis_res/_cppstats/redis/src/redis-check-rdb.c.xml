@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/results/redis_res/_cppstats/redis/src/redis-check-rdb.c"><cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"mt19937-64.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"server.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"rdb.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdarg.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/time.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;unistd.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/stat.h&gt;</cpp:file></cpp:include>
+<function_decl><type><name>void</name></type> <name>createSharedObjects</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><name>void</name></type> <name>rdbLoadProgressCallback</name><parameter_list>(<parameter><decl><type><name>rio</name> <modifier>*</modifier></type><name>r</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>len</name></decl></parameter>)</parameter_list>;</function_decl>
+<decl_stmt><decl><type><name>int</name></type> <name>rdbCheckMode</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<struct>struct <block>{
+<decl_stmt><decl><type><name>rio</name> <modifier>*</modifier></type><name>rio</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>robj</name> <modifier>*</modifier></type><name>key</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>key_type</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>long</name></type> <name>keys</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>long</name></type> <name>expires</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>long</name></type> <name>already_expired</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>doing</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>error_set</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name><name>error</name><index>[<expr><literal type="number">1024</literal></expr>]</index></name></decl>;</decl_stmt>
+}</block> <decl><name>rdbstate</name></decl>;</struct>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>RDB_CHECK_DOING_START</name></cpp:macro> <cpp:value>0</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>RDB_CHECK_DOING_READ_TYPE</name></cpp:macro> <cpp:value>1</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>RDB_CHECK_DOING_READ_EXPIRE</name></cpp:macro> <cpp:value>2</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>RDB_CHECK_DOING_READ_KEY</name></cpp:macro> <cpp:value>3</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>RDB_CHECK_DOING_READ_OBJECT_VALUE</name></cpp:macro> <cpp:value>4</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>RDB_CHECK_DOING_CHECK_SUM</name></cpp:macro> <cpp:value>5</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>RDB_CHECK_DOING_READ_LEN</name></cpp:macro> <cpp:value>6</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>RDB_CHECK_DOING_READ_AUX</name></cpp:macro> <cpp:value>7</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>RDB_CHECK_DOING_READ_MODULE_AUX</name></cpp:macro> <cpp:value>8</cpp:value></cpp:define>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name><name>rdb_check_doing_string</name><index>[]</index></name> <init>= <expr><block>{
+<expr><literal type="string">"start"</literal></expr>,
+<expr><literal type="string">"read-type"</literal></expr>,
+<expr><literal type="string">"read-expire"</literal></expr>,
+<expr><literal type="string">"read-key"</literal></expr>,
+<expr><literal type="string">"read-object-value"</literal></expr>,
+<expr><literal type="string">"check-sum"</literal></expr>,
+<expr><literal type="string">"read-len"</literal></expr>,
+<expr><literal type="string">"read-aux"</literal></expr>,
+<expr><literal type="string">"read-module-aux"</literal></expr>
+}</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name><name>rdb_type_string</name><index>[]</index></name> <init>= <expr><block>{
+<expr><literal type="string">"string"</literal></expr>,
+<expr><literal type="string">"list-linked"</literal></expr>,
+<expr><literal type="string">"set-hashtable"</literal></expr>,
+<expr><literal type="string">"zset-v1"</literal></expr>,
+<expr><literal type="string">"hash-hashtable"</literal></expr>,
+<expr><literal type="string">"zset-v2"</literal></expr>,
+<expr><literal type="string">"module-value"</literal></expr>,
+<expr><literal type="string">""</literal></expr>,<expr><literal type="string">""</literal></expr>,
+<expr><literal type="string">"hash-zipmap"</literal></expr>,
+<expr><literal type="string">"list-ziplist"</literal></expr>,
+<expr><literal type="string">"set-intset"</literal></expr>,
+<expr><literal type="string">"zset-ziplist"</literal></expr>,
+<expr><literal type="string">"hash-ziplist"</literal></expr>,
+<expr><literal type="string">"quicklist"</literal></expr>,
+<expr><literal type="string">"stream"</literal></expr>,
+<expr><literal type="string">"hash-listpack"</literal></expr>,
+<expr><literal type="string">"zset-listpack"</literal></expr>,
+<expr><literal type="string">"quicklist-v2"</literal></expr>
+}</block></expr></init></decl>;</decl_stmt>
+<function><type><name>void</name></type> <name>rdbShowGenericInfo</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"[info] %lu keys read\n"</literal></expr></argument>, <argument><expr><name><name>rdbstate</name><operator>.</operator><name>keys</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"[info] %lu expires\n"</literal></expr></argument>, <argument><expr><name><name>rdbstate</name><operator>.</operator><name>expires</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"[info] %lu already expired\n"</literal></expr></argument>, <argument><expr><name><name>rdbstate</name><operator>.</operator><name>already_expired</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><name>void</name></type> <name>rdbCheckError</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>fmt</name></decl></parameter>, <parameter><decl><type><modifier>...</modifier></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>char</name></type> <name><name>msg</name><index>[<expr><literal type="number">1024</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>va_list</name></type> <name>ap</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>va_start</name><argument_list>(<argument><expr><name>ap</name></expr></argument>, <argument><expr><name>fmt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>vsnprintf</name><argument_list>(<argument><expr><name>msg</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>msg</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><name>fmt</name></expr></argument>, <argument><expr><name>ap</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>va_end</name><argument_list>(<argument><expr><name>ap</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"--- RDB ERROR DETECTED ---\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"[offset %llu] %s\n"</literal></expr></argument>,
+<argument><expr><operator>(</operator><name>unsigned</name> <name>long</name> <name>long</name><operator>)</operator> <operator>(</operator><ternary><condition><expr><name><name>rdbstate</name><operator>.</operator><name>rio</name></name></expr> ?</condition><then>
+<expr><name><name>rdbstate</name><operator>.</operator><name>rio</name><operator>-&gt;</operator><name>processed_bytes</name></name></expr> </then><else>: <expr><literal type="number">0</literal></expr></else></ternary><operator>)</operator></expr></argument>, <argument><expr><name>msg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"[additional info] While doing: %s\n"</literal></expr></argument>,
+<argument><expr><name><name>rdb_check_doing_string</name><index>[<expr><name><name>rdbstate</name><operator>.</operator><name>doing</name></name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>rdbstate</name><operator>.</operator><name>key</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"[additional info] Reading key '%s'\n"</literal></expr></argument>,
+<argument><expr><operator>(</operator><name>char</name><operator>*</operator><operator>)</operator><name><name>rdbstate</name><operator>.</operator><name>key</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>rdbstate</name><operator>.</operator><name>key_type</name></name> <operator>!=</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"[additional info] Reading type %d (%s)\n"</literal></expr></argument>,
+<argument><expr><name><name>rdbstate</name><operator>.</operator><name>key_type</name></name></expr></argument>,
+<argument><expr><ternary><condition><expr><operator>(</operator><operator>(</operator><name>unsigned</name><operator>)</operator><name><name>rdbstate</name><operator>.</operator><name>key_type</name></name> <operator>&lt;</operator>
+<sizeof>sizeof<argument_list>(<argument><expr><name>rdb_type_string</name></expr></argument>)</argument_list></sizeof><operator>/</operator><sizeof>sizeof<argument_list>(<argument><expr><name>char</name><operator>*</operator></expr></argument>)</argument_list></sizeof><operator>)</operator></expr> ?</condition><then>
+<expr><name><name>rdb_type_string</name><index>[<expr><name><name>rdbstate</name><operator>.</operator><name>key_type</name></name></expr>]</index></name></expr> </then><else>: <expr><literal type="string">"unknown"</literal></expr></else></ternary></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>rdbShowGenericInfo</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><name>void</name></type> <name>rdbCheckInfo</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>fmt</name></decl></parameter>, <parameter><decl><type><modifier>...</modifier></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>char</name></type> <name><name>msg</name><index>[<expr><literal type="number">1024</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>va_list</name></type> <name>ap</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>va_start</name><argument_list>(<argument><expr><name>ap</name></expr></argument>, <argument><expr><name>fmt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>vsnprintf</name><argument_list>(<argument><expr><name>msg</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>msg</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><name>fmt</name></expr></argument>, <argument><expr><name>ap</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>va_end</name><argument_list>(<argument><expr><name>ap</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"[offset %llu] %s\n"</literal></expr></argument>,
+<argument><expr><operator>(</operator><name>unsigned</name> <name>long</name> <name>long</name><operator>)</operator> <operator>(</operator><ternary><condition><expr><name><name>rdbstate</name><operator>.</operator><name>rio</name></name></expr> ?</condition><then>
+<expr><name><name>rdbstate</name><operator>.</operator><name>rio</name><operator>-&gt;</operator><name>processed_bytes</name></name></expr> </then><else>: <expr><literal type="number">0</literal></expr></else></ternary><operator>)</operator></expr></argument>, <argument><expr><name>msg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><name>void</name></type> <name>rdbCheckSetError</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>fmt</name></decl></parameter>, <parameter><decl><type><modifier>...</modifier></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>va_list</name></type> <name>ap</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>va_start</name><argument_list>(<argument><expr><name>ap</name></expr></argument>, <argument><expr><name>fmt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>vsnprintf</name><argument_list>(<argument><expr><name><name>rdbstate</name><operator>.</operator><name>error</name></name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name><name>rdbstate</name><operator>.</operator><name>error</name></name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><name>fmt</name></expr></argument>, <argument><expr><name>ap</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>va_end</name><argument_list>(<argument><expr><name>ap</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>rdbstate</name><operator>.</operator><name>error_set</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><name>void</name></type> <name>rdbCheckHandleCrash</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>sig</name></decl></parameter>, <parameter><decl><type><name>siginfo_t</name> <modifier>*</modifier></type><name>info</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>secret</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>UNUSED</name><argument_list>(<argument><expr><name>sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>UNUSED</name><argument_list>(<argument><expr><name>info</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>UNUSED</name><argument_list>(<argument><expr><name>secret</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>rdbCheckError</name><argument_list>(<argument><expr><literal type="string">"Server crash checking the specified RDB file!"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><name>void</name></type> <name>rdbCheckSetupSignals</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>sigaction</name></name></type> <name>act</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>sigemptyset</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>act</name><operator>.</operator><name>sa_mask</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>act</name><operator>.</operator><name>sa_flags</name></name> <operator>=</operator> <name>SA_NODEFER</name> <operator>|</operator> <name>SA_RESETHAND</name> <operator>|</operator> <name>SA_SIGINFO</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>act</name><operator>.</operator><name>sa_sigaction</name></name> <operator>=</operator> <name>rdbCheckHandleCrash</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>sigaction</name><argument_list>(<argument><expr><name>SIGSEGV</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>act</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>sigaction</name><argument_list>(<argument><expr><name>SIGBUS</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>act</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>sigaction</name><argument_list>(<argument><expr><name>SIGFPE</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>act</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>sigaction</name><argument_list>(<argument><expr><name>SIGILL</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>act</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>sigaction</name><argument_list>(<argument><expr><name>SIGABRT</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>act</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><name>int</name></type> <name>redis_check_rdb</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>rdbfilename</name></decl></parameter>, <parameter><decl><type><name>FILE</name> <modifier>*</modifier></type><name>fp</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>dbid</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>selected_dbid</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>type</name></decl>, <decl><type ref="prev"/><name>rdbver</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name><name>buf</name><index>[<expr><literal type="number">1024</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>long</name> <name>long</name></type> <name>expiretime</name></decl>, <decl><type ref="prev"/><name>now</name> <init>= <expr><call><name>mstime</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>rio</name></type> <name>rdb</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>stat</name></name></type> <name>sb</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>closefile</name> <init>= <expr><operator>(</operator><name>fp</name> <operator>==</operator> <name>NULL</name><operator>)</operator></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>fp</name> <operator>==</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <operator>(</operator><name>fp</name> <operator>=</operator> <call><name>fopen</name><argument_list>(<argument><expr><name>rdbfilename</name></expr></argument>,<argument><expr><literal type="string">"r"</literal></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><literal type="number">1</literal></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>fstat</name><argument_list>(<argument><expr><call><name>fileno</name><argument_list>(<argument><expr><name>fp</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><operator>&amp;</operator><name>sb</name></expr></argument>)</argument_list></call> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>sb</name><operator>.</operator><name>st_size</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>startLoadingFile</name><argument_list>(<argument><expr><name><name>sb</name><operator>.</operator><name>st_size</name></name></expr></argument>, <argument><expr><name>rdbfilename</name></expr></argument>, <argument><expr><name>RDBFLAGS_NONE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>rioInitWithFile</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rdb</name></expr></argument>,<argument><expr><name>fp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>rdbstate</name><operator>.</operator><name>rio</name></name> <operator>=</operator> <operator>&amp;</operator><name>rdb</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>rdb</name><operator>.</operator><name>update_cksum</name></name> <operator>=</operator> <name>rdbLoadProgressCallback</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>rioRead</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rdb</name></expr></argument>,<argument><expr><name>buf</name></expr></argument>,<argument><expr><literal type="number">9</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content> <goto>goto <name>eoferr</name>;</goto></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>buf</name><index>[<expr><literal type="number">9</literal></expr>]</index></name> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>memcmp</name><argument_list>(<argument><expr><name>buf</name></expr></argument>,<argument><expr><literal type="string">"REDIS"</literal></expr></argument>,<argument><expr><literal type="number">5</literal></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>rdbCheckError</name><argument_list>(<argument><expr><literal type="string">"Wrong signature trying to load DB from file"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>err</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>rdbver</name> <operator>=</operator> <call><name>atoi</name><argument_list>(<argument><expr><name>buf</name><operator>+</operator><literal type="number">5</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>rdbver</name> <argument_list type="generic">&lt; <argument><expr><literal type="number">1</literal> <operator>||</operator> <name>rdbver</name></expr></argument> &gt;</argument_list></name> <name>RDB_VERSION</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>rdbCheckError</name><argument_list>(<argument><expr><literal type="string">"Can't handle RDB format version %d"</literal></expr></argument>,<argument><expr><name>rdbver</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>err</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>expiretime</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<while>while<condition>(<expr><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>robj</name> <modifier>*</modifier></type><name>key</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>val</name></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>rdbstate</name><operator>.</operator><name>doing</name></name> <operator>=</operator> <name>RDB_CHECK_DOING_READ_TYPE</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>type</name> <operator>=</operator> <call><name>rdbLoadType</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rdb</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content> <goto>goto <name>eoferr</name>;</goto></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>type</name> <operator>==</operator> <name>RDB_OPCODE_EXPIRETIME</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>rdbstate</name><operator>.</operator><name>doing</name></name> <operator>=</operator> <name>RDB_CHECK_DOING_READ_EXPIRE</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>expiretime</name> <operator>=</operator> <call><name>rdbLoadTime</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rdb</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>expiretime</name> <operator>*=</operator> <literal type="number">1000</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>rioGetReadError</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rdb</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content> <goto>goto <name>eoferr</name>;</goto></block_content></block></if></if_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>type</name> <operator>==</operator> <name>RDB_OPCODE_EXPIRETIME_MS</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>rdbstate</name><operator>.</operator><name>doing</name></name> <operator>=</operator> <name>RDB_CHECK_DOING_READ_EXPIRE</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>expiretime</name> <operator>=</operator> <call><name>rdbLoadMillisecondTime</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rdb</name></expr></argument>, <argument><expr><name>rdbver</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>rioGetReadError</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rdb</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content> <goto>goto <name>eoferr</name>;</goto></block_content></block></if></if_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>type</name> <operator>==</operator> <name>RDB_OPCODE_FREQ</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>uint8_t</name></type> <name>byte</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>rioRead</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rdb</name></expr></argument>,<argument><expr><operator>&amp;</operator><name>byte</name></expr></argument>,<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content> <goto>goto <name>eoferr</name>;</goto></block_content></block></if></if_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>type</name> <operator>==</operator> <name>RDB_OPCODE_IDLE</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>rdbLoadLen</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rdb</name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>RDB_LENERR</name></expr>)</condition><block type="pseudo"><block_content> <goto>goto <name>eoferr</name>;</goto></block_content></block></if></if_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>type</name> <operator>==</operator> <name>RDB_OPCODE_EOF</name></expr>)</condition> <block>{<block_content>
+<break>break;</break>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>type</name> <operator>==</operator> <name>RDB_OPCODE_SELECTDB</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>rdbstate</name><operator>.</operator><name>doing</name></name> <operator>=</operator> <name>RDB_CHECK_DOING_READ_LEN</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>dbid</name> <operator>=</operator> <call><name>rdbLoadLen</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rdb</name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>RDB_LENERR</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>eoferr</name>;</goto></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>rdbCheckInfo</name><argument_list>(<argument><expr><literal type="string">"Selecting DB ID %llu"</literal></expr></argument>, <argument><expr><operator>(</operator><name>unsigned</name> <name>long</name> <name>long</name><operator>)</operator><name>dbid</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>selected_dbid</name> <operator>=</operator> <name>dbid</name></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>type</name> <operator>==</operator> <name>RDB_OPCODE_RESIZEDB</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>db_size</name></decl>, <decl><type ref="prev"/><name>expires_size</name></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>rdbstate</name><operator>.</operator><name>doing</name></name> <operator>=</operator> <name>RDB_CHECK_DOING_READ_LEN</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>db_size</name> <operator>=</operator> <call><name>rdbLoadLen</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rdb</name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>RDB_LENERR</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>eoferr</name>;</goto></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>expires_size</name> <operator>=</operator> <call><name>rdbLoadLen</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rdb</name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>RDB_LENERR</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>eoferr</name>;</goto></block_content></block></if></if_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>type</name> <operator>==</operator> <name>RDB_OPCODE_AUX</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>robj</name> <modifier>*</modifier></type><name>auxkey</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>auxval</name></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>rdbstate</name><operator>.</operator><name>doing</name></name> <operator>=</operator> <name>RDB_CHECK_DOING_READ_AUX</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>auxkey</name> <operator>=</operator> <call><name>rdbLoadStringObject</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rdb</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content> <goto>goto <name>eoferr</name>;</goto></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>auxval</name> <operator>=</operator> <call><name>rdbLoadStringObject</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rdb</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content> <goto>goto <name>eoferr</name>;</goto></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>rdbCheckInfo</name><argument_list>(<argument><expr><literal type="string">"AUX FIELD %s = '%s'"</literal></expr></argument>,
+<argument><expr><operator>(</operator><name>char</name><operator>*</operator><operator>)</operator><name><name>auxkey</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>, <argument><expr><operator>(</operator><name>char</name><operator>*</operator><operator>)</operator><name><name>auxval</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>decrRefCount</name><argument_list>(<argument><expr><name>auxkey</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>decrRefCount</name><argument_list>(<argument><expr><name>auxval</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>type</name> <operator>==</operator> <name>RDB_OPCODE_MODULE_AUX</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>moduleid</name></decl>, <decl><type ref="prev"/><name>when_opcode</name></decl>, <decl><type ref="prev"/><name>when</name></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>rdbstate</name><operator>.</operator><name>doing</name></name> <operator>=</operator> <name>RDB_CHECK_DOING_READ_MODULE_AUX</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>moduleid</name> <operator>=</operator> <call><name>rdbLoadLen</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rdb</name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>RDB_LENERR</name></expr>)</condition><block type="pseudo"><block_content> <goto>goto <name>eoferr</name>;</goto></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>when_opcode</name> <operator>=</operator> <call><name>rdbLoadLen</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rdb</name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>RDB_LENERR</name></expr>)</condition><block type="pseudo"><block_content> <goto>goto <name>eoferr</name>;</goto></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>when</name> <operator>=</operator> <call><name>rdbLoadLen</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rdb</name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>RDB_LENERR</name></expr>)</condition><block type="pseudo"><block_content> <goto>goto <name>eoferr</name>;</goto></block_content></block></if></if_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name><name>name</name><index>[<expr><literal type="number">10</literal></expr>]</index></name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>moduleTypeNameByID</name><argument_list>(<argument><expr><name>name</name></expr></argument>,<argument><expr><name>moduleid</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>rdbCheckInfo</name><argument_list>(<argument><expr><literal type="string">"MODULE AUX for: %s"</literal></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>robj</name> <modifier>*</modifier></type><name>o</name> <init>= <expr><call><name>rdbLoadCheckModuleValue</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rdb</name></expr></argument>,<argument><expr><name>name</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>decrRefCount</name><argument_list>(<argument><expr><name>o</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>type</name> <operator>==</operator> <name>RDB_OPCODE_FUNCTION</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>sds</name></type> <name>err</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>rdbFunctionLoad</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rdb</name></expr></argument>, <argument><expr><name>rdbver</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>err</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>C_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>rdbCheckError</name><argument_list>(<argument><expr><literal type="string">"Failed loading library, %s"</literal></expr></argument>, <argument><expr><name>err</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>sdsfree</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>err</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>rdbIsObjectType</name><argument_list>(<argument><expr><name>type</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>rdbCheckError</name><argument_list>(<argument><expr><literal type="string">"Invalid object type: %d"</literal></expr></argument>, <argument><expr><name>type</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>err</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>rdbstate</name><operator>.</operator><name>key_type</name></name> <operator>=</operator> <name>type</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><name><name>rdbstate</name><operator>.</operator><name>doing</name></name> <operator>=</operator> <name>RDB_CHECK_DOING_READ_KEY</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>key</name> <operator>=</operator> <call><name>rdbLoadStringObject</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rdb</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content> <goto>goto <name>eoferr</name>;</goto></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>rdbstate</name><operator>.</operator><name>key</name></name> <operator>=</operator> <name>key</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>rdbstate</name><operator>.</operator><name>keys</name></name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>rdbstate</name><operator>.</operator><name>doing</name></name> <operator>=</operator> <name>RDB_CHECK_DOING_READ_OBJECT_VALUE</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>val</name> <operator>=</operator> <call><name>rdbLoadObject</name><argument_list>(<argument><expr><name>type</name></expr></argument>,<argument><expr><operator>&amp;</operator><name>rdb</name></expr></argument>,<argument><expr><name><name>key</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>,<argument><expr><name>selected_dbid</name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content> <goto>goto <name>eoferr</name>;</goto></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>expiretime</name> <operator>!=</operator> <operator>-</operator><literal type="number">1</literal> <operator>&amp;&amp;</operator> <name>expiretime</name> <operator>&lt;</operator> <name>now</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>rdbstate</name><operator>.</operator><name>already_expired</name></name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>expiretime</name> <operator>!=</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name><name>rdbstate</name><operator>.</operator><name>expires</name></name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>rdbstate</name><operator>.</operator><name>key</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>decrRefCount</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>decrRefCount</name><argument_list>(<argument><expr><name>val</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>rdbstate</name><operator>.</operator><name>key_type</name></name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>expiretime</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></while>
+<if_stmt><if>if <condition>(<expr><name>rdbver</name> <operator>&gt;=</operator> <literal type="number">5</literal> <operator>&amp;&amp;</operator> <name><name>server</name><operator>.</operator><name>rdb_checksum</name></name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>cksum</name></decl>, <decl><type ref="prev"/><name>expected</name> <init>= <expr><name><name>rdb</name><operator>.</operator><name>cksum</name></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>rdbstate</name><operator>.</operator><name>doing</name></name> <operator>=</operator> <name>RDB_CHECK_DOING_CHECK_SUM</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>rioRead</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rdb</name></expr></argument>,<argument><expr><operator>&amp;</operator><name>cksum</name></expr></argument>,<argument><expr><literal type="number">8</literal></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content> <goto>goto <name>eoferr</name>;</goto></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>memrev64ifbe</name><argument_list>(<argument><expr><operator>&amp;</operator><name>cksum</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>cksum</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>rdbCheckInfo</name><argument_list>(<argument><expr><literal type="string">"RDB file was saved with checksum disabled: no check performed."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>cksum</name> <operator>!=</operator> <name>expected</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>rdbCheckError</name><argument_list>(<argument><expr><literal type="string">"RDB CRC error"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>err</name>;</goto>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>rdbCheckInfo</name><argument_list>(<argument><expr><literal type="string">"Checksum OK"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>closefile</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><call><name>fclose</name><argument_list>(<argument><expr><name>fp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>stopLoading</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+<label><name>eoferr</name>:</label>
+<if_stmt><if>if <condition>(<expr><name><name>rdbstate</name><operator>.</operator><name>error_set</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>rdbCheckError</name><argument_list>(<argument><expr><name><name>rdbstate</name><operator>.</operator><name>error</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>rdbCheckError</name><argument_list>(<argument><expr><literal type="string">"Unexpected EOF reading RDB file"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<label><name>err</name>:</label>
+<if_stmt><if>if <condition>(<expr><name>closefile</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><call><name>fclose</name><argument_list>(<argument><expr><name>fp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>stopLoading</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>sds</name></type> <name>checkRdbVersion</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>sds</name></type> <name>version</name></decl>;</decl_stmt>
+<expr_stmt><expr><name>version</name> <operator>=</operator> <call><name>sdscatprintf</name><argument_list>(<argument><expr><call><name>sdsempty</name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><literal type="string">"%s"</literal></expr></argument>, <argument><expr><name>REDIS_VERSION</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>strtoll</name><argument_list>(<argument><expr><call><name>redisGitSHA1</name><argument_list>()</argument_list></call></expr></argument>,<argument><expr><name>NULL</name></expr></argument>,<argument><expr><literal type="number">16</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>version</name> <operator>=</operator> <call><name>sdscatprintf</name><argument_list>(<argument><expr><name>version</name></expr></argument>, <argument><expr><literal type="string">" (git:%s"</literal></expr></argument>, <argument><expr><call><name>redisGitSHA1</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>strtoll</name><argument_list>(<argument><expr><call><name>redisGitDirty</name><argument_list>()</argument_list></call></expr></argument>,<argument><expr><name>NULL</name></expr></argument>,<argument><expr><literal type="number">10</literal></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>version</name> <operator>=</operator> <call><name>sdscatprintf</name><argument_list>(<argument><expr><name>version</name></expr></argument>, <argument><expr><literal type="string">"-dirty"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>version</name> <operator>=</operator> <call><name>sdscat</name><argument_list>(<argument><expr><name>version</name></expr></argument>, <argument><expr><literal type="string">")"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name>version</name></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>int</name></type> <name>redis_check_rdb_main</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>argc</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><name>FILE</name> <modifier>*</modifier></type><name>fp</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>timeval</name></name></type> <name>tv</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>argc</name> <operator>!=</operator> <literal type="number">2</literal> <operator>&amp;&amp;</operator> <name>fp</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"Usage: %s &lt;rdb-file-name&gt;\n"</literal></expr></argument>, <argument><expr><name><name>argv</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>!</operator><call><name>strcmp</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>,<argument><expr><literal type="string">"-v"</literal></expr></argument>)</argument_list></call> <operator>||</operator> <operator>!</operator><call><name>strcmp</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>, <argument><expr><literal type="string">"--version"</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>sds</name></type> <name>version</name> <init>= <expr><call><name>checkRdbVersion</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"redis-check-rdb %s\n"</literal></expr></argument>, <argument><expr><name>version</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>sdsfree</name><argument_list>(<argument><expr><name>version</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>gettimeofday</name><argument_list>(<argument><expr><operator>&amp;</operator><name>tv</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>init_genrand64</name><argument_list>(<argument><expr><operator>(</operator><operator>(</operator><name>long</name> <name>long</name><operator>)</operator> <name><name>tv</name><operator>.</operator><name>tv_sec</name></name> <operator>*</operator> <literal type="number">1000000</literal> <operator>+</operator> <name><name>tv</name><operator>.</operator><name>tv_usec</name></name><operator>)</operator> <operator>^</operator> <call><name>getpid</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>shared</name><operator>.</operator><name>integers</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>createSharedObjects</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>loading_process_events_interval_bytes</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>sanitize_dump_payload</name></name> <operator>=</operator> <name>SANITIZE_DUMP_YES</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>rdbCheckMode</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>rdbCheckInfo</name><argument_list>(<argument><expr><literal type="string">"Checking RDB file %s"</literal></expr></argument>, <argument><expr><name><name>argv</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>rdbCheckSetupSignals</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>retval</name> <init>= <expr><call><name>redis_check_rdb</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>,<argument><expr><name>fp</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>retval</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>rdbCheckInfo</name><argument_list>(<argument><expr><literal type="string">"\\o/ RDB looks OK! \\o/"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>rdbShowGenericInfo</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>fp</name></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><ternary><condition><expr><operator>(</operator><name>retval</name> <operator>==</operator> <literal type="number">0</literal><operator>)</operator></expr> ?</condition><then> <expr><name>C_OK</name></expr> </then><else>: <expr><name>C_ERR</name></expr></else></ternary></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><name>retval</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+</unit>

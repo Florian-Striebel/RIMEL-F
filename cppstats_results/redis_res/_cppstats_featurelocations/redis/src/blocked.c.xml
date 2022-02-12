@@ -1,0 +1,820 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/results/redis_res/_cppstats_featurelocations/redis/src/blocked.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"server.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"slowlog.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"latency.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"monotonic.h"</cpp:file></cpp:include>
+
+<function_decl><type><name>void</name></type> <name>serveClientBlockedOnList</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>receiver</name></decl></parameter>, <parameter><decl><type><name>robj</name> <modifier>*</modifier></type><name>o</name></decl></parameter>, <parameter><decl><type><name>robj</name> <modifier>*</modifier></type><name>key</name></decl></parameter>, <parameter><decl><type><name>robj</name> <modifier>*</modifier></type><name>dstkey</name></decl></parameter>, <parameter><decl><type><name>redisDb</name> <modifier>*</modifier></type><name>db</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>wherefrom</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>whereto</name></decl></parameter>, <parameter><decl><type><name>int</name> <modifier>*</modifier></type><name>deleted</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><name>int</name></type> <name>getListPositionFromObjectOrReply</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>, <parameter><decl><type><name>robj</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>, <parameter><decl><type><name>int</name> <modifier>*</modifier></type><name>position</name></decl></parameter>)</parameter_list>;</function_decl>
+
+
+
+
+
+
+
+
+
+
+
+<typedef>typedef <type><struct>struct <name>bkinfo</name> <block>{
+<decl_stmt><decl><type><name>listNode</name> <modifier>*</modifier></type><name>listnode</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>streamID</name></type> <name>stream_id</name></decl>;</decl_stmt>
+}</block></struct></type> <name>bkinfo</name>;</typedef>
+
+
+
+
+<function><type><name>void</name></type> <name>blockClient</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>btype</name></decl></parameter>)</parameter_list> <block>{<block_content>
+
+<expr_stmt><expr><call><name>serverAssert</name><argument_list>(<argument><expr><operator>!</operator><operator>(</operator><name><name>c</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>CLIENT_MASTER</name> <operator>&amp;&amp;</operator>
+<name>btype</name> <operator>!=</operator> <name>BLOCKED_MODULE</name> <operator>&amp;&amp;</operator>
+<name>btype</name> <operator>!=</operator> <name>BLOCKED_POSTPONE</name><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>flags</name></name> <operator>|=</operator> <name>CLIENT_BLOCKED</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>btype</name></name> <operator>=</operator> <name>btype</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>blocked_clients</name></name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>blocked_clients_by_type</name><index>[<expr><name>btype</name></expr>]</index></name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>addClientToTimeoutTable</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>btype</name> <operator>==</operator> <name>BLOCKED_POSTPONE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>listAddNodeTail</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>postponed_clients</name></name></expr></argument>, <argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>postponed_list_node</name></name> <operator>=</operator> <call><name>listLast</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>postponed_clients</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>flags</name></name> <operator>|=</operator> <name>CLIENT_PENDING_COMMAND</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>void</name></type> <name>updateStatsOnUnblock</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>, <parameter><decl><type><name>long</name></type> <name>blocked_us</name></decl></parameter>, <parameter><decl><type><name>long</name></type> <name>reply_us</name></decl></parameter>)</parameter_list><block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>ustime_t</name></type> <name>total_cmd_duration</name> <init>= <expr><name><name>c</name><operator>-&gt;</operator><name>duration</name></name> <operator>+</operator> <name>blocked_us</name> <operator>+</operator> <name>reply_us</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>lastcmd</name><operator>-&gt;</operator><name>microseconds</name></name> <operator>+=</operator> <name>total_cmd_duration</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>server</name><operator>.</operator><name>latency_tracking_enabled</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>updateCommandLatencyHistogram</name><argument_list>(<argument><expr><operator>&amp;</operator><operator>(</operator><name><name>c</name><operator>-&gt;</operator><name>lastcmd</name><operator>-&gt;</operator><name>latency_histogram</name></name><operator>)</operator></expr></argument>, <argument><expr><name>total_cmd_duration</name><operator>*</operator><literal type="number">1000</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>slowlogPushCurrentCommand</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>lastcmd</name></name></expr></argument>, <argument><expr><name>total_cmd_duration</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>latencyAddSampleIfNeeded</name><argument_list>(<argument><expr><literal type="string">"command-unblocking"</literal></expr></argument>,<argument><expr><name>reply_us</name><operator>/</operator><literal type="number">1000</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>void</name></type> <name>processUnblockedClients</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>listNode</name> <modifier>*</modifier></type><name>ln</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl>;</decl_stmt>
+
+<while>while <condition>(<expr><call><name>listLength</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>unblocked_clients</name></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>ln</name> <operator>=</operator> <call><name>listFirst</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>unblocked_clients</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>serverAssert</name><argument_list>(<argument><expr><name>ln</name> <operator>!=</operator> <name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>c</name> <operator>=</operator> <name><name>ln</name><operator>-&gt;</operator><name>value</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>listDelNode</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>unblocked_clients</name></name></expr></argument>,<argument><expr><name>ln</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;=</operator> <operator>~</operator><name>CLIENT_UNBLOCKED</name></expr>;</expr_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name><name>c</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>CLIENT_BLOCKED</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><call><name>processPendingCommandsAndResetClient</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>C_OK</name></expr>)</condition> <block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><name><name>c</name><operator>-&gt;</operator><name>querybuf</name></name> <operator>&amp;&amp;</operator> <call><name>sdslen</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>querybuf</name></name></expr></argument>)</argument_list></call> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>processInputBuffer</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>C_ERR</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>c</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>c</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>beforeNextClient</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></while>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><name>void</name></type> <name>queueClientForReprocessing</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>)</parameter_list> <block>{<block_content>
+
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name><name>c</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>CLIENT_UNBLOCKED</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>flags</name></name> <operator>|=</operator> <name>CLIENT_UNBLOCKED</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>listAddNodeTail</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>unblocked_clients</name></name></expr></argument>,<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></function>
+
+
+
+<function><type><name>void</name></type> <name>unblockClient</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>c</name><operator>-&gt;</operator><name>btype</name></name> <operator>==</operator> <name>BLOCKED_LIST</name> <operator>||</operator>
+<name><name>c</name><operator>-&gt;</operator><name>btype</name></name> <operator>==</operator> <name>BLOCKED_ZSET</name> <operator>||</operator>
+<name><name>c</name><operator>-&gt;</operator><name>btype</name></name> <operator>==</operator> <name>BLOCKED_STREAM</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>unblockClientWaitingData</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>c</name><operator>-&gt;</operator><name>btype</name></name> <operator>==</operator> <name>BLOCKED_WAIT</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>unblockClientWaitingReplicas</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>c</name><operator>-&gt;</operator><name>btype</name></name> <operator>==</operator> <name>BLOCKED_MODULE</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>moduleClientIsBlockedOnKeys</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><call><name>unblockClientWaitingData</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>unblockClientFromModule</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>c</name><operator>-&gt;</operator><name>btype</name></name> <operator>==</operator> <name>BLOCKED_POSTPONE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>listDelNode</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>postponed_clients</name></name></expr></argument>,<argument><expr><name><name>c</name><operator>-&gt;</operator><name>postponed_list_node</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>postponed_list_node</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>c</name><operator>-&gt;</operator><name>btype</name></name> <operator>==</operator> <name>BLOCKED_SHUTDOWN</name></expr>)</condition> <block>{<block_content>
+
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>serverPanic</name><argument_list>(<argument><expr><literal type="string">"Unknown btype in unblockClient()."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>c</name><operator>-&gt;</operator><name>btype</name></name> <operator>!=</operator> <name>BLOCKED_POSTPONE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>freeClientOriginalArgv</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>resetClient</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>blocked_clients</name></name><operator>--</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>blocked_clients_by_type</name><index>[<expr><name><name>c</name><operator>-&gt;</operator><name>btype</name></name></expr>]</index></name><operator>--</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;=</operator> <operator>~</operator><name>CLIENT_BLOCKED</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>btype</name></name> <operator>=</operator> <name>BLOCKED_NONE</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>removeClientFromTimeoutTable</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>queueClientForReprocessing</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>void</name></type> <name>replyToBlockedClientTimedOut</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>c</name><operator>-&gt;</operator><name>btype</name></name> <operator>==</operator> <name>BLOCKED_LIST</name> <operator>||</operator>
+<name><name>c</name><operator>-&gt;</operator><name>btype</name></name> <operator>==</operator> <name>BLOCKED_ZSET</name> <operator>||</operator>
+<name><name>c</name><operator>-&gt;</operator><name>btype</name></name> <operator>==</operator> <name>BLOCKED_STREAM</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyNullArray</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>c</name><operator>-&gt;</operator><name>btype</name></name> <operator>==</operator> <name>BLOCKED_WAIT</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyLongLong</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><call><name>replicationCountAcksByOffset</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>reploffset</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>c</name><operator>-&gt;</operator><name>btype</name></name> <operator>==</operator> <name>BLOCKED_MODULE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>moduleBlockedClientTimedOut</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>serverPanic</name><argument_list>(<argument><expr><literal type="string">"Unknown btype in replyToBlockedClientTimedOut()."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></function>
+
+
+
+<function><type><name>void</name></type> <name>replyToClientsBlockedOnShutdown</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>server</name><operator>.</operator><name>blocked_clients_by_type</name><index>[<expr><name>BLOCKED_SHUTDOWN</name></expr>]</index></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content> <return>return;</return></block_content></block></if></if_stmt>
+<decl_stmt><decl><type><name>listNode</name> <modifier>*</modifier></type><name>ln</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>listIter</name></type> <name>li</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>listRewind</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>clients</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>li</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<while>while<condition>(<expr><operator>(</operator><name>ln</name> <operator>=</operator> <call><name>listNext</name><argument_list>(<argument><expr><operator>&amp;</operator><name>li</name></expr></argument>)</argument_list></call><operator>)</operator></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name> <init>= <expr><call><name>listNodeValue</name><argument_list>(<argument><expr><name>ln</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>c</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>CLIENT_BLOCKED</name> <operator>&amp;&amp;</operator> <name><name>c</name><operator>-&gt;</operator><name>btype</name></name> <operator>==</operator> <name>BLOCKED_SHUTDOWN</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyError</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><literal type="string">"Errors trying to SHUTDOWN. Check logs."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>unblockClient</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></while>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+<function><type><name>void</name></type> <name>disconnectAllBlockedClients</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>listNode</name> <modifier>*</modifier></type><name>ln</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>listIter</name></type> <name>li</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>listRewind</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>clients</name></name></expr></argument>,<argument><expr><operator>&amp;</operator><name>li</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<while>while<condition>(<expr><operator>(</operator><name>ln</name> <operator>=</operator> <call><name>listNext</name><argument_list>(<argument><expr><operator>&amp;</operator><name>li</name></expr></argument>)</argument_list></call><operator>)</operator></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name> <init>= <expr><call><name>listNodeValue</name><argument_list>(<argument><expr><name>ln</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>c</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>CLIENT_BLOCKED</name></expr>)</condition> <block>{<block_content>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>c</name><operator>-&gt;</operator><name>btype</name></name> <operator>==</operator> <name>BLOCKED_POSTPONE</name></expr>)</condition><block type="pseudo"><block_content>
+<continue>continue;</continue></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>addReplyError</name><argument_list>(<argument><expr><name>c</name></expr></argument>,
+<argument><expr><literal type="string">"-UNBLOCKED force unblock from blocking operation, "</literal>
+<literal type="string">"instance state changed (master -&gt; replica?)"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>unblockClient</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>flags</name></name> <operator>|=</operator> <name>CLIENT_CLOSE_AFTER_REPLY</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></while>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>void</name></type> <name>serveClientsBlockedOnListKey</name><parameter_list>(<parameter><decl><type><name>robj</name> <modifier>*</modifier></type><name>o</name></decl></parameter>, <parameter><decl><type><name>readyList</name> <modifier>*</modifier></type><name>rl</name></decl></parameter>)</parameter_list> <block>{<block_content>
+
+
+<decl_stmt><decl><type><name>dictEntry</name> <modifier>*</modifier></type><name>de</name> <init>= <expr><call><name>dictFind</name><argument_list>(<argument><expr><name><name>rl</name><operator>-&gt;</operator><name>db</name><operator>-&gt;</operator><name>blocking_keys</name></name></expr></argument>,<argument><expr><name><name>rl</name><operator>-&gt;</operator><name>key</name></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>de</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>list</name> <modifier>*</modifier></type><name>clients</name> <init>= <expr><call><name>dictGetVal</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>numclients</name> <init>= <expr><call><name>listLength</name><argument_list>(<argument><expr><name>clients</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>deleted</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<while>while<condition>(<expr><name>numclients</name><operator>--</operator></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>listNode</name> <modifier>*</modifier></type><name>clientnode</name> <init>= <expr><call><name>listFirst</name><argument_list>(<argument><expr><name>clients</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>client</name> <modifier>*</modifier></type><name>receiver</name> <init>= <expr><name><name>clientnode</name><operator>-&gt;</operator><name>value</name></name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>receiver</name><operator>-&gt;</operator><name>btype</name></name> <operator>!=</operator> <name>BLOCKED_LIST</name></expr>)</condition> <block>{<block_content>
+
+
+<expr_stmt><expr><call><name>listRotateHeadToTail</name><argument_list>(<argument><expr><name>clients</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+
+<decl_stmt><decl><type><name>robj</name> <modifier>*</modifier></type><name>dstkey</name> <init>= <expr><name><name>receiver</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>target</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>wherefrom</name> <init>= <expr><name><name>receiver</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>blockpos</name><operator>.</operator><name>wherefrom</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>whereto</name> <init>= <expr><name><name>receiver</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>blockpos</name><operator>.</operator><name>whereto</name></name></expr></init></decl>;</decl_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>dstkey</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><call><name>incrRefCount</name><argument_list>(<argument><expr><name>dstkey</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<decl_stmt><decl><type><name>client</name> <modifier>*</modifier></type><name>old_client</name> <init>= <expr><name><name>server</name><operator>.</operator><name>current_client</name></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>current_client</name></name> <operator>=</operator> <name>receiver</name></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>monotime</name></type> <name>replyTimer</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>elapsedStart</name><argument_list>(<argument><expr><operator>&amp;</operator><name>replyTimer</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>serveClientBlockedOnList</name><argument_list>(<argument><expr><name>receiver</name></expr></argument>, <argument><expr><name>o</name></expr></argument>,
+<argument><expr><name><name>rl</name><operator>-&gt;</operator><name>key</name></name></expr></argument>, <argument><expr><name>dstkey</name></expr></argument>, <argument><expr><name><name>rl</name><operator>-&gt;</operator><name>db</name></name></expr></argument>,
+<argument><expr><name>wherefrom</name></expr></argument>, <argument><expr><name>whereto</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>deleted</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>updateStatsOnUnblock</name><argument_list>(<argument><expr><name>receiver</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><call><name>elapsedUs</name><argument_list>(<argument><expr><name>replyTimer</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>unblockClient</name><argument_list>(<argument><expr><name>receiver</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>afterCommand</name><argument_list>(<argument><expr><name>receiver</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>current_client</name></name> <operator>=</operator> <name>old_client</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>dstkey</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><call><name>decrRefCount</name><argument_list>(<argument><expr><name>dstkey</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>deleted</name></expr>)</condition><block type="pseudo"><block_content> <break>break;</break></block_content></block></if></if_stmt>
+</block_content>}</block></while>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>void</name></type> <name>serveClientsBlockedOnSortedSetKey</name><parameter_list>(<parameter><decl><type><name>robj</name> <modifier>*</modifier></type><name>o</name></decl></parameter>, <parameter><decl><type><name>readyList</name> <modifier>*</modifier></type><name>rl</name></decl></parameter>)</parameter_list> <block>{<block_content>
+
+
+<decl_stmt><decl><type><name>dictEntry</name> <modifier>*</modifier></type><name>de</name> <init>= <expr><call><name>dictFind</name><argument_list>(<argument><expr><name><name>rl</name><operator>-&gt;</operator><name>db</name><operator>-&gt;</operator><name>blocking_keys</name></name></expr></argument>,<argument><expr><name><name>rl</name><operator>-&gt;</operator><name>key</name></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>de</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>list</name> <modifier>*</modifier></type><name>clients</name> <init>= <expr><call><name>dictGetVal</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>numclients</name> <init>= <expr><call><name>listLength</name><argument_list>(<argument><expr><name>clients</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>deleted</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<while>while <condition>(<expr><name>numclients</name><operator>--</operator></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>listNode</name> <modifier>*</modifier></type><name>clientnode</name> <init>= <expr><call><name>listFirst</name><argument_list>(<argument><expr><name>clients</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>client</name> <modifier>*</modifier></type><name>receiver</name> <init>= <expr><name><name>clientnode</name><operator>-&gt;</operator><name>value</name></name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>receiver</name><operator>-&gt;</operator><name>btype</name></name> <operator>!=</operator> <name>BLOCKED_ZSET</name></expr>)</condition> <block>{<block_content>
+
+
+<expr_stmt><expr><call><name>listRotateHeadToTail</name><argument_list>(<argument><expr><name>clients</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+
+<decl_stmt><decl><type><name>long</name></type> <name>llen</name> <init>= <expr><call><name>zsetLength</name><argument_list>(<argument><expr><name>o</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>long</name></type> <name>count</name> <init>= <expr><name><name>receiver</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>count</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>where</name> <init>= <expr><name><name>receiver</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>blockpos</name><operator>.</operator><name>wherefrom</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>use_nested_array</name> <init>= <expr><ternary><condition><expr><operator>(</operator><name><name>receiver</name><operator>-&gt;</operator><name>lastcmd</name></name> <operator>&amp;&amp;</operator>
+<name><name>receiver</name><operator>-&gt;</operator><name>lastcmd</name><operator>-&gt;</operator><name>proc</name></name> <operator>==</operator> <name>bzmpopCommand</name><operator>)</operator></expr>
+?</condition><then> <expr><literal type="number">1</literal></expr> </then><else>: <expr><literal type="number">0</literal></expr></else></ternary></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>reply_nil_when_empty</name> <init>= <expr><name>use_nested_array</name></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>client</name> <modifier>*</modifier></type><name>old_client</name> <init>= <expr><name><name>server</name><operator>.</operator><name>current_client</name></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>current_client</name></name> <operator>=</operator> <name>receiver</name></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>monotime</name></type> <name>replyTimer</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>elapsedStart</name><argument_list>(<argument><expr><operator>&amp;</operator><name>replyTimer</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>genericZpopCommand</name><argument_list>(<argument><expr><name>receiver</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>rl</name><operator>-&gt;</operator><name>key</name></name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>where</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>count</name></expr></argument>, <argument><expr><name>use_nested_array</name></expr></argument>, <argument><expr><name>reply_nil_when_empty</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>deleted</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<decl_stmt><decl><type><name>int</name></type> <name>argc</name> <init>= <expr><literal type="number">2</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>robj</name> <modifier>*</modifier></type><name><name>argv</name><index>[<expr><literal type="number">3</literal></expr>]</index></name></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>argv</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>=</operator> <ternary><condition><expr><name>where</name> <operator>==</operator> <name>ZSET_MIN</name></expr> ?</condition><then> <expr><name><name>shared</name><operator>.</operator><name>zpopmin</name></name></expr> </then><else>: <expr><name><name>shared</name><operator>.</operator><name>zpopmax</name></name></expr></else></ternary></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>argv</name><index>[<expr><literal type="number">1</literal></expr>]</index></name> <operator>=</operator> <name><name>rl</name><operator>-&gt;</operator><name>key</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>incrRefCount</name><argument_list>(<argument><expr><name><name>rl</name><operator>-&gt;</operator><name>key</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>count</name> <operator>!=</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+
+<decl_stmt><decl><type><name>robj</name> <modifier>*</modifier></type><name>count_obj</name> <init>= <expr><call><name>createStringObjectFromLongLong</name><argument_list>(<argument><expr><ternary><condition><expr><operator>(</operator><name>count</name> <operator>&gt;</operator> <name>llen</name><operator>)</operator></expr> ?</condition><then> <expr><name>llen</name></expr> </then><else>: <expr><name>count</name></expr></else></ternary></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>argv</name><index>[<expr><literal type="number">2</literal></expr>]</index></name> <operator>=</operator> <name>count_obj</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>argc</name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>alsoPropagate</name><argument_list>(<argument><expr><name><name>receiver</name><operator>-&gt;</operator><name>db</name><operator>-&gt;</operator><name>id</name></name></expr></argument>, <argument><expr><name>argv</name></expr></argument>, <argument><expr><name>argc</name></expr></argument>, <argument><expr><name>PROPAGATE_AOF</name><operator>|</operator><name>PROPAGATE_REPL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>decrRefCount</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>count</name> <operator>!=</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><call><name>decrRefCount</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr><literal type="number">2</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>updateStatsOnUnblock</name><argument_list>(<argument><expr><name>receiver</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><call><name>elapsedUs</name><argument_list>(<argument><expr><name>replyTimer</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>unblockClient</name><argument_list>(<argument><expr><name>receiver</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>afterCommand</name><argument_list>(<argument><expr><name>receiver</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>current_client</name></name> <operator>=</operator> <name>old_client</name></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>deleted</name></expr>)</condition><block type="pseudo"><block_content> <break>break;</break></block_content></block></if></if_stmt>
+</block_content>}</block></while>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></function>
+
+
+
+
+<function><type><name>void</name></type> <name>serveClientsBlockedOnStreamKey</name><parameter_list>(<parameter><decl><type><name>robj</name> <modifier>*</modifier></type><name>o</name></decl></parameter>, <parameter><decl><type><name>readyList</name> <modifier>*</modifier></type><name>rl</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>dictEntry</name> <modifier>*</modifier></type><name>de</name> <init>= <expr><call><name>dictFind</name><argument_list>(<argument><expr><name><name>rl</name><operator>-&gt;</operator><name>db</name><operator>-&gt;</operator><name>blocking_keys</name></name></expr></argument>,<argument><expr><name><name>rl</name><operator>-&gt;</operator><name>key</name></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>stream</name> <modifier>*</modifier></type><name>s</name> <init>= <expr><name><name>o</name><operator>-&gt;</operator><name>ptr</name></name></expr></init></decl>;</decl_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>de</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>list</name> <modifier>*</modifier></type><name>clients</name> <init>= <expr><call><name>dictGetVal</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>listNode</name> <modifier>*</modifier></type><name>ln</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>listIter</name></type> <name>li</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>listRewind</name><argument_list>(<argument><expr><name>clients</name></expr></argument>,<argument><expr><operator>&amp;</operator><name>li</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<while>while<condition>(<expr><operator>(</operator><name>ln</name> <operator>=</operator> <call><name>listNext</name><argument_list>(<argument><expr><operator>&amp;</operator><name>li</name></expr></argument>)</argument_list></call><operator>)</operator></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>client</name> <modifier>*</modifier></type><name>receiver</name> <init>= <expr><call><name>listNodeValue</name><argument_list>(<argument><expr><name>ln</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>receiver</name><operator>-&gt;</operator><name>btype</name></name> <operator>!=</operator> <name>BLOCKED_STREAM</name></expr>)</condition><block type="pseudo"><block_content> <continue>continue;</continue></block_content></block></if></if_stmt>
+<decl_stmt><decl><type><name>bkinfo</name> <modifier>*</modifier></type><name>bki</name> <init>= <expr><call><name>dictFetchValue</name><argument_list>(<argument><expr><name><name>receiver</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>keys</name></name></expr></argument>,<argument><expr><name><name>rl</name><operator>-&gt;</operator><name>key</name></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>streamID</name> <modifier>*</modifier></type><name>gt</name> <init>= <expr><operator>&amp;</operator><name><name>bki</name><operator>-&gt;</operator><name>stream_id</name></name></expr></init></decl>;</decl_stmt>
+
+
+
+
+
+
+
+
+
+
+<decl_stmt><decl><type><name>streamCG</name> <modifier>*</modifier></type><name>group</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>receiver</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>xread_group</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>group</name> <operator>=</operator> <call><name>streamLookupCG</name><argument_list>(<argument><expr><name>s</name></expr></argument>,
+<argument><expr><name><name>receiver</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>xread_group</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>group</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyError</name><argument_list>(<argument><expr><name>receiver</name></expr></argument>,
+<argument><expr><literal type="string">"-NOGROUP the consumer group this client "</literal>
+<literal type="string">"was blocked on no longer exists"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>unblockClient</name><argument_list>(<argument><expr><name>receiver</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>gt</name> <operator>=</operator> <name><name>group</name><operator>-&gt;</operator><name>last_id</name></name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>streamCompareID</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>s</name><operator>-&gt;</operator><name>last_id</name></name></expr></argument>, <argument><expr><name>gt</name></expr></argument>)</argument_list></call> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>streamID</name></type> <name>start</name> <init>= <expr><operator>*</operator><name>gt</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>streamIncrID</name><argument_list>(<argument><expr><operator>&amp;</operator><name>start</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<decl_stmt><decl><type><name>streamConsumer</name> <modifier>*</modifier></type><name>consumer</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>noack</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>group</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>noack</name> <operator>=</operator> <name><name>receiver</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>xread_group_noack</name></name></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>sds</name></type> <name>name</name> <init>= <expr><name><name>receiver</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>xread_consumer</name><operator>-&gt;</operator><name>ptr</name></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>consumer</name> <operator>=</operator> <call><name>streamLookupConsumer</name><argument_list>(<argument><expr><name>group</name></expr></argument>,<argument><expr><name>name</name></expr></argument>,<argument><expr><name>SLC_DEFAULT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>consumer</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>consumer</name> <operator>=</operator> <call><name>streamCreateConsumer</name><argument_list>(<argument><expr><name>group</name></expr></argument>,<argument><expr><name>name</name></expr></argument>,<argument><expr><name><name>rl</name><operator>-&gt;</operator><name>key</name></name></expr></argument>,
+<argument><expr><name><name>rl</name><operator>-&gt;</operator><name>db</name><operator>-&gt;</operator><name>id</name></name></expr></argument>,<argument><expr><name>SCC_DEFAULT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>noack</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>streamPropagateConsumerCreation</name><argument_list>(<argument><expr><name>receiver</name></expr></argument>,<argument><expr><name><name>rl</name><operator>-&gt;</operator><name>key</name></name></expr></argument>,
+<argument><expr><name><name>receiver</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>xread_group</name></name></expr></argument>,
+<argument><expr><name><name>consumer</name><operator>-&gt;</operator><name>name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<decl_stmt><decl><type><name>client</name> <modifier>*</modifier></type><name>old_client</name> <init>= <expr><name><name>server</name><operator>.</operator><name>current_client</name></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>current_client</name></name> <operator>=</operator> <name>receiver</name></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>monotime</name></type> <name>replyTimer</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>elapsedStart</name><argument_list>(<argument><expr><operator>&amp;</operator><name>replyTimer</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>receiver</name><operator>-&gt;</operator><name>resp</name></name> <operator>==</operator> <literal type="number">2</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyArrayLen</name><argument_list>(<argument><expr><name>receiver</name></expr></argument>,<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>addReplyArrayLen</name><argument_list>(<argument><expr><name>receiver</name></expr></argument>,<argument><expr><literal type="number">2</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>addReplyMapLen</name><argument_list>(<argument><expr><name>receiver</name></expr></argument>,<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><call><name>addReplyBulk</name><argument_list>(<argument><expr><name>receiver</name></expr></argument>,<argument><expr><name><name>rl</name><operator>-&gt;</operator><name>key</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>streamPropInfo</name></type> <name>pi</name> <init>= <expr><block>{
+<expr><name><name>rl</name><operator>-&gt;</operator><name>key</name></name></expr>,
+<expr><name><name>receiver</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>xread_group</name></name></expr>
+}</block></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>streamReplyWithRange</name><argument_list>(<argument><expr><name>receiver</name></expr></argument>,<argument><expr><name>s</name></expr></argument>,<argument><expr><operator>&amp;</operator><name>start</name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>,
+<argument><expr><name><name>receiver</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>xread_count</name></name></expr></argument>,
+<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>group</name></expr></argument>, <argument><expr><name>consumer</name></expr></argument>, <argument><expr><name>noack</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>pi</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>updateStatsOnUnblock</name><argument_list>(<argument><expr><name>receiver</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><call><name>elapsedUs</name><argument_list>(<argument><expr><name>replyTimer</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+<expr_stmt><expr><call><name>unblockClient</name><argument_list>(<argument><expr><name>receiver</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>afterCommand</name><argument_list>(<argument><expr><name>receiver</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>current_client</name></name> <operator>=</operator> <name>old_client</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></while>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+<function><type><name>void</name></type> <name>serveClientsBlockedOnKeyByModule</name><parameter_list>(<parameter><decl><type><name>readyList</name> <modifier>*</modifier></type><name>rl</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>dictEntry</name> <modifier>*</modifier></type><name>de</name></decl>;</decl_stmt>
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>server</name><operator>.</operator><name>blocked_clients_by_type</name><index>[<expr><name>BLOCKED_MODULE</name></expr>]</index></name></expr>)</condition><block type="pseudo"><block_content> <return>return;</return></block_content></block></if></if_stmt>
+
+
+
+<expr_stmt><expr><name>de</name> <operator>=</operator> <call><name>dictFind</name><argument_list>(<argument><expr><name><name>rl</name><operator>-&gt;</operator><name>db</name><operator>-&gt;</operator><name>blocking_keys</name></name></expr></argument>,<argument><expr><name><name>rl</name><operator>-&gt;</operator><name>key</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>de</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>list</name> <modifier>*</modifier></type><name>clients</name> <init>= <expr><call><name>dictGetVal</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>numclients</name> <init>= <expr><call><name>listLength</name><argument_list>(<argument><expr><name>clients</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<while>while<condition>(<expr><name>numclients</name><operator>--</operator></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>listNode</name> <modifier>*</modifier></type><name>clientnode</name> <init>= <expr><call><name>listFirst</name><argument_list>(<argument><expr><name>clients</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>client</name> <modifier>*</modifier></type><name>receiver</name> <init>= <expr><name><name>clientnode</name><operator>-&gt;</operator><name>value</name></name></expr></init></decl>;</decl_stmt>
+
+
+
+
+
+
+<expr_stmt><expr><call><name>listRotateHeadToTail</name><argument_list>(<argument><expr><name>clients</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>receiver</name><operator>-&gt;</operator><name>btype</name></name> <operator>!=</operator> <name>BLOCKED_MODULE</name></expr>)</condition><block type="pseudo"><block_content> <continue>continue;</continue></block_content></block></if></if_stmt>
+
+
+
+
+
+
+
+<decl_stmt><decl><type><name>client</name> <modifier>*</modifier></type><name>old_client</name> <init>= <expr><name><name>server</name><operator>.</operator><name>current_client</name></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>current_client</name></name> <operator>=</operator> <name>receiver</name></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>monotime</name></type> <name>replyTimer</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>elapsedStart</name><argument_list>(<argument><expr><operator>&amp;</operator><name>replyTimer</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>moduleTryServeClientBlockedOnKey</name><argument_list>(<argument><expr><name>receiver</name></expr></argument>, <argument><expr><name><name>rl</name><operator>-&gt;</operator><name>key</name></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content> <continue>continue;</continue></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>updateStatsOnUnblock</name><argument_list>(<argument><expr><name>receiver</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><call><name>elapsedUs</name><argument_list>(<argument><expr><name>replyTimer</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>moduleUnblockClient</name><argument_list>(<argument><expr><name>receiver</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>afterCommand</name><argument_list>(<argument><expr><name>receiver</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>current_client</name></name> <operator>=</operator> <name>old_client</name></expr>;</expr_stmt>
+</block_content>}</block></while>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><name>void</name></type> <name>handleClientsBlockedOnKeys</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+
+
+<expr_stmt><expr><call><name>serverAssert</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>also_propagate</name><operator>.</operator><name>numops</name></name> <operator>==</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>core_propagates</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+
+<while>while<condition>(<expr><call><name>listLength</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>ready_keys</name></name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>list</name> <modifier>*</modifier></type><name>l</name></decl>;</decl_stmt>
+
+
+
+
+
+<expr_stmt><expr><name>l</name> <operator>=</operator> <name><name>server</name><operator>.</operator><name>ready_keys</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>ready_keys</name></name> <operator>=</operator> <call><name>listCreate</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+<while>while<condition>(<expr><call><name>listLength</name><argument_list>(<argument><expr><name>l</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>listNode</name> <modifier>*</modifier></type><name>ln</name> <init>= <expr><call><name>listFirst</name><argument_list>(<argument><expr><name>l</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>readyList</name> <modifier>*</modifier></type><name>rl</name> <init>= <expr><name><name>ln</name><operator>-&gt;</operator><name>value</name></name></expr></init></decl>;</decl_stmt>
+
+
+
+<expr_stmt><expr><call><name>dictDelete</name><argument_list>(<argument><expr><name><name>rl</name><operator>-&gt;</operator><name>db</name><operator>-&gt;</operator><name>ready_keys</name></name></expr></argument>,<argument><expr><name><name>rl</name><operator>-&gt;</operator><name>key</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+
+
+
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>fixed_time_expire</name></name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>updateCachedTime</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<decl_stmt><decl><type><name>robj</name> <modifier>*</modifier></type><name>o</name> <init>= <expr><call><name>lookupKeyReadWithFlags</name><argument_list>(<argument><expr><name><name>rl</name><operator>-&gt;</operator><name>db</name></name></expr></argument>, <argument><expr><name><name>rl</name><operator>-&gt;</operator><name>key</name></name></expr></argument>, <argument><expr><name>LOOKUP_NONOTIFY</name> <operator>|</operator> <name>LOOKUP_NOSTATS</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>o</name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>o</name><operator>-&gt;</operator><name>type</name></name> <operator>==</operator> <name>OBJ_LIST</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>serveClientsBlockedOnListKey</name><argument_list>(<argument><expr><name>o</name></expr></argument>,<argument><expr><name>rl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name><name>o</name><operator>-&gt;</operator><name>type</name></name> <operator>==</operator> <name>OBJ_ZSET</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>serveClientsBlockedOnSortedSetKey</name><argument_list>(<argument><expr><name>o</name></expr></argument>,<argument><expr><name>rl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name><name>o</name><operator>-&gt;</operator><name>type</name></name> <operator>==</operator> <name>OBJ_STREAM</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>serveClientsBlockedOnStreamKey</name><argument_list>(<argument><expr><name>o</name></expr></argument>,<argument><expr><name>rl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+
+<expr_stmt><expr><call><name>serveClientsBlockedOnKeyByModule</name><argument_list>(<argument><expr><name>rl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+
+<if_stmt><if>if <condition>(<expr><name><name>server</name><operator>.</operator><name>also_propagate</name><operator>.</operator><name>numops</name></name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>propagatePendingCommands</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>fixed_time_expire</name></name><operator>--</operator></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><call><name>decrRefCount</name><argument_list>(<argument><expr><name><name>rl</name><operator>-&gt;</operator><name>key</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>zfree</name><argument_list>(<argument><expr><name>rl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>listDelNode</name><argument_list>(<argument><expr><name>l</name></expr></argument>,<argument><expr><name>ln</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></while>
+<expr_stmt><expr><call><name>listRelease</name><argument_list>(<argument><expr><name>l</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></while>
+
+<expr_stmt><expr><call><name>serverAssert</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>core_propagates</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>server</name><operator>.</operator><name>core_propagates</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><name>void</name></type> <name>blockForKeys</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>btype</name></decl></parameter>, <parameter><decl><type><name>robj</name> <modifier>*</modifier><modifier>*</modifier></type><name>keys</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>numkeys</name></decl></parameter>, <parameter><decl><type><name>long</name></type> <name>count</name></decl></parameter>, <parameter><decl><type><name>mstime_t</name></type> <name>timeout</name></decl></parameter>, <parameter><decl><type><name>robj</name> <modifier>*</modifier></type><name>target</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>blockPos</name></name> <modifier>*</modifier></type><name>blockpos</name></decl></parameter>, <parameter><decl><type><name>streamID</name> <modifier>*</modifier></type><name>ids</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>dictEntry</name> <modifier>*</modifier></type><name>de</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>list</name> <modifier>*</modifier></type><name>l</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>j</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>count</name></name> <operator>=</operator> <name>count</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>timeout</name></name> <operator>=</operator> <name>timeout</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>target</name></name> <operator>=</operator> <name>target</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>blockpos</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>blockpos</name></name> <operator>=</operator> <operator>*</operator><name>blockpos</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>target</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><call><name>incrRefCount</name><argument_list>(<argument><expr><name>target</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<for>for <control>(<init><expr><name>j</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>j</name> <operator>&lt;</operator> <name>numkeys</name></expr>;</condition> <incr><expr><name>j</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+
+
+<decl_stmt><decl><type><name>bkinfo</name> <modifier>*</modifier></type><name>bki</name> <init>= <expr><call><name>zmalloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>bki</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>btype</name> <operator>==</operator> <name>BLOCKED_STREAM</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>bki</name><operator>-&gt;</operator><name>stream_id</name></name> <operator>=</operator> <name><name>ids</name><index>[<expr><name>j</name></expr>]</index></name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>dictAdd</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>keys</name></name></expr></argument>,<argument><expr><name><name>keys</name><index>[<expr><name>j</name></expr>]</index></name></expr></argument>,<argument><expr><name>bki</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>DICT_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>zfree</name><argument_list>(<argument><expr><name>bki</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>incrRefCount</name><argument_list>(<argument><expr><name><name>keys</name><index>[<expr><name>j</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><name>de</name> <operator>=</operator> <call><name>dictFind</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>db</name><operator>-&gt;</operator><name>blocking_keys</name></name></expr></argument>,<argument><expr><name><name>keys</name><index>[<expr><name>j</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>de</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>retval</name></decl>;</decl_stmt>
+
+
+<expr_stmt><expr><name>l</name> <operator>=</operator> <call><name>listCreate</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>retval</name> <operator>=</operator> <call><name>dictAdd</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>db</name><operator>-&gt;</operator><name>blocking_keys</name></name></expr></argument>,<argument><expr><name><name>keys</name><index>[<expr><name>j</name></expr>]</index></name></expr></argument>,<argument><expr><name>l</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>incrRefCount</name><argument_list>(<argument><expr><name><name>keys</name><index>[<expr><name>j</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>serverAssertWithInfo</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><name><name>keys</name><index>[<expr><name>j</name></expr>]</index></name></expr></argument>,<argument><expr><name>retval</name> <operator>==</operator> <name>DICT_OK</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>l</name> <operator>=</operator> <call><name>dictGetVal</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><call><name>listAddNodeTail</name><argument_list>(<argument><expr><name>l</name></expr></argument>,<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>bki</name><operator>-&gt;</operator><name>listnode</name></name> <operator>=</operator> <call><name>listLast</name><argument_list>(<argument><expr><name>l</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><call><name>blockClient</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><name>btype</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+<function><type><name>void</name></type> <name>unblockClientWaitingData</name><parameter_list>(<parameter><decl><type><name>client</name> <modifier>*</modifier></type><name>c</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>dictEntry</name> <modifier>*</modifier></type><name>de</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>dictIterator</name> <modifier>*</modifier></type><name>di</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>list</name> <modifier>*</modifier></type><name>l</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>serverAssertWithInfo</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>,<argument><expr><call><name>dictSize</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>keys</name></name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>di</name> <operator>=</operator> <call><name>dictGetIterator</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>keys</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<while>while<condition>(<expr><operator>(</operator><name>de</name> <operator>=</operator> <call><name>dictNext</name><argument_list>(<argument><expr><name>di</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>robj</name> <modifier>*</modifier></type><name>key</name> <init>= <expr><call><name>dictGetKey</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bkinfo</name> <modifier>*</modifier></type><name>bki</name> <init>= <expr><call><name>dictGetVal</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+
+<expr_stmt><expr><name>l</name> <operator>=</operator> <call><name>dictFetchValue</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>db</name><operator>-&gt;</operator><name>blocking_keys</name></name></expr></argument>,<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>serverAssertWithInfo</name><argument_list>(<argument><expr><name>c</name></expr></argument>,<argument><expr><name>key</name></expr></argument>,<argument><expr><name>l</name> <operator>!=</operator> <name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>listDelNode</name><argument_list>(<argument><expr><name>l</name></expr></argument>,<argument><expr><name><name>bki</name><operator>-&gt;</operator><name>listnode</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>listLength</name><argument_list>(<argument><expr><name>l</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>dictDelete</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>db</name><operator>-&gt;</operator><name>blocking_keys</name></name></expr></argument>,<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></while>
+<expr_stmt><expr><call><name>dictReleaseIterator</name><argument_list>(<argument><expr><name>di</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><call><name>dictEmpty</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>keys</name></name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>c</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>target</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>decrRefCount</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>target</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>target</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>c</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>xread_group</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>decrRefCount</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>xread_group</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>decrRefCount</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>xread_consumer</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>xread_group</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>bpop</name><operator>.</operator><name>xread_consumer</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type> <name>getBlockedTypeByType</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>type</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<switch>switch <condition>(<expr><name>type</name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>OBJ_LIST</name></expr>:</case> <return>return <expr><name>BLOCKED_LIST</name></expr>;</return>
+<case>case <expr><name>OBJ_ZSET</name></expr>:</case> <return>return <expr><name>BLOCKED_ZSET</name></expr>;</return>
+<case>case <expr><name>OBJ_MODULE</name></expr>:</case> <return>return <expr><name>BLOCKED_MODULE</name></expr>;</return>
+<case>case <expr><name>OBJ_STREAM</name></expr>:</case> <return>return <expr><name>BLOCKED_STREAM</name></expr>;</return>
+<default>default:</default> <return>return <expr><name>BLOCKED_NONE</name></expr>;</return>
+</block_content>}</block></switch>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+<function><type><name>void</name></type> <name>signalKeyAsReady</name><parameter_list>(<parameter><decl><type><name>redisDb</name> <modifier>*</modifier></type><name>db</name></decl></parameter>, <parameter><decl><type><name>robj</name> <modifier>*</modifier></type><name>key</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>type</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>readyList</name> <modifier>*</modifier></type><name>rl</name></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><name>int</name></type> <name>btype</name> <init>= <expr><call><name>getBlockedTypeByType</name><argument_list>(<argument><expr><name>type</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>btype</name> <operator>==</operator> <name>BLOCKED_NONE</name></expr>)</condition> <block>{<block_content>
+
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name><name>server</name><operator>.</operator><name>blocked_clients_by_type</name><index>[<expr><name>btype</name></expr>]</index></name> <operator>&amp;&amp;</operator>
+<operator>!</operator><name><name>server</name><operator>.</operator><name>blocked_clients_by_type</name><index>[<expr><name>BLOCKED_MODULE</name></expr>]</index></name></expr>)</condition> <block>{<block_content>
+
+
+
+
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>dictFind</name><argument_list>(<argument><expr><name><name>db</name><operator>-&gt;</operator><name>blocking_keys</name></name></expr></argument>,<argument><expr><name>key</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content> <return>return;</return></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>dictFind</name><argument_list>(<argument><expr><name><name>db</name><operator>-&gt;</operator><name>ready_keys</name></name></expr></argument>,<argument><expr><name>key</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content> <return>return;</return></block_content></block></if></if_stmt>
+
+
+<expr_stmt><expr><name>rl</name> <operator>=</operator> <call><name>zmalloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>rl</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>rl</name><operator>-&gt;</operator><name>key</name></name> <operator>=</operator> <name>key</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>rl</name><operator>-&gt;</operator><name>db</name></name> <operator>=</operator> <name>db</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>incrRefCount</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>listAddNodeTail</name><argument_list>(<argument><expr><name><name>server</name><operator>.</operator><name>ready_keys</name></name></expr></argument>,<argument><expr><name>rl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+<expr_stmt><expr><call><name>incrRefCount</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>serverAssert</name><argument_list>(<argument><expr><call><name>dictAdd</name><argument_list>(<argument><expr><name><name>db</name><operator>-&gt;</operator><name>ready_keys</name></name></expr></argument>,<argument><expr><name>key</name></expr></argument>,<argument><expr><name>NULL</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>DICT_OK</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+</unit>

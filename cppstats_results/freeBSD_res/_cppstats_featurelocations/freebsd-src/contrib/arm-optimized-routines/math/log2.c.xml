@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/arm-optimized-routines/math/log2.c">
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;float.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;math.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdint.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"math_config.h"</cpp:file></cpp:include>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>T</name></cpp:macro> <cpp:value>__log2_data.tab</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>T2</name></cpp:macro> <cpp:value>__log2_data.tab2</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>B</name></cpp:macro> <cpp:value>__log2_data.poly1</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>A</name></cpp:macro> <cpp:value>__log2_data.poly</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>InvLn2hi</name></cpp:macro> <cpp:value>__log2_data.invln2hi</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>InvLn2lo</name></cpp:macro> <cpp:value>__log2_data.invln2lo</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>N</name></cpp:macro> <cpp:value>(1 &lt;&lt; LOG2_TABLE_BITS)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>OFF</name></cpp:macro> <cpp:value>0x3fe6000000000000</cpp:value></cpp:define>
+
+
+<function><type><specifier>static</specifier> <specifier>inline</specifier> <name>uint32_t</name></type>
+<name>top16</name> <parameter_list>(<parameter><decl><type><name>double</name></type> <name>x</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><call><name>asuint64</name> <argument_list>(<argument><expr><name>x</name></expr></argument>)</argument_list></call> <operator>&gt;&gt;</operator> <literal type="number">48</literal></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>double</name></type>
+<name>log2</name> <parameter_list>(<parameter><decl><type><name>double</name></type> <name>x</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+<decl_stmt><decl><type><name>double_t</name></type> <name>z</name></decl>, <decl><type ref="prev"/><name>r</name></decl>, <decl><type ref="prev"/><name>r2</name></decl>, <decl><type ref="prev"/><name>r4</name></decl>, <decl><type ref="prev"/><name>y</name></decl>, <decl><type ref="prev"/><name>invc</name></decl>, <decl><type ref="prev"/><name>logc</name></decl>, <decl><type ref="prev"/><name>kd</name></decl>, <decl><type ref="prev"/><name>hi</name></decl>, <decl><type ref="prev"/><name>lo</name></decl>, <decl><type ref="prev"/><name>t1</name></decl>, <decl><type ref="prev"/><name>t2</name></decl>, <decl><type ref="prev"/><name>t3</name></decl>, <decl><type ref="prev"/><name>p</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>ix</name></decl>, <decl><type ref="prev"/><name>iz</name></decl>, <decl><type ref="prev"/><name>tmp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>top</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>k</name></decl>, <decl><type ref="prev"/><name>i</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>ix</name> <operator>=</operator> <call><name>asuint64</name> <argument_list>(<argument><expr><name>x</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>top</name> <operator>=</operator> <call><name>top16</name> <argument_list>(<argument><expr><name>x</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>LOG2_POLY1_ORDER</name> <operator>==</operator> <literal type="number">11</literal></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>LO</name></cpp:macro> <cpp:value>asuint64 (1.0 - 0x1.5b51p-5)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>HI</name></cpp:macro> <cpp:value>asuint64 (1.0 + 0x1.6ab2p-5)</cpp:value></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<if_stmt><if>if <condition>(<expr><call><name>unlikely</name> <argument_list>(<argument><expr><name>ix</name> <operator>-</operator> <name>LO</name> <operator>&lt;</operator> <name>HI</name> <operator>-</operator> <name>LO</name></expr></argument>)</argument_list></call></expr>)</condition>
+<block>{<block_content>
+
+
+<if_stmt><if>if <condition>(<expr><name>WANT_ROUNDING</name> <operator>&amp;&amp;</operator> <call><name>unlikely</name> <argument_list>(<argument><expr><name>ix</name> <operator>==</operator> <call><name>asuint64</name> <argument_list>(<argument><expr><literal type="number">1.0</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><literal type="number">0</literal></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>x</name> <operator>-</operator> <literal type="number">1.0</literal></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HAVE_FAST_FMA</name></expr></cpp:if>
+<expr_stmt><expr><name>hi</name> <operator>=</operator> <name>r</name> <operator>*</operator> <name>InvLn2hi</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>lo</name> <operator>=</operator> <name>r</name> <operator>*</operator> <name>InvLn2lo</name> <operator>+</operator> <call><name>fma</name> <argument_list>(<argument><expr><name>r</name></expr></argument>, <argument><expr><name>InvLn2hi</name></expr></argument>, <argument><expr><operator>-</operator><name>hi</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<decl_stmt><decl><type><name>double_t</name></type> <name>rhi</name></decl>, <decl><type ref="prev"/><name>rlo</name></decl>;</decl_stmt>
+<expr_stmt><expr><name>rhi</name> <operator>=</operator> <call><name>asdouble</name> <argument_list>(<argument><expr><call><name>asuint64</name> <argument_list>(<argument><expr><name>r</name></expr></argument>)</argument_list></call> <operator>&amp;</operator> <operator>-</operator><literal type="number">1ULL</literal> <operator>&lt;&lt;</operator> <literal type="number">32</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>rlo</name> <operator>=</operator> <name>r</name> <operator>-</operator> <name>rhi</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>hi</name> <operator>=</operator> <name>rhi</name> <operator>*</operator> <name>InvLn2hi</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>lo</name> <operator>=</operator> <name>rlo</name> <operator>*</operator> <name>InvLn2hi</name> <operator>+</operator> <name>r</name> <operator>*</operator> <name>InvLn2lo</name></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<expr_stmt><expr><name>r2</name> <operator>=</operator> <name>r</name> <operator>*</operator> <name>r</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>r4</name> <operator>=</operator> <name>r2</name> <operator>*</operator> <name>r2</name></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>LOG2_POLY1_ORDER</name> <operator>==</operator> <literal type="number">11</literal></expr></cpp:if>
+
+<expr_stmt><expr><name>p</name> <operator>=</operator> <name>r2</name> <operator>*</operator> <operator>(</operator><name><name>B</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>+</operator> <name>r</name> <operator>*</operator> <name><name>B</name><index>[<expr><literal type="number">1</literal></expr>]</index></name><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name>y</name> <operator>=</operator> <name>hi</name> <operator>+</operator> <name>p</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>lo</name> <operator>+=</operator> <name>hi</name> <operator>-</operator> <name>y</name> <operator>+</operator> <name>p</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>lo</name> <operator>+=</operator> <name>r4</name> <operator>*</operator> <operator>(</operator><name><name>B</name><index>[<expr><literal type="number">2</literal></expr>]</index></name> <operator>+</operator> <name>r</name> <operator>*</operator> <name><name>B</name><index>[<expr><literal type="number">3</literal></expr>]</index></name> <operator>+</operator> <name>r2</name> <operator>*</operator> <operator>(</operator><name><name>B</name><index>[<expr><literal type="number">4</literal></expr>]</index></name> <operator>+</operator> <name>r</name> <operator>*</operator> <name><name>B</name><index>[<expr><literal type="number">5</literal></expr>]</index></name><operator>)</operator>
+<operator>+</operator> <name>r4</name> <operator>*</operator> <operator>(</operator><name><name>B</name><index>[<expr><literal type="number">6</literal></expr>]</index></name> <operator>+</operator> <name>r</name> <operator>*</operator> <name><name>B</name><index>[<expr><literal type="number">7</literal></expr>]</index></name> <operator>+</operator> <name>r2</name> <operator>*</operator> <operator>(</operator><name><name>B</name><index>[<expr><literal type="number">8</literal></expr>]</index></name> <operator>+</operator> <name>r</name> <operator>*</operator> <name><name>B</name><index>[<expr><literal type="number">9</literal></expr>]</index></name><operator>)</operator><operator>)</operator><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name>y</name> <operator>+=</operator> <name>lo</name></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<return>return <expr><call><name>eval_as_double</name> <argument_list>(<argument><expr><name>y</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>unlikely</name> <argument_list>(<argument><expr><name>top</name> <operator>-</operator> <literal type="number">0x0010</literal> <operator>&gt;=</operator> <literal type="number">0x7ff0</literal> <operator>-</operator> <literal type="number">0x0010</literal></expr></argument>)</argument_list></call></expr>)</condition>
+<block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><name>ix</name> <operator>*</operator> <literal type="number">2</literal> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><call><name>__math_divzero</name> <argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>ix</name> <operator>==</operator> <call><name>asuint64</name> <argument_list>(<argument><expr><name>INFINITY</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>x</name></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>top</name> <operator>&amp;</operator> <literal type="number">0x8000</literal><operator>)</operator> <operator>||</operator> <operator>(</operator><name>top</name> <operator>&amp;</operator> <literal type="number">0x7ff0</literal><operator>)</operator> <operator>==</operator> <literal type="number">0x7ff0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><call><name>__math_invalid</name> <argument_list>(<argument><expr><name>x</name></expr></argument>)</argument_list></call></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>ix</name> <operator>=</operator> <call><name>asuint64</name> <argument_list>(<argument><expr><name>x</name> <operator>*</operator> <literal type="number">0x1p52</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>ix</name> <operator>-=</operator> <literal type="number">52ULL</literal> <operator>&lt;&lt;</operator> <literal type="number">52</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+<expr_stmt><expr><name>tmp</name> <operator>=</operator> <name>ix</name> <operator>-</operator> <name>OFF</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>i</name> <operator>=</operator> <operator>(</operator><name>tmp</name> <operator>&gt;&gt;</operator> <operator>(</operator><literal type="number">52</literal> <operator>-</operator> <name>LOG2_TABLE_BITS</name><operator>)</operator><operator>)</operator> <operator>%</operator> <name>N</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>k</name> <operator>=</operator> <operator>(</operator><name>int64_t</name><operator>)</operator> <name>tmp</name> <operator>&gt;&gt;</operator> <literal type="number">52</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>iz</name> <operator>=</operator> <name>ix</name> <operator>-</operator> <operator>(</operator><name>tmp</name> <operator>&amp;</operator> <literal type="number">0xfffULL</literal> <operator>&lt;&lt;</operator> <literal type="number">52</literal><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name>invc</name> <operator>=</operator> <name><name>T</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>invc</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>logc</name> <operator>=</operator> <name><name>T</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>logc</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>z</name> <operator>=</operator> <call><name>asdouble</name> <argument_list>(<argument><expr><name>iz</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>kd</name> <operator>=</operator> <operator>(</operator><name>double_t</name><operator>)</operator> <name>k</name></expr>;</expr_stmt>
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>HAVE_FAST_FMA</name></expr></cpp:if>
+
+<expr_stmt><expr><name>r</name> <operator>=</operator> <call><name>fma</name> <argument_list>(<argument><expr><name>z</name></expr></argument>, <argument><expr><name>invc</name></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1.0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>t1</name> <operator>=</operator> <name>r</name> <operator>*</operator> <name>InvLn2hi</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>t2</name> <operator>=</operator> <name>r</name> <operator>*</operator> <name>InvLn2lo</name> <operator>+</operator> <call><name>fma</name> <argument_list>(<argument><expr><name>r</name></expr></argument>, <argument><expr><name>InvLn2hi</name></expr></argument>, <argument><expr><operator>-</operator><name>t1</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<decl_stmt><decl><type><name>double_t</name></type> <name>rhi</name></decl>, <decl><type ref="prev"/><name>rlo</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>r</name> <operator>=</operator> <operator>(</operator><name>z</name> <operator>-</operator> <name><name>T2</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>chi</name> <operator>-</operator> <name><name>T2</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>clo</name><operator>)</operator> <operator>*</operator> <name>invc</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>rhi</name> <operator>=</operator> <call><name>asdouble</name> <argument_list>(<argument><expr><call><name>asuint64</name> <argument_list>(<argument><expr><name>r</name></expr></argument>)</argument_list></call> <operator>&amp;</operator> <operator>-</operator><literal type="number">1ULL</literal> <operator>&lt;&lt;</operator> <literal type="number">32</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>rlo</name> <operator>=</operator> <name>r</name> <operator>-</operator> <name>rhi</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>t1</name> <operator>=</operator> <name>rhi</name> <operator>*</operator> <name>InvLn2hi</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>t2</name> <operator>=</operator> <name>rlo</name> <operator>*</operator> <name>InvLn2hi</name> <operator>+</operator> <name>r</name> <operator>*</operator> <name>InvLn2lo</name></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+<expr_stmt><expr><name>t3</name> <operator>=</operator> <name>kd</name> <operator>+</operator> <name>logc</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>hi</name> <operator>=</operator> <name>t3</name> <operator>+</operator> <name>t1</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>lo</name> <operator>=</operator> <name>t3</name> <operator>-</operator> <name>hi</name> <operator>+</operator> <name>t1</name> <operator>+</operator> <name>t2</name></expr>;</expr_stmt>
+
+
+
+<expr_stmt><expr><name>r2</name> <operator>=</operator> <name>r</name> <operator>*</operator> <name>r</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>r4</name> <operator>=</operator> <name>r2</name> <operator>*</operator> <name>r2</name></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>LOG2_POLY_ORDER</name> <operator>==</operator> <literal type="number">7</literal></expr></cpp:if>
+
+
+<expr_stmt><expr><name>p</name> <operator>=</operator> <name><name>A</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>+</operator> <name>r</name> <operator>*</operator> <name><name>A</name><index>[<expr><literal type="number">1</literal></expr>]</index></name> <operator>+</operator> <name>r2</name> <operator>*</operator> <operator>(</operator><name><name>A</name><index>[<expr><literal type="number">2</literal></expr>]</index></name> <operator>+</operator> <name>r</name> <operator>*</operator> <name><name>A</name><index>[<expr><literal type="number">3</literal></expr>]</index></name><operator>)</operator> <operator>+</operator> <name>r4</name> <operator>*</operator> <operator>(</operator><name><name>A</name><index>[<expr><literal type="number">4</literal></expr>]</index></name> <operator>+</operator> <name>r</name> <operator>*</operator> <name><name>A</name><index>[<expr><literal type="number">5</literal></expr>]</index></name><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name>y</name> <operator>=</operator> <name>lo</name> <operator>+</operator> <name>r2</name> <operator>*</operator> <name>p</name> <operator>+</operator> <name>hi</name></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<return>return <expr><call><name>eval_as_double</name> <argument_list>(<argument><expr><name>y</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>USE_GLIBC_ABI</name></expr></cpp:if>
+<macro><name>strong_alias</name> <argument_list>(<argument>log2</argument>, <argument>__log2_finite</argument>)</argument_list></macro>
+<macro><name>hidden_alias</name> <argument_list>(<argument>log2</argument>, <argument>__ieee754_log2</argument>)</argument_list></macro>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>LDBL_MANT_DIG</name> <operator>==</operator> <literal type="number">53</literal></expr></cpp:if>
+<function><type><name>long</name> <name>double</name></type> <name>log2l</name> <parameter_list>(<parameter><decl><type><name>long</name> <name>double</name></type> <name>x</name></decl></parameter>)</parameter_list> <block>{<block_content> <return>return <expr><call><name>log2</name> <argument_list>(<argument><expr><name>x</name></expr></argument>)</argument_list></call></expr>;</return> </block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

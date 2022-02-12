@@ -1,0 +1,761 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/ldns/drill/securetrace.c">
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"drill.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;ldns/ldns.h&gt;</cpp:file></cpp:include>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>SELF</name></cpp:macro> <cpp:value>"[S]"</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>TRUST</name></cpp:macro> <cpp:value>"[T]"</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>BOGUS</name></cpp:macro> <cpp:value>"[B]"</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>UNSIGNED</name></cpp:macro> <cpp:value>"[U]"</cpp:value></cpp:define>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><literal type="number">0</literal></expr></cpp:if>
+
+
+
+static ldns_rr_list *
+ds_key_match(ldns_rr_list *ds, ldns_rr_list *trusted)
+{
+size_t i, j;
+bool match;
+ldns_rr *rr_i, *rr_j;
+ldns_rr_list *keys;
+
+if (!trusted || !ds) {
+return NULL;
+}
+
+match = false;
+keys = ldns_rr_list_new();
+if (!keys) {
+return NULL;
+}
+
+if (!ds || !trusted) {
+return NULL;
+}
+
+for (i = 0; i &lt; ldns_rr_list_rr_count(trusted); i++) {
+rr_i = ldns_rr_list_rr(trusted, i);
+for (j = 0; j &lt; ldns_rr_list_rr_count(ds); j++) {
+
+rr_j = ldns_rr_list_rr(ds, j);
+if (ldns_rr_compare_ds(rr_i, rr_j)) {
+match = true;
+
+ldns_rr_set_push_rr(keys, rr_i);
+}
+}
+}
+if (match) {
+return keys;
+} else {
+return NULL;
+}
+}
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<function><type><specifier>static</specifier> <name>ldns_pkt</name> <modifier>*</modifier></type>
+<name>get_dnssec_pkt</name><parameter_list>(<parameter><decl><type><name>ldns_resolver</name> <modifier>*</modifier></type><name>r</name></decl></parameter>, <parameter><decl><type><name>ldns_rdf</name> <modifier>*</modifier></type><name>name</name></decl></parameter>, <parameter><decl><type><name>ldns_rr_type</name></type> <name>t</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ldns_pkt</name> <modifier>*</modifier></type><name>p</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>p</name> <operator>=</operator> <call><name>ldns_resolver_query</name><argument_list>(<argument><expr><name>r</name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><name>t</name></expr></argument>, <argument><expr><name>LDNS_RR_CLASS_IN</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>p</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>verbosity</name> <operator>&gt;=</operator> <literal type="number">5</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_pkt_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>p</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name>p</name></expr>;</return>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></function>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_SSL</name></expr></argument>)</argument_list></call></expr></cpp:if>
+
+
+
+<function><type><specifier>static</specifier> <name>ldns_pkt_type</name></type>
+<name>get_key</name><parameter_list>(<parameter><decl><type><name>ldns_pkt</name> <modifier>*</modifier></type><name>p</name></decl></parameter>, <parameter><decl><type><name>ldns_rdf</name> <modifier>*</modifier></type><name>apexname</name></decl></parameter>, <parameter><decl><type><name>ldns_rr_list</name> <modifier>*</modifier><modifier>*</modifier></type><name>rrlist</name></decl></parameter>, <parameter><decl><type><name>ldns_rr_list</name> <modifier>*</modifier><modifier>*</modifier></type><name>opt_sig</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><call><name>get_dnssec_rr</name><argument_list>(<argument><expr><name>p</name></expr></argument>, <argument><expr><name>apexname</name></expr></argument>, <argument><expr><name>LDNS_RR_TYPE_DNSKEY</name></expr></argument>, <argument><expr><name>rrlist</name></expr></argument>, <argument><expr><name>opt_sig</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>ldns_pkt_type</name></type>
+<name>get_ds</name><parameter_list>(<parameter><decl><type><name>ldns_pkt</name> <modifier>*</modifier></type><name>p</name></decl></parameter>, <parameter><decl><type><name>ldns_rdf</name> <modifier>*</modifier></type><name>ownername</name></decl></parameter>, <parameter><decl><type><name>ldns_rr_list</name> <modifier>*</modifier><modifier>*</modifier></type><name>rrlist</name></decl></parameter>, <parameter><decl><type><name>ldns_rr_list</name> <modifier>*</modifier><modifier>*</modifier></type><name>opt_sig</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><call><name>get_dnssec_rr</name><argument_list>(<argument><expr><name>p</name></expr></argument>, <argument><expr><name>ownername</name></expr></argument>, <argument><expr><name>LDNS_RR_TYPE_DS</name></expr></argument>, <argument><expr><name>rrlist</name></expr></argument>, <argument><expr><name>opt_sig</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>remove_resolver_nameservers</name><parameter_list>(<parameter><decl><type><name>ldns_resolver</name> <modifier>*</modifier></type><name>res</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ldns_rdf</name> <modifier>*</modifier></type><name>pop</name></decl>;</decl_stmt>
+
+
+<while>while<condition>(<expr><operator>(</operator><name>pop</name> <operator>=</operator> <call><name>ldns_resolver_pop_nameserver</name><argument_list>(<argument><expr><name>res</name></expr></argument>)</argument_list></call><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_rdf_deep_free</name><argument_list>(<argument><expr><name>pop</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></while>
+
+</block_content>}</block></function>
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_SSL</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<function><type><name>int</name></type>
+<name>do_secure_trace</name><parameter_list>(<parameter><decl><type><name>ldns_resolver</name> <modifier>*</modifier></type><name>local_res</name></decl></parameter>, <parameter><decl><type><name>ldns_rdf</name> <modifier>*</modifier></type><name>name</name></decl></parameter>, <parameter><decl><type><name>ldns_rr_type</name></type> <name>t</name></decl></parameter>,
+<parameter><decl><type><name>ldns_rr_class</name></type> <name>c</name></decl></parameter>, <parameter><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>trusted_keys</name></decl></parameter>, <parameter><decl><type><name>ldns_rdf</name> <modifier>*</modifier></type><name>start_name</name></decl></parameter>
+)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ldns_resolver</name> <modifier>*</modifier></type><name>res</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_pkt</name> <modifier>*</modifier></type><name>p</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>local_p</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>new_nss</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>ns_addr</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rdf</name> <modifier>*</modifier></type><name>pop</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rdf</name> <modifier>*</modifier><modifier>*</modifier></type><name>labels</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_status</name></type> <name>status</name></decl>, <decl><type ref="prev"/><name>st</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ssize_t</name></type> <name>i</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>j</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>k</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>l</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint8_t</name></type> <name>labels_count</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>key_list</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>key_sig_list</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>ds_list</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>ds_sig_list</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>correct_key_list</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>trusted_ds_rrs</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>new_keys_trusted</name> <init>= <expr><name>false</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>current_correct_keys</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>dataset</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>nsec_rrs</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>nsec_rr_sigs</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><name>bool</name></type> <name>ent</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rr</name> <modifier>*</modifier></type><name>nsecrr</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rdf</name> <modifier>*</modifier></type><name>hashed_name</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rdf</name> <modifier>*</modifier></type><name>label0</name></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>new_ns_addr</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rr_list</name> <modifier>*</modifier></type><name>old_ns_addr</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ldns_rr</name> <modifier>*</modifier></type><name>ns_rr</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>int</name></type> <name>result</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><specifier>const</specifier> <name>ldns_rr_descriptor</name> <modifier>*</modifier></type><name>descriptor</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>descriptor</name> <operator>=</operator> <call><name>ldns_rr_descript</name><argument_list>(<argument><expr><name>t</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>new_nss</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>ns_addr</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>key_list</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>ds_list</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>p</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>local_p</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>res</name> <operator>=</operator> <call><name>ldns_resolver_new</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>key_sig_list</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>ds_sig_list</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>res</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>error</name><argument_list>(<argument><expr><literal type="string">"Memory allocation failed"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>correct_key_list</name> <operator>=</operator> <call><name>ldns_rr_list_new</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>correct_key_list</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>error</name><argument_list>(<argument><expr><literal type="string">"Memory allocation failed"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>trusted_ds_rrs</name> <operator>=</operator> <call><name>ldns_rr_list_new</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>trusted_ds_rrs</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>error</name><argument_list>(<argument><expr><literal type="string">"Memory allocation failed"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt>
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<for>for <control>(<init><expr><name>j</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>j</name> <operator>&lt;</operator> <call><name>ldns_rr_list_rr_count</name><argument_list>(<argument><expr><name>trusted_keys</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>j</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>ldns_rr</name><modifier>*</modifier></type> <name>one_rr</name> <init>= <expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>trusted_keys</name></expr></argument>, <argument><expr><name>j</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>ldns_rr_get_type</name><argument_list>(<argument><expr><name>one_rr</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>LDNS_RR_TYPE_DS</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_rr_list_push_rr</name><argument_list>(<argument><expr><name>trusted_ds_rrs</name></expr></argument>, <argument><expr><call><name>ldns_rr_clone</name><argument_list>(<argument><expr><name>one_rr</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+
+
+<expr_stmt><expr><call><name>ldns_resolver_set_ip6</name><argument_list>(<argument><expr><name>res</name></expr></argument>,
+<argument><expr><call><name>ldns_resolver_ip6</name><argument_list>(<argument><expr><name>local_res</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_resolver_set_port</name><argument_list>(<argument><expr><name>res</name></expr></argument>,
+<argument><expr><call><name>ldns_resolver_port</name><argument_list>(<argument><expr><name>local_res</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_resolver_set_debug</name><argument_list>(<argument><expr><name>res</name></expr></argument>,
+<argument><expr><call><name>ldns_resolver_debug</name><argument_list>(<argument><expr><name>local_res</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_resolver_set_fail</name><argument_list>(<argument><expr><name>res</name></expr></argument>,
+<argument><expr><call><name>ldns_resolver_fail</name><argument_list>(<argument><expr><name>local_res</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_resolver_set_usevc</name><argument_list>(<argument><expr><name>res</name></expr></argument>,
+<argument><expr><call><name>ldns_resolver_usevc</name><argument_list>(<argument><expr><name>local_res</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_resolver_set_random</name><argument_list>(<argument><expr><name>res</name></expr></argument>,
+<argument><expr><call><name>ldns_resolver_random</name><argument_list>(<argument><expr><name>local_res</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_resolver_set_source</name><argument_list>(<argument><expr><name>res</name></expr></argument>,
+<argument><expr><call><name>ldns_resolver_source</name><argument_list>(<argument><expr><name>local_res</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_resolver_set_recursive</name><argument_list>(<argument><expr><name>local_res</name></expr></argument>, <argument><expr><name>true</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>ldns_resolver_set_recursive</name><argument_list>(<argument><expr><name>res</name></expr></argument>, <argument><expr><name>false</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_resolver_set_dnssec_cd</name><argument_list>(<argument><expr><name>res</name></expr></argument>, <argument><expr><name>false</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_resolver_set_dnssec</name><argument_list>(<argument><expr><name>res</name></expr></argument>, <argument><expr><name>true</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><name>status</name> <operator>=</operator> <call><name>ldns_resolver_push_nameserver_rr_list</name><argument_list>(<argument><expr><name>res</name></expr></argument>, <argument><expr><name>global_dns_root</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>status</name> <operator>!=</operator> <name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"ERRRRR: %s\n"</literal></expr></argument>, <argument><expr><call><name>ldns_get_errorstr_by_id</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>global_dns_root</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <name>status</name></expr>;</expr_stmt>
+<goto>goto <name>done</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>labels_count</name> <operator>=</operator> <call><name>ldns_dname_label_count</name><argument_list>(<argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>start_name</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>ldns_dname_is_subdomain</name><argument_list>(<argument><expr><name>name</name></expr></argument>, <argument><expr><name>start_name</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>labels_count</name> <operator>-=</operator> <call><name>ldns_dname_label_count</name><argument_list>(<argument><expr><name>start_name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"Error; "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rdf_print</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">" is not a subdomain of "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rdf_print</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><name>start_name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>done</name>;</goto>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>labels</name> <operator>=</operator> <call><name>LDNS_XMALLOC</name><argument_list>(<argument><expr><name>ldns_rdf</name><operator>*</operator></expr></argument>, <argument><expr><name>labels_count</name> <operator>+</operator> <literal type="number">2</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>labels</name></expr>)</condition> <block>{<block_content>
+<goto>goto <name>done</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>labels</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>=</operator> <call><name>ldns_dname_new_frm_str</name><argument_list>(<argument><expr><name>LDNS_ROOT_LABEL_STR</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>labels</name><index>[<expr><literal type="number">1</literal></expr>]</index></name> <operator>=</operator> <call><name>ldns_rdf_clone</name><argument_list>(<argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for<control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">2</literal></expr> ;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <operator>(</operator><name>ssize_t</name><operator>)</operator><name>labels_count</name> <operator>+</operator> <literal type="number">2</literal></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name><name>labels</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <call><name>ldns_dname_left_chop</name><argument_list>(<argument><expr><name><name>labels</name><index>[<expr><name>i</name> <operator>-</operator> <literal type="number">1</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+
+
+
+<for>for<control>(<init><expr><name>i</name> <operator>=</operator> <operator>(</operator><name>ssize_t</name><operator>)</operator><name>labels_count</name> <operator>+</operator> <literal type="number">1</literal></expr>;</init> <condition><expr><name>i</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>;</condition> <incr><expr><name>i</name><operator>--</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>status</name> <operator>=</operator> <call><name>ldns_resolver_send</name><argument_list>(<argument><expr><operator>&amp;</operator><name>local_p</name></expr></argument>, <argument><expr><name>res</name></expr></argument>, <argument><expr><name><name>labels</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><name>LDNS_RR_TYPE_NS</name></expr></argument>, <argument><expr><name>c</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>verbosity</name> <operator>&gt;=</operator> <literal type="number">5</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_pkt_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>local_p</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>new_nss</name> <operator>=</operator> <call><name>ldns_pkt_rr_list_by_type</name><argument_list>(<argument><expr><name>local_p</name></expr></argument>,
+<argument><expr><name>LDNS_RR_TYPE_NS</name></expr></argument>, <argument><expr><name>LDNS_SECTION_ANSWER</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>new_nss</name></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><name>new_nss</name> <operator>=</operator> <call><name>ldns_pkt_rr_list_by_type</name><argument_list>(<argument><expr><name>local_p</name></expr></argument>,
+<argument><expr><name>LDNS_RR_TYPE_NS</name></expr></argument>, <argument><expr><name>LDNS_SECTION_AUTHORITY</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>new_nss</name> <operator>||</operator> <name>i</name> <operator>&gt;</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<for>for<control>(<init><expr><name>j</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>j</name> <operator>&lt;</operator> <call><name>ldns_rr_list_rr_count</name><argument_list>(<argument><expr><name>new_nss</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>j</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>ns_rr</name> <operator>=</operator> <call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>new_nss</name></expr></argument>, <argument><expr><name>j</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>pop</name> <operator>=</operator> <call><name>ldns_rr_rdf</name><argument_list>(<argument><expr><name>ns_rr</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>pop</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"nopo\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><name>new_ns_addr</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>ldns_dname_is_subdomain</name><argument_list>(<argument><expr><name>pop</name></expr></argument>, <argument><expr><name><name>labels</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>new_ns_addr</name> <operator>=</operator> <call><name>ldns_pkt_rr_list_by_name_and_type</name><argument_list>(<argument><expr><name>local_p</name></expr></argument>, <argument><expr><name>pop</name></expr></argument>, <argument><expr><name>LDNS_RR_TYPE_A</name></expr></argument>, <argument><expr><name>LDNS_SECTION_ADDITIONAL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>new_ns_addr</name> <operator>||</operator> <call><name>ldns_rr_list_rr_count</name><argument_list>(<argument><expr><name>new_ns_addr</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>new_ns_addr</name> <operator>=</operator> <call><name>ldns_get_rr_list_addr_by_name</name><argument_list>(<argument><expr><name>res</name></expr></argument>, <argument><expr><name>pop</name></expr></argument>, <argument><expr><name>c</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>new_ns_addr</name> <operator>||</operator> <call><name>ldns_rr_list_rr_count</name><argument_list>(<argument><expr><name>new_ns_addr</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>new_ns_addr</name> <operator>=</operator> <call><name>ldns_get_rr_list_addr_by_name</name><argument_list>(<argument><expr><name>local_res</name></expr></argument>, <argument><expr><name>pop</name></expr></argument>, <argument><expr><name>c</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>new_ns_addr</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>old_ns_addr</name> <operator>=</operator> <name>ns_addr</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>ns_addr</name> <operator>=</operator> <call><name>ldns_rr_list_cat_clone</name><argument_list>(<argument><expr><name>ns_addr</name></expr></argument>, <argument><expr><name>new_ns_addr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>old_ns_addr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>new_ns_addr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>new_nss</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ns_addr</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>remove_resolver_nameservers</name><argument_list>(<argument><expr><name>res</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>ldns_resolver_push_nameserver_rr_list</name><argument_list>(<argument><expr><name>res</name></expr></argument>, <argument><expr><name>ns_addr</name></expr></argument>)</argument_list></call> <operator>!=</operator>
+<name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>error</name><argument_list>(<argument><expr><literal type="string">"Error adding new nameservers"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_pkt_free</name><argument_list>(<argument><expr><name>local_p</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>done</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>ns_addr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>status</name> <operator>=</operator> <call><name>ldns_verify_denial</name><argument_list>(<argument><expr><name>local_p</name></expr></argument>, <argument><expr><name><name>labels</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><name>LDNS_RR_TYPE_NS</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>nsec_rrs</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>nsec_rr_sigs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>verbosity</name> <operator>&gt;=</operator> <literal type="number">4</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"NSEC(3) Records to verify:\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>nsec_rrs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"With signatures:\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>nsec_rr_sigs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"correct keys:\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>correct_key_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>status</name> <operator>==</operator> <name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>st</name> <operator>=</operator> <call><name>ldns_verify</name><argument_list>(<argument><expr><name>nsec_rrs</name></expr></argument>, <argument><expr><name>nsec_rr_sigs</name></expr></argument>, <argument><expr><name>trusted_keys</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">"%s "</literal></expr></argument>, <argument><expr><name>TRUST</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">"Existence denied: "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rdf_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name><name>labels</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">" NS\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>(</operator><name>st</name> <operator>=</operator> <call><name>ldns_verify</name><argument_list>(<argument><expr><name>nsec_rrs</name></expr></argument>, <argument><expr><name>nsec_rr_sigs</name></expr></argument>, <argument><expr><name>correct_key_list</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">"%s "</literal></expr></argument>, <argument><expr><name>SELF</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">"Existence denied: "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rdf_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name><name>labels</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+
+
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">" NS\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">"%s "</literal></expr></argument>, <argument><expr><name>BOGUS</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">";; Error verifying denial of existence for name "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rdf_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name><name>labels</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+
+
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"NS: %s\n"</literal></expr></argument>, <argument><expr><call><name>ldns_get_errorstr_by_id</name><argument_list>(<argument><expr><name>st</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">"%s "</literal></expr></argument>, <argument><expr><name>BOGUS</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">";; Error verifying denial of existence for name "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rdf_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name><name>labels</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"NS: %s\n"</literal></expr></argument>, <argument><expr><call><name>ldns_get_errorstr_by_id</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+
+<expr_stmt><expr><name>ent</name> <operator>=</operator> <name>false</name></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>j</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>j</name> <operator>&lt;</operator> <call><name>ldns_rr_list_rr_count</name><argument_list>(<argument><expr><name>nsec_rrs</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>j</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>nsecrr</name> <operator>=</operator> <call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>nsec_rrs</name></expr></argument>, <argument><expr><name>j</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>ldns_rr_get_type</name><argument_list>(<argument><expr><name>nsecrr</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>LDNS_RR_TYPE_NSEC</name> <operator>&amp;&amp;</operator>
+<call><name>ldns_dname_is_subdomain</name><argument_list>(<argument><expr><call><name>ldns_rr_rdf</name><argument_list>(<argument><expr><name>nsecrr</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name><name>labels</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>ent</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+
+
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><call><name>ldns_rr_get_type</name><argument_list>(<argument><expr><name>nsecrr</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>LDNS_RR_TYPE_NSEC3</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>hashed_name</name> <operator>=</operator> <call><name>ldns_nsec3_hash_name_frm_nsec3</name><argument_list>(<argument><expr><name>nsecrr</name></expr></argument>, <argument><expr><name><name>labels</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>label0</name> <operator>=</operator> <call><name>ldns_dname_label</name><argument_list>(<argument><expr><call><name>ldns_rr_owner</name><argument_list>(<argument><expr><name>nsecrr</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>hashed_name</name> <operator>&amp;&amp;</operator> <name>label0</name> <operator>&amp;&amp;</operator>
+<call><name>ldns_dname_compare</name><argument_list>(<argument><expr><name>hashed_name</name></expr></argument>, <argument><expr><name>label0</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator>
+<call><name>ldns_nsec3_bitmap</name><argument_list>(<argument><expr><name>nsecrr</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>ent</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>label0</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LDNS_FREE</name><argument_list>(<argument><expr><name>label0</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>hashed_name</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>LDNS_FREE</name><argument_list>(<argument><expr><name>hashed_name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>ent</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>nsec_rrs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>nsec_rr_sigs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_pkt_free</name><argument_list>(<argument><expr><name>local_p</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>done</name>;</goto>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">";; There is an empty non-terminal here, continue\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>ldns_resolver_nameserver_count</name><argument_list>(<argument><expr><name>res</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>error</name><argument_list>(<argument><expr><literal type="string">"No nameservers found for this node"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>done</name>;</goto>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>ldns_pkt_free</name><argument_list>(<argument><expr><name>local_p</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">";; Domain: "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rdf_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name><name>labels</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">"\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+<expr_stmt><expr><name>p</name> <operator>=</operator> <call><name>get_dnssec_pkt</name><argument_list>(<argument><expr><name>res</name></expr></argument>, <argument><expr><name><name>labels</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><name>LDNS_RR_TYPE_DNSKEY</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>get_key</name><argument_list>(<argument><expr><name>p</name></expr></argument>, <argument><expr><name><name>labels</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>key_list</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>key_sig_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>key_sig_list</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>key_list</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>current_correct_keys</name> <operator>=</operator> <call><name>ldns_rr_list_new</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>st</name> <operator>=</operator> <call><name>ldns_verify</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>, <argument><expr><name>key_sig_list</name></expr></argument>, <argument><expr><name>key_list</name></expr></argument>, <argument><expr><name>current_correct_keys</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator>
+<name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+
+
+<for>for <control>(<init><expr><name>j</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>j</name> <operator>&lt;</operator> <call><name>ldns_rr_list_rr_count</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>j</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_rr_list_push_rr</name><argument_list>(<argument><expr><name>correct_key_list</name></expr></argument>, <argument><expr><call><name>ldns_rr_clone</name><argument_list>(<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>, <argument><expr><name>j</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+
+
+
+<expr_stmt><expr><name>new_keys_trusted</name> <operator>=</operator> <name>false</name></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>k</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>k</name> <operator>&lt;</operator> <call><name>ldns_rr_list_rr_count</name><argument_list>(<argument><expr><name>current_correct_keys</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>k</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<for>for <control>(<init><expr><name>j</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>j</name> <operator>&lt;</operator> <call><name>ldns_rr_list_rr_count</name><argument_list>(<argument><expr><name>trusted_ds_rrs</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>j</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>ldns_rr_compare_ds</name><argument_list>(<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>current_correct_keys</name></expr></argument>, <argument><expr><name>k</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>trusted_ds_rrs</name></expr></argument>, <argument><expr><name>j</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>new_keys_trusted</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></for>
+
+
+<for>for <control>(<init><expr><name>k</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>k</name> <operator>&lt;</operator> <call><name>ldns_rr_list_rr_count</name><argument_list>(<argument><expr><name>current_correct_keys</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>k</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<for>for <control>(<init><expr><name>j</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>j</name> <operator>&lt;</operator> <call><name>ldns_rr_list_rr_count</name><argument_list>(<argument><expr><name>trusted_keys</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>j</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>ldns_rr_compare</name><argument_list>(<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>current_correct_keys</name></expr></argument>, <argument><expr><name>k</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>trusted_keys</name></expr></argument>, <argument><expr><name>j</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>new_keys_trusted</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></for>
+
+
+<if_stmt><if>if <condition>(<expr><name>new_keys_trusted</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_rr_list_push_rr_list</name><argument_list>(<argument><expr><name>trusted_keys</name></expr></argument>, <argument><expr><name>key_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>print_rr_list_abbr</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>key_list</name></expr></argument>, <argument><expr><name>TRUST</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_free</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>key_list</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>verbosity</name> <operator>&gt;=</operator> <literal type="number">2</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">";; Signature ok but no chain to a trusted key or ds record\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>print_rr_list_abbr</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>key_list</name></expr></argument>, <argument><expr><name>SELF</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>key_list</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>print_rr_list_abbr</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>key_list</name></expr></argument>, <argument><expr><name>BOGUS</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <literal type="number">2</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>key_list</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_free</name><argument_list>(<argument><expr><name>current_correct_keys</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>current_correct_keys</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">";; No DNSKEY record found for "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rdf_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name><name>labels</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>ldns_pkt_free</name><argument_list>(<argument><expr><name>p</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>key_sig_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>key_sig_list</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>i</name> <operator>&gt;</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>p</name> <operator>=</operator> <call><name>get_dnssec_pkt</name><argument_list>(<argument><expr><name>res</name></expr></argument>, <argument><expr><name><name>labels</name><index>[<expr><name>i</name><operator>-</operator><literal type="number">1</literal></expr>]</index></name></expr></argument>, <argument><expr><name>LDNS_RR_TYPE_DS</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>get_ds</name><argument_list>(<argument><expr><name>p</name></expr></argument>, <argument><expr><name><name>labels</name><index>[<expr><name>i</name><operator>-</operator><literal type="number">1</literal></expr>]</index></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ds_list</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ds_sig_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>ds_list</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_pkt_free</name><argument_list>(<argument><expr><name>p</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ds_sig_list</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>ds_sig_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>p</name> <operator>=</operator> <call><name>get_dnssec_pkt</name><argument_list>(<argument><expr><name>res</name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><name>LDNS_RR_TYPE_DNSKEY</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>get_ds</name><argument_list>(<argument><expr><name>p</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ds_list</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ds_sig_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>ds_sig_list</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>ds_list</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>verbosity</name> <operator>&gt;=</operator> <literal type="number">4</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"VERIFYING:\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"DS LIST:\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>ds_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"SIGS:\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>ds_sig_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"KEYS:\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>correct_key_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>current_correct_keys</name> <operator>=</operator> <call><name>ldns_rr_list_new</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>st</name> <operator>=</operator> <call><name>ldns_verify</name><argument_list>(<argument><expr><name>ds_list</name></expr></argument>, <argument><expr><name>ds_sig_list</name></expr></argument>, <argument><expr><name>correct_key_list</name></expr></argument>, <argument><expr><name>current_correct_keys</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator>
+<name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+
+
+<expr_stmt><expr><name>new_keys_trusted</name> <operator>=</operator> <name>false</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>verbosity</name> <operator>&gt;=</operator> <literal type="number">2</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"Checking if signing key is trusted:\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<for>for <control>(<init><expr><name>j</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>j</name> <operator>&lt;</operator> <call><name>ldns_rr_list_rr_count</name><argument_list>(<argument><expr><name>current_correct_keys</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>j</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>verbosity</name> <operator>&gt;=</operator> <literal type="number">2</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"New key: "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>current_correct_keys</name></expr></argument>, <argument><expr><name>j</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<for>for <control>(<init><expr><name>k</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>k</name> <operator>&lt;</operator> <call><name>ldns_rr_list_rr_count</name><argument_list>(<argument><expr><name>trusted_keys</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>k</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>verbosity</name> <operator>&gt;=</operator> <literal type="number">2</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"\tTrusted key: "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>trusted_keys</name></expr></argument>, <argument><expr><name>k</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>ldns_rr_compare</name><argument_list>(<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>current_correct_keys</name></expr></argument>, <argument><expr><name>j</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>trusted_keys</name></expr></argument>, <argument><expr><name>k</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>verbosity</name> <operator>&gt;=</operator> <literal type="number">2</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"Key is now trusted!\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<for>for <control>(<init><expr><name>l</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>l</name> <operator>&lt;</operator> <call><name>ldns_rr_list_rr_count</name><argument_list>(<argument><expr><name>ds_list</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>l</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_rr_list_push_rr</name><argument_list>(<argument><expr><name>trusted_ds_rrs</name></expr></argument>, <argument><expr><call><name>ldns_rr_clone</name><argument_list>(<argument><expr><call><name>ldns_rr_list_rr</name><argument_list>(<argument><expr><name>ds_list</name></expr></argument>, <argument><expr><name>l</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>new_keys_trusted</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></for>
+<if_stmt><if>if <condition>(<expr><name>new_keys_trusted</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>print_rr_list_abbr</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>ds_list</name></expr></argument>, <argument><expr><name>TRUST</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>print_rr_list_abbr</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>ds_list</name></expr></argument>, <argument><expr><name>SELF</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <literal type="number">3</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>print_rr_list_abbr</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>ds_list</name></expr></argument>, <argument><expr><name>BOGUS</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<expr_stmt><expr><call><name>ldns_rr_list_free</name><argument_list>(<argument><expr><name>current_correct_keys</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>current_correct_keys</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+<expr_stmt><expr><call><name>ldns_pkt_free</name><argument_list>(<argument><expr><name>p</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>ds_sig_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>p</name> <operator>=</operator> <call><name>get_dnssec_pkt</name><argument_list>(<argument><expr><name>res</name></expr></argument>, <argument><expr><name><name>labels</name><index>[<expr><name>i</name><operator>-</operator><literal type="number">1</literal></expr>]</index></name></expr></argument>, <argument><expr><name>LDNS_RR_TYPE_DS</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>get_ds</name><argument_list>(<argument><expr><name>p</name></expr></argument>, <argument><expr><name><name>labels</name><index>[<expr><name>i</name><operator>-</operator><literal type="number">1</literal></expr>]</index></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ds_list</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ds_sig_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>status</name> <operator>=</operator> <call><name>ldns_verify_denial</name><argument_list>(<argument><expr><name>p</name></expr></argument>, <argument><expr><name><name>labels</name><index>[<expr><name>i</name><operator>-</operator><literal type="number">1</literal></expr>]</index></name></expr></argument>, <argument><expr><name>LDNS_RR_TYPE_DS</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>nsec_rrs</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>nsec_rr_sigs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>verbosity</name> <operator>&gt;=</operator> <literal type="number">4</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"NSEC(3) Records to verify:\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>nsec_rrs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"With signatures:\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>nsec_rr_sigs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"correct keys:\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>correct_key_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>status</name> <operator>==</operator> <name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>st</name> <operator>=</operator> <call><name>ldns_verify</name><argument_list>(<argument><expr><name>nsec_rrs</name></expr></argument>, <argument><expr><name>nsec_rr_sigs</name></expr></argument>, <argument><expr><name>trusted_keys</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">"%s "</literal></expr></argument>, <argument><expr><name>TRUST</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">"Existence denied: "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rdf_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name><name>labels</name><index>[<expr><name>i</name><operator>-</operator><literal type="number">1</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">" DS"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">"\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>(</operator><name>st</name> <operator>=</operator> <call><name>ldns_verify</name><argument_list>(<argument><expr><name>nsec_rrs</name></expr></argument>, <argument><expr><name>nsec_rr_sigs</name></expr></argument>, <argument><expr><name>correct_key_list</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">"%s "</literal></expr></argument>, <argument><expr><name>SELF</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">"Existence denied: "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rdf_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name><name>labels</name><index>[<expr><name>i</name><operator>-</operator><literal type="number">1</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">" DS"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">"\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <literal type="number">4</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">"%s "</literal></expr></argument>, <argument><expr><name>BOGUS</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"Error verifying denial of existence for "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rdf_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name><name>labels</name><index>[<expr><name>i</name><operator>-</operator><literal type="number">1</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">" DS"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">": %s\n"</literal></expr></argument>, <argument><expr><call><name>ldns_get_errorstr_by_id</name><argument_list>(<argument><expr><name>st</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>status</name> <operator>==</operator> <name>LDNS_STATUS_CRYPTO_NO_RRSIG</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">";; No DS for "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rdf_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name><name>labels</name><index>[<expr><name>i</name> <operator>-</operator> <literal type="number">1</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"[B] Unable to verify denial of existence for "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rdf_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name><name>labels</name><index>[<expr><name>i</name> <operator>-</operator> <literal type="number">1</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">" DS: %s\n"</literal></expr></argument>, <argument><expr><call><name>ldns_get_errorstr_by_id</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>verbosity</name> <operator>&gt;=</operator> <literal type="number">2</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">";; No ds record for delegation\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>ds_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_pkt_free</name><argument_list>(<argument><expr><name>p</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+<expr_stmt><expr><name>p</name> <operator>=</operator> <call><name>get_dnssec_pkt</name><argument_list>(<argument><expr><name>res</name></expr></argument>, <argument><expr><name><name>labels</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><name>t</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>get_dnssec_rr</name><argument_list>(<argument><expr><name>p</name></expr></argument>, <argument><expr><name><name>labels</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><name>t</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>dataset</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>key_sig_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>dataset</name> <operator>&amp;&amp;</operator> <call><name>ldns_rr_list_rr_count</name><argument_list>(<argument><expr><name>dataset</name></expr></argument>)</argument_list></call> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>key_sig_list</name> <operator>&amp;&amp;</operator> <call><name>ldns_rr_list_rr_count</name><argument_list>(<argument><expr><name>key_sig_list</name></expr></argument>)</argument_list></call> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>st</name> <operator>=</operator> <call><name>ldns_verify</name><argument_list>(<argument><expr><name>dataset</name></expr></argument>, <argument><expr><name>key_sig_list</name></expr></argument>, <argument><expr><name>trusted_keys</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">"%s "</literal></expr></argument>, <argument><expr><name>TRUST</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>dataset</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>(</operator><name>st</name> <operator>=</operator> <call><name>ldns_verify</name><argument_list>(<argument><expr><name>dataset</name></expr></argument>, <argument><expr><name>key_sig_list</name></expr></argument>, <argument><expr><name>correct_key_list</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">"%s "</literal></expr></argument>, <argument><expr><name>SELF</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>dataset</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <literal type="number">5</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">"%s "</literal></expr></argument>, <argument><expr><name>BOGUS</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>dataset</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">";; Error: %s\n"</literal></expr></argument>, <argument><expr><call><name>ldns_get_errorstr_by_id</name><argument_list>(<argument><expr><name>st</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">"%s "</literal></expr></argument>, <argument><expr><name>UNSIGNED</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>dataset</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>dataset</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>status</name> <operator>=</operator> <call><name>ldns_verify_denial</name><argument_list>(<argument><expr><name>p</name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><name>t</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>nsec_rrs</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>nsec_rr_sigs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>status</name> <operator>==</operator> <name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+
+<if_stmt><if>if <condition>(<expr><name>verbosity</name> <operator>&gt;=</operator> <literal type="number">5</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"NSEC(3) Records to verify:\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>nsec_rrs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"With signatures:\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>nsec_rr_sigs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"correct keys:\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>correct_key_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>st</name> <operator>=</operator> <call><name>ldns_verify</name><argument_list>(<argument><expr><name>nsec_rrs</name></expr></argument>, <argument><expr><name>nsec_rr_sigs</name></expr></argument>, <argument><expr><name>trusted_keys</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">"%s "</literal></expr></argument>, <argument><expr><name>TRUST</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">"Existence denied: "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rdf_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>descriptor</name> <operator>&amp;&amp;</operator> <name><name>descriptor</name><operator>-&gt;</operator><name>_name</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">" %s"</literal></expr></argument>, <argument><expr><name><name>descriptor</name><operator>-&gt;</operator><name>_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">" TYPE%u"</literal></expr></argument>, <argument><expr><name>t</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">"\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>(</operator><name>st</name> <operator>=</operator> <call><name>ldns_verify</name><argument_list>(<argument><expr><name>nsec_rrs</name></expr></argument>, <argument><expr><name>nsec_rr_sigs</name></expr></argument>, <argument><expr><name>correct_key_list</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>LDNS_STATUS_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">"%s "</literal></expr></argument>, <argument><expr><name>SELF</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">"Existence denied: "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rdf_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>descriptor</name> <operator>&amp;&amp;</operator> <name><name>descriptor</name><operator>-&gt;</operator><name>_name</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">" %s"</literal></expr></argument>, <argument><expr><name><name>descriptor</name><operator>-&gt;</operator><name>_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">" TYPE%u"</literal></expr></argument>, <argument><expr><name>t</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">"\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>result</name> <operator>=</operator> <literal type="number">6</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><literal type="string">"%s "</literal></expr></argument>, <argument><expr><name>BOGUS</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"Error verifying denial of existence for "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rdf_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">" type "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>descriptor</name> <operator>&amp;&amp;</operator> <name><name>descriptor</name><operator>-&gt;</operator><name>_name</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%s"</literal></expr></argument>, <argument><expr><name><name>descriptor</name><operator>-&gt;</operator><name>_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"TYPE%u"</literal></expr></argument>, <argument><expr><name>t</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">": %s\n"</literal></expr></argument>, <argument><expr><call><name>ldns_get_errorstr_by_id</name><argument_list>(<argument><expr><name>st</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>nsec_rrs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>nsec_rr_sigs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+
+<if_stmt><if>if <condition>(<expr><name>status</name> <operator>==</operator> <name>LDNS_STATUS_CRYPTO_NO_RRSIG</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%s "</literal></expr></argument>, <argument><expr><name>UNSIGNED</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"No data found for: "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rdf_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">" type "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>descriptor</name> <operator>&amp;&amp;</operator> <name><name>descriptor</name><operator>-&gt;</operator><name>_name</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%s"</literal></expr></argument>, <argument><expr><name><name>descriptor</name><operator>-&gt;</operator><name>_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"TYPE%u"</literal></expr></argument>, <argument><expr><name>t</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"[B] Unable to verify denial of existence for "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rdf_print</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">" type "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>descriptor</name> <operator>&amp;&amp;</operator> <name><name>descriptor</name><operator>-&gt;</operator><name>_name</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%s"</literal></expr></argument>, <argument><expr><name><name>descriptor</name><operator>-&gt;</operator><name>_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"TYPE%u"</literal></expr></argument>, <argument><expr><name>t</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><call><name>ldns_pkt_free</name><argument_list>(<argument><expr><name>p</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<expr_stmt><expr><name>new_nss</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>ns_addr</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>key_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>key_list</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>key_sig_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>key_sig_list</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>ds_list</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>ds_sig_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>ds_sig_list</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">";;"</literal> <name>SELF</name> <literal type="string">" self sig OK; "</literal> <name>BOGUS</name> <literal type="string">" bogus; "</literal> <name>TRUST</name> <literal type="string">" trusted\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+
+
+<label><name>done</name>:</label>
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>trusted_ds_rrs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_rr_list_deep_free</name><argument_list>(<argument><expr><name>correct_key_list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ldns_resolver_deep_free</name><argument_list>(<argument><expr><name>res</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>labels</name></expr>)</condition> <block>{<block_content>
+<for>for<control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr> ;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <operator>(</operator><name>ssize_t</name><operator>)</operator><name>labels_count</name> <operator>+</operator> <literal type="number">2</literal></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>ldns_rdf_deep_free</name><argument_list>(<argument><expr><name><name>labels</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><call><name>LDNS_FREE</name><argument_list>(<argument><expr><name>labels</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><name>result</name></expr>;</return>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

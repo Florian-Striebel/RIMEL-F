@@ -1,0 +1,375 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/results/redis_res/_cppstats_featurelocations/redis/src/cli_common.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"fmacros.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"cli_common.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdio.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;fcntl.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;errno.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;hiredis.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sdscompat.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sds.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;unistd.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;string.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;ctype.h&gt;</cpp:file></cpp:include>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_OPENSSL</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;openssl/ssl.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;openssl/err.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;hiredis_ssl.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>UNUSED</name><parameter_list>(<parameter><type><name>V</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((void) V)</cpp:value></cpp:define>
+
+
+
+
+<function><type><name>int</name></type> <name>cliSecureConnection</name><parameter_list>(<parameter><decl><type><name>redisContext</name> <modifier>*</modifier></type><name>c</name></decl></parameter>, <parameter><decl><type><name>cliSSLconfig</name></type> <name>config</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>err</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_OPENSSL</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<decl_stmt><decl><type><specifier>static</specifier> <name>SSL_CTX</name> <modifier>*</modifier></type><name>ssl_ctx</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>ssl_ctx</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>ssl_ctx</name> <operator>=</operator> <call><name>SSL_CTX_new</name><argument_list>(<argument><expr><call><name>SSLv23_client_method</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>ssl_ctx</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>err</name> <operator>=</operator> <literal type="string">"Failed to create SSL_CTX"</literal></expr>;</expr_stmt>
+<goto>goto <name>error</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>SSL_CTX_set_options</name><argument_list>(<argument><expr><name>ssl_ctx</name></expr></argument>, <argument><expr><name>SSL_OP_NO_SSLv2</name> <operator>|</operator> <name>SSL_OP_NO_SSLv3</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SSL_CTX_set_verify</name><argument_list>(<argument><expr><name>ssl_ctx</name></expr></argument>, <argument><expr><ternary><condition><expr><name><name>config</name><operator>.</operator><name>skip_cert_verify</name></name></expr> ?</condition><then> <expr><name>SSL_VERIFY_NONE</name></expr> </then><else>: <expr><name>SSL_VERIFY_PEER</name></expr></else></ternary></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>config</name><operator>.</operator><name>cacert</name></name> <operator>||</operator> <name><name>config</name><operator>.</operator><name>cacertdir</name></name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>SSL_CTX_load_verify_locations</name><argument_list>(<argument><expr><name>ssl_ctx</name></expr></argument>, <argument><expr><name><name>config</name><operator>.</operator><name>cacert</name></name></expr></argument>, <argument><expr><name><name>config</name><operator>.</operator><name>cacertdir</name></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>err</name> <operator>=</operator> <literal type="string">"Invalid CA Certificate File/Directory"</literal></expr>;</expr_stmt>
+<goto>goto <name>error</name>;</goto>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>SSL_CTX_set_default_verify_paths</name><argument_list>(<argument><expr><name>ssl_ctx</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>err</name> <operator>=</operator> <literal type="string">"Failed to use default CA paths"</literal></expr>;</expr_stmt>
+<goto>goto <name>error</name>;</goto>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>config</name><operator>.</operator><name>cert</name></name> <operator>&amp;&amp;</operator> <operator>!</operator><call><name>SSL_CTX_use_certificate_chain_file</name><argument_list>(<argument><expr><name>ssl_ctx</name></expr></argument>, <argument><expr><name><name>config</name><operator>.</operator><name>cert</name></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>err</name> <operator>=</operator> <literal type="string">"Invalid client certificate"</literal></expr>;</expr_stmt>
+<goto>goto <name>error</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>config</name><operator>.</operator><name>key</name></name> <operator>&amp;&amp;</operator> <operator>!</operator><call><name>SSL_CTX_use_PrivateKey_file</name><argument_list>(<argument><expr><name>ssl_ctx</name></expr></argument>, <argument><expr><name><name>config</name><operator>.</operator><name>key</name></name></expr></argument>, <argument><expr><name>SSL_FILETYPE_PEM</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>err</name> <operator>=</operator> <literal type="string">"Invalid private key"</literal></expr>;</expr_stmt>
+<goto>goto <name>error</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>config</name><operator>.</operator><name>ciphers</name></name> <operator>&amp;&amp;</operator> <operator>!</operator><call><name>SSL_CTX_set_cipher_list</name><argument_list>(<argument><expr><name>ssl_ctx</name></expr></argument>, <argument><expr><name><name>config</name><operator>.</operator><name>ciphers</name></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>err</name> <operator>=</operator> <literal type="string">"Error while configuring ciphers"</literal></expr>;</expr_stmt>
+<goto>goto <name>error</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>TLS1_3_VERSION</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name><name>config</name><operator>.</operator><name>ciphersuites</name></name> <operator>&amp;&amp;</operator> <operator>!</operator><call><name>SSL_CTX_set_ciphersuites</name><argument_list>(<argument><expr><name>ssl_ctx</name></expr></argument>, <argument><expr><name><name>config</name><operator>.</operator><name>ciphersuites</name></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>err</name> <operator>=</operator> <literal type="string">"Error while setting cypher suites"</literal></expr>;</expr_stmt>
+<goto>goto <name>error</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></if></if_stmt>
+
+<decl_stmt><decl><type><name>SSL</name> <modifier>*</modifier></type><name>ssl</name> <init>= <expr><call><name>SSL_new</name><argument_list>(<argument><expr><name>ssl_ctx</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>ssl</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>err</name> <operator>=</operator> <literal type="string">"Failed to create SSL object"</literal></expr>;</expr_stmt>
+<return>return <expr><name>REDIS_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>config</name><operator>.</operator><name>sni</name></name> <operator>&amp;&amp;</operator> <operator>!</operator><call><name>SSL_set_tlsext_host_name</name><argument_list>(<argument><expr><name>ssl</name></expr></argument>, <argument><expr><name><name>config</name><operator>.</operator><name>sni</name></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>err</name> <operator>=</operator> <literal type="string">"Failed to configure SNI"</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SSL_free</name><argument_list>(<argument><expr><name>ssl</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>REDIS_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><call><name>redisInitiateSSL</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name>ssl</name></expr></argument>)</argument_list></call></expr>;</return>
+
+<label><name>error</name>:</label>
+<expr_stmt><expr><call><name>SSL_CTX_free</name><argument_list>(<argument><expr><name>ssl_ctx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>ssl_ctx</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<return>return <expr><name>REDIS_ERR</name></expr>;</return>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <name>config</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <name>c</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <name>err</name></expr>;</expr_stmt>
+<return>return <expr><name>REDIS_OK</name></expr>;</return>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><name>ssize_t</name></type> <name>cliWriteConn</name><parameter_list>(<parameter><decl><type><name>redisContext</name> <modifier>*</modifier></type><name>c</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>buf_len</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>done</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+
+
+
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>obuf</name></name> <operator>=</operator> <call><name>sdscatlen</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>obuf</name></name></expr></argument>, <argument><expr><name>buf</name></expr></argument>, <argument><expr><name>buf_len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>redisBufferWrite</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>done</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>REDIS_ERR</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name><name>c</name><operator>-&gt;</operator><name>flags</name></name> <operator>&amp;</operator> <name>REDIS_BLOCK</name><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>errno</name> <operator>=</operator> <name>EAGAIN</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>sdslen</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>obuf</name></name></expr></argument>)</argument_list></call> <operator>&gt;</operator> <name>buf_len</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>sdsrange</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>obuf</name></name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><operator>-</operator><operator>(</operator><name>buf_len</name><operator>+</operator><literal type="number">1</literal><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>sdsclear</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>obuf</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<return>return <expr><operator>-</operator><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>done</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>sdsclear</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>obuf</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>buf_len</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>sdslen</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>obuf</name></name></expr></argument>)</argument_list></call> <operator>&gt;</operator> <name>buf_len</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>sdsrange</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>obuf</name></name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><operator>-</operator><operator>(</operator><name>buf_len</name><operator>+</operator><literal type="number">1</literal><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+<decl_stmt><decl><type><name>size_t</name></type> <name>left</name> <init>= <expr><call><name>sdslen</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>obuf</name></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>sdsclear</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>obuf</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>buf_len</name> <operator>-</operator> <name>left</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<function><type><name>int</name></type> <name>cliSecureInit</name><parameter_list>()</parameter_list>
+<block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_OPENSSL</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr_stmt><expr><call><name>ERR_load_crypto_strings</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SSL_load_error_strings</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SSL_library_init</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<return>return <expr><name>REDIS_OK</name></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><name>sds</name></type> <name>readArgFromStdin</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>char</name></type> <name><name>buf</name><index>[<expr><literal type="number">1024</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>sds</name></type> <name>arg</name> <init>= <expr><call><name>sdsempty</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<while>while<condition>(<expr><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>nread</name> <init>= <expr><call><name>read</name><argument_list>(<argument><expr><call><name>fileno</name><argument_list>(<argument><expr><name>stdin</name></expr></argument>)</argument_list></call></expr></argument>,<argument><expr><name>buf</name></expr></argument>,<argument><expr><literal type="number">1024</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>nread</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content> <break>break;</break></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name>nread</name> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>perror</name><argument_list>(<argument><expr><literal type="string">"Reading from standard input"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>arg</name> <operator>=</operator> <call><name>sdscatlen</name><argument_list>(<argument><expr><name>arg</name></expr></argument>,<argument><expr><name>buf</name></expr></argument>,<argument><expr><name>nread</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></while>
+<return>return <expr><name>arg</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+<function><type><name>sds</name> <modifier>*</modifier></type><name>getSdsArrayFromArgv</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>argc</name></decl></parameter>,<parameter><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>quoted</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>sds</name> <modifier>*</modifier></type><name>res</name> <init>= <expr><call><name>sds_malloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>sds</name></expr></argument>)</argument_list></sizeof> <operator>*</operator> <name>argc</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<for>for <control>(<init><decl><type><name>int</name></type> <name>j</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>j</name> <operator>&lt;</operator> <name>argc</name></expr>;</condition> <incr><expr><name>j</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>quoted</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>sds</name></type> <name>unquoted</name> <init>= <expr><call><name>unquoteCString</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr><name>j</name></expr>]</index></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>unquoted</name></expr>)</condition> <block>{<block_content>
+<while>while <condition>(<expr><operator>--</operator><name>j</name> <operator>&gt;=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><call><name>sdsfree</name><argument_list>(<argument><expr><name><name>res</name><index>[<expr><name>j</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></while>
+<expr_stmt><expr><call><name>sds_free</name><argument_list>(<argument><expr><name>res</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>res</name><index>[<expr><name>j</name></expr>]</index></name> <operator>=</operator> <name>unquoted</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name><name>res</name><index>[<expr><name>j</name></expr>]</index></name> <operator>=</operator> <call><name>sdsnew</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr><name>j</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></for>
+
+<return>return <expr><name>res</name></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><name>sds</name></type> <name>unquoteCString</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>str</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>count</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>sds</name> <modifier>*</modifier></type><name>unquoted</name> <init>= <expr><call><name>sdssplitargs</name><argument_list>(<argument><expr><name>str</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>count</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>sds</name></type> <name>res</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>unquoted</name> <operator>&amp;&amp;</operator> <name>count</name> <operator>==</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>res</name> <operator>=</operator> <name><name>unquoted</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>unquoted</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>unquoted</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>sdsfreesplitres</name><argument_list>(<argument><expr><name>unquoted</name></expr></argument>, <argument><expr><name>count</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<return>return <expr><name>res</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>isHexChar</name><parameter_list>(<parameter><type><name>c</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>(isdigit(c) || ((c) &gt;= 'a' &amp;&amp; (c) &lt;= 'f'))</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>decodeHexChar</name><parameter_list>(<parameter><type><name>c</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>(isdigit(c) ? (c) - '0' : (c) - 'a' + 10)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>decodeHex</name><parameter_list>(<parameter><type><name>h</name></type></parameter>, <parameter><type><name>l</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((decodeHexChar(h) &lt;&lt; 4) + decodeHexChar(l))</cpp:value></cpp:define>
+
+<function><type><specifier>static</specifier> <name>sds</name></type> <name>percentDecode</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>pe</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>len</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>end</name> <init>= <expr><name>pe</name> <operator>+</operator> <name>len</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>sds</name></type> <name>ret</name> <init>= <expr><call><name>sdsempty</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>curr</name> <init>= <expr><name>pe</name></expr></init></decl>;</decl_stmt>
+
+<while>while <condition>(<expr><name>curr</name> <operator>&lt;</operator> <name>end</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>curr</name> <operator>==</operator> <literal type="char">'%'</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>end</name> <operator>-</operator> <name>curr</name><operator>)</operator> <operator>&lt;</operator> <literal type="number">2</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"Incomplete URI encoding\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<decl_stmt><decl><type><name>char</name></type> <name>h</name> <init>= <expr><call><name>tolower</name><argument_list>(<argument><expr><operator>*</operator><operator>(</operator><operator>++</operator><name>curr</name><operator>)</operator></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name>l</name> <init>= <expr><call><name>tolower</name><argument_list>(<argument><expr><operator>*</operator><operator>(</operator><operator>++</operator><name>curr</name><operator>)</operator></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>isHexChar</name><argument_list>(<argument><expr><name>h</name></expr></argument>)</argument_list></call> <operator>||</operator> <operator>!</operator><call><name>isHexChar</name><argument_list>(<argument><expr><name>l</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"Illegal character in URI encoding\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name>c</name> <init>= <expr><call><name>decodeHex</name><argument_list>(<argument><expr><name>h</name></expr></argument>, <argument><expr><name>l</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <call><name>sdscatlen</name><argument_list>(<argument><expr><name>ret</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>c</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>curr</name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <call><name>sdscatlen</name><argument_list>(<argument><expr><name>ret</name></expr></argument>, <argument><expr><name>curr</name><operator>++</operator></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></while>
+
+<return>return <expr><name>ret</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+<function><type><name>void</name></type> <name>parseRedisUri</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>uri</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name><modifier>*</modifier></type> <name>tool_name</name></decl></parameter>, <parameter><decl><type><name>cliConnInfo</name> <modifier>*</modifier></type><name>connInfo</name></decl></parameter>, <parameter><decl><type><name>int</name> <modifier>*</modifier></type><name>tls_flag</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_OPENSSL</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr_stmt><expr><call><name>UNUSED</name><argument_list>(<argument><expr><name>tool_name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><call><name>UNUSED</name><argument_list>(<argument><expr><name>tls_flag</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>scheme</name> <init>= <expr><literal type="string">"redis://"</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>tlsscheme</name> <init>= <expr><literal type="string">"rediss://"</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>curr</name> <init>= <expr><name>uri</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>end</name> <init>= <expr><name>uri</name> <operator>+</operator> <call><name>strlen</name><argument_list>(<argument><expr><name>uri</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>userinfo</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>username</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>port</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>host</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>path</name></decl>;</decl_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>strncasecmp</name><argument_list>(<argument><expr><name>tlsscheme</name></expr></argument>, <argument><expr><name>curr</name></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name>tlsscheme</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_OPENSSL</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr_stmt><expr><operator>*</operator><name>tls_flag</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>curr</name> <operator>+=</operator> <call><name>strlen</name><argument_list>(<argument><expr><name>tlsscheme</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>,<argument><expr><literal type="string">"rediss:// is only supported when %s is compiled with OpenSSL\n"</literal></expr></argument>, <argument><expr><name>tool_name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><operator>!</operator><call><name>strncasecmp</name><argument_list>(<argument><expr><name>scheme</name></expr></argument>, <argument><expr><name>curr</name></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name>scheme</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>curr</name> <operator>+=</operator> <call><name>strlen</name><argument_list>(<argument><expr><name>scheme</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>,<argument><expr><literal type="string">"Invalid URI scheme\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>curr</name> <operator>==</operator> <name>end</name></expr>)</condition><block type="pseudo"><block_content> <return>return;</return></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>userinfo</name> <operator>=</operator> <call><name>strchr</name><argument_list>(<argument><expr><name>curr</name></expr></argument>,<argument><expr><literal type="char">'@'</literal></expr></argument>)</argument_list></call><operator>)</operator></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>username</name> <operator>=</operator> <call><name>strchr</name><argument_list>(<argument><expr><name>curr</name></expr></argument>, <argument><expr><literal type="char">':'</literal></expr></argument>)</argument_list></call><operator>)</operator> <operator>&amp;&amp;</operator> <name>username</name> <operator>&lt;</operator> <name>userinfo</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>connInfo</name><operator>-&gt;</operator><name>user</name></name> <operator>=</operator> <call><name>percentDecode</name><argument_list>(<argument><expr><name>curr</name></expr></argument>, <argument><expr><name>username</name> <operator>-</operator> <name>curr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>curr</name> <operator>=</operator> <name>username</name> <operator>+</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>connInfo</name><operator>-&gt;</operator><name>auth</name></name> <operator>=</operator> <call><name>percentDecode</name><argument_list>(<argument><expr><name>curr</name></expr></argument>, <argument><expr><name>userinfo</name> <operator>-</operator> <name>curr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>curr</name> <operator>=</operator> <name>userinfo</name> <operator>+</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>curr</name> <operator>==</operator> <name>end</name></expr>)</condition><block type="pseudo"><block_content> <return>return;</return></block_content></block></if></if_stmt>
+
+
+<expr_stmt><expr><name>path</name> <operator>=</operator> <call><name>strchr</name><argument_list>(<argument><expr><name>curr</name></expr></argument>, <argument><expr><literal type="char">'/'</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>curr</name> <operator>!=</operator> <literal type="char">'/'</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>host</name> <operator>=</operator> <ternary><condition><expr><name>path</name></expr> ?</condition><then> <expr><name>path</name> <operator>-</operator> <literal type="number">1</literal></expr> </then><else>: <expr><name>end</name></expr></else></ternary></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>port</name> <operator>=</operator> <call><name>strchr</name><argument_list>(<argument><expr><name>curr</name></expr></argument>, <argument><expr><literal type="char">':'</literal></expr></argument>)</argument_list></call><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>connInfo</name><operator>-&gt;</operator><name>hostport</name></name> <operator>=</operator> <call><name>atoi</name><argument_list>(<argument><expr><name>port</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>host</name> <operator>=</operator> <name>port</name> <operator>-</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>sdsfree</name><argument_list>(<argument><expr><name><name>connInfo</name><operator>-&gt;</operator><name>hostip</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>connInfo</name><operator>-&gt;</operator><name>hostip</name></name> <operator>=</operator> <call><name>sdsnewlen</name><argument_list>(<argument><expr><name>curr</name></expr></argument>, <argument><expr><name>host</name> <operator>-</operator> <name>curr</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>curr</name> <operator>=</operator> <ternary><condition><expr><name>path</name></expr> ?</condition><then> <expr><name>path</name> <operator>+</operator> <literal type="number">1</literal></expr> </then><else>: <expr><name>end</name></expr></else></ternary></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>curr</name> <operator>==</operator> <name>end</name></expr>)</condition><block type="pseudo"><block_content> <return>return;</return></block_content></block></if></if_stmt>
+
+
+<expr_stmt><expr><name><name>connInfo</name><operator>-&gt;</operator><name>input_dbnum</name></name> <operator>=</operator> <call><name>atoi</name><argument_list>(<argument><expr><name>curr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type> <name>freeCliConnInfo</name><parameter_list>(<parameter><decl><type><name>cliConnInfo</name></type> <name>connInfo</name></decl></parameter>)</parameter_list><block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>connInfo</name><operator>.</operator><name>hostip</name></name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><call><name>sdsfree</name><argument_list>(<argument><expr><name><name>connInfo</name><operator>.</operator><name>hostip</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>connInfo</name><operator>.</operator><name>auth</name></name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><call><name>sdsfree</name><argument_list>(<argument><expr><name><name>connInfo</name><operator>.</operator><name>auth</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>connInfo</name><operator>.</operator><name>user</name></name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><call><name>sdsfree</name><argument_list>(<argument><expr><name><name>connInfo</name><operator>.</operator><name>user</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+</unit>

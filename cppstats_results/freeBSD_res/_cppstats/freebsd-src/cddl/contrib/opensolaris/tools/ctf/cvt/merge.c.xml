@@ -1,0 +1,735 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/results/freeBSD_res/_cppstats/freebsd-src/cddl/contrib/opensolaris/tools/ctf/cvt/merge.c"><cpp:pragma>#<cpp:directive>pragma</cpp:directive> <name>ident</name> <cpp:literal>"%Z%%M% %I% %E% SMI"</cpp:literal></cpp:pragma>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdio.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;strings.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;assert.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;pthread.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"ctf_headers.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"ctftools.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"list.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"alist.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"memory.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"traverse.h"</cpp:file></cpp:include>
+<typedef>typedef <type><name><name>struct</name> <name>equiv_data</name></name></type> <name>equiv_data_t</name>;</typedef>
+<typedef>typedef <type><name><name>struct</name> <name>merge_cb_data</name></name></type> <name>merge_cb_data_t</name>;</typedef>
+<typedef>typedef <type><struct>struct <name>tdesc_ops</name> <block>{
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>name</name></decl>;</decl_stmt>
+<function_decl><type><name>int</name></type> (<modifier>*</modifier><name>equiv</name>)<parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>equiv_data_t</name> <modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><name>tdesc_t</name> <modifier>*</modifier></type>(<modifier>*</modifier><name>conjure</name>)<parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>int</name></type></decl></parameter>, <parameter><decl><type><name>merge_cb_data_t</name> <modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl>
+}</block></struct></type> <name>tdesc_ops_t</name>;</typedef>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>tdesc_ops_t</name></type> <name><name>tdesc_ops</name><index>[]</index></name></decl>;</decl_stmt>
+<struct>struct <name>merge_cb_data</name> <block>{
+<decl_stmt><decl><type><name>tdata_t</name> <modifier>*</modifier></type><name>md_parent</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>tdata_t</name> <modifier>*</modifier></type><name>md_tgt</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>alist_t</name> <modifier>*</modifier></type><name>md_ta</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>alist_t</name> <modifier>*</modifier></type><name>md_fdida</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>list_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>md_iitba</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>hash_t</name> <modifier>*</modifier></type><name>md_tdtba</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>list_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>md_tdtbr</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>md_flags</name></decl>;</decl_stmt>
+}</block>;</struct>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MCD_F_SELFUNIQUIFY</name></cpp:macro> <cpp:value>0x1</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>MCD_F_REFMERGE</name></cpp:macro> <cpp:value>0x2</cpp:value></cpp:define>
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>add_mapping</name><parameter_list>(<parameter><decl><type><name>alist_t</name> <modifier>*</modifier></type><name>ta</name></decl></parameter>, <parameter><decl><type><name>tid_t</name></type> <name>srcid</name></decl></parameter>, <parameter><decl><type><name>tid_t</name></type> <name>tgtid</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"Adding mapping %u &lt;%x&gt; =&gt; %u &lt;%x&gt;\n"</literal></expr></argument>, <argument><expr><name>srcid</name></expr></argument>, <argument><expr><name>srcid</name></expr></argument>, <argument><expr><name>tgtid</name></expr></argument>, <argument><expr><name>tgtid</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><operator>!</operator><call><name>alist_find</name><argument_list>(<argument><expr><name>ta</name></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><name>srcid</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>srcid</name> <operator>!=</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <name>tgtid</name> <operator>!=</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>alist_add</name><argument_list>(<argument><expr><name>ta</name></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><name>srcid</name></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><name>tgtid</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>tid_t</name></type>
+<name>get_mapping</name><parameter_list>(<parameter><decl><type><name>alist_t</name> <modifier>*</modifier></type><name>ta</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>srcid</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>ltgtid</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>alist_find</name><argument_list>(<argument><expr><name>ta</name></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><name>srcid</name></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>*</operator><operator>)</operator><operator>&amp;</operator><name>ltgtid</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><name>ltgtid</name><operator>)</operator></expr>;</return></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></else></if_stmt>
+</block_content>}</block></function>
+<struct>struct <name>equiv_data</name> <block>{
+<decl_stmt><decl><type><name>alist_t</name> <modifier>*</modifier></type><name>ed_ta</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>ed_node</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>ed_tgt</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ed_clear_mark</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ed_cur_mark</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ed_selfuniquify</name></decl>;</decl_stmt>
+}</block>;</struct>
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>equiv_node</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>equiv_data_t</name> <modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>equiv_intrinsic</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>stdp</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>ttdp</name></decl></parameter>, <parameter><decl><type><name>equiv_data_t</name> <modifier>*</modifier><name>ed</name></type> <name>__unused</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>intr_t</name> <modifier>*</modifier></type><name>si</name> <init>= <expr><name><name>stdp</name><operator>-&gt;</operator><name>t_intr</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>intr_t</name> <modifier>*</modifier></type><name>ti</name> <init>= <expr><name><name>ttdp</name><operator>-&gt;</operator><name>t_intr</name></name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>si</name><operator>-&gt;</operator><name>intr_type</name></name> <operator>!=</operator> <name><name>ti</name><operator>-&gt;</operator><name>intr_type</name></name> <operator>||</operator>
+<name><name>si</name><operator>-&gt;</operator><name>intr_signed</name></name> <operator>!=</operator> <name><name>ti</name><operator>-&gt;</operator><name>intr_signed</name></name> <operator>||</operator>
+<name><name>si</name><operator>-&gt;</operator><name>intr_offset</name></name> <operator>!=</operator> <name><name>ti</name><operator>-&gt;</operator><name>intr_offset</name></name> <operator>||</operator>
+<name><name>si</name><operator>-&gt;</operator><name>intr_nbits</name></name> <operator>!=</operator> <name><name>ti</name><operator>-&gt;</operator><name>intr_nbits</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>si</name><operator>-&gt;</operator><name>intr_type</name></name> <operator>==</operator> <name>INTR_INT</name> <operator>&amp;&amp;</operator>
+<name><name>si</name><operator>-&gt;</operator><name>intr_iformat</name></name> <operator>!=</operator> <name><name>ti</name><operator>-&gt;</operator><name>intr_iformat</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name><name>si</name><operator>-&gt;</operator><name>intr_type</name></name> <operator>==</operator> <name>INTR_REAL</name> <operator>&amp;&amp;</operator>
+<name><name>si</name><operator>-&gt;</operator><name>intr_fformat</name></name> <operator>!=</operator> <name><name>ti</name><operator>-&gt;</operator><name>intr_fformat</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>equiv_plain</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>stdp</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>ttdp</name></decl></parameter>, <parameter><decl><type><name>equiv_data_t</name> <modifier>*</modifier></type><name>ed</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><call><name>equiv_node</name><argument_list>(<argument><expr><name><name>stdp</name><operator>-&gt;</operator><name>t_tdesc</name></name></expr></argument>, <argument><expr><name><name>ttdp</name><operator>-&gt;</operator><name>t_tdesc</name></name></expr></argument>, <argument><expr><name>ed</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>equiv_function</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>stdp</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>ttdp</name></decl></parameter>, <parameter><decl><type><name>equiv_data_t</name> <modifier>*</modifier></type><name>ed</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>fndef_t</name> <modifier>*</modifier></type><name>fn1</name> <init>= <expr><name><name>stdp</name><operator>-&gt;</operator><name>t_fndef</name></name></expr></init></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>fn2</name> <init>= <expr><name><name>ttdp</name><operator>-&gt;</operator><name>t_fndef</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>fn1</name><operator>-&gt;</operator><name>fn_nargs</name></name> <operator>!=</operator> <name><name>fn2</name><operator>-&gt;</operator><name>fn_nargs</name></name> <operator>||</operator>
+<name><name>fn1</name><operator>-&gt;</operator><name>fn_vargs</name></name> <operator>!=</operator> <name><name>fn2</name><operator>-&gt;</operator><name>fn_vargs</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>equiv_node</name><argument_list>(<argument><expr><name><name>fn1</name><operator>-&gt;</operator><name>fn_ret</name></name></expr></argument>, <argument><expr><name><name>fn2</name><operator>-&gt;</operator><name>fn_ret</name></name></expr></argument>, <argument><expr><name>ed</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <operator>(</operator><name>int</name><operator>)</operator> <name><name>fn1</name><operator>-&gt;</operator><name>fn_nargs</name></name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>equiv_node</name><argument_list>(<argument><expr><name><name>fn1</name><operator>-&gt;</operator><name>fn_args</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><name><name>fn2</name><operator>-&gt;</operator><name>fn_args</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><name>ed</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></for>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>equiv_array</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>stdp</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>ttdp</name></decl></parameter>, <parameter><decl><type><name>equiv_data_t</name> <modifier>*</modifier></type><name>ed</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ardef_t</name> <modifier>*</modifier></type><name>ar1</name> <init>= <expr><name><name>stdp</name><operator>-&gt;</operator><name>t_ardef</name></name></expr></init></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>ar2</name> <init>= <expr><name><name>ttdp</name><operator>-&gt;</operator><name>t_ardef</name></name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>equiv_node</name><argument_list>(<argument><expr><name><name>ar1</name><operator>-&gt;</operator><name>ad_contents</name></name></expr></argument>, <argument><expr><name><name>ar2</name><operator>-&gt;</operator><name>ad_contents</name></name></expr></argument>, <argument><expr><name>ed</name></expr></argument>)</argument_list></call> <operator>||</operator>
+<operator>!</operator><call><name>equiv_node</name><argument_list>(<argument><expr><name><name>ar1</name><operator>-&gt;</operator><name>ad_idxtype</name></name></expr></argument>, <argument><expr><name><name>ar2</name><operator>-&gt;</operator><name>ad_idxtype</name></name></expr></argument>, <argument><expr><name>ed</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>ar1</name><operator>-&gt;</operator><name>ad_nelems</name></name> <operator>!=</operator> <name><name>ar2</name><operator>-&gt;</operator><name>ad_nelems</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>equiv_su</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>stdp</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>ttdp</name></decl></parameter>, <parameter><decl><type><name>equiv_data_t</name> <modifier>*</modifier></type><name>ed</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>mlist_t</name> <modifier>*</modifier></type><name>ml1</name> <init>= <expr><name><name>stdp</name><operator>-&gt;</operator><name>t_members</name></name></expr></init></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>ml2</name> <init>= <expr><name><name>ttdp</name><operator>-&gt;</operator><name>t_members</name></name></expr></init></decl>;</decl_stmt>
+<while>while <condition>(<expr><name>ml1</name> <operator>&amp;&amp;</operator> <name>ml2</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>ml1</name><operator>-&gt;</operator><name>ml_offset</name></name> <operator>!=</operator> <name><name>ml2</name><operator>-&gt;</operator><name>ml_offset</name></name> <operator>||</operator>
+<call><name>strcmp</name><argument_list>(<argument><expr><name><name>ml1</name><operator>-&gt;</operator><name>ml_name</name></name></expr></argument>, <argument><expr><name><name>ml2</name><operator>-&gt;</operator><name>ml_name</name></name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal> <operator>||</operator>
+<name><name>ml1</name><operator>-&gt;</operator><name>ml_size</name></name> <operator>!=</operator> <name><name>ml2</name><operator>-&gt;</operator><name>ml_size</name></name> <operator>||</operator>
+<operator>!</operator><call><name>equiv_node</name><argument_list>(<argument><expr><name><name>ml1</name><operator>-&gt;</operator><name>ml_type</name></name></expr></argument>, <argument><expr><name><name>ml2</name><operator>-&gt;</operator><name>ml_type</name></name></expr></argument>, <argument><expr><name>ed</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>ml1</name> <operator>=</operator> <name><name>ml1</name><operator>-&gt;</operator><name>ml_next</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>ml2</name> <operator>=</operator> <name><name>ml2</name><operator>-&gt;</operator><name>ml_next</name></name></expr>;</expr_stmt>
+</block_content>}</block></while>
+<if_stmt><if>if <condition>(<expr><name>ml1</name> <operator>||</operator> <name>ml2</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>equiv_enum</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>stdp</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>ttdp</name></decl></parameter>, <parameter><decl><type><name>equiv_data_t</name> <modifier>*</modifier><name>ed</name></type> <name>__unused</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>elist_t</name> <modifier>*</modifier></type><name>el1</name> <init>= <expr><name><name>stdp</name><operator>-&gt;</operator><name>t_emem</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>elist_t</name> <modifier>*</modifier></type><name>el2</name> <init>= <expr><name><name>ttdp</name><operator>-&gt;</operator><name>t_emem</name></name></expr></init></decl>;</decl_stmt>
+<while>while <condition>(<expr><name>el1</name> <operator>&amp;&amp;</operator> <name>el2</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>el1</name><operator>-&gt;</operator><name>el_number</name></name> <operator>!=</operator> <name><name>el2</name><operator>-&gt;</operator><name>el_number</name></name> <operator>||</operator>
+<call><name>strcmp</name><argument_list>(<argument><expr><name><name>el1</name><operator>-&gt;</operator><name>el_name</name></name></expr></argument>, <argument><expr><name><name>el2</name><operator>-&gt;</operator><name>el_name</name></name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>el1</name> <operator>=</operator> <name><name>el1</name><operator>-&gt;</operator><name>el_next</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>el2</name> <operator>=</operator> <name><name>el2</name><operator>-&gt;</operator><name>el_next</name></name></expr>;</expr_stmt>
+</block_content>}</block></while>
+<if_stmt><if>if <condition>(<expr><name>el1</name> <operator>||</operator> <name>el2</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>equiv_assert</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier><name>stdp</name></type> <name>__unused</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier><name>ttdp</name></type> <name>__unused</name></decl></parameter>, <parameter><decl><type><name>equiv_data_t</name> <modifier>*</modifier><name>ed</name></type> <name>__unused</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><literal type="number">1</literal> <operator>==</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>fwd_equiv</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>ctdp</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>mtdp</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>defn</name> <init>= <expr><operator>(</operator><ternary><condition><expr><name><name>ctdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>==</operator> <name>FORWARD</name></expr> ?</condition><then> <expr><name>mtdp</name></expr> </then><else>: <expr><name>ctdp</name></expr></else></ternary><operator>)</operator></expr></init></decl>;</decl_stmt>
+<return>return <expr><operator>(</operator><name><name>defn</name><operator>-&gt;</operator><name>t_type</name></name> <operator>==</operator> <name>STRUCT</name> <operator>||</operator> <name><name>defn</name><operator>-&gt;</operator><name>t_type</name></name> <operator>==</operator> <name>UNION</name> <operator>||</operator>
+<name><name>defn</name><operator>-&gt;</operator><name>t_type</name></name> <operator>==</operator> <name>ENUM</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>equiv_node</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>ctdp</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>mtdp</name></decl></parameter>, <parameter><decl><type><name>equiv_data_t</name> <modifier>*</modifier></type><name>ed</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<function_decl><type><name>int</name></type> (<modifier>*</modifier><name>equiv</name>)<parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>equiv_data_t</name> <modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl>
+<decl_stmt><decl><type><name>int</name></type> <name>mapping</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>ctdp</name><operator>-&gt;</operator><name>t_emark</name></name> <operator>&gt;</operator> <name><name>ed</name><operator>-&gt;</operator><name>ed_clear_mark</name></name> <operator>&amp;&amp;</operator>
+<name><name>mtdp</name><operator>-&gt;</operator><name>t_emark</name></name> <operator>&gt;</operator> <name><name>ed</name><operator>-&gt;</operator><name>ed_clear_mark</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name><name>ctdp</name><operator>-&gt;</operator><name>t_emark</name></name> <operator>==</operator> <name><name>mtdp</name><operator>-&gt;</operator><name>t_emark</name></name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>mapping</name> <operator>=</operator> <call><name>get_mapping</name><argument_list>(<argument><expr><name><name>ed</name><operator>-&gt;</operator><name>ed_ta</name></name></expr></argument>, <argument><expr><name><name>ctdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&gt;</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator>
+<name>mapping</name> <operator>==</operator> <name><name>mtdp</name><operator>-&gt;</operator><name>t_id</name></name> <operator>&amp;&amp;</operator> <operator>!</operator><name><name>ed</name><operator>-&gt;</operator><name>ed_selfuniquify</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>streq</name><argument_list>(<argument><expr><name><name>ctdp</name><operator>-&gt;</operator><name>t_name</name></name></expr></argument>, <argument><expr><name><name>mtdp</name><operator>-&gt;</operator><name>t_name</name></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>ctdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>!=</operator> <name><name>mtdp</name><operator>-&gt;</operator><name>t_type</name></name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>ctdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>==</operator> <name>FORWARD</name> <operator>||</operator> <name><name>mtdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>==</operator> <name>FORWARD</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><call><name>fwd_equiv</name><argument_list>(<argument><expr><name>ctdp</name></expr></argument>, <argument><expr><name>mtdp</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>ctdp</name><operator>-&gt;</operator><name>t_emark</name></name> <operator>=</operator> <name><name>ed</name><operator>-&gt;</operator><name>ed_cur_mark</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>mtdp</name><operator>-&gt;</operator><name>t_emark</name></name> <operator>=</operator> <name><name>ed</name><operator>-&gt;</operator><name>ed_cur_mark</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ed</name><operator>-&gt;</operator><name>ed_cur_mark</name></name><operator>++</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>equiv</name> <operator>=</operator> <name><name>tdesc_ops</name><index>[<expr><name><name>ctdp</name><operator>-&gt;</operator><name>t_type</name></name></expr>]</index></name><operator>.</operator><name>equiv</name><operator>)</operator> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><call><name>equiv</name><argument_list>(<argument><expr><name>ctdp</name></expr></argument>, <argument><expr><name>mtdp</name></expr></argument>, <argument><expr><name>ed</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>equiv_cb</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>bucket</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>equiv_data_t</name> <modifier>*</modifier></type><name>ed</name> <init>= <expr><name>arg</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>mtdp</name> <init>= <expr><name>bucket</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>ctdp</name> <init>= <expr><name><name>ed</name><operator>-&gt;</operator><name>ed_node</name></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>ed</name><operator>-&gt;</operator><name>ed_clear_mark</name></name> <operator>=</operator> <name><name>ed</name><operator>-&gt;</operator><name>ed_cur_mark</name></name> <operator>+</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ed</name><operator>-&gt;</operator><name>ed_cur_mark</name></name> <operator>=</operator> <name><name>ed</name><operator>-&gt;</operator><name>ed_clear_mark</name></name> <operator>+</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>equiv_node</name><argument_list>(<argument><expr><name>ctdp</name></expr></argument>, <argument><expr><name>mtdp</name></expr></argument>, <argument><expr><name>ed</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"equiv_node matched %d &lt;%x&gt; %d &lt;%x&gt;\n"</literal></expr></argument>,
+<argument><expr><name><name>ctdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>, <argument><expr><name><name>ctdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>, <argument><expr><name><name>mtdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>, <argument><expr><name><name>mtdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ed</name><operator>-&gt;</operator><name>ed_tgt</name></name> <operator>=</operator> <name>mtdp</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>map_td_tree_pre</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>ctdp</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier><modifier>*</modifier><name>ctdpp</name></type> <name>__unused</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>private</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>merge_cb_data_t</name> <modifier>*</modifier></type><name>mcd</name> <init>= <expr><name>private</name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>get_mapping</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_ta</name></name></expr></argument>, <argument><expr><name><name>ctdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>)</argument_list></call> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>map_td_tree_post</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>ctdp</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier><modifier>*</modifier><name>ctdpp</name></type> <name>__unused</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>private</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>merge_cb_data_t</name> <modifier>*</modifier></type><name>mcd</name> <init>= <expr><name>private</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>equiv_data_t</name></type> <name>ed</name></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>ed</name><operator>.</operator><name>ed_ta</name></name> <operator>=</operator> <name><name>mcd</name><operator>-&gt;</operator><name>md_ta</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ed</name><operator>.</operator><name>ed_clear_mark</name></name> <operator>=</operator> <name><name>mcd</name><operator>-&gt;</operator><name>md_parent</name><operator>-&gt;</operator><name>td_curemark</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ed</name><operator>.</operator><name>ed_cur_mark</name></name> <operator>=</operator> <name><name>mcd</name><operator>-&gt;</operator><name>md_parent</name><operator>-&gt;</operator><name>td_curemark</name></name> <operator>+</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ed</name><operator>.</operator><name>ed_node</name></name> <operator>=</operator> <name>ctdp</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ed</name><operator>.</operator><name>ed_selfuniquify</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"map_td_tree_post on %d &lt;%x&gt; %s\n"</literal></expr></argument>, <argument><expr><name><name>ctdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>, <argument><expr><name><name>ctdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>,<argument><expr><call><name>tdesc_name</name><argument_list>(<argument><expr><name>ctdp</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>hash_find_iter</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_parent</name><operator>-&gt;</operator><name>td_layouthash</name></name></expr></argument>, <argument><expr><name>ctdp</name></expr></argument>,
+<argument><expr><name>equiv_cb</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ed</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>ed</name><operator>.</operator><name>ed_tgt</name><operator>-&gt;</operator><name>t_type</name></name> <operator>==</operator> <name>FORWARD</name> <operator>&amp;&amp;</operator> <name><name>ctdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>!=</operator> <name>FORWARD</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>id</name> <init>= <expr><name><name>mcd</name><operator>-&gt;</operator><name>md_tgt</name><operator>-&gt;</operator><name>td_nextid</name></name><operator>++</operator></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"Creating new defn type %d &lt;%x&gt;\n"</literal></expr></argument>, <argument><expr><name>id</name></expr></argument>, <argument><expr><name>id</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>add_mapping</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_ta</name></name></expr></argument>, <argument><expr><name><name>ctdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>, <argument><expr><name>id</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>alist_add</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_fdida</name></name></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><operator>(</operator><name>ulong_t</name><operator>)</operator><name><name>ed</name><operator>.</operator><name>ed_tgt</name></name></expr></argument>,
+<argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><operator>(</operator><name>ulong_t</name><operator>)</operator><name>id</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>hash_add</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_tdtba</name></name></expr></argument>, <argument><expr><name>ctdp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>add_mapping</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_ta</name></name></expr></argument>, <argument><expr><name><name>ctdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>, <argument><expr><name><name>ed</name><operator>.</operator><name>ed_tgt</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>debug_level</name> <operator>&gt;</operator> <literal type="number">1</literal> <operator>&amp;&amp;</operator> <call><name>hash_iter</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_parent</name><operator>-&gt;</operator><name>td_idhash</name></name></expr></argument>,
+<argument><expr><name>equiv_cb</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ed</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>aborterr</name><argument_list>(<argument><expr><literal type="string">"Second pass for %d (%s) == %d\n"</literal></expr></argument>, <argument><expr><name><name>ctdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>,
+<argument><expr><call><name>tdesc_name</name><argument_list>(<argument><expr><name>ctdp</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name><name>ed</name><operator>.</operator><name>ed_tgt</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>id</name> <init>= <expr><name><name>mcd</name><operator>-&gt;</operator><name>md_tgt</name><operator>-&gt;</operator><name>td_nextid</name></name><operator>++</operator></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"Creating new type %d &lt;%x&gt;\n"</literal></expr></argument>, <argument><expr><name>id</name></expr></argument>, <argument><expr><name>id</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>add_mapping</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_ta</name></name></expr></argument>, <argument><expr><name><name>ctdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>, <argument><expr><name>id</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>hash_add</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_tdtba</name></name></expr></argument>, <argument><expr><name>ctdp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_parent</name><operator>-&gt;</operator><name>td_curemark</name></name> <operator>=</operator> <name><name>ed</name><operator>.</operator><name>ed_cur_mark</name></name> <operator>+</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>map_td_tree_self_post</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>ctdp</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier><modifier>*</modifier><name>ctdpp</name></type> <name>__unused</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>private</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>merge_cb_data_t</name> <modifier>*</modifier></type><name>mcd</name> <init>= <expr><name>private</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>equiv_data_t</name></type> <name>ed</name></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>ed</name><operator>.</operator><name>ed_ta</name></name> <operator>=</operator> <name><name>mcd</name><operator>-&gt;</operator><name>md_ta</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ed</name><operator>.</operator><name>ed_clear_mark</name></name> <operator>=</operator> <name><name>mcd</name><operator>-&gt;</operator><name>md_parent</name><operator>-&gt;</operator><name>td_curemark</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ed</name><operator>.</operator><name>ed_cur_mark</name></name> <operator>=</operator> <name><name>mcd</name><operator>-&gt;</operator><name>md_parent</name><operator>-&gt;</operator><name>td_curemark</name></name> <operator>+</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ed</name><operator>.</operator><name>ed_node</name></name> <operator>=</operator> <name>ctdp</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ed</name><operator>.</operator><name>ed_selfuniquify</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ed</name><operator>.</operator><name>ed_tgt</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>hash_find_iter</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_tdtba</name></name></expr></argument>, <argument><expr><name>ctdp</name></expr></argument>, <argument><expr><name>equiv_cb</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ed</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"Self check found %d &lt;%x&gt; in %d &lt;%x&gt;\n"</literal></expr></argument>, <argument><expr><name><name>ctdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>,
+<argument><expr><name><name>ctdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>, <argument><expr><name><name>ed</name><operator>.</operator><name>ed_tgt</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>, <argument><expr><name><name>ed</name><operator>.</operator><name>ed_tgt</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>add_mapping</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_ta</name></name></expr></argument>, <argument><expr><name><name>ctdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>,
+<argument><expr><call><name>get_mapping</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_ta</name></name></expr></argument>, <argument><expr><name><name>ed</name><operator>.</operator><name>ed_tgt</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>debug_level</name> <operator>&gt;</operator> <literal type="number">1</literal> <operator>&amp;&amp;</operator> <call><name>hash_iter</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_tdtba</name></name></expr></argument>,
+<argument><expr><name>equiv_cb</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ed</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>aborterr</name><argument_list>(<argument><expr><literal type="string">"Self-unique second pass for %d &lt;%x&gt; (%s) == %d &lt;%x&gt;\n"</literal></expr></argument>,
+<argument><expr><name><name>ctdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>, <argument><expr><name><name>ctdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>, <argument><expr><call><name>tdesc_name</name><argument_list>(<argument><expr><name>ctdp</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name><name>ed</name><operator>.</operator><name>ed_tgt</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>,
+<argument><expr><name><name>ed</name><operator>.</operator><name>ed_tgt</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>id</name> <init>= <expr><name><name>mcd</name><operator>-&gt;</operator><name>md_tgt</name><operator>-&gt;</operator><name>td_nextid</name></name><operator>++</operator></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"Creating new type %d &lt;%x&gt;\n"</literal></expr></argument>, <argument><expr><name>id</name></expr></argument>, <argument><expr><name>id</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>add_mapping</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_ta</name></name></expr></argument>, <argument><expr><name><name>ctdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>, <argument><expr><name>id</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>hash_add</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_tdtba</name></name></expr></argument>, <argument><expr><name>ctdp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_parent</name><operator>-&gt;</operator><name>td_curemark</name></name> <operator>=</operator> <name><name>ed</name><operator>.</operator><name>ed_cur_mark</name></name> <operator>+</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<decl_stmt><decl><type><specifier>static</specifier> <name>tdtrav_cb_f</name></type> <name><name>map_pre</name><index>[]</index></name> <init>= <expr><block>{
+<expr><name>NULL</name></expr>,
+<expr><name>map_td_tree_pre</name></expr>,
+<expr><name>map_td_tree_pre</name></expr>,
+<expr><name>map_td_tree_pre</name></expr>,
+<expr><name>map_td_tree_pre</name></expr>,
+<expr><name>map_td_tree_pre</name></expr>,
+<expr><name>map_td_tree_pre</name></expr>,
+<expr><name>map_td_tree_pre</name></expr>,
+<expr><name>map_td_tree_pre</name></expr>,
+<expr><name>map_td_tree_pre</name></expr>,
+<expr><name>tdtrav_assert</name></expr>,
+<expr><name>map_td_tree_pre</name></expr>,
+<expr><name>map_td_tree_pre</name></expr>,
+<expr><name>map_td_tree_pre</name></expr>
+}</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>tdtrav_cb_f</name></type> <name><name>map_post</name><index>[]</index></name> <init>= <expr><block>{
+<expr><name>NULL</name></expr>,
+<expr><name>map_td_tree_post</name></expr>,
+<expr><name>map_td_tree_post</name></expr>,
+<expr><name>map_td_tree_post</name></expr>,
+<expr><name>map_td_tree_post</name></expr>,
+<expr><name>map_td_tree_post</name></expr>,
+<expr><name>map_td_tree_post</name></expr>,
+<expr><name>map_td_tree_post</name></expr>,
+<expr><name>map_td_tree_post</name></expr>,
+<expr><name>map_td_tree_post</name></expr>,
+<expr><name>tdtrav_assert</name></expr>,
+<expr><name>map_td_tree_post</name></expr>,
+<expr><name>map_td_tree_post</name></expr>,
+<expr><name>map_td_tree_post</name></expr>
+}</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>tdtrav_cb_f</name></type> <name><name>map_self_post</name><index>[]</index></name> <init>= <expr><block>{
+<expr><name>NULL</name></expr>,
+<expr><name>map_td_tree_self_post</name></expr>,
+<expr><name>map_td_tree_self_post</name></expr>,
+<expr><name>map_td_tree_self_post</name></expr>,
+<expr><name>map_td_tree_self_post</name></expr>,
+<expr><name>map_td_tree_self_post</name></expr>,
+<expr><name>map_td_tree_self_post</name></expr>,
+<expr><name>map_td_tree_self_post</name></expr>,
+<expr><name>map_td_tree_self_post</name></expr>,
+<expr><name>map_td_tree_self_post</name></expr>,
+<expr><name>tdtrav_assert</name></expr>,
+<expr><name>map_td_tree_self_post</name></expr>,
+<expr><name>map_td_tree_self_post</name></expr>,
+<expr><name>map_td_tree_self_post</name></expr>
+}</block></expr></init></decl>;</decl_stmt>
+<typedef>typedef <type><struct>struct <name>iifind_data</name> <block>{
+<decl_stmt><decl><type><name>iidesc_t</name> <modifier>*</modifier></type><name>iif_template</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>alist_t</name> <modifier>*</modifier></type><name>iif_ta</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>iif_newidx</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>iif_refmerge</name></decl>;</decl_stmt>
+}</block></struct></type> <name>iifind_data_t</name>;</typedef>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>iidesc_match</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>data</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>iidesc_t</name> <modifier>*</modifier></type><name>node</name> <init>= <expr><name>data</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>iifind_data_t</name> <modifier>*</modifier></type><name>iif</name> <init>= <expr><name>arg</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>node</name><operator>-&gt;</operator><name>ii_type</name></name> <operator>!=</operator> <name><name>iif</name><operator>-&gt;</operator><name>iif_template</name><operator>-&gt;</operator><name>ii_type</name></name> <operator>||</operator>
+<operator>!</operator><call><name>streq</name><argument_list>(<argument><expr><name><name>node</name><operator>-&gt;</operator><name>ii_name</name></name></expr></argument>, <argument><expr><name><name>iif</name><operator>-&gt;</operator><name>iif_template</name><operator>-&gt;</operator><name>ii_name</name></name></expr></argument>)</argument_list></call> <operator>||</operator>
+<name><name>node</name><operator>-&gt;</operator><name>ii_dtype</name><operator>-&gt;</operator><name>t_id</name></name> <operator>!=</operator> <name><name>iif</name><operator>-&gt;</operator><name>iif_newidx</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>node</name><operator>-&gt;</operator><name>ii_type</name></name> <operator>==</operator> <name>II_SVAR</name> <operator>||</operator> <name><name>node</name><operator>-&gt;</operator><name>ii_type</name></name> <operator>==</operator> <name>II_SFUN</name><operator>)</operator> <operator>&amp;&amp;</operator>
+<operator>!</operator><call><name>streq</name><argument_list>(<argument><expr><name><name>node</name><operator>-&gt;</operator><name>ii_owner</name></name></expr></argument>, <argument><expr><name><name>iif</name><operator>-&gt;</operator><name>iif_template</name><operator>-&gt;</operator><name>ii_owner</name></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>node</name><operator>-&gt;</operator><name>ii_nargs</name></name> <operator>!=</operator> <name><name>iif</name><operator>-&gt;</operator><name>iif_template</name><operator>-&gt;</operator><name>ii_nargs</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name><name>node</name><operator>-&gt;</operator><name>ii_nargs</name></name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>get_mapping</name><argument_list>(<argument><expr><name><name>iif</name><operator>-&gt;</operator><name>iif_ta</name></name></expr></argument>,
+<argument><expr><name><name>iif</name><operator>-&gt;</operator><name>iif_template</name><operator>-&gt;</operator><name>ii_args</name><index>[<expr><name>i</name></expr>]</index></name><operator>-&gt;</operator><name>t_id</name></expr></argument>)</argument_list></call> <operator>!=</operator>
+<name><name>node</name><operator>-&gt;</operator><name>ii_args</name><index>[<expr><name>i</name></expr>]</index></name><operator>-&gt;</operator><name>t_id</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></for>
+<if_stmt><if>if <condition>(<expr><name><name>iif</name><operator>-&gt;</operator><name>iif_refmerge</name></name></expr>)</condition> <block>{<block_content>
+<switch>switch <condition>(<expr><name><name>iif</name><operator>-&gt;</operator><name>iif_template</name><operator>-&gt;</operator><name>ii_type</name></name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>II_GFUN</name></expr>:</case>
+<case>case <expr><name>II_SFUN</name></expr>:</case>
+<case>case <expr><name>II_GVAR</name></expr>:</case>
+<case>case <expr><name>II_SVAR</name></expr>:</case>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"suppressing duping of %d %s from %s\n"</literal></expr></argument>,
+<argument><expr><name><name>iif</name><operator>-&gt;</operator><name>iif_template</name><operator>-&gt;</operator><name>ii_type</name></name></expr></argument>,
+<argument><expr><name><name>iif</name><operator>-&gt;</operator><name>iif_template</name><operator>-&gt;</operator><name>ii_name</name></name></expr></argument>,
+<argument><expr><operator>(</operator><ternary><condition><expr><name><name>iif</name><operator>-&gt;</operator><name>iif_template</name><operator>-&gt;</operator><name>ii_owner</name></name></expr> ?</condition><then>
+<expr><name><name>iif</name><operator>-&gt;</operator><name>iif_template</name><operator>-&gt;</operator><name>ii_owner</name></name></expr> </then><else>: <expr><literal type="string">"NULL"</literal></expr></else></ternary><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+<case>case <expr><name>II_NOT</name></expr>:</case>
+<case>case <expr><name>II_PSYM</name></expr>:</case>
+<case>case <expr><name>II_SOU</name></expr>:</case>
+<case>case <expr><name>II_TYPE</name></expr>:</case>
+<break>break;</break>
+</block_content>}</block></switch>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>merge_type_cb</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>data</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>iidesc_t</name> <modifier>*</modifier></type><name>sii</name> <init>= <expr><name>data</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>merge_cb_data_t</name> <modifier>*</modifier></type><name>mcd</name> <init>= <expr><name>arg</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>iifind_data_t</name></type> <name>iif</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>tdtrav_cb_f</name> <modifier>*</modifier></type><name>post</name></decl>;</decl_stmt>
+<expr_stmt><expr><name>post</name> <operator>=</operator> <operator>(</operator><ternary><condition><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_flags</name></name> <operator>&amp;</operator> <name>MCD_F_SELFUNIQUIFY</name></expr> ?</condition><then> <expr><name>map_self_post</name></expr> </then><else>: <expr><name>map_post</name></expr></else></ternary><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>iitraverse</name><argument_list>(<argument><expr><name>sii</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>mcd</name><operator>-&gt;</operator><name>md_parent</name><operator>-&gt;</operator><name>td_curvgen</name></name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>map_pre</name></expr></argument>, <argument><expr><name>post</name></expr></argument>,
+<argument><expr><name>mcd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>iif</name><operator>.</operator><name>iif_template</name></name> <operator>=</operator> <name>sii</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>iif</name><operator>.</operator><name>iif_ta</name></name> <operator>=</operator> <name><name>mcd</name><operator>-&gt;</operator><name>md_ta</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>iif</name><operator>.</operator><name>iif_newidx</name></name> <operator>=</operator> <call><name>get_mapping</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_ta</name></name></expr></argument>, <argument><expr><name><name>sii</name><operator>-&gt;</operator><name>ii_dtype</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>iif</name><operator>.</operator><name>iif_refmerge</name></name> <operator>=</operator> <operator>(</operator><name><name>mcd</name><operator>-&gt;</operator><name>md_flags</name></name> <operator>&amp;</operator> <name>MCD_F_REFMERGE</name><operator>)</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>hash_match</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_parent</name><operator>-&gt;</operator><name>td_iihash</name></name></expr></argument>, <argument><expr><name>sii</name></expr></argument>, <argument><expr><name>iidesc_match</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>iif</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"tba %s (%d)\n"</literal></expr></argument>, <argument><expr><operator>(</operator><ternary><condition><expr><name><name>sii</name><operator>-&gt;</operator><name>ii_name</name></name></expr> ?</condition><then> <expr><name><name>sii</name><operator>-&gt;</operator><name>ii_name</name></name></expr> </then><else>: <expr><literal type="string">"(anon)"</literal></expr></else></ternary><operator>)</operator></expr></argument>,
+<argument><expr><name><name>sii</name><operator>-&gt;</operator><name>ii_type</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>list_add</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_iitba</name></name></expr></argument>, <argument><expr><name>sii</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>remap_node</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>tgtp</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>oldtgt</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>selftid</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>newself</name></decl></parameter>,
+<parameter><decl><type><name>merge_cb_data_t</name> <modifier>*</modifier></type><name>mcd</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>tgt</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>tdesc_t</name></type> <name>template</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>oldid</name> <init>= <expr><name><name>oldtgt</name><operator>-&gt;</operator><name>t_id</name></name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>oldid</name> <operator>==</operator> <name>selftid</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>tgtp</name> <operator>=</operator> <name>newself</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>template</name><operator>.</operator><name>t_id</name></name> <operator>=</operator> <call><name>get_mapping</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_ta</name></name></expr></argument>, <argument><expr><name>oldid</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>aborterr</name><argument_list>(<argument><expr><literal type="string">"failed to get mapping for tid %d &lt;%x&gt;\n"</literal></expr></argument>, <argument><expr><name>oldid</name></expr></argument>, <argument><expr><name>oldid</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>hash_find</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_parent</name><operator>-&gt;</operator><name>td_idhash</name></name></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><operator>&amp;</operator><name>template</name></expr></argument>,
+<argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><operator>&amp;</operator><name>tgt</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <operator>(</operator><operator>!</operator><operator>(</operator><name><name>mcd</name><operator>-&gt;</operator><name>md_flags</name></name> <operator>&amp;</operator> <name>MCD_F_REFMERGE</name><operator>)</operator> <operator>||</operator>
+<operator>!</operator><call><name>hash_find</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_tgt</name><operator>-&gt;</operator><name>td_idhash</name></name></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><operator>&amp;</operator><name>template</name></expr></argument>,
+<argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><operator>&amp;</operator><name>tgt</name></expr></argument>)</argument_list></call><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"Remap couldn't find %d &lt;%x&gt; (from %d &lt;%x&gt;)\n"</literal></expr></argument>, <argument><expr><name><name>template</name><operator>.</operator><name>t_id</name></name></expr></argument>,
+<argument><expr><name><name>template</name><operator>.</operator><name>t_id</name></name></expr></argument>, <argument><expr><name>oldid</name></expr></argument>, <argument><expr><name>oldid</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>tgtp</name> <operator>=</operator> <name>oldtgt</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>list_add</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_tdtbr</name></name></expr></argument>, <argument><expr><name>tgtp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><operator>*</operator><name>tgtp</name> <operator>=</operator> <name>tgt</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>tdesc_t</name> <modifier>*</modifier></type>
+<name>conjure_template</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>old</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>newselfid</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>new</name> <init>= <expr><call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>tdesc_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>new</name><operator>-&gt;</operator><name>t_name</name></name> <operator>=</operator> <ternary><condition><expr><name><name>old</name><operator>-&gt;</operator><name>t_name</name></name></expr> ?</condition><then> <expr><call><name>xstrdup</name><argument_list>(<argument><expr><name><name>old</name><operator>-&gt;</operator><name>t_name</name></name></expr></argument>)</argument_list></call></expr> </then><else>: <expr><name>NULL</name></expr></else></ternary></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>new</name><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name><name>old</name><operator>-&gt;</operator><name>t_type</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>new</name><operator>-&gt;</operator><name>t_size</name></name> <operator>=</operator> <name><name>old</name><operator>-&gt;</operator><name>t_size</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>new</name><operator>-&gt;</operator><name>t_id</name></name> <operator>=</operator> <name>newselfid</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>new</name><operator>-&gt;</operator><name>t_flags</name></name> <operator>=</operator> <name><name>old</name><operator>-&gt;</operator><name>t_flags</name></name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>new</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>tdesc_t</name> <modifier>*</modifier></type>
+<name>conjure_intrinsic</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>old</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>newselfid</name></decl></parameter>, <parameter><decl><type><name>merge_cb_data_t</name> <modifier>*</modifier><name>mcd</name></type> <name>__unused</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>new</name> <init>= <expr><call><name>conjure_template</name><argument_list>(<argument><expr><name>old</name></expr></argument>, <argument><expr><name>newselfid</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>new</name><operator>-&gt;</operator><name>t_intr</name></name> <operator>=</operator> <call><name>xmalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>intr_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>bcopy</name><argument_list>(<argument><expr><name><name>old</name><operator>-&gt;</operator><name>t_intr</name></name></expr></argument>, <argument><expr><name><name>new</name><operator>-&gt;</operator><name>t_intr</name></name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>intr_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>new</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>tdesc_t</name> <modifier>*</modifier></type>
+<name>conjure_plain</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>old</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>newselfid</name></decl></parameter>, <parameter><decl><type><name>merge_cb_data_t</name> <modifier>*</modifier></type><name>mcd</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>new</name> <init>= <expr><call><name>conjure_template</name><argument_list>(<argument><expr><name>old</name></expr></argument>, <argument><expr><name>newselfid</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>remap_node</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>new</name><operator>-&gt;</operator><name>t_tdesc</name></name></expr></argument>, <argument><expr><name><name>old</name><operator>-&gt;</operator><name>t_tdesc</name></name></expr></argument>, <argument><expr><name><name>old</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>, <argument><expr><name>new</name></expr></argument>, <argument><expr><name>mcd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>new</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>tdesc_t</name> <modifier>*</modifier></type>
+<name>conjure_function</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>old</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>newselfid</name></decl></parameter>, <parameter><decl><type><name>merge_cb_data_t</name> <modifier>*</modifier></type><name>mcd</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>new</name> <init>= <expr><call><name>conjure_template</name><argument_list>(<argument><expr><name>old</name></expr></argument>, <argument><expr><name>newselfid</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>fndef_t</name> <modifier>*</modifier></type><name>nfn</name> <init>= <expr><call><name>xmalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>fndef_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>fndef_t</name> <modifier>*</modifier></type><name>ofn</name> <init>= <expr><name><name>old</name><operator>-&gt;</operator><name>t_fndef</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>remap_node</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>nfn</name><operator>-&gt;</operator><name>fn_ret</name></name></expr></argument>, <argument><expr><name><name>ofn</name><operator>-&gt;</operator><name>fn_ret</name></name></expr></argument>, <argument><expr><name><name>old</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>, <argument><expr><name>new</name></expr></argument>, <argument><expr><name>mcd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>nfn</name><operator>-&gt;</operator><name>fn_nargs</name></name> <operator>=</operator> <name><name>ofn</name><operator>-&gt;</operator><name>fn_nargs</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>nfn</name><operator>-&gt;</operator><name>fn_vargs</name></name> <operator>=</operator> <name><name>ofn</name><operator>-&gt;</operator><name>fn_vargs</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>nfn</name><operator>-&gt;</operator><name>fn_nargs</name></name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>nfn</name><operator>-&gt;</operator><name>fn_args</name></name> <operator>=</operator> <call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>tdesc_t</name> <operator>*</operator></expr></argument>)</argument_list></sizeof> <operator>*</operator> <name><name>ofn</name><operator>-&gt;</operator><name>fn_nargs</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <operator>(</operator><name>int</name><operator>)</operator> <name><name>ofn</name><operator>-&gt;</operator><name>fn_nargs</name></name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>remap_node</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>nfn</name><operator>-&gt;</operator><name>fn_args</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><name><name>ofn</name><operator>-&gt;</operator><name>fn_args</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><name><name>old</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>,
+<argument><expr><name>new</name></expr></argument>, <argument><expr><name>mcd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><name><name>new</name><operator>-&gt;</operator><name>t_fndef</name></name> <operator>=</operator> <name>nfn</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>new</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>tdesc_t</name> <modifier>*</modifier></type>
+<name>conjure_array</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>old</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>newselfid</name></decl></parameter>, <parameter><decl><type><name>merge_cb_data_t</name> <modifier>*</modifier></type><name>mcd</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>new</name> <init>= <expr><call><name>conjure_template</name><argument_list>(<argument><expr><name>old</name></expr></argument>, <argument><expr><name>newselfid</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ardef_t</name> <modifier>*</modifier></type><name>nar</name> <init>= <expr><call><name>xmalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>ardef_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ardef_t</name> <modifier>*</modifier></type><name>oar</name> <init>= <expr><name><name>old</name><operator>-&gt;</operator><name>t_ardef</name></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>remap_node</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>nar</name><operator>-&gt;</operator><name>ad_contents</name></name></expr></argument>, <argument><expr><name><name>oar</name><operator>-&gt;</operator><name>ad_contents</name></name></expr></argument>, <argument><expr><name><name>old</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>, <argument><expr><name>new</name></expr></argument>,
+<argument><expr><name>mcd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>remap_node</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>nar</name><operator>-&gt;</operator><name>ad_idxtype</name></name></expr></argument>, <argument><expr><name><name>oar</name><operator>-&gt;</operator><name>ad_idxtype</name></name></expr></argument>, <argument><expr><name><name>old</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>, <argument><expr><name>new</name></expr></argument>,
+<argument><expr><name>mcd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>nar</name><operator>-&gt;</operator><name>ad_nelems</name></name> <operator>=</operator> <name><name>oar</name><operator>-&gt;</operator><name>ad_nelems</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>new</name><operator>-&gt;</operator><name>t_ardef</name></name> <operator>=</operator> <name>nar</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>new</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>tdesc_t</name> <modifier>*</modifier></type>
+<name>conjure_su</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>old</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>newselfid</name></decl></parameter>, <parameter><decl><type><name>merge_cb_data_t</name> <modifier>*</modifier></type><name>mcd</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>new</name> <init>= <expr><call><name>conjure_template</name><argument_list>(<argument><expr><name>old</name></expr></argument>, <argument><expr><name>newselfid</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>mlist_t</name> <modifier>*</modifier></type><name>omem</name></decl>, <decl><type ref="prev"><modifier>*</modifier><modifier>*</modifier></type><name>nmemp</name></decl>;</decl_stmt>
+<for>for <control>(<init><expr><name>omem</name> <operator>=</operator> <name><name>old</name><operator>-&gt;</operator><name>t_members</name></name></expr><operator>,</operator> <expr><name>nmemp</name> <operator>=</operator> <operator>&amp;</operator><name><name>new</name><operator>-&gt;</operator><name>t_members</name></name></expr>;</init>
+<condition><expr><name>omem</name></expr>;</condition> <incr><expr><name>omem</name> <operator>=</operator> <name><name>omem</name><operator>-&gt;</operator><name>ml_next</name></name></expr><operator>,</operator> <expr><name>nmemp</name> <operator>=</operator> <operator>&amp;</operator><operator>(</operator><name><operator>(</operator><operator>*</operator><name>nmemp</name><operator>)</operator><operator>-&gt;</operator><name>ml_next</name></name><operator>)</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>nmemp</name> <operator>=</operator> <call><name>xmalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>mlist_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>nmemp</name><operator>)</operator><operator>-&gt;</operator><name>ml_offset</name></name> <operator>=</operator> <name><name>omem</name><operator>-&gt;</operator><name>ml_offset</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>nmemp</name><operator>)</operator><operator>-&gt;</operator><name>ml_size</name></name> <operator>=</operator> <name><name>omem</name><operator>-&gt;</operator><name>ml_size</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>nmemp</name><operator>)</operator><operator>-&gt;</operator><name>ml_name</name></name> <operator>=</operator> <call><name>xstrdup</name><argument_list>(<argument><expr><ternary><condition><expr><name><name>omem</name><operator>-&gt;</operator><name>ml_name</name></name></expr> ?</condition><then> <expr><name><name>omem</name><operator>-&gt;</operator><name>ml_name</name></name></expr> </then><else>: <expr><literal type="string">"empty omem-&gt;ml_name"</literal></expr></else></ternary></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>remap_node</name><argument_list>(<argument><expr><operator>&amp;</operator><operator>(</operator><name><operator>(</operator><operator>*</operator><name>nmemp</name><operator>)</operator><operator>-&gt;</operator><name>ml_type</name></name><operator>)</operator></expr></argument>, <argument><expr><name><name>omem</name><operator>-&gt;</operator><name>ml_type</name></name></expr></argument>,
+<argument><expr><name><name>old</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>, <argument><expr><name>new</name></expr></argument>, <argument><expr><name>mcd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><operator>*</operator><name>nmemp</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>new</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>tdesc_t</name> <modifier>*</modifier></type>
+<name>conjure_enum</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>old</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>newselfid</name></decl></parameter>, <parameter><decl><type><name>merge_cb_data_t</name> <modifier>*</modifier><name>mcd</name></type> <name>__unused</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>new</name> <init>= <expr><call><name>conjure_template</name><argument_list>(<argument><expr><name>old</name></expr></argument>, <argument><expr><name>newselfid</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>elist_t</name> <modifier>*</modifier></type><name>oel</name></decl>, <decl><type ref="prev"><modifier>*</modifier><modifier>*</modifier></type><name>nelp</name></decl>;</decl_stmt>
+<for>for <control>(<init><expr><name>oel</name> <operator>=</operator> <name><name>old</name><operator>-&gt;</operator><name>t_emem</name></name></expr><operator>,</operator> <expr><name>nelp</name> <operator>=</operator> <operator>&amp;</operator><name><name>new</name><operator>-&gt;</operator><name>t_emem</name></name></expr>;</init>
+<condition><expr><name>oel</name></expr>;</condition> <incr><expr><name>oel</name> <operator>=</operator> <name><name>oel</name><operator>-&gt;</operator><name>el_next</name></name></expr><operator>,</operator> <expr><name>nelp</name> <operator>=</operator> <operator>&amp;</operator><operator>(</operator><name><operator>(</operator><operator>*</operator><name>nelp</name><operator>)</operator><operator>-&gt;</operator><name>el_next</name></name><operator>)</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>nelp</name> <operator>=</operator> <call><name>xmalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>elist_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>nelp</name><operator>)</operator><operator>-&gt;</operator><name>el_name</name></name> <operator>=</operator> <call><name>xstrdup</name><argument_list>(<argument><expr><name><name>oel</name><operator>-&gt;</operator><name>el_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>nelp</name><operator>)</operator><operator>-&gt;</operator><name>el_number</name></name> <operator>=</operator> <name><name>oel</name><operator>-&gt;</operator><name>el_number</name></name></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><operator>*</operator><name>nelp</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>new</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>tdesc_t</name> <modifier>*</modifier></type>
+<name>conjure_forward</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>old</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>newselfid</name></decl></parameter>, <parameter><decl><type><name>merge_cb_data_t</name> <modifier>*</modifier></type><name>mcd</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>new</name> <init>= <expr><call><name>conjure_template</name><argument_list>(<argument><expr><name>old</name></expr></argument>, <argument><expr><name>newselfid</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>list_add</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>mcd</name><operator>-&gt;</operator><name>md_tgt</name><operator>-&gt;</operator><name>td_fwdlist</name></name></expr></argument>, <argument><expr><name>new</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>new</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>tdesc_t</name> <modifier>*</modifier></type>
+<name>conjure_assert</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier><name>old</name></type> <name>__unused</name></decl></parameter>, <parameter><decl><type><name>int</name> <name>newselfid</name></type> <name>__unused</name></decl></parameter>, <parameter><decl><type><name>merge_cb_data_t</name> <modifier>*</modifier><name>mcd</name></type> <name>__unused</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><literal type="number">1</literal> <operator>==</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>iidesc_t</name> <modifier>*</modifier></type>
+<name>conjure_iidesc</name><parameter_list>(<parameter><decl><type><name>iidesc_t</name> <modifier>*</modifier></type><name>old</name></decl></parameter>, <parameter><decl><type><name>merge_cb_data_t</name> <modifier>*</modifier></type><name>mcd</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>iidesc_t</name> <modifier>*</modifier></type><name>new</name> <init>= <expr><call><name>iidesc_dup</name><argument_list>(<argument><expr><name>old</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>remap_node</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>new</name><operator>-&gt;</operator><name>ii_dtype</name></name></expr></argument>, <argument><expr><name><name>old</name><operator>-&gt;</operator><name>ii_dtype</name></name></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>mcd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name><name>new</name><operator>-&gt;</operator><name>ii_nargs</name></name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>remap_node</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>new</name><operator>-&gt;</operator><name>ii_args</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><name><name>old</name><operator>-&gt;</operator><name>ii_args</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>,
+<argument><expr><name>mcd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+<return>return <expr><operator>(</operator><name>new</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>fwd_redir</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>fwd</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>fwdp</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>private</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>alist_t</name> <modifier>*</modifier></type><name>map</name> <init>= <expr><name>private</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>defn</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>alist_find</name><argument_list>(<argument><expr><name>map</name></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name>fwd</name></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>*</operator><operator>)</operator><operator>&amp;</operator><name>defn</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"Redirecting an edge to %s\n"</literal></expr></argument>, <argument><expr><call><name>tdesc_name</name><argument_list>(<argument><expr><name>defn</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>fwdp</name> <operator>=</operator> <name>defn</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<decl_stmt><decl><type><specifier>static</specifier> <name>tdtrav_cb_f</name></type> <name><name>fwd_redir_cbs</name><index>[]</index></name> <init>= <expr><block>{
+<expr><name>NULL</name></expr>,
+<expr><name>NULL</name></expr>,
+<expr><name>NULL</name></expr>,
+<expr><name>NULL</name></expr>,
+<expr><name>NULL</name></expr>,
+<expr><name>NULL</name></expr>,
+<expr><name>NULL</name></expr>,
+<expr><name>NULL</name></expr>,
+<expr><name>fwd_redir</name></expr>,
+<expr><name>NULL</name></expr>,
+<expr><name>tdtrav_assert</name></expr>,
+<expr><name>NULL</name></expr>,
+<expr><name>NULL</name></expr>,
+<expr><name>NULL</name></expr>
+}</block></expr></init></decl>;</decl_stmt>
+<typedef>typedef <type><struct>struct <name>redir_mstr_data</name> <block>{
+<decl_stmt><decl><type><name>tdata_t</name> <modifier>*</modifier></type><name>rmd_tgt</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>alist_t</name> <modifier>*</modifier></type><name>rmd_map</name></decl>;</decl_stmt>
+}</block></struct></type> <name>redir_mstr_data_t</name>;</typedef>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>redir_mstr_fwd_cb</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>name</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>value</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>fwd</name> <init>= <expr><name>name</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>defnid</name> <init>= <expr><operator>(</operator><name>uintptr_t</name><operator>)</operator><name>value</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>redir_mstr_data_t</name> <modifier>*</modifier></type><name>rmd</name> <init>= <expr><name>arg</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>tdesc_t</name></type> <name>template</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>defn</name></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>template</name><operator>.</operator><name>t_id</name></name> <operator>=</operator> <name>defnid</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>hash_find</name><argument_list>(<argument><expr><name><name>rmd</name><operator>-&gt;</operator><name>rmd_tgt</name><operator>-&gt;</operator><name>td_idhash</name></name></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><operator>&amp;</operator><name>template</name></expr></argument>,
+<argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><operator>&amp;</operator><name>defn</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>aborterr</name><argument_list>(<argument><expr><literal type="string">"Couldn't unforward %d (%s)\n"</literal></expr></argument>, <argument><expr><name>defnid</name></expr></argument>,
+<argument><expr><call><name>tdesc_name</name><argument_list>(<argument><expr><name>defn</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"Forward map: resolved %d to %s\n"</literal></expr></argument>, <argument><expr><name>defnid</name></expr></argument>, <argument><expr><call><name>tdesc_name</name><argument_list>(<argument><expr><name>defn</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>alist_add</name><argument_list>(<argument><expr><name><name>rmd</name><operator>-&gt;</operator><name>rmd_map</name></name></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name>fwd</name></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name>defn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>redir_mstr_fwds</name><parameter_list>(<parameter><decl><type><name>merge_cb_data_t</name> <modifier>*</modifier></type><name>mcd</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>redir_mstr_data_t</name></type> <name>rmd</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>alist_t</name> <modifier>*</modifier></type><name>map</name> <init>= <expr><call><name>alist_new</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>rmd</name><operator>.</operator><name>rmd_tgt</name></name> <operator>=</operator> <name><name>mcd</name><operator>-&gt;</operator><name>md_tgt</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>rmd</name><operator>.</operator><name>rmd_map</name></name> <operator>=</operator> <name>map</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>alist_iter</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_fdida</name></name></expr></argument>, <argument><expr><name>redir_mstr_fwd_cb</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>rmd</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>iitraverse_hash</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_tgt</name><operator>-&gt;</operator><name>td_iihash</name></name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name><name>mcd</name><operator>-&gt;</operator><name>md_tgt</name><operator>-&gt;</operator><name>td_curvgen</name></name></expr></argument>, <argument><expr><name>fwd_redir_cbs</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>map</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>alist_free</name><argument_list>(<argument><expr><name>map</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>add_iitba_cb</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>data</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>private</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>merge_cb_data_t</name> <modifier>*</modifier></type><name>mcd</name> <init>= <expr><name>private</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>iidesc_t</name> <modifier>*</modifier></type><name>tba</name> <init>= <expr><name>data</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>iidesc_t</name> <modifier>*</modifier></type><name>new</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>iifind_data_t</name></type> <name>iif</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>newidx</name></decl>;</decl_stmt>
+<expr_stmt><expr><name>newidx</name> <operator>=</operator> <call><name>get_mapping</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_ta</name></name></expr></argument>, <argument><expr><name><name>tba</name><operator>-&gt;</operator><name>ii_dtype</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>newidx</name> <operator>!=</operator> <operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>list_remove</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_iitba</name></name></expr></argument>, <argument><expr><name>data</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>iif</name><operator>.</operator><name>iif_template</name></name> <operator>=</operator> <name>tba</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>iif</name><operator>.</operator><name>iif_ta</name></name> <operator>=</operator> <name><name>mcd</name><operator>-&gt;</operator><name>md_ta</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>iif</name><operator>.</operator><name>iif_newidx</name></name> <operator>=</operator> <name>newidx</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>iif</name><operator>.</operator><name>iif_refmerge</name></name> <operator>=</operator> <operator>(</operator><name><name>mcd</name><operator>-&gt;</operator><name>md_flags</name></name> <operator>&amp;</operator> <name>MCD_F_REFMERGE</name><operator>)</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>hash_match</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_parent</name><operator>-&gt;</operator><name>td_iihash</name></name></expr></argument>, <argument><expr><name>tba</name></expr></argument>, <argument><expr><name>iidesc_match</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>iif</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"iidesc_t %s already exists\n"</literal></expr></argument>,
+<argument><expr><operator>(</operator><ternary><condition><expr><name><name>tba</name><operator>-&gt;</operator><name>ii_name</name></name></expr> ?</condition><then> <expr><name><name>tba</name><operator>-&gt;</operator><name>ii_name</name></name></expr> </then><else>: <expr><literal type="string">"(anon)"</literal></expr></else></ternary><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>new</name> <operator>=</operator> <call><name>conjure_iidesc</name><argument_list>(<argument><expr><name>tba</name></expr></argument>, <argument><expr><name>mcd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>hash_add</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_tgt</name><operator>-&gt;</operator><name>td_iihash</name></name></expr></argument>, <argument><expr><name>new</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>add_tdesc</name><parameter_list>(<parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>oldtdp</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>newid</name></decl></parameter>, <parameter><decl><type><name>merge_cb_data_t</name> <modifier>*</modifier></type><name>mcd</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>newtdp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>tdesc_t</name></type> <name>template</name></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>template</name><operator>.</operator><name>t_id</name></name> <operator>=</operator> <name>newid</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><call><name>hash_find</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_parent</name><operator>-&gt;</operator><name>td_idhash</name></name></expr></argument>,
+<argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><operator>&amp;</operator><name>template</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"trying to conjure %d %s (%d, &lt;%x&gt;) as %d, &lt;%x&gt;\n"</literal></expr></argument>,
+<argument><expr><name><name>oldtdp</name><operator>-&gt;</operator><name>t_type</name></name></expr></argument>, <argument><expr><call><name>tdesc_name</name><argument_list>(<argument><expr><name>oldtdp</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name><name>oldtdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>,
+<argument><expr><name><name>oldtdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>, <argument><expr><name>newid</name></expr></argument>, <argument><expr><name>newid</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>newtdp</name> <operator>=</operator> <name><name>tdesc_ops</name><index>[<expr><name><name>oldtdp</name><operator>-&gt;</operator><name>t_type</name></name></expr>]</index></name><operator>.</operator><call><name>conjure</name><argument_list>(<argument><expr><name>oldtdp</name></expr></argument>, <argument><expr><name>newid</name></expr></argument>,
+<argument><expr><name>mcd</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"succeeded\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>hash_add</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_tgt</name><operator>-&gt;</operator><name>td_idhash</name></name></expr></argument>, <argument><expr><name>newtdp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>hash_add</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_tgt</name><operator>-&gt;</operator><name>td_layouthash</name></name></expr></argument>, <argument><expr><name>newtdp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>add_tdtba_cb</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>data</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>tdp</name> <init>= <expr><name>data</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>merge_cb_data_t</name> <modifier>*</modifier></type><name>mcd</name> <init>= <expr><name>arg</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>newid</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>rc</name></decl>;</decl_stmt>
+<expr_stmt><expr><name>newid</name> <operator>=</operator> <call><name>get_mapping</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_ta</name></name></expr></argument>, <argument><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>newid</name> <operator>!=</operator> <operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>rc</name> <operator>=</operator> <call><name>add_tdesc</name><argument_list>(<argument><expr><name>tdp</name></expr></argument>, <argument><expr><name>newid</name></expr></argument>, <argument><expr><name>mcd</name></expr></argument>)</argument_list></call><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>hash_remove</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_tdtba</name></name></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name>tdp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>rc</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>add_tdtbr_cb</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>data</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>tdpp</name> <init>= <expr><name>data</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>merge_cb_data_t</name> <modifier>*</modifier></type><name>mcd</name> <init>= <expr><name>arg</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"Remapping %s (%d)\n"</literal></expr></argument>, <argument><expr><call><name>tdesc_name</name><argument_list>(<argument><expr><operator>*</operator><name>tdpp</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name><operator>(</operator><operator>*</operator><name>tdpp</name><operator>)</operator><operator>-&gt;</operator><name>t_id</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>remap_node</name><argument_list>(<argument><expr><name>tdpp</name></expr></argument>, <argument><expr><operator>*</operator><name>tdpp</name></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>mcd</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>list_remove</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_tdtbr</name></name></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name>tdpp</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>merge_types</name><parameter_list>(<parameter><decl><type><name>hash_t</name> <modifier>*</modifier></type><name>src</name></decl></parameter>, <parameter><decl><type><name>merge_cb_data_t</name> <modifier>*</modifier></type><name>mcd</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>list_t</name> <modifier>*</modifier></type><name>iitba</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>list_t</name> <modifier>*</modifier></type><name>tdtbr</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>iirc</name></decl>, <decl><type ref="prev"/><name>tdrc</name></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_iitba</name></name> <operator>=</operator> <operator>&amp;</operator><name>iitba</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_tdtba</name></name> <operator>=</operator> <call><name>hash_new</name><argument_list>(<argument><expr><name>TDATA_LAYOUT_HASH_SIZE</name></expr></argument>, <argument><expr><name>tdesc_layouthash</name></expr></argument>,
+<argument><expr><name>tdesc_layoutcmp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_tdtbr</name></name> <operator>=</operator> <operator>&amp;</operator><name>tdtbr</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>hash_iter</name><argument_list>(<argument><expr><name>src</name></expr></argument>, <argument><expr><name>merge_type_cb</name></expr></argument>, <argument><expr><name>mcd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>tdrc</name> <operator>=</operator> <call><name>hash_iter</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_tdtba</name></name></expr></argument>, <argument><expr><name>add_tdtba_cb</name></expr></argument>, <argument><expr><name>mcd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"add_tdtba_cb added %d items\n"</literal></expr></argument>, <argument><expr><name>tdrc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>iirc</name> <operator>=</operator> <call><name>list_iter</name><argument_list>(<argument><expr><operator>*</operator><name><name>mcd</name><operator>-&gt;</operator><name>md_iitba</name></name></expr></argument>, <argument><expr><name>add_iitba_cb</name></expr></argument>, <argument><expr><name>mcd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"add_iitba_cb added %d items\n"</literal></expr></argument>, <argument><expr><name>iirc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><call><name>list_count</name><argument_list>(<argument><expr><operator>*</operator><name><name>mcd</name><operator>-&gt;</operator><name>md_iitba</name></name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator>
+<call><name>hash_count</name><argument_list>(<argument><expr><name><name>mcd</name><operator>-&gt;</operator><name>md_tdtba</name></name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>tdrc</name> <operator>=</operator> <call><name>list_iter</name><argument_list>(<argument><expr><operator>*</operator><name><name>mcd</name><operator>-&gt;</operator><name>md_tdtbr</name></name></expr></argument>, <argument><expr><name>add_tdtbr_cb</name></expr></argument>, <argument><expr><name>mcd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"add_tdtbr_cb added %d items\n"</literal></expr></argument>, <argument><expr><name>tdrc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>list_count</name><argument_list>(<argument><expr><operator>*</operator><name><name>mcd</name><operator>-&gt;</operator><name>md_tdtbr</name></name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>aborterr</name><argument_list>(<argument><expr><literal type="string">"Couldn't remap all nodes\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>mcd</name><operator>-&gt;</operator><name>md_parent</name></name> <operator>==</operator> <name><name>mcd</name><operator>-&gt;</operator><name>md_tgt</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>redir_mstr_fwds</name><argument_list>(<argument><expr><name>mcd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></function>
+<function><type><name>void</name></type>
+<name>merge_into_master</name><parameter_list>(<parameter><decl><type><name>tdata_t</name> <modifier>*</modifier></type><name>cur</name></decl></parameter>, <parameter><decl><type><name>tdata_t</name> <modifier>*</modifier></type><name>mstr</name></decl></parameter>, <parameter><decl><type><name>tdata_t</name> <modifier>*</modifier></type><name>tgt</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>selfuniquify</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>merge_cb_data_t</name></type> <name>mcd</name></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>cur</name><operator>-&gt;</operator><name>td_ref</name></name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>mstr</name><operator>-&gt;</operator><name>td_ref</name></name><operator>++</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>tgt</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>tgt</name><operator>-&gt;</operator><name>td_ref</name></name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name><name>cur</name><operator>-&gt;</operator><name>td_ref</name></name> <operator>==</operator> <literal type="number">1</literal> <operator>&amp;&amp;</operator> <name><name>mstr</name><operator>-&gt;</operator><name>td_ref</name></name> <operator>==</operator> <literal type="number">1</literal> <operator>&amp;&amp;</operator>
+<operator>(</operator><name>tgt</name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <name><name>tgt</name><operator>-&gt;</operator><name>td_ref</name></name> <operator>==</operator> <literal type="number">1</literal><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>mcd</name><operator>.</operator><name>md_parent</name></name> <operator>=</operator> <name>mstr</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>mcd</name><operator>.</operator><name>md_tgt</name></name> <operator>=</operator> <operator>(</operator><ternary><condition><expr><name>tgt</name></expr> ?</condition><then> <expr><name>tgt</name></expr> </then><else>: <expr><name>mstr</name></expr></else></ternary><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>mcd</name><operator>.</operator><name>md_ta</name></name> <operator>=</operator> <call><name>alist_new</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>mcd</name><operator>.</operator><name>md_fdida</name></name> <operator>=</operator> <call><name>alist_new</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>mcd</name><operator>.</operator><name>md_flags</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>selfuniquify</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>mcd</name><operator>.</operator><name>md_flags</name></name> <operator>|=</operator> <name>MCD_F_SELFUNIQUIFY</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>tgt</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>mcd</name><operator>.</operator><name>md_flags</name></name> <operator>|=</operator> <name>MCD_F_REFMERGE</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>mstr</name><operator>-&gt;</operator><name>td_curvgen</name></name> <operator>=</operator> <call><name>MAX</name><argument_list>(<argument><expr><name><name>mstr</name><operator>-&gt;</operator><name>td_curvgen</name></name></expr></argument>, <argument><expr><name><name>cur</name><operator>-&gt;</operator><name>td_curvgen</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>mstr</name><operator>-&gt;</operator><name>td_curemark</name></name> <operator>=</operator> <call><name>MAX</name><argument_list>(<argument><expr><name><name>mstr</name><operator>-&gt;</operator><name>td_curemark</name></name></expr></argument>, <argument><expr><name><name>cur</name><operator>-&gt;</operator><name>td_curemark</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>merge_types</name><argument_list>(<argument><expr><name><name>cur</name><operator>-&gt;</operator><name>td_iihash</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>mcd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>debug_level</name> <operator>&gt;=</operator> <literal type="number">3</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"Type association stats\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>alist_stats</name><argument_list>(<argument><expr><name><name>mcd</name><operator>.</operator><name>md_ta</name></name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"Layout hash stats\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>hash_stats</name><argument_list>(<argument><expr><name><name>mcd</name><operator>.</operator><name>md_tgt</name><operator>-&gt;</operator><name>td_layouthash</name></name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>alist_free</name><argument_list>(<argument><expr><name><name>mcd</name><operator>.</operator><name>md_fdida</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>alist_free</name><argument_list>(<argument><expr><name><name>mcd</name><operator>.</operator><name>md_ta</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>cur</name><operator>-&gt;</operator><name>td_ref</name></name><operator>--</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>mstr</name><operator>-&gt;</operator><name>td_ref</name></name><operator>--</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>tgt</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>tgt</name><operator>-&gt;</operator><name>td_ref</name></name><operator>--</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+<decl_stmt><decl><type><name>tdesc_ops_t</name></type> <name><name>tdesc_ops</name><index>[]</index></name> <init>= <expr><block>{
+<expr><block>{ <expr><literal type="string">"ERROR! BAD tdesc TYPE"</literal></expr>, <expr><name>NULL</name></expr>, <expr><name>NULL</name></expr> }</block></expr>,
+<expr><block>{ <expr><literal type="string">"intrinsic"</literal></expr>, <expr><name>equiv_intrinsic</name></expr>, <expr><name>conjure_intrinsic</name></expr> }</block></expr>,
+<expr><block>{ <expr><literal type="string">"pointer"</literal></expr>, <expr><name>equiv_plain</name></expr>, <expr><name>conjure_plain</name></expr> }</block></expr>,
+<expr><block>{ <expr><literal type="string">"array"</literal></expr>, <expr><name>equiv_array</name></expr>, <expr><name>conjure_array</name></expr> }</block></expr>,
+<expr><block>{ <expr><literal type="string">"function"</literal></expr>, <expr><name>equiv_function</name></expr>, <expr><name>conjure_function</name></expr> }</block></expr>,
+<expr><block>{ <expr><literal type="string">"struct"</literal></expr>, <expr><name>equiv_su</name></expr>, <expr><name>conjure_su</name></expr> }</block></expr>,
+<expr><block>{ <expr><literal type="string">"union"</literal></expr>, <expr><name>equiv_su</name></expr>, <expr><name>conjure_su</name></expr> }</block></expr>,
+<expr><block>{ <expr><literal type="string">"enum"</literal></expr>, <expr><name>equiv_enum</name></expr>, <expr><name>conjure_enum</name></expr> }</block></expr>,
+<expr><block>{ <expr><literal type="string">"forward"</literal></expr>, <expr><name>NULL</name></expr>, <expr><name>conjure_forward</name></expr> }</block></expr>,
+<expr><block>{ <expr><literal type="string">"typedef"</literal></expr>, <expr><name>equiv_plain</name></expr>, <expr><name>conjure_plain</name></expr> }</block></expr>,
+<expr><block>{ <expr><literal type="string">"typedef_unres"</literal></expr>, <expr><name>equiv_assert</name></expr>, <expr><name>conjure_assert</name></expr> }</block></expr>,
+<expr><block>{ <expr><literal type="string">"volatile"</literal></expr>, <expr><name>equiv_plain</name></expr>, <expr><name>conjure_plain</name></expr> }</block></expr>,
+<expr><block>{ <expr><literal type="string">"const"</literal></expr>, <expr><name>equiv_plain</name></expr>, <expr><name>conjure_plain</name></expr> }</block></expr>,
+<expr><block>{ <expr><literal type="string">"restrict"</literal></expr>, <expr><name>equiv_plain</name></expr>, <expr><name>conjure_plain</name></expr> }</block></expr>
+}</block></expr></init></decl>;</decl_stmt>
+</unit>

@@ -1,0 +1,14 @@
+
+
+
+
+
+
+
+
+#if !defined(LLVM_CLANG_TOOLING_REFACTORING_REFACTORINGDIAGNOSTIC_H)
+#define LLVM_CLANG_TOOLING_REFACTORING_REFACTORINGDIAGNOSTIC_H
+
+#include "clang/Basic/DiagnosticRefactoring.h"
+
+#endif

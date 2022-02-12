@@ -1,0 +1,822 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/libfido2/src/u2f.c">
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;openssl/sha.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;openssl/x509.h&gt;</cpp:file></cpp:include>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_UNISTD_H</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;unistd.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"fido.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"fido/es256.h"</cpp:file></cpp:include>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>_MSC_VER</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>usleep</name><parameter_list>(<parameter><decl><type><name>unsigned</name> <name>int</name></type> <name>usec</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>Sleep</name><argument_list>(<argument><expr><name>usec</name> <operator>/</operator> <literal type="number">1000</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>sig_get</name><parameter_list>(<parameter><decl><type><name>fido_blob_t</name> <modifier>*</modifier></type><name>sig</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>unsigned</name> <name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>size_t</name> <modifier>*</modifier></type><name>len</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><name><name>sig</name><operator>-&gt;</operator><name>len</name></name> <operator>=</operator> <operator>*</operator><name>len</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>sig</name><operator>-&gt;</operator><name>ptr</name></name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name><name>sig</name><operator>-&gt;</operator><name>len</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<call><name>fido_buf_read</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><name>len</name></expr></argument>, <argument><expr><name><name>sig</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>sig</name><operator>-&gt;</operator><name>len</name></name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_buf_read"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fido_blob_reset</name><argument_list>(<argument><expr><name>sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>x5c_get</name><parameter_list>(<parameter><decl><type><name>fido_blob_t</name> <modifier>*</modifier></type><name>x5c</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>unsigned</name> <name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>size_t</name> <modifier>*</modifier></type><name>len</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>X509</name> <modifier>*</modifier></type><name>cert</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ok</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>len</name> <operator>&gt;</operator> <name>LONG_MAX</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: invalid len %zu"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>, <argument><expr><operator>*</operator><name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+
+<decl_stmt><decl><type><specifier>const</specifier> <name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>end</name> <init>= <expr><operator>*</operator><name>buf</name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>cert</name> <operator>=</operator> <call><name>d2i_X509</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>end</name></expr></argument>, <argument><expr><operator>(</operator><name>long</name><operator>)</operator><operator>*</operator><name>len</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator> <name>end</name> <operator>&lt;=</operator> <operator>*</operator><name>buf</name> <operator>||</operator>
+<operator>(</operator><name><name>x5c</name><operator>-&gt;</operator><name>len</name></name> <operator>=</operator> <operator>(</operator><name>size_t</name><operator>)</operator><operator>(</operator><name>end</name> <operator>-</operator> <operator>*</operator><name>buf</name><operator>)</operator><operator>)</operator> <operator>&gt;=</operator> <operator>*</operator><name>len</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: d2i_X509"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>x5c</name><operator>-&gt;</operator><name>ptr</name></name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name><name>x5c</name><operator>-&gt;</operator><name>len</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<call><name>fido_buf_read</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><name>len</name></expr></argument>, <argument><expr><name><name>x5c</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>x5c</name><operator>-&gt;</operator><name>len</name></name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_buf_read"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>ok</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<label><name>fail</name>:</label>
+<if_stmt><if>if <condition>(<expr><name>cert</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>X509_free</name><argument_list>(<argument><expr><name>cert</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ok</name> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>fido_blob_reset</name><argument_list>(<argument><expr><name>x5c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>ok</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>authdata_fake</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>rp_id</name></decl></parameter>, <parameter><decl><type><name>uint8_t</name></type> <name>flags</name></decl></parameter>, <parameter><decl><type><name>uint32_t</name></type> <name>sigcount</name></decl></parameter>,
+<parameter><decl><type><name>fido_blob_t</name> <modifier>*</modifier></type><name>fake_cbor_ad</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>fido_authdata_t</name></type> <name>ad</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>cbor_item_t</name> <modifier>*</modifier></type><name>item</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>alloc_len</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ad</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>ad</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>SHA256</name><argument_list>(<argument><expr><operator>(</operator><specifier>const</specifier> <name>void</name> <operator>*</operator><operator>)</operator><name>rp_id</name></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name>rp_id</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name><name>ad</name><operator>.</operator><name>rp_id_hash</name></name></expr></argument>)</argument_list></call> <operator>!=</operator> <name><name>ad</name><operator>.</operator><name>rp_id_hash</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: sha256"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>ad</name><operator>.</operator><name>flags</name></name> <operator>=</operator> <name>flags</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ad</name><operator>.</operator><name>sigcount</name></name> <operator>=</operator> <name>sigcount</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>item</name> <operator>=</operator> <call><name>cbor_build_bytestring</name><argument_list>(<argument><expr><operator>(</operator><specifier>const</specifier> <name>unsigned</name> <name>char</name> <operator>*</operator><operator>)</operator><operator>&amp;</operator><name>ad</name></expr></argument>,
+<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>ad</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: cbor_build_bytestring"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>fake_cbor_ad</name><operator>-&gt;</operator><name>ptr</name></name> <operator>!=</operator> <name>NULL</name> <operator>||</operator>
+<operator>(</operator><name><name>fake_cbor_ad</name><operator>-&gt;</operator><name>len</name></name> <operator>=</operator> <call><name>cbor_serialize_alloc</name><argument_list>(<argument><expr><name>item</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>fake_cbor_ad</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>alloc_len</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: cbor_serialize_alloc"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>cbor_decref</name><argument_list>(<argument><expr><operator>&amp;</operator><name>item</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>cbor_decref</name><argument_list>(<argument><expr><operator>&amp;</operator><name>item</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>send_dummy_register</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ms</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>iso7816_apdu_t</name> <modifier>*</modifier></type><name>apdu</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>challenge</name><index>[<expr><name>SHA256_DIGEST_LENGTH</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>application</name><index>[<expr><name>SHA256_DIGEST_LENGTH</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>reply</name><index>[<expr><name>FIDO_MAXMSG</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name></decl>;</decl_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>FIDO_FUZZ</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr_stmt><expr><name>ms</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>challenge</name></expr></argument>, <argument><expr><literal type="number">0xff</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>challenge</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>application</name></expr></argument>, <argument><expr><literal type="number">0xff</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>application</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>apdu</name> <operator>=</operator> <call><name>iso7816_new</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>U2F_CMD_REGISTER</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">2</literal> <operator>*</operator>
+<name>SHA256_DIGEST_LENGTH</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<call><name>iso7816_add</name><argument_list>(<argument><expr><name>apdu</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>challenge</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>challenge</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>iso7816_add</name><argument_list>(<argument><expr><name>apdu</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>application</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>application</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: iso7816"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_INTERNAL</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<do>do <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>fido_tx</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>CTAP_CMD_MSG</name></expr></argument>, <argument><expr><call><name>iso7816_ptr</name><argument_list>(<argument><expr><name>apdu</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>iso7816_len</name><argument_list>(<argument><expr><name>apdu</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_tx"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_TX</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>fido_rx</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>CTAP_CMD_MSG</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>reply</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>reply</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><name>ms</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">2</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_rx"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_RX</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>usleep</name><argument_list>(<argument><expr><operator>(</operator><name>unsigned</name><operator>)</operator><operator>(</operator><ternary><condition><expr><name>ms</name> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr> ?</condition><then> <expr><literal type="number">100</literal></expr> </then><else>: <expr><name>ms</name></expr></else></ternary><operator>)</operator> <operator>*</operator> <literal type="number">1000</literal></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: usleep"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_RX</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block> while <condition>(<expr><operator>(</operator><operator>(</operator><name><name>reply</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>&lt;&lt;</operator> <literal type="number">8</literal><operator>)</operator> <operator>|</operator> <name><name>reply</name><index>[<expr><literal type="number">1</literal></expr>]</index></name><operator>)</operator> <operator>==</operator> <name>SW_CONDITIONS_NOT_SATISFIED</name></expr>)</condition>;</do>
+
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_OK</name></expr>;</expr_stmt>
+<label><name>fail</name>:</label>
+<expr_stmt><expr><call><name>iso7816_free</name><argument_list>(<argument><expr><operator>&amp;</operator><name>apdu</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>key_lookup</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>rp_id</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>fido_blob_t</name> <modifier>*</modifier></type><name>key_id</name></decl></parameter>,
+<parameter><decl><type><name>int</name> <modifier>*</modifier></type><name>found</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ms</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>iso7816_apdu_t</name> <modifier>*</modifier></type><name>apdu</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>challenge</name><index>[<expr><name>SHA256_DIGEST_LENGTH</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>rp_id_hash</name><index>[<expr><name>SHA256_DIGEST_LENGTH</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>reply</name><index>[<expr><name>FIDO_MAXMSG</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint8_t</name></type> <name>key_id_len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>key_id</name><operator>-&gt;</operator><name>len</name></name> <operator>&gt;</operator> <name>UINT8_MAX</name> <operator>||</operator> <name>rp_id</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: key_id-&gt;len=%zu, rp_id=%p"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>,
+<argument><expr><name><name>key_id</name><operator>-&gt;</operator><name>len</name></name></expr></argument>, <argument><expr><operator>(</operator><specifier>const</specifier> <name>void</name> <operator>*</operator><operator>)</operator><name>rp_id</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_INVALID_ARGUMENT</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>challenge</name></expr></argument>, <argument><expr><literal type="number">0xff</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>challenge</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rp_id_hash</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>rp_id_hash</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>SHA256</name><argument_list>(<argument><expr><operator>(</operator><specifier>const</specifier> <name>void</name> <operator>*</operator><operator>)</operator><name>rp_id</name></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name>rp_id</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name>rp_id_hash</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>rp_id_hash</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: sha256"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_INTERNAL</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>key_id_len</name> <operator>=</operator> <operator>(</operator><name>uint8_t</name><operator>)</operator><name><name>key_id</name><operator>-&gt;</operator><name>len</name></name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>apdu</name> <operator>=</operator> <call><name>iso7816_new</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>U2F_CMD_AUTH</name></expr></argument>, <argument><expr><name>U2F_AUTH_CHECK</name></expr></argument>, <argument><expr><operator>(</operator><name>uint16_t</name><operator>)</operator><operator>(</operator><literal type="number">2</literal> <operator>*</operator>
+<name>SHA256_DIGEST_LENGTH</name> <operator>+</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>key_id_len</name></expr></argument>)</argument_list></sizeof> <operator>+</operator> <name>key_id_len</name><operator>)</operator></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<call><name>iso7816_add</name><argument_list>(<argument><expr><name>apdu</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>challenge</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>challenge</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>iso7816_add</name><argument_list>(<argument><expr><name>apdu</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>rp_id_hash</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>rp_id_hash</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>iso7816_add</name><argument_list>(<argument><expr><name>apdu</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>key_id_len</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>key_id_len</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>iso7816_add</name><argument_list>(<argument><expr><name>apdu</name></expr></argument>, <argument><expr><name><name>key_id</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>, <argument><expr><name>key_id_len</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: iso7816"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_INTERNAL</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>fido_tx</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>CTAP_CMD_MSG</name></expr></argument>, <argument><expr><call><name>iso7816_ptr</name><argument_list>(<argument><expr><name>apdu</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>iso7816_len</name><argument_list>(<argument><expr><name>apdu</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_tx"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_TX</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>fido_rx</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>CTAP_CMD_MSG</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>reply</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>reply</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><name>ms</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">2</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_rx"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_RX</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<switch>switch <condition>(<expr><operator>(</operator><name><name>reply</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>&lt;&lt;</operator> <literal type="number">8</literal><operator>)</operator> <operator>|</operator> <name><name>reply</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>SW_CONDITIONS_NOT_SATISFIED</name></expr>:</case>
+<expr_stmt><expr><operator>*</operator><name>found</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>SW_WRONG_DATA</name></expr>:</case>
+<expr_stmt><expr><operator>*</operator><name>found</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<break>break;</break>
+<default>default:</default>
+
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_INTERNAL</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></switch>
+
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_OK</name></expr>;</expr_stmt>
+<label><name>fail</name>:</label>
+<expr_stmt><expr><call><name>iso7816_free</name><argument_list>(<argument><expr><operator>&amp;</operator><name>apdu</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>parse_auth_reply</name><parameter_list>(<parameter><decl><type><name>fido_blob_t</name> <modifier>*</modifier></type><name>sig</name></decl></parameter>, <parameter><decl><type><name>fido_blob_t</name> <modifier>*</modifier></type><name>ad</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>rp_id</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>reply</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>len</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>uint8_t</name></type> <name>flags</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>sigcount</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>len</name> <operator>&lt;</operator> <literal type="number">2</literal> <operator>||</operator> <operator>(</operator><operator>(</operator><name><name>reply</name><index>[<expr><name>len</name> <operator>-</operator> <literal type="number">2</literal></expr>]</index></name> <operator>&lt;&lt;</operator> <literal type="number">8</literal><operator>)</operator> <operator>|</operator> <name><name>reply</name><index>[<expr><name>len</name> <operator>-</operator> <literal type="number">1</literal></expr>]</index></name><operator>)</operator> <operator>!=</operator> <name>SW_NO_ERROR</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: unexpected sw"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FIDO_ERR_RX</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>len</name> <operator>-=</operator> <literal type="number">2</literal></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>fido_buf_read</name><argument_list>(<argument><expr><operator>&amp;</operator><name>reply</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>len</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>flags</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>flags</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>fido_buf_read</name><argument_list>(<argument><expr><operator>&amp;</operator><name>reply</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>len</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>sigcount</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>sigcount</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_buf_read"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FIDO_ERR_RX</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>sig_get</name><argument_list>(<argument><expr><name>sig</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>reply</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>len</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: sig_get"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FIDO_ERR_RX</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>authdata_fake</name><argument_list>(<argument><expr><name>rp_id</name></expr></argument>, <argument><expr><name>flags</name></expr></argument>, <argument><expr><name>sigcount</name></expr></argument>, <argument><expr><name>ad</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s; authdata_fake"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FIDO_ERR_RX</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>FIDO_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>do_auth</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>fido_blob_t</name> <modifier>*</modifier></type><name>cdh</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>rp_id</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>fido_blob_t</name> <modifier>*</modifier></type><name>key_id</name></decl></parameter>, <parameter><decl><type><name>fido_blob_t</name> <modifier>*</modifier></type><name>sig</name></decl></parameter>, <parameter><decl><type><name>fido_blob_t</name> <modifier>*</modifier></type><name>ad</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ms</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>iso7816_apdu_t</name> <modifier>*</modifier></type><name>apdu</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>rp_id_hash</name><index>[<expr><name>SHA256_DIGEST_LENGTH</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>reply</name><index>[<expr><name>FIDO_MAXMSG</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>reply_len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint8_t</name></type> <name>key_id_len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name></decl>;</decl_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>FIDO_FUZZ</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr_stmt><expr><name>ms</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<if_stmt><if>if <condition>(<expr><name><name>cdh</name><operator>-&gt;</operator><name>len</name></name> <operator>!=</operator> <name>SHA256_DIGEST_LENGTH</name> <operator>||</operator> <name><name>key_id</name><operator>-&gt;</operator><name>len</name></name> <operator>&gt;</operator> <name>UINT8_MAX</name> <operator>||</operator>
+<name>rp_id</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_INVALID_ARGUMENT</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rp_id_hash</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>rp_id_hash</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>SHA256</name><argument_list>(<argument><expr><operator>(</operator><specifier>const</specifier> <name>void</name> <operator>*</operator><operator>)</operator><name>rp_id</name></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name>rp_id</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name>rp_id_hash</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>rp_id_hash</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: sha256"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_INTERNAL</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>key_id_len</name> <operator>=</operator> <operator>(</operator><name>uint8_t</name><operator>)</operator><name><name>key_id</name><operator>-&gt;</operator><name>len</name></name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>apdu</name> <operator>=</operator> <call><name>iso7816_new</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>U2F_CMD_AUTH</name></expr></argument>, <argument><expr><name>U2F_AUTH_SIGN</name></expr></argument>, <argument><expr><operator>(</operator><name>uint16_t</name><operator>)</operator><operator>(</operator><literal type="number">2</literal> <operator>*</operator>
+<name>SHA256_DIGEST_LENGTH</name> <operator>+</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>key_id_len</name></expr></argument>)</argument_list></sizeof> <operator>+</operator> <name>key_id_len</name><operator>)</operator></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<call><name>iso7816_add</name><argument_list>(<argument><expr><name>apdu</name></expr></argument>, <argument><expr><name><name>cdh</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>cdh</name><operator>-&gt;</operator><name>len</name></name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>iso7816_add</name><argument_list>(<argument><expr><name>apdu</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>rp_id_hash</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>rp_id_hash</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>iso7816_add</name><argument_list>(<argument><expr><name>apdu</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>key_id_len</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>key_id_len</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>iso7816_add</name><argument_list>(<argument><expr><name>apdu</name></expr></argument>, <argument><expr><name><name>key_id</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>, <argument><expr><name>key_id_len</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: iso7816"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_INTERNAL</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<do>do <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>fido_tx</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>CTAP_CMD_MSG</name></expr></argument>, <argument><expr><call><name>iso7816_ptr</name><argument_list>(<argument><expr><name>apdu</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>iso7816_len</name><argument_list>(<argument><expr><name>apdu</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_tx"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_TX</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>reply_len</name> <operator>=</operator> <call><name>fido_rx</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>CTAP_CMD_MSG</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>reply</name></expr></argument>,
+<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>reply</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><name>ms</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">2</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_rx"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_RX</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>usleep</name><argument_list>(<argument><expr><operator>(</operator><name>unsigned</name><operator>)</operator><operator>(</operator><ternary><condition><expr><name>ms</name> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr> ?</condition><then> <expr><literal type="number">100</literal></expr> </then><else>: <expr><name>ms</name></expr></else></ternary><operator>)</operator> <operator>*</operator> <literal type="number">1000</literal></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: usleep"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_RX</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block> while <condition>(<expr><operator>(</operator><operator>(</operator><name><name>reply</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>&lt;&lt;</operator> <literal type="number">8</literal><operator>)</operator> <operator>|</operator> <name><name>reply</name><index>[<expr><literal type="number">1</literal></expr>]</index></name><operator>)</operator> <operator>==</operator> <name>SW_CONDITIONS_NOT_SATISFIED</name></expr>)</condition>;</do>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>parse_auth_reply</name><argument_list>(<argument><expr><name>sig</name></expr></argument>, <argument><expr><name>ad</name></expr></argument>, <argument><expr><name>rp_id</name></expr></argument>, <argument><expr><name>reply</name></expr></argument>,
+<argument><expr><operator>(</operator><name>size_t</name><operator>)</operator><name>reply_len</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: parse_auth_reply"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<label><name>fail</name>:</label>
+<expr_stmt><expr><call><name>iso7816_free</name><argument_list>(<argument><expr><operator>&amp;</operator><name>apdu</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>cbor_blob_from_ec_point</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>uint8_t</name> <modifier>*</modifier></type><name>ec_point</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>ec_point_len</name></decl></parameter>,
+<parameter><decl><type><name>fido_blob_t</name> <modifier>*</modifier></type><name>cbor_blob</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>es256_pk_t</name> <modifier>*</modifier></type><name>pk</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>cbor_item_t</name> <modifier>*</modifier></type><name>pk_cbor</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>alloc_len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ok</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>ec_point_len</name> <operator>!=</operator> <literal type="number">65</literal> <operator>||</operator> <name><name>ec_point</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>!=</operator> <literal type="number">0x04</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: unexpected format"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>pk</name> <operator>=</operator> <call><name>es256_pk_new</name><argument_list>()</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<call><name>es256_pk_set_x</name><argument_list>(<argument><expr><name>pk</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>ec_point</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>es256_pk_set_y</name><argument_list>(<argument><expr><name>pk</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>ec_point</name><index>[<expr><literal type="number">33</literal></expr>]</index></name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: es256_pk_set"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>pk_cbor</name> <operator>=</operator> <call><name>es256_pk_encode</name><argument_list>(<argument><expr><name>pk</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: es256_pk_encode"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>cbor_blob</name><operator>-&gt;</operator><name>len</name></name> <operator>=</operator> <call><name>cbor_serialize_alloc</name><argument_list>(<argument><expr><name>pk_cbor</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>cbor_blob</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>alloc_len</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <literal type="number">77</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: cbor_serialize_alloc"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>ok</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<label><name>fail</name>:</label>
+<expr_stmt><expr><call><name>es256_pk_free</name><argument_list>(<argument><expr><operator>&amp;</operator><name>pk</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>pk_cbor</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>cbor_decref</name><argument_list>(<argument><expr><operator>&amp;</operator><name>pk_cbor</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>ok</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>encode_cred_authdata</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>rp_id</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>uint8_t</name> <modifier>*</modifier></type><name>kh</name></decl></parameter>, <parameter><decl><type><name>uint8_t</name></type> <name>kh_len</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>uint8_t</name> <modifier>*</modifier></type><name>pubkey</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>pubkey_len</name></decl></parameter>, <parameter><decl><type><name>fido_blob_t</name> <modifier>*</modifier></type><name>out</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>fido_authdata_t</name></type> <name>authdata</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>fido_attcred_raw_t</name></type> <name>attcred_raw</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>fido_blob_t</name></type> <name>pk_blob</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>fido_blob_t</name></type> <name>authdata_blob</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>cbor_item_t</name> <modifier>*</modifier></type><name>authdata_cbor</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>ptr</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>alloc_len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ok</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>pk_blob</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>pk_blob</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>authdata</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>authdata</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>authdata_blob</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>authdata_blob</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><name>out</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>out</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>rp_id</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: NULL rp_id"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>cbor_blob_from_ec_point</name><argument_list>(<argument><expr><name>pubkey</name></expr></argument>, <argument><expr><name>pubkey_len</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>pk_blob</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: cbor_blob_from_ec_point"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>SHA256</name><argument_list>(<argument><expr><operator>(</operator><specifier>const</specifier> <name>void</name> <operator>*</operator><operator>)</operator><name>rp_id</name></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name>rp_id</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name><name>authdata</name><operator>.</operator><name>rp_id_hash</name></name></expr></argument>)</argument_list></call> <operator>!=</operator> <name><name>authdata</name><operator>.</operator><name>rp_id_hash</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: sha256"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>authdata</name><operator>.</operator><name>flags</name></name> <operator>=</operator> <operator>(</operator><name>CTAP_AUTHDATA_ATT_CRED</name> <operator>|</operator> <name>CTAP_AUTHDATA_USER_PRESENT</name><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>authdata</name><operator>.</operator><name>sigcount</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>attcred_raw</name><operator>.</operator><name>aaguid</name></name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name><name>attcred_raw</name><operator>.</operator><name>aaguid</name></name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>attcred_raw</name><operator>.</operator><name>id_len</name></name> <operator>=</operator> <call><name>htobe16</name><argument_list>(<argument><expr><name>kh_len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>len</name> <operator>=</operator> <name><name>authdata_blob</name><operator>.</operator><name>len</name></name> <operator>=</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>authdata</name></expr></argument>)</argument_list></sizeof> <operator>+</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>attcred_raw</name></expr></argument>)</argument_list></sizeof> <operator>+</operator>
+<name>kh_len</name> <operator>+</operator> <name><name>pk_blob</name><operator>.</operator><name>len</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>ptr</name> <operator>=</operator> <name><name>authdata_blob</name><operator>.</operator><name>ptr</name></name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name><name>authdata_blob</name><operator>.</operator><name>len</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: ptr=%p, len=%zu"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name>ptr</name></expr></argument>, <argument><expr><name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>authdata_blob</name><operator>.</operator><name>ptr</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>fail</name>;</goto></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>fido_buf_write</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ptr</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>len</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>authdata</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>authdata</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>fido_buf_write</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ptr</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>len</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>attcred_raw</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>attcred_raw</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>fido_buf_write</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ptr</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>len</name></expr></argument>, <argument><expr><name>kh</name></expr></argument>, <argument><expr><name>kh_len</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>fido_buf_write</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ptr</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>len</name></expr></argument>, <argument><expr><name><name>pk_blob</name><operator>.</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>pk_blob</name><operator>.</operator><name>len</name></name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_buf_write"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>authdata_cbor</name> <operator>=</operator> <call><name>fido_blob_encode</name><argument_list>(<argument><expr><operator>&amp;</operator><name>authdata_blob</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_blob_encode"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>out</name><operator>-&gt;</operator><name>len</name></name> <operator>=</operator> <call><name>cbor_serialize_alloc</name><argument_list>(<argument><expr><name>authdata_cbor</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>out</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>alloc_len</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: cbor_serialize_alloc"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>ok</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<label><name>fail</name>:</label>
+<if_stmt><if>if <condition>(<expr><name>authdata_cbor</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>cbor_decref</name><argument_list>(<argument><expr><operator>&amp;</operator><name>authdata_cbor</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>fido_blob_reset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>pk_blob</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fido_blob_reset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>authdata_blob</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>ok</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>parse_register_reply</name><parameter_list>(<parameter><decl><type><name>fido_cred_t</name> <modifier>*</modifier></type><name>cred</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>reply</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>len</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>fido_blob_t</name></type> <name>x5c</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>fido_blob_t</name></type> <name>sig</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>fido_blob_t</name></type> <name>ad</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint8_t</name></type> <name>dummy</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint8_t</name></type> <name><name>pubkey</name><index>[<expr><literal type="number">65</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint8_t</name></type> <name>kh_len</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint8_t</name> <modifier>*</modifier></type><name>kh</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>x5c</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>x5c</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>sig</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>sig</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ad</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>ad</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_RX</name></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>len</name> <operator>&lt;</operator> <literal type="number">2</literal> <operator>||</operator> <operator>(</operator><operator>(</operator><name><name>reply</name><index>[<expr><name>len</name> <operator>-</operator> <literal type="number">2</literal></expr>]</index></name> <operator>&lt;&lt;</operator> <literal type="number">8</literal><operator>)</operator> <operator>|</operator> <name><name>reply</name><index>[<expr><name>len</name> <operator>-</operator> <literal type="number">1</literal></expr>]</index></name><operator>)</operator> <operator>!=</operator> <name>SW_NO_ERROR</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: unexpected sw"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>len</name> <operator>-=</operator> <literal type="number">2</literal></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>fido_buf_read</name><argument_list>(<argument><expr><operator>&amp;</operator><name>reply</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>len</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>dummy</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>dummy</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<name>dummy</name> <operator>!=</operator> <literal type="number">0x05</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: reserved byte"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>fido_buf_read</name><argument_list>(<argument><expr><operator>&amp;</operator><name>reply</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>len</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>pubkey</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>pubkey</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>fido_buf_read</name><argument_list>(<argument><expr><operator>&amp;</operator><name>reply</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>len</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>kh_len</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>kh_len</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<operator>(</operator><name>kh</name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>kh_len</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<call><name>fido_buf_read</name><argument_list>(<argument><expr><operator>&amp;</operator><name>reply</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>len</name></expr></argument>, <argument><expr><name>kh</name></expr></argument>, <argument><expr><name>kh_len</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_buf_read"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>x5c_get</name><argument_list>(<argument><expr><operator>&amp;</operator><name>x5c</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>reply</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>len</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>sig_get</name><argument_list>(<argument><expr><operator>&amp;</operator><name>sig</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>reply</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>len</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: x5c || sig"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>encode_cred_authdata</name><argument_list>(<argument><expr><name><name>cred</name><operator>-&gt;</operator><name>rp</name><operator>.</operator><name>id</name></name></expr></argument>, <argument><expr><name>kh</name></expr></argument>, <argument><expr><name>kh_len</name></expr></argument>, <argument><expr><name>pubkey</name></expr></argument>,
+<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>pubkey</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><operator>&amp;</operator><name>ad</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: encode_cred_authdata"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>fido_cred_set_fmt</name><argument_list>(<argument><expr><name>cred</name></expr></argument>, <argument><expr><literal type="string">"fido-u2f"</literal></expr></argument>)</argument_list></call> <operator>!=</operator> <name>FIDO_OK</name> <operator>||</operator>
+<call><name>fido_cred_set_authdata</name><argument_list>(<argument><expr><name>cred</name></expr></argument>, <argument><expr><name><name>ad</name><operator>.</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>ad</name><operator>.</operator><name>len</name></name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>FIDO_OK</name> <operator>||</operator>
+<call><name>fido_cred_set_x509</name><argument_list>(<argument><expr><name>cred</name></expr></argument>, <argument><expr><name><name>x5c</name><operator>.</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>x5c</name><operator>.</operator><name>len</name></name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>FIDO_OK</name> <operator>||</operator>
+<call><name>fido_cred_set_sig</name><argument_list>(<argument><expr><name>cred</name></expr></argument>, <argument><expr><name><name>sig</name><operator>.</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>sig</name><operator>.</operator><name>len</name></name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_cred_set"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_INTERNAL</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_OK</name></expr>;</expr_stmt>
+<label><name>fail</name>:</label>
+<expr_stmt><expr><call><name>freezero</name><argument_list>(<argument><expr><name>kh</name></expr></argument>, <argument><expr><name>kh_len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fido_blob_reset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>x5c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fido_blob_reset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fido_blob_reset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ad</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>u2f_register</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><name>fido_cred_t</name> <modifier>*</modifier></type><name>cred</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ms</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>iso7816_apdu_t</name> <modifier>*</modifier></type><name>apdu</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>rp_id_hash</name><index>[<expr><name>SHA256_DIGEST_LENGTH</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>reply</name><index>[<expr><name>FIDO_MAXMSG</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>reply_len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>found</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name></decl>;</decl_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>FIDO_FUZZ</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<expr_stmt><expr><name>ms</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<if_stmt><if>if <condition>(<expr><name><name>cred</name><operator>-&gt;</operator><name>rk</name></name> <operator>==</operator> <name>FIDO_OPT_TRUE</name> <operator>||</operator> <name><name>cred</name><operator>-&gt;</operator><name>uv</name></name> <operator>==</operator> <name>FIDO_OPT_TRUE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: rk=%d, uv=%d"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>, <argument><expr><name><name>cred</name><operator>-&gt;</operator><name>rk</name></name></expr></argument>,
+<argument><expr><name><name>cred</name><operator>-&gt;</operator><name>uv</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FIDO_ERR_UNSUPPORTED_OPTION</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>cred</name><operator>-&gt;</operator><name>type</name></name> <operator>!=</operator> <name>COSE_ES256</name> <operator>||</operator> <name><name>cred</name><operator>-&gt;</operator><name>cdh</name><operator>.</operator><name>ptr</name></name> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<name><name>cred</name><operator>-&gt;</operator><name>rp</name><operator>.</operator><name>id</name></name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <name><name>cred</name><operator>-&gt;</operator><name>cdh</name><operator>.</operator><name>len</name></name> <operator>!=</operator> <name>SHA256_DIGEST_LENGTH</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: type=%d, cdh=(%p,%zu)"</literal></expr></argument> , <argument><expr><name>__func__</name></expr></argument>,
+<argument><expr><name><name>cred</name><operator>-&gt;</operator><name>type</name></name></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name><name>cred</name><operator>-&gt;</operator><name>cdh</name><operator>.</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>cred</name><operator>-&gt;</operator><name>cdh</name><operator>.</operator><name>len</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FIDO_ERR_INVALID_ARGUMENT</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name><name>cred</name><operator>-&gt;</operator><name>excl</name><operator>.</operator><name>len</name></name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>key_lookup</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name><name>cred</name><operator>-&gt;</operator><name>rp</name><operator>.</operator><name>id</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>cred</name><operator>-&gt;</operator><name>excl</name><operator>.</operator><name>ptr</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>found</name></expr></argument>, <argument><expr><name>ms</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: key_lookup"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>found</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>send_dummy_register</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>ms</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: send_dummy_register"</literal></expr></argument>,
+<argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>FIDO_ERR_CREDENTIAL_EXCLUDED</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rp_id_hash</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>rp_id_hash</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>SHA256</name><argument_list>(<argument><expr><operator>(</operator><specifier>const</specifier> <name>void</name> <operator>*</operator><operator>)</operator><name><name>cred</name><operator>-&gt;</operator><name>rp</name><operator>.</operator><name>id</name></name></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name><name>cred</name><operator>-&gt;</operator><name>rp</name><operator>.</operator><name>id</name></name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name>rp_id_hash</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>rp_id_hash</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: sha256"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FIDO_ERR_INTERNAL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>apdu</name> <operator>=</operator> <call><name>iso7816_new</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>U2F_CMD_REGISTER</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">2</literal> <operator>*</operator>
+<name>SHA256_DIGEST_LENGTH</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<call><name>iso7816_add</name><argument_list>(<argument><expr><name>apdu</name></expr></argument>, <argument><expr><name><name>cred</name><operator>-&gt;</operator><name>cdh</name><operator>.</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>cred</name><operator>-&gt;</operator><name>cdh</name><operator>.</operator><name>len</name></name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>iso7816_add</name><argument_list>(<argument><expr><name>apdu</name></expr></argument>, <argument><expr><name>rp_id_hash</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>rp_id_hash</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: iso7816"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_INTERNAL</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<do>do <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>fido_tx</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>CTAP_CMD_MSG</name></expr></argument>, <argument><expr><call><name>iso7816_ptr</name><argument_list>(<argument><expr><name>apdu</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>iso7816_len</name><argument_list>(<argument><expr><name>apdu</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_tx"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_TX</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>reply_len</name> <operator>=</operator> <call><name>fido_rx</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>CTAP_CMD_MSG</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>reply</name></expr></argument>,
+<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>reply</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><name>ms</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">2</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_rx"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_RX</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>usleep</name><argument_list>(<argument><expr><operator>(</operator><name>unsigned</name><operator>)</operator><operator>(</operator><ternary><condition><expr><name>ms</name> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr> ?</condition><then> <expr><literal type="number">100</literal></expr> </then><else>: <expr><name>ms</name></expr></else></ternary><operator>)</operator> <operator>*</operator> <literal type="number">1000</literal></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: usleep"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_RX</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block> while <condition>(<expr><operator>(</operator><operator>(</operator><name><name>reply</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>&lt;&lt;</operator> <literal type="number">8</literal><operator>)</operator> <operator>|</operator> <name><name>reply</name><index>[<expr><literal type="number">1</literal></expr>]</index></name><operator>)</operator> <operator>==</operator> <name>SW_CONDITIONS_NOT_SATISFIED</name></expr>)</condition>;</do>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>parse_register_reply</name><argument_list>(<argument><expr><name>cred</name></expr></argument>, <argument><expr><name>reply</name></expr></argument>,
+<argument><expr><operator>(</operator><name>size_t</name><operator>)</operator><name>reply_len</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: parse_register_reply"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<label><name>fail</name>:</label>
+<expr_stmt><expr><call><name>iso7816_free</name><argument_list>(<argument><expr><operator>&amp;</operator><name>apdu</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>u2f_authenticate_single</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>fido_blob_t</name> <modifier>*</modifier></type><name>key_id</name></decl></parameter>,
+<parameter><decl><type><name>fido_assert_t</name> <modifier>*</modifier></type><name>fa</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>idx</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ms</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>fido_blob_t</name></type> <name>sig</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>fido_blob_t</name></type> <name>ad</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>found</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>sig</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>sig</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ad</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>ad</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>key_lookup</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name><name>fa</name><operator>-&gt;</operator><name>rp_id</name></name></expr></argument>, <argument><expr><name>key_id</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>found</name></expr></argument>, <argument><expr><name>ms</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: key_lookup"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>found</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: not found"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_CREDENTIAL_EXCLUDED</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>fido_blob_set</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>fa</name><operator>-&gt;</operator><name>stmt</name><index>[<expr><name>idx</name></expr>]</index></name><operator>.</operator><name>id</name></expr></argument>, <argument><expr><name><name>key_id</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>key_id</name><operator>-&gt;</operator><name>len</name></name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_blob_set"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_INTERNAL</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>fa</name><operator>-&gt;</operator><name>up</name></name> <operator>==</operator> <name>FIDO_OPT_FALSE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: checking for key existence only"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_USER_PRESENCE_REQUIRED</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>do_auth</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>fa</name><operator>-&gt;</operator><name>cdh</name></name></expr></argument>, <argument><expr><name><name>fa</name><operator>-&gt;</operator><name>rp_id</name></name></expr></argument>, <argument><expr><name>key_id</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>sig</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ad</name></expr></argument>,
+<argument><expr><name>ms</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: do_auth"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>fido_assert_set_authdata</name><argument_list>(<argument><expr><name>fa</name></expr></argument>, <argument><expr><name>idx</name></expr></argument>, <argument><expr><name><name>ad</name><operator>.</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>ad</name><operator>.</operator><name>len</name></name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>FIDO_OK</name> <operator>||</operator>
+<call><name>fido_assert_set_sig</name><argument_list>(<argument><expr><name>fa</name></expr></argument>, <argument><expr><name>idx</name></expr></argument>, <argument><expr><name><name>sig</name><operator>.</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>sig</name><operator>.</operator><name>len</name></name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_assert_set"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_INTERNAL</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_OK</name></expr>;</expr_stmt>
+<label><name>fail</name>:</label>
+<expr_stmt><expr><call><name>fido_blob_reset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fido_blob_reset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ad</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>u2f_authenticate</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><name>fido_assert_t</name> <modifier>*</modifier></type><name>fa</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ms</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>size_t</name></type> <name>nfound</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>nauth_ok</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>fa</name><operator>-&gt;</operator><name>uv</name></name> <operator>==</operator> <name>FIDO_OPT_TRUE</name> <operator>||</operator> <name><name>fa</name><operator>-&gt;</operator><name>allow_list</name><operator>.</operator><name>ptr</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: uv=%d, allow_list=%p"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>, <argument><expr><name><name>fa</name><operator>-&gt;</operator><name>uv</name></name></expr></argument>,
+<argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name><name>fa</name><operator>-&gt;</operator><name>allow_list</name><operator>.</operator><name>ptr</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FIDO_ERR_UNSUPPORTED_OPTION</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>fido_assert_set_count</name><argument_list>(<argument><expr><name>fa</name></expr></argument>, <argument><expr><name><name>fa</name><operator>-&gt;</operator><name>allow_list</name><operator>.</operator><name>len</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_assert_set_count"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name><name>fa</name><operator>-&gt;</operator><name>allow_list</name><operator>.</operator><name>len</name></name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<switch>switch <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>u2f_authenticate_single</name><argument_list>(<argument><expr><name>dev</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name><name>fa</name><operator>-&gt;</operator><name>allow_list</name><operator>.</operator><name>ptr</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><name>fa</name></expr></argument>, <argument><expr><name>nfound</name></expr></argument>, <argument><expr><name>ms</name></expr></argument>)</argument_list></call><operator>)</operator></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>FIDO_OK</name></expr>:</case>
+<expr_stmt><expr><name>nauth_ok</name><operator>++</operator></expr>;</expr_stmt>
+
+<case>case <expr><name>FIDO_ERR_USER_PRESENCE_REQUIRED</name></expr>:</case>
+<expr_stmt><expr><name>nfound</name><operator>++</operator></expr>;</expr_stmt>
+<break>break;</break>
+<default>default:</default>
+<if_stmt><if>if <condition>(<expr><name>r</name> <operator>!=</operator> <name>FIDO_ERR_CREDENTIAL_EXCLUDED</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: u2f_authenticate_single"</literal></expr></argument>,
+<argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+</block_content>}</block></switch>
+</block_content>}</block></for>
+
+<expr_stmt><expr><name><name>fa</name><operator>-&gt;</operator><name>stmt_len</name></name> <operator>=</operator> <name>nfound</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>nfound</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>FIDO_ERR_NO_CREDENTIALS</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>nauth_ok</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>FIDO_ERR_USER_PRESENCE_REQUIRED</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>FIDO_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>u2f_get_touch_begin</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>iso7816_apdu_t</name> <modifier>*</modifier></type><name>apdu</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>clientdata</name> <init>= <expr><name>FIDO_DUMMY_CLIENTDATA</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>rp_id</name> <init>= <expr><name>FIDO_DUMMY_RP_ID</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>clientdata_hash</name><index>[<expr><name>SHA256_DIGEST_LENGTH</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>rp_id_hash</name><index>[<expr><name>SHA256_DIGEST_LENGTH</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>reply</name><index>[<expr><name>FIDO_MAXMSG</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>clientdata_hash</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>clientdata_hash</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rp_id_hash</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>rp_id_hash</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>SHA256</name><argument_list>(<argument><expr><operator>(</operator><specifier>const</specifier> <name>void</name> <operator>*</operator><operator>)</operator><name>clientdata</name></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name>clientdata</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name>clientdata_hash</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>clientdata_hash</name> <operator>||</operator> <call><name>SHA256</name><argument_list>(<argument><expr><operator>(</operator><specifier>const</specifier> <name>void</name> <operator>*</operator><operator>)</operator><name>rp_id</name></expr></argument>,
+<argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name>rp_id</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>rp_id_hash</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>rp_id_hash</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: sha256"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FIDO_ERR_INTERNAL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>apdu</name> <operator>=</operator> <call><name>iso7816_new</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>U2F_CMD_REGISTER</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">2</literal> <operator>*</operator>
+<name>SHA256_DIGEST_LENGTH</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<call><name>iso7816_add</name><argument_list>(<argument><expr><name>apdu</name></expr></argument>, <argument><expr><name>clientdata_hash</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>clientdata_hash</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>iso7816_add</name><argument_list>(<argument><expr><name>apdu</name></expr></argument>, <argument><expr><name>rp_id_hash</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>rp_id_hash</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: iso7816"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_INTERNAL</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>dev</name><operator>-&gt;</operator><name>attr</name><operator>.</operator><name>flags</name></name> <operator>&amp;</operator> <name>FIDO_CAP_WINK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_tx</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>CTAP_CMD_WINK</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fido_rx</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>CTAP_CMD_WINK</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>reply</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>reply</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><literal type="number">200</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>fido_tx</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>CTAP_CMD_MSG</name></expr></argument>, <argument><expr><call><name>iso7816_ptr</name><argument_list>(<argument><expr><name>apdu</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name>iso7816_len</name><argument_list>(<argument><expr><name>apdu</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_tx"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_TX</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_OK</name></expr>;</expr_stmt>
+<label><name>fail</name>:</label>
+<expr_stmt><expr><call><name>iso7816_free</name><argument_list>(<argument><expr><operator>&amp;</operator><name>apdu</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>u2f_get_touch_status</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><name>int</name> <modifier>*</modifier></type><name>touched</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ms</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>reply</name><index>[<expr><name>FIDO_MAXMSG</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>reply_len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>reply_len</name> <operator>=</operator> <call><name>fido_rx</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>CTAP_CMD_MSG</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>reply</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>reply</name></expr></argument>)</argument_list></sizeof></expr></argument>,
+<argument><expr><name>ms</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">2</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_rx"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FIDO_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<switch>switch <condition>(<expr><operator>(</operator><name><name>reply</name><index>[<expr><name>reply_len</name> <operator>-</operator> <literal type="number">2</literal></expr>]</index></name> <operator>&lt;&lt;</operator> <literal type="number">8</literal><operator>)</operator> <operator>|</operator> <name><name>reply</name><index>[<expr><name>reply_len</name> <operator>-</operator> <literal type="number">1</literal></expr>]</index></name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>SW_CONDITIONS_NOT_SATISFIED</name></expr>:</case>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>u2f_get_touch_begin</name><argument_list>(<argument><expr><name>dev</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: u2f_get_touch_begin"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><operator>*</operator><name>touched</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>SW_NO_ERROR</name></expr>:</case>
+<expr_stmt><expr><operator>*</operator><name>touched</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<break>break;</break>
+<default>default:</default>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: unexpected sw"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FIDO_ERR_RX</name><operator>)</operator></expr>;</return>
+</block_content>}</block></switch>
+
+<return>return <expr><operator>(</operator><name>FIDO_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+</unit>

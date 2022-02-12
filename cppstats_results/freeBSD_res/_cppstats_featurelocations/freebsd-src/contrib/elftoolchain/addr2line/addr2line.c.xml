@@ -1,0 +1,997 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/elftoolchain/addr2line/addr2line.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/param.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/tree.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;capsicum_helpers.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;dwarf.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;err.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;fcntl.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;gelf.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;getopt.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;libdwarf.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;libelftc.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;libgen.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdbool.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdio.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;string.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"_elftc.h"</cpp:file></cpp:include>
+
+<expr_stmt><expr><call><name>ELFTC_VCSID</name><argument_list>(<argument><expr><literal type="string">"$Id: addr2line.c 3499 2016-11-25 16:06:29Z emaste $"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<struct>struct <name>Func</name> <block>{
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>name</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Unsigned</name></type> <name>lopc</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Unsigned</name></type> <name>hipc</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Unsigned</name></type> <name>call_file</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Unsigned</name></type> <name>call_line</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Ranges</name> <modifier>*</modifier></type><name>ranges</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Signed</name></type> <name>ranges_cnt</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>Func</name></name> <modifier>*</modifier></type><name>inlined_caller</name></decl>;</decl_stmt>
+<macro><name>STAILQ_ENTRY</name><argument_list>(<argument>Func</argument>)</argument_list></macro> <expr_stmt><expr><name>next</name></expr>;</expr_stmt>
+}</block>;</struct>
+
+<struct>struct <name>range</name> <block>{
+<macro><name>RB_ENTRY</name><argument_list>(<argument>range</argument>)</argument_list></macro> <expr_stmt><expr><name>entry</name></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>Dwarf_Off</name></type> <name>off</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Unsigned</name></type> <name>lopc</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Unsigned</name></type> <name>hipc</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>srcfiles</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Signed</name></type> <name>nsrcfiles</name></decl>;</decl_stmt>
+<macro><name>STAILQ_HEAD</name><argument_list>(<argument/>, <argument>Func</argument>)</argument_list></macro> <expr_stmt><expr><name>funclist</name></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>Dwarf_Die</name></type> <name>die</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Debug</name></type> <name>dbg</name></decl>;</decl_stmt>
+}</block>;</struct>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name><name>struct</name> <name>option</name></name></type> <name><name>longopts</name><index>[]</index></name> <init>= <expr><block>{
+<expr><block>{<expr><literal type="string">"addresses"</literal></expr>, <expr><name>no_argument</name></expr>, <expr><name>NULL</name></expr>, <expr><literal type="char">'a'</literal></expr>}</block></expr>,
+<expr><block>{<expr><literal type="string">"target"</literal></expr> , <expr><name>required_argument</name></expr>, <expr><name>NULL</name></expr>, <expr><literal type="char">'b'</literal></expr>}</block></expr>,
+<expr><block>{<expr><literal type="string">"demangle"</literal></expr>, <expr><name>no_argument</name></expr>, <expr><name>NULL</name></expr>, <expr><literal type="char">'C'</literal></expr>}</block></expr>,
+<expr><block>{<expr><literal type="string">"exe"</literal></expr>, <expr><name>required_argument</name></expr>, <expr><name>NULL</name></expr>, <expr><literal type="char">'e'</literal></expr>}</block></expr>,
+<expr><block>{<expr><literal type="string">"functions"</literal></expr>, <expr><name>no_argument</name></expr>, <expr><name>NULL</name></expr>, <expr><literal type="char">'f'</literal></expr>}</block></expr>,
+<expr><block>{<expr><literal type="string">"inlines"</literal></expr>, <expr><name>no_argument</name></expr>, <expr><name>NULL</name></expr>, <expr><literal type="char">'i'</literal></expr>}</block></expr>,
+<expr><block>{<expr><literal type="string">"section"</literal></expr>, <expr><name>required_argument</name></expr>, <expr><name>NULL</name></expr>, <expr><literal type="char">'j'</literal></expr>}</block></expr>,
+<expr><block>{<expr><literal type="string">"pretty-print"</literal></expr>, <expr><name>no_argument</name></expr>, <expr><name>NULL</name></expr>, <expr><literal type="char">'p'</literal></expr>}</block></expr>,
+<expr><block>{<expr><literal type="string">"basename"</literal></expr>, <expr><name>no_argument</name></expr>, <expr><name>NULL</name></expr>, <expr><literal type="char">'s'</literal></expr>}</block></expr>,
+<expr><block>{<expr><literal type="string">"help"</literal></expr>, <expr><name>no_argument</name></expr>, <expr><name>NULL</name></expr>, <expr><literal type="char">'H'</literal></expr>}</block></expr>,
+<expr><block>{<expr><literal type="string">"version"</literal></expr>, <expr><name>no_argument</name></expr>, <expr><name>NULL</name></expr>, <expr><literal type="char">'V'</literal></expr>}</block></expr>,
+<expr><block>{<expr><name>NULL</name></expr>, <expr><literal type="number">0</literal></expr>, <expr><name>NULL</name></expr>, <expr><literal type="number">0</literal></expr>}</block></expr>
+}</block></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>demangle</name></decl>, <decl><type ref="prev"/><name>func</name></decl>, <decl><type ref="prev"/><name>base</name></decl>, <decl><type ref="prev"/><name>inlines</name></decl>, <decl><type ref="prev"/><name>print_addr</name></decl>, <decl><type ref="prev"/><name>pretty_print</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>char</name></type> <name><name>unknown</name><index>[]</index></name> <init>= <expr><block>{ <expr><literal type="char">'?'</literal></expr>, <expr><literal type="char">'?'</literal></expr>, <expr><literal type="char">'\0'</literal></expr> }</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>Dwarf_Addr</name></type> <name>section_base</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>Dwarf_Unsigned</name></type> <name>curlopc</name> <init>= <expr><operator>~</operator><literal type="number">0ULL</literal></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><specifier>static</specifier> <macro><name>RB_HEAD</name><argument_list>(<argument>cutree</argument>, <argument>range</argument>)</argument_list></macro> <name>cuhead</name> <operator>=</operator> <call><name>RB_INITIALIZER</name><argument_list>(<argument><expr><operator>&amp;</operator><name>cuhead</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>lopccmp</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>range</name></name> <modifier>*</modifier></type><name>e1</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>range</name></name> <modifier>*</modifier></type><name>e2</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><ternary><condition><expr><name><name>e1</name><operator>-&gt;</operator><name>lopc</name></name> <operator>&lt;</operator> <name><name>e2</name><operator>-&gt;</operator><name>lopc</name></name></expr> ?</condition><then> <expr><operator>-</operator><literal type="number">1</literal></expr> </then><else>: <expr><name><name>e1</name><operator>-&gt;</operator><name>lopc</name></name> <operator>&gt;</operator> <name><name>e2</name><operator>-&gt;</operator><name>lopc</name></name></expr></else></ternary><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<expr_stmt><expr><call><name>RB_PROTOTYPE</name><argument_list>(<argument><expr><name>cutree</name></expr></argument>, <argument><expr><name>range</name></expr></argument>, <argument><expr><name>entry</name></expr></argument>, <argument><expr><name>lopccmp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<macro><name>RB_GENERATE</name><argument_list>(<argument>cutree</argument>, <argument>range</argument>, <argument>entry</argument>, <argument>lopccmp</argument>)</argument_list></macro>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>USAGE_MESSAGE</name></cpp:macro> <cpp:value>"Usage: %s [options] hexaddress...\nMap program addresses to source file names and line numbers.\n\nOptions:\n-a | --addresses Display address prior to line number info.\n-b TGT | --target=TGT (Accepted but ignored).\n-e EXE | --exe=EXE Use program \"EXE\" to translate addresses.\n-f | --functions Display function names.\n-i | --inlines Display caller info for inlined functions.\n-j NAME | --section=NAME Values are offsets into section \"NAME\".\n-p | --pretty-print Display line number info and function name\nin human readable manner.\n-s | --basename Only show the base name for each file name.\n-C | --demangle Demangle C++ names.\n-H | --help Print a help message.\n-V | --version Print a version identifier and exit.\n"</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>usage</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><name>USAGE_MESSAGE</name></expr></argument>, <argument><expr><call><name>ELFTC_GETPROGNAME</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>version</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"%s (%s)\n"</literal></expr></argument>, <argument><expr><call><name>ELFTC_GETPROGNAME</name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><call><name>elftc_version</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>handle_high_pc</name><parameter_list>(<parameter><decl><type><name>Dwarf_Die</name></type> <name>die</name></decl></parameter>, <parameter><decl><type><name>Dwarf_Unsigned</name></type> <name>lopc</name></decl></parameter>, <parameter><decl><type><name>Dwarf_Unsigned</name> <modifier>*</modifier></type><name>hipc</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>Dwarf_Error</name></type> <name>de</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Half</name></type> <name>form</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Attribute</name></type> <name>at</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ret</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <call><name>dwarf_attr</name><argument_list>(<argument><expr><name>die</name></expr></argument>, <argument><expr><name>DW_AT_high_pc</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>at</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ret</name> <operator>==</operator> <name>DW_DLV_ERROR</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"dwarf_attr failed: %s"</literal></expr></argument>, <argument><expr><call><name>dwarf_errmsg</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ret</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <call><name>dwarf_whatform</name><argument_list>(<argument><expr><name>at</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>form</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ret</name> <operator>==</operator> <name>DW_DLV_ERROR</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"dwarf_whatform failed: %s"</literal></expr></argument>, <argument><expr><call><name>dwarf_errmsg</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>ret</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>dwarf_get_form_class</name><argument_list>(<argument><expr><literal type="number">2</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>form</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>DW_FORM_CLASS_CONSTANT</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>*</operator><name>hipc</name> <operator>+=</operator> <name>lopc</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>DW_DLV_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name><name>struct</name> <name>Func</name></name> <modifier>*</modifier></type>
+<name>search_func</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>range</name></name> <modifier>*</modifier></type><name>range</name></decl></parameter>, <parameter><decl><type><name>Dwarf_Unsigned</name></type> <name>addr</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>Func</name></name> <modifier>*</modifier></type><name>f</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>f0</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Unsigned</name></type> <name>lopc</name></decl>, <decl><type ref="prev"/><name>hipc</name></decl>, <decl><type ref="prev"/><name>addr_base</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>f0</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+
+<macro><name>STAILQ_FOREACH</name><argument_list>(<argument>f</argument>, <argument>&amp;range-&gt;funclist</argument>, <argument>next</argument>)</argument_list></macro> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>f</name><operator>-&gt;</operator><name>ranges</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>addr_base</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name><name>f</name><operator>-&gt;</operator><name>ranges_cnt</name></name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>f</name><operator>-&gt;</operator><name>ranges</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>dwr_type</name> <operator>==</operator> <name>DW_RANGES_END</name></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>f</name><operator>-&gt;</operator><name>ranges</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>dwr_type</name> <operator>==</operator>
+<name>DW_RANGES_ADDRESS_SELECTION</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>addr_base</name> <operator>=</operator> <name><name>f</name><operator>-&gt;</operator><name>ranges</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>dwr_addr2</name></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><name>lopc</name> <operator>=</operator> <name><name>f</name><operator>-&gt;</operator><name>ranges</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>dwr_addr1</name> <operator>+</operator> <name>addr_base</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>hipc</name> <operator>=</operator> <name><name>f</name><operator>-&gt;</operator><name>ranges</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>dwr_addr2</name> <operator>+</operator> <name>addr_base</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>addr</name> <operator>&gt;=</operator> <name>lopc</name> <operator>&amp;&amp;</operator> <name>addr</name> <operator>&lt;</operator> <name>hipc</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>f0</name> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<operator>(</operator><name>lopc</name> <operator>&gt;=</operator> <name><name>f0</name><operator>-&gt;</operator><name>lopc</name></name> <operator>&amp;&amp;</operator>
+<name>hipc</name> <operator>&lt;=</operator> <name><name>f0</name><operator>-&gt;</operator><name>hipc</name></name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>f0</name> <operator>=</operator> <name>f</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>f0</name><operator>-&gt;</operator><name>lopc</name></name> <operator>=</operator> <name>lopc</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>f0</name><operator>-&gt;</operator><name>hipc</name></name> <operator>=</operator> <name>hipc</name></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>addr</name> <operator>&gt;=</operator> <name><name>f</name><operator>-&gt;</operator><name>lopc</name></name> <operator>&amp;&amp;</operator> <name>addr</name> <operator>&lt;</operator> <name><name>f</name><operator>-&gt;</operator><name>hipc</name></name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>f0</name> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<operator>(</operator><name><name>f</name><operator>-&gt;</operator><name>lopc</name></name> <operator>&gt;=</operator> <name><name>f0</name><operator>-&gt;</operator><name>lopc</name></name> <operator>&amp;&amp;</operator> <name><name>f</name><operator>-&gt;</operator><name>hipc</name></name> <operator>&lt;=</operator> <name><name>f0</name><operator>-&gt;</operator><name>hipc</name></name><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>f0</name> <operator>=</operator> <name>f</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block>
+
+<return>return <expr><operator>(</operator><name>f0</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>collect_func</name><parameter_list>(<parameter><decl><type><name>Dwarf_Debug</name></type> <name>dbg</name></decl></parameter>, <parameter><decl><type><name>Dwarf_Die</name></type> <name>die</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>Func</name></name> <modifier>*</modifier></type><name>parent</name></decl></parameter>,
+<parameter><decl><type><name><name>struct</name> <name>range</name></name> <modifier>*</modifier></type><name>range</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>Dwarf_Die</name></type> <name>ret_die</name></decl>, <decl><type ref="prev"/><name>abst_die</name></decl>, <decl><type ref="prev"/><name>spec_die</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Error</name></type> <name>de</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Half</name></type> <name>tag</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Unsigned</name></type> <name>lopc</name></decl>, <decl><type ref="prev"/><name>hipc</name></decl>, <decl><type ref="prev"/><name>ranges_off</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Signed</name></type> <name>ranges_cnt</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Off</name></type> <name>ref</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Attribute</name></type> <name>abst_at</name></decl>, <decl><type ref="prev"/><name>spec_at</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Ranges</name> <modifier>*</modifier></type><name>ranges</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>funcname</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>Func</name></name> <modifier>*</modifier></type><name>f</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>found_ranges</name></decl>, <decl><type ref="prev"/><name>ret</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>f</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>abst_die</name> <operator>=</operator> <name>spec_die</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>dwarf_tag</name><argument_list>(<argument><expr><name>die</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>tag</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"dwarf_tag: %s"</literal></expr></argument>, <argument><expr><call><name>dwarf_errmsg</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>cont_search</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>tag</name> <operator>==</operator> <name>DW_TAG_subprogram</name> <operator>||</operator> <name>tag</name> <operator>==</operator> <name>DW_TAG_entry_point</name> <operator>||</operator>
+<name>tag</name> <operator>==</operator> <name>DW_TAG_inlined_subroutine</name> <operator>||</operator> <name>tag</name> <operator>==</operator> <name>DW_TAG_label</name></expr>)</condition> <block>{<block_content>
+
+
+
+
+
+<expr_stmt><expr><name>ranges</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>ranges_cnt</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>found_ranges</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>dwarf_attrval_unsigned</name><argument_list>(<argument><expr><name>die</name></expr></argument>, <argument><expr><name>DW_AT_ranges</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ranges_off</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>DW_DLV_OK</name> <operator>&amp;&amp;</operator>
+<call><name>dwarf_get_ranges</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><operator>(</operator><name>Dwarf_Off</name><operator>)</operator> <name>ranges_off</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ranges</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>ranges_cnt</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>DW_DLV_OK</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>ranges</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <name>ranges_cnt</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>found_ranges</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<goto>goto <name>get_func_name</name>;</goto>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>tag</name> <operator>==</operator> <name>DW_TAG_label</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>dwarf_attrval_unsigned</name><argument_list>(<argument><expr><name>die</name></expr></argument>, <argument><expr><name>DW_AT_low_pc</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>lopc</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>DW_DLV_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>cont_search</name>;</goto></block_content></block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>dwarf_attrval_unsigned</name><argument_list>(<argument><expr><name>die</name></expr></argument>, <argument><expr><name>DW_AT_low_pc</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>lopc</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call> <operator>||</operator> <call><name>dwarf_attrval_unsigned</name><argument_list>(<argument><expr><name>die</name></expr></argument>, <argument><expr><name>DW_AT_high_pc</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>hipc</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>cont_search</name>;</goto></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>handle_high_pc</name><argument_list>(<argument><expr><name>die</name></expr></argument>, <argument><expr><name>lopc</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>hipc</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>DW_DLV_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>cont_search</name>;</goto></block_content></block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+
+<label><name>get_func_name</name>:</label>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>dwarf_attrval_string</name><argument_list>(<argument><expr><name>die</name></expr></argument>, <argument><expr><name>DW_AT_name</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>funcname</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call> <operator>==</operator>
+<name>DW_DLV_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>add_func</name>;</goto></block_content></block></if></if_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>dwarf_attr</name><argument_list>(<argument><expr><name>die</name></expr></argument>, <argument><expr><name>DW_AT_abstract_origin</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>abst_at</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call> <operator>==</operator>
+<name>DW_DLV_OK</name> <operator>&amp;&amp;</operator>
+<call><name>dwarf_global_formref</name><argument_list>(<argument><expr><name>abst_at</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ref</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>DW_DLV_OK</name> <operator>&amp;&amp;</operator>
+<call><name>dwarf_offdie</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><name>ref</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>abst_die</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>DW_DLV_OK</name> <operator>&amp;&amp;</operator>
+<call><name>dwarf_attrval_string</name><argument_list>(<argument><expr><name>abst_die</name></expr></argument>, <argument><expr><name>DW_AT_name</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>funcname</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>DW_DLV_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>add_func</name>;</goto></block_content></block></if></if_stmt>
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>dwarf_attr</name><argument_list>(<argument><expr><name>die</name></expr></argument>, <argument><expr><name>DW_AT_specification</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>spec_at</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call> <operator>==</operator>
+<name>DW_DLV_OK</name> <operator>&amp;&amp;</operator>
+<call><name>dwarf_global_formref</name><argument_list>(<argument><expr><name>spec_at</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ref</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>DW_DLV_OK</name> <operator>&amp;&amp;</operator>
+<call><name>dwarf_offdie</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><name>ref</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>spec_die</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>DW_DLV_OK</name> <operator>&amp;&amp;</operator>
+<call><name>dwarf_attrval_string</name><argument_list>(<argument><expr><name>spec_die</name></expr></argument>, <argument><expr><name>DW_AT_name</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>funcname</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>DW_DLV_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>add_func</name>;</goto></block_content></block></if></if_stmt>
+
+
+<goto>goto <name>cont_search</name>;</goto>
+
+<label><name>add_func</name>:</label>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>f</name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>f</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"calloc"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>f</name><operator>-&gt;</operator><name>name</name></name> <operator>=</operator> <call><name>strdup</name><argument_list>(<argument><expr><name>funcname</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"strdup"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>found_ranges</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>f</name><operator>-&gt;</operator><name>ranges</name></name> <operator>=</operator> <name>ranges</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>f</name><operator>-&gt;</operator><name>ranges_cnt</name></name> <operator>=</operator> <name>ranges_cnt</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name><name>f</name><operator>-&gt;</operator><name>lopc</name></name> <operator>=</operator> <name>lopc</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>f</name><operator>-&gt;</operator><name>hipc</name></name> <operator>=</operator> <name>hipc</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>tag</name> <operator>==</operator> <name>DW_TAG_inlined_subroutine</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>f</name><operator>-&gt;</operator><name>inlined_caller</name></name> <operator>=</operator> <name>parent</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dwarf_attrval_unsigned</name><argument_list>(<argument><expr><name>die</name></expr></argument>, <argument><expr><name>DW_AT_call_file</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name><name>f</name><operator>-&gt;</operator><name>call_file</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dwarf_attrval_unsigned</name><argument_list>(<argument><expr><name>die</name></expr></argument>, <argument><expr><name>DW_AT_call_line</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name><name>f</name><operator>-&gt;</operator><name>call_line</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>STAILQ_INSERT_TAIL</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>range</name><operator>-&gt;</operator><name>funclist</name></name></expr></argument>, <argument><expr><name>f</name></expr></argument>, <argument><expr><name>next</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<label><name>cont_search</name>:</label>
+
+
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <call><name>dwarf_child</name><argument_list>(<argument><expr><name>die</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ret_die</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ret</name> <operator>==</operator> <name>DW_DLV_ERROR</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"dwarf_child: %s"</literal></expr></argument>, <argument><expr><call><name>dwarf_errmsg</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name>ret</name> <operator>==</operator> <name>DW_DLV_OK</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>f</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>collect_func</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><name>ret_die</name></expr></argument>, <argument><expr><name>f</name></expr></argument>, <argument><expr><name>range</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>collect_func</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><name>ret_die</name></expr></argument>, <argument><expr><name>parent</name></expr></argument>, <argument><expr><name>range</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <call><name>dwarf_siblingof</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><name>die</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ret_die</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ret</name> <operator>==</operator> <name>DW_DLV_ERROR</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"dwarf_siblingof: %s"</literal></expr></argument>, <argument><expr><call><name>dwarf_errmsg</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name>ret</name> <operator>==</operator> <name>DW_DLV_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>collect_func</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><name>ret_die</name></expr></argument>, <argument><expr><name>parent</name></expr></argument>, <argument><expr><name>range</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>die</name> <operator>!=</operator> <name><name>range</name><operator>-&gt;</operator><name>die</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>dwarf_dealloc</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><name>die</name></expr></argument>, <argument><expr><name>DW_DLA_DIE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>abst_die</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>dwarf_dealloc</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><name>abst_die</name></expr></argument>, <argument><expr><name>DW_DLA_DIE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>spec_die</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>dwarf_dealloc</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><name>spec_die</name></expr></argument>, <argument><expr><name>DW_DLA_DIE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>print_inlines</name><parameter_list>(<parameter><decl><type><name><name>struct</name> <name>range</name></name> <modifier>*</modifier></type><name>range</name></decl></parameter>, <parameter><decl><type><name><name>struct</name> <name>Func</name></name> <modifier>*</modifier></type><name>f</name></decl></parameter>, <parameter><decl><type><name>Dwarf_Unsigned</name></type> <name>call_file</name></decl></parameter>,
+<parameter><decl><type><name>Dwarf_Unsigned</name></type> <name>call_line</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>char</name></type> <name><name>demangled</name><index>[<expr><literal type="number">1024</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>file</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>call_file</name> <operator>&gt;</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <operator>(</operator><name>Dwarf_Signed</name><operator>)</operator> <name>call_file</name> <operator>&lt;=</operator> <name><name>range</name><operator>-&gt;</operator><name>nsrcfiles</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>file</name> <operator>=</operator> <name><name>range</name><operator>-&gt;</operator><name>srcfiles</name><index>[<expr><name>call_file</name> <operator>-</operator> <literal type="number">1</literal></expr>]</index></name></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>file</name> <operator>=</operator> <name>unknown</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>pretty_print</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">" (inlined by) "</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>func</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>demangle</name> <operator>&amp;&amp;</operator> <operator>!</operator><call><name>elftc_demangle</name><argument_list>(<argument><expr><name><name>f</name><operator>-&gt;</operator><name>name</name></name></expr></argument>, <argument><expr><name>demangled</name></expr></argument>,
+<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>demangled</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>pretty_print</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%s at "</literal></expr></argument>, <argument><expr><name>demangled</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%s\n"</literal></expr></argument>, <argument><expr><name>demangled</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>pretty_print</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%s at "</literal></expr></argument>, <argument><expr><name><name>f</name><operator>-&gt;</operator><name>name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%s\n"</literal></expr></argument>, <argument><expr><name><name>f</name><operator>-&gt;</operator><name>name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%s:%ju\n"</literal></expr></argument>, <argument><expr><ternary><condition><expr><name>base</name></expr> ?</condition><then> <expr><call><name>basename</name><argument_list>(<argument><expr><name>file</name></expr></argument>)</argument_list></call></expr> </then><else>: <expr><name>file</name></expr></else></ternary></expr></argument>,
+<argument><expr><operator>(</operator><name>uintmax_t</name><operator>)</operator> <name>call_line</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>f</name><operator>-&gt;</operator><name>inlined_caller</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>print_inlines</name><argument_list>(<argument><expr><name>range</name></expr></argument>, <argument><expr><name><name>f</name><operator>-&gt;</operator><name>inlined_caller</name></name></expr></argument>, <argument><expr><name><name>f</name><operator>-&gt;</operator><name>call_file</name></name></expr></argument>,
+<argument><expr><name><name>f</name><operator>-&gt;</operator><name>call_line</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name><name>struct</name> <name>range</name></name> <modifier>*</modifier></type>
+<name>culookup</name><parameter_list>(<parameter><decl><type><name>Dwarf_Unsigned</name></type> <name>addr</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>range</name></name></type> <name>find</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>res</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>find</name><operator>.</operator><name>lopc</name></name> <operator>=</operator> <name>addr</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>res</name> <operator>=</operator> <call><name>RB_NFIND</name><argument_list>(<argument><expr><name>cutree</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>cuhead</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>find</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>res</name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>res</name><operator>-&gt;</operator><name>lopc</name></name> <operator>!=</operator> <name>addr</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>res</name> <operator>=</operator> <call><name>RB_PREV</name><argument_list>(<argument><expr><name>cutree</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>cuhead</name></expr></argument>, <argument><expr><name>res</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>res</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <name>addr</name> <operator>&gt;=</operator> <name><name>res</name><operator>-&gt;</operator><name>lopc</name></name> <operator>&amp;&amp;</operator> <name>addr</name> <operator>&lt;</operator> <name><name>res</name><operator>-&gt;</operator><name>hipc</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>res</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>res</name> <operator>=</operator> <call><name>RB_MAX</name><argument_list>(<argument><expr><name>cutree</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>cuhead</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>res</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <name>addr</name> <operator>&gt;=</operator> <name><name>res</name><operator>-&gt;</operator><name>lopc</name></name> <operator>&amp;&amp;</operator> <name>addr</name> <operator>&lt;</operator> <name><name>res</name><operator>-&gt;</operator><name>hipc</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>res</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>check_labels</name><parameter_list>(<parameter><decl><type><name>Dwarf_Debug</name></type> <name>dbg</name></decl></parameter>, <parameter><decl><type><name>Dwarf_Die</name></type> <name>die</name></decl></parameter>, <parameter><decl><type><name>Dwarf_Unsigned</name></type> <name>addr</name></decl></parameter>,
+<parameter><decl><type><name><name>struct</name> <name>range</name></name> <modifier>*</modifier><modifier>*</modifier></type><name>range</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>Dwarf_Addr</name></type> <name>start</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Arange</name> <modifier>*</modifier></type><name>aranges</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Die</name></type> <name>prev_die</name></decl>, <decl><type ref="prev"/><name>ret_die</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Error</name></type> <name>de</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Half</name></type> <name>tag</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Off</name></type> <name>die_off</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Unsigned</name></type> <name>lopc</name></decl>, <decl><type ref="prev"/><name>length</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Signed</name></type> <name>arcnt</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>range</name></name> <modifier>*</modifier></type><name>labelp</name></decl>, <decl><type ref="prev"><modifier>*</modifier><modifier>*</modifier></type><name>labels</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>, <decl><type ref="prev"/><name>j</name></decl>, <decl><type ref="prev"/><name>label_cnt</name></decl>, <decl><type ref="prev"/><name>ret</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>prev_die</name> <operator>=</operator> <name>ret_die</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>labels</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>i</name> <operator>=</operator> <name>label_cnt</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <call><name>dwarf_get_aranges</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>aranges</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>arcnt</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ret</name> <operator>!=</operator> <name>DW_DLV_OK</name> <operator>&amp;&amp;</operator> <name>ret</name> <operator>!=</operator> <name>DW_DLV_NO_ENTRY</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"dwarf_get_aranges failed: %s"</literal></expr></argument>, <argument><expr><call><name>dwarf_errmsg</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <call><name>dwarf_child</name><argument_list>(<argument><expr><name>die</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>prev_die</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ret</name> <operator>==</operator> <name>DW_DLV_ERROR</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"dwarf_child: %s"</literal></expr></argument>, <argument><expr><call><name>dwarf_errmsg</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+<while>while <condition>(<expr><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>dwarf_tag</name><argument_list>(<argument><expr><name>prev_die</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>tag</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>DW_DLV_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"dwarf_tag failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>dwarf_errmsg</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>DW_DLV_ERROR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>tag</name> <operator>==</operator> <name>DW_TAG_label</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>dwarf_attrval_unsigned</name><argument_list>(<argument><expr><name>prev_die</name></expr></argument>, <argument><expr><name>DW_AT_low_pc</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>lopc</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>DW_DLV_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>label_cnt</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>dwarf_siblingof</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><name>prev_die</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ret_die</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>DW_DLV_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>prev_die</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>dwarf_dealloc</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><name>prev_die</name></expr></argument>, <argument><expr><name>DW_DLA_DIE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>prev_die</name> <operator>=</operator> <name>ret_die</name></expr>;</expr_stmt>
+</block_content>}</block></while>
+
+<if_stmt><if>if <condition>(<expr><name>label_cnt</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>DW_DLV_NO_ENTRY</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>labels</name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><name>label_cnt</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr>struct <name>range</name> <operator>*</operator></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"calloc"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <call><name>dwarf_child</name><argument_list>(<argument><expr><name>die</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>prev_die</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ret</name> <operator>==</operator> <name>DW_DLV_ERROR</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"dwarf_child: %s"</literal></expr></argument>, <argument><expr><call><name>dwarf_errmsg</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<while>while <condition>(<expr><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>dwarf_tag</name><argument_list>(<argument><expr><name>prev_die</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>tag</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>DW_DLV_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"dwarf_tag failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>dwarf_errmsg</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>labels</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>DW_DLV_ERROR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>tag</name> <operator>==</operator> <name>DW_TAG_label</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>dwarf_attrval_unsigned</name><argument_list>(<argument><expr><name>prev_die</name></expr></argument>, <argument><expr><name>DW_AT_low_pc</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>lopc</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>DW_DLV_OK</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>curlopc</name> <operator>==</operator> <name>lopc</name></expr>)</condition> <block>{<block_content>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>label_cnt</name> <operator>-</operator> <literal type="number">1</literal></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>labels</name><index>[<expr><name>i</name></expr>]</index></name> <operator>!=</operator> <operator>*</operator><name>range</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>labels</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>labels</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>DW_DLV_ERROR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>labelp</name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr>struct <name>range</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>labelp</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"calloc"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>labelp</name><operator>-&gt;</operator><name>lopc</name></name> <operator>=</operator> <name>lopc</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>labelp</name><operator>-&gt;</operator><name>die</name></name> <operator>=</operator> <name>prev_die</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>labelp</name><operator>-&gt;</operator><name>dbg</name></name> <operator>=</operator> <name>dbg</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>STAILQ_INIT</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>labelp</name><operator>-&gt;</operator><name>funclist</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>labels</name><index>[<expr><name>i</name><operator>++</operator></expr>]</index></name> <operator>=</operator> <name>labelp</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>dwarf_siblingof</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><name>prev_die</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ret_die</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>DW_DLV_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>prev_die</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <name>tag</name> <operator>!=</operator> <name>DW_TAG_label</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>dwarf_dealloc</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><name>prev_die</name></expr></argument>, <argument><expr><name>DW_DLA_DIE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>prev_die</name> <operator>=</operator> <name>ret_die</name></expr>;</expr_stmt>
+</block_content>}</block></while>
+
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>label_cnt</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<for>for <control>(<init><expr><name>j</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>j</name> <operator>&lt;</operator> <name>arcnt</name></expr>;</condition> <incr><expr><name>j</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>dwarf_get_arange_info</name><argument_list>(<argument><expr><name><name>aranges</name><index>[<expr><name>j</name></expr>]</index></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>start</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>length</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>die_off</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>DW_DLV_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"dwarf_get_arange_info failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>dwarf_errmsg</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>labels</name><index>[<expr><name>i</name></expr>]</index></name><operator>-&gt;</operator><name>lopc</name> <operator>==</operator> <operator>(</operator><name>Dwarf_Unsigned</name><operator>)</operator><name>start</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>labels</name><index>[<expr><name>i</name></expr>]</index></name><operator>-&gt;</operator><name>hipc</name> <operator>=</operator> <name>start</name> <operator>+</operator> <name>length</name></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></for>
+
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>label_cnt</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>addr</name> <operator>&gt;=</operator> <name><name>labels</name><index>[<expr><name>i</name></expr>]</index></name><operator>-&gt;</operator><name>lopc</name> <operator>&amp;&amp;</operator> <name>addr</name> <operator>&lt;</operator> <name><name>labels</name><index>[<expr><name>i</name></expr>]</index></name><operator>-&gt;</operator><name>hipc</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>range</name> <operator>=</operator> <name><name>labels</name><index>[<expr><name>i</name></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RB_INSERT</name><argument_list>(<argument><expr><name>cutree</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>cuhead</name></expr></argument>, <argument><expr><operator>(</operator><operator>*</operator><name>range</name><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>curlopc</name> <operator>=</operator> <name><operator>(</operator><operator>*</operator><name>range</name><operator>)</operator><operator>-&gt;</operator><name>lopc</name></name></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>label_cnt</name> <operator>-</operator> <literal type="number">1</literal></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>labels</name><index>[<expr><name>i</name></expr>]</index></name> <operator>!=</operator> <operator>*</operator><name>range</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>labels</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>labels</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>range</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>DW_DLV_OK</name><operator>)</operator></expr>;</return></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>DW_DLV_NO_ENTRY</name><operator>)</operator></expr>;</return></block_content></block></else></if_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>check_range</name><parameter_list>(<parameter><decl><type><name>Dwarf_Debug</name></type> <name>dbg</name></decl></parameter>, <parameter><decl><type><name>Dwarf_Die</name></type> <name>die</name></decl></parameter>, <parameter><decl><type><name>Dwarf_Unsigned</name></type> <name>addr</name></decl></parameter>,
+<parameter><decl><type><name><name>struct</name> <name>range</name></name> <modifier>*</modifier><modifier>*</modifier></type><name>range</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>Dwarf_Error</name></type> <name>de</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Unsigned</name></type> <name>addr_base</name></decl>, <decl><type ref="prev"/><name>lopc</name></decl>, <decl><type ref="prev"/><name>hipc</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Off</name></type> <name>ranges_off</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Signed</name></type> <name>ranges_cnt</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Ranges</name> <modifier>*</modifier></type><name>ranges</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>, <decl><type ref="prev"/><name>ret</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>bool</name></type> <name>in_cu</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>addr_base</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>ranges</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>ranges_cnt</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>in_cu</name> <operator>=</operator> <name>false</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>dwarf_attrval_unsigned</name><argument_list>(<argument><expr><name>die</name></expr></argument>, <argument><expr><name>DW_AT_ranges</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ranges_off</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call> <operator>==</operator>
+<name>DW_DLV_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <call><name>dwarf_get_ranges</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><name>ranges_off</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ranges</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>ranges_cnt</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ret</name> <operator>!=</operator> <name>DW_DLV_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>ret</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>ranges</name> <operator>||</operator> <name>ranges_cnt</name> <operator>&lt;=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>DW_DLV_ERROR</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>ranges_cnt</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>ranges</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>dwr_type</name> <operator>==</operator> <name>DW_RANGES_END</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>DW_DLV_NO_ENTRY</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>ranges</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>dwr_type</name> <operator>==</operator>
+<name>DW_RANGES_ADDRESS_SELECTION</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>addr_base</name> <operator>=</operator> <name><name>ranges</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>dwr_addr2</name></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+
+
+<expr_stmt><expr><name>lopc</name> <operator>=</operator> <name><name>ranges</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>dwr_addr1</name> <operator>+</operator> <name>addr_base</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>hipc</name> <operator>=</operator> <name><name>ranges</name><index>[<expr><name>i</name></expr>]</index></name><operator>.</operator><name>dwr_addr2</name> <operator>+</operator> <name>addr_base</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>lopc</name> <operator>==</operator> <name>curlopc</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>DW_DLV_ERROR</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>addr</name> <operator>&gt;=</operator> <name>lopc</name> <operator>&amp;&amp;</operator> <name>addr</name> <operator>&lt;</operator> <name>hipc</name></expr>)</condition><block>{<block_content>
+<expr_stmt><expr><name>in_cu</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+<break>break;</break>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><call><name>dwarf_attrval_unsigned</name><argument_list>(<argument><expr><name>die</name></expr></argument>, <argument><expr><name>DW_AT_low_pc</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>lopc</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call> <operator>==</operator>
+<name>DW_DLV_OK</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>lopc</name> <operator>==</operator> <name>curlopc</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>DW_DLV_ERROR</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>dwarf_attrval_unsigned</name><argument_list>(<argument><expr><name>die</name></expr></argument>, <argument><expr><name>DW_AT_high_pc</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>hipc</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call> <operator>==</operator>
+<name>DW_DLV_OK</name></expr>)</condition> <block>{<block_content>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><call><name>handle_high_pc</name><argument_list>(<argument><expr><name>die</name></expr></argument>, <argument><expr><name>lopc</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>hipc</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>DW_DLV_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>DW_DLV_ERROR</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+<expr_stmt><expr><name>hipc</name> <operator>=</operator> <operator>~</operator><literal type="number">0ULL</literal></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>addr</name> <operator>&gt;=</operator> <name>lopc</name> <operator>&amp;&amp;</operator> <name>addr</name> <operator>&lt;</operator> <name>hipc</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>in_cu</name> <operator>=</operator> <name>true</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <call><name>check_labels</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><name>die</name></expr></argument>, <argument><expr><name>addr</name></expr></argument>, <argument><expr><name>range</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>ret</name></expr>;</return>
+</block_content>}</block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>in_cu</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><operator>*</operator><name>range</name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr>struct <name>range</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"calloc"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>range</name><operator>)</operator><operator>-&gt;</operator><name>lopc</name></name> <operator>=</operator> <name>lopc</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>range</name><operator>)</operator><operator>-&gt;</operator><name>hipc</name></name> <operator>=</operator> <name>hipc</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>range</name><operator>)</operator><operator>-&gt;</operator><name>die</name></name> <operator>=</operator> <name>die</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>range</name><operator>)</operator><operator>-&gt;</operator><name>dbg</name></name> <operator>=</operator> <name>dbg</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>STAILQ_INIT</name><argument_list>(<argument><expr><operator>&amp;</operator><name><operator>(</operator><operator>*</operator><name>range</name><operator>)</operator><operator>-&gt;</operator><name>funclist</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RB_INSERT</name><argument_list>(<argument><expr><name>cutree</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>cuhead</name></expr></argument>, <argument><expr><operator>*</operator><name>range</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>curlopc</name> <operator>=</operator> <name>lopc</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>DW_DLV_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<return>return <expr><operator>(</operator><name>DW_DLV_NO_ENTRY</name><operator>)</operator></expr>;</return>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>translate</name><parameter_list>(<parameter><decl><type><name>Dwarf_Debug</name></type> <name>dbg</name></decl></parameter>, <parameter><decl><type><name>Elf</name> <modifier>*</modifier></type><name>e</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name><modifier>*</modifier></type> <name>addrstr</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>Dwarf_Die</name></type> <name>die</name></decl>, <decl><type ref="prev"/><name>ret_die</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Line</name> <modifier>*</modifier></type><name>lbuf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Error</name></type> <name>de</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Half</name></type> <name>tag</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Unsigned</name></type> <name>addr</name></decl>, <decl><type ref="prev"/><name>lineno</name></decl>, <decl><type ref="prev"/><name>plineno</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Signed</name></type> <name>lcount</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Addr</name></type> <name>lineaddr</name></decl>, <decl><type ref="prev"/><name>plineaddr</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>range</name></name> <modifier>*</modifier></type><name>range</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>Func</name></name> <modifier>*</modifier></type><name>f</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>funcname</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>file</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>file0</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>pfile</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name><name>demangled</name><index>[<expr><literal type="number">1024</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ec</name></decl>, <decl><type ref="prev"/><name>i</name></decl>, <decl><type ref="prev"/><name>ret</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>addr</name> <operator>=</operator> <call><name>strtoull</name><argument_list>(<argument><expr><name>addrstr</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="number">16</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>addr</name> <operator>+=</operator> <name>section_base</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>lineno</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>file</name> <operator>=</operator> <name>unknown</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>die</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <name>DW_DLV_OK</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>range</name> <operator>=</operator> <call><name>culookup</name><argument_list>(<argument><expr><name>addr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>range</name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>die</name> <operator>=</operator> <name><name>range</name><operator>-&gt;</operator><name>die</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>dbg</name> <operator>=</operator> <name><name>range</name><operator>-&gt;</operator><name>dbg</name></name></expr>;</expr_stmt>
+<goto>goto <name>status_ok</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<while>while <condition>(<expr><name>true</name></expr>)</condition> <block>{<block_content>
+
+
+
+
+
+
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <call><name>dwarf_next_cu_header</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ret</name> <operator>==</operator> <name>DW_DLV_NO_ENTRY</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>curlopc</name> <operator>==</operator> <operator>~</operator><literal type="number">0ULL</literal></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <call><name>dwarf_next_cu_header</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>,
+<argument><expr><name>NULL</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>die</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<while>while <condition>(<expr><call><name>dwarf_siblingof</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><name>die</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ret_die</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>DW_DLV_OK</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>die</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>dwarf_dealloc</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><name>die</name></expr></argument>, <argument><expr><name>DW_DLA_DIE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>die</name> <operator>=</operator> <name>ret_die</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>dwarf_tag</name><argument_list>(<argument><expr><name>die</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>tag</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>DW_DLV_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"dwarf_tag failed: %s"</literal></expr></argument>,
+<argument><expr><call><name>dwarf_errmsg</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>next_cu</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>tag</name> <operator>==</operator> <name>DW_TAG_compile_unit</name></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+</block_content>}</block></while>
+
+<if_stmt><if>if <condition>(<expr><name>ret_die</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"could not find DW_TAG_compile_unit die"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>next_cu</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>ret</name> <operator>=</operator> <call><name>check_range</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><name>die</name></expr></argument>, <argument><expr><name>addr</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>range</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ret</name> <operator>==</operator> <name>DW_DLV_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>ret</name> <operator>==</operator> <name>DW_DLV_ERROR</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+<label><name>next_cu</name>:</label>
+<if_stmt><if>if <condition>(<expr><name>die</name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>dwarf_dealloc</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><name>die</name></expr></argument>, <argument><expr><name>DW_DLA_DIE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>die</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></while>
+
+<if_stmt><if>if <condition>(<expr><name>ret</name> <operator>!=</operator> <name>DW_DLV_OK</name> <operator>||</operator> <name>die</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+
+<label><name>status_ok</name>:</label>
+<switch>switch <condition>(<expr><call><name>dwarf_srclines</name><argument_list>(<argument><expr><name>die</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>lbuf</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>lcount</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>DW_DLV_OK</name></expr>:</case>
+<break>break;</break>
+<case>case <expr><name>DW_DLV_NO_ENTRY</name></expr>:</case>
+
+<goto>goto <name>out</name>;</goto>
+<default>default:</default>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"dwarf_srclines: %s"</literal></expr></argument>, <argument><expr><call><name>dwarf_errmsg</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></switch>
+
+<expr_stmt><expr><name>plineaddr</name> <operator>=</operator> <operator>~</operator><literal type="number">0ULL</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>plineno</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>pfile</name> <operator>=</operator> <name>unknown</name></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>lcount</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>dwarf_lineaddr</name><argument_list>(<argument><expr><name><name>lbuf</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>lineaddr</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"dwarf_lineaddr: %s"</literal></expr></argument>, <argument><expr><call><name>dwarf_errmsg</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>dwarf_lineno</name><argument_list>(<argument><expr><name><name>lbuf</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>lineno</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"dwarf_lineno: %s"</literal></expr></argument>, <argument><expr><call><name>dwarf_errmsg</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>dwarf_linesrc</name><argument_list>(<argument><expr><name><name>lbuf</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>file0</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"dwarf_linesrc: %s"</literal></expr></argument>, <argument><expr><call><name>dwarf_errmsg</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>file</name> <operator>=</operator> <name>file0</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>addr</name> <operator>==</operator> <name>lineaddr</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name><name>addr</name> <argument_list type="generic">&lt; <argument><expr><name>lineaddr</name> <operator>&amp;&amp;</operator> <name>addr</name></expr></argument> &gt;</argument_list></name> <name>plineaddr</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>lineno</name> <operator>=</operator> <name>plineno</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>file</name> <operator>=</operator> <name>pfile</name></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>plineaddr</name> <operator>=</operator> <name>lineaddr</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>plineno</name> <operator>=</operator> <name>lineno</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>pfile</name> <operator>=</operator> <name>file</name></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<label><name>out</name>:</label>
+<expr_stmt><expr><name>f</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>funcname</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ret</name> <operator>==</operator> <name>DW_DLV_OK</name> <operator>&amp;&amp;</operator> <operator>(</operator><name>func</name> <operator>||</operator> <name>inlines</name><operator>)</operator> <operator>&amp;&amp;</operator> <name>range</name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>range</name><operator>-&gt;</operator><name>srcfiles</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<if_stmt><if>if <condition>(<expr><call><name>dwarf_srcfiles</name><argument_list>(<argument><expr><name>die</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>range</name><operator>-&gt;</operator><name>srcfiles</name></name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name><name>range</name><operator>-&gt;</operator><name>nsrcfiles</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"dwarf_srcfiles: %s"</literal></expr></argument>, <argument><expr><call><name>dwarf_errmsg</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>STAILQ_EMPTY</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>range</name><operator>-&gt;</operator><name>funclist</name></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>collect_func</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><name><name>range</name><operator>-&gt;</operator><name>die</name></name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>range</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>die</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>f</name> <operator>=</operator> <call><name>search_func</name><argument_list>(<argument><expr><name>range</name></expr></argument>, <argument><expr><name>addr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>f</name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>funcname</name> <operator>=</operator> <name><name>f</name><operator>-&gt;</operator><name>name</name></name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>print_addr</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>ec</name> <operator>=</operator> <call><name>gelf_getclass</name><argument_list>(<argument><expr><name>e</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>ELFCLASSNONE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"gelf_getclass failed: %s"</literal></expr></argument>, <argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>ec</name> <operator>=</operator> <name>ELFCLASS64</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>ec</name> <operator>==</operator> <name>ELFCLASS32</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>pretty_print</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"0x%08jx: "</literal></expr></argument>, <argument><expr><operator>(</operator><name>uintmax_t</name><operator>)</operator> <name>addr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"0x%08jx\n"</literal></expr></argument>, <argument><expr><operator>(</operator><name>uintmax_t</name><operator>)</operator> <name>addr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>pretty_print</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"0x%016jx: "</literal></expr></argument>, <argument><expr><operator>(</operator><name>uintmax_t</name><operator>)</operator> <name>addr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"0x%016jx\n"</literal></expr></argument>, <argument><expr><operator>(</operator><name>uintmax_t</name><operator>)</operator> <name>addr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>func</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>funcname</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>funcname</name> <operator>=</operator> <name>unknown</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>demangle</name> <operator>&amp;&amp;</operator> <operator>!</operator><call><name>elftc_demangle</name><argument_list>(<argument><expr><name>funcname</name></expr></argument>, <argument><expr><name>demangled</name></expr></argument>,
+<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>demangled</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>pretty_print</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%s at "</literal></expr></argument>, <argument><expr><name>demangled</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%s\n"</literal></expr></argument>, <argument><expr><name>demangled</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>pretty_print</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%s at "</literal></expr></argument>, <argument><expr><name>funcname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%s\n"</literal></expr></argument>, <argument><expr><name>funcname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%s:%ju\n"</literal></expr></argument>, <argument><expr><ternary><condition><expr><name>base</name></expr> ?</condition><then> <expr><call><name>basename</name><argument_list>(<argument><expr><name>file</name></expr></argument>)</argument_list></call></expr> </then><else>: <expr><name>file</name></expr></else></ternary></expr></argument>,
+<argument><expr><operator>(</operator><name>uintmax_t</name><operator>)</operator> <name>lineno</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ret</name> <operator>==</operator> <name>DW_DLV_OK</name> <operator>&amp;&amp;</operator> <name>inlines</name> <operator>&amp;&amp;</operator> <name>range</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator>
+<name><name>range</name><operator>-&gt;</operator><name>srcfiles</name></name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <name>f</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <name><name>f</name><operator>-&gt;</operator><name>inlined_caller</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>print_inlines</name><argument_list>(<argument><expr><name>range</name></expr></argument>, <argument><expr><name><name>f</name><operator>-&gt;</operator><name>inlined_caller</name></name></expr></argument>, <argument><expr><name><name>f</name><operator>-&gt;</operator><name>call_file</name></name></expr></argument>,
+<argument><expr><name><name>f</name><operator>-&gt;</operator><name>call_line</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>find_section_base</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>exe</name></decl></parameter>, <parameter><decl><type><name>Elf</name> <modifier>*</modifier></type><name>e</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>section</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>Dwarf_Addr</name></type> <name>off</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf_Scn</name> <modifier>*</modifier></type><name>scn</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>GElf_Ehdr</name></type> <name>eh</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>GElf_Shdr</name></type> <name>sh</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>shstrndx</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>elferr</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>name</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>gelf_getehdr</name><argument_list>(<argument><expr><name>e</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>eh</name></expr></argument>)</argument_list></call> <operator>!=</operator> <operator>&amp;</operator><name>eh</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"gelf_getehdr failed: %s"</literal></expr></argument>, <argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>elf_getshstrndx</name><argument_list>(<argument><expr><name>e</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>shstrndx</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"elf_getshstrndx failed: %s"</literal></expr></argument>, <argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>elf_errno</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>off</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>scn</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<while>while <condition>(<expr><operator>(</operator><name>scn</name> <operator>=</operator> <call><name>elf_nextscn</name><argument_list>(<argument><expr><name>e</name></expr></argument>, <argument><expr><name>scn</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>gelf_getshdr</name><argument_list>(<argument><expr><name>scn</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>sh</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"gelf_getshdr failed: %s"</literal></expr></argument>, <argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>name</name> <operator>=</operator> <call><name>elf_strptr</name><argument_list>(<argument><expr><name>e</name></expr></argument>, <argument><expr><name>shstrndx</name></expr></argument>, <argument><expr><name><name>sh</name><operator>.</operator><name>sh_name</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>next</name>;</goto></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>strcmp</name><argument_list>(<argument><expr><name>section</name></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>eh</name><operator>.</operator><name>e_type</name></name> <operator>==</operator> <name>ET_EXEC</name> <operator>||</operator> <name><name>eh</name><operator>.</operator><name>e_type</name></name> <operator>==</operator> <name>ET_DYN</name></expr>)</condition> <block>{<block_content>
+
+
+
+
+<expr_stmt><expr><name>section_base</name> <operator>=</operator> <name><name>sh</name><operator>.</operator><name>sh_addr</name></name></expr>;</expr_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name><name>eh</name><operator>.</operator><name>e_type</name></name> <operator>==</operator> <name>ET_REL</name></expr>)</condition> <block>{<block_content>
+
+
+
+
+
+<expr_stmt><expr><name>section_base</name> <operator>=</operator> <name>off</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"unknown e_type %u"</literal></expr></argument>, <argument><expr><name><name>eh</name><operator>.</operator><name>e_type</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+<label><name>next</name>:</label>
+<expr_stmt><expr><name>off</name> <operator>+=</operator> <name><name>sh</name><operator>.</operator><name>sh_size</name></name></expr>;</expr_stmt>
+</block_content>}</block></while>
+<expr_stmt><expr><name>elferr</name> <operator>=</operator> <call><name>elf_errno</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>elferr</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>warnx</name><argument_list>(<argument><expr><literal type="string">"elf_nextscn failed: %s"</literal></expr></argument>, <argument><expr><call><name>elf_errmsg</name><argument_list>(<argument><expr><name>elferr</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"%s: cannot find section %s"</literal></expr></argument>, <argument><expr><name>exe</name></expr></argument>, <argument><expr><name>section</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>main</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>argc</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>cap_rights_t</name></type> <name>rights</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Elf</name> <modifier>*</modifier></type><name>e</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Debug</name></type> <name>dbg</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>Dwarf_Error</name></type> <name>de</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>exe</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>section</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type> <name><name>line</name><index>[<expr><literal type="number">1024</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>fd</name></decl>, <decl><type ref="prev"/><name>i</name></decl>, <decl><type ref="prev"/><name>opt</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>exe</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>section</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<while>while <condition>(<expr><operator>(</operator><name>opt</name> <operator>=</operator> <call><name>getopt_long</name><argument_list>(<argument><expr><name>argc</name></expr></argument>, <argument><expr><name>argv</name></expr></argument>, <argument><expr><literal type="string">"ab:Ce:fij:psHV"</literal></expr></argument>, <argument><expr><name>longopts</name></expr></argument>,
+<argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<switch>switch <condition>(<expr><name>opt</name></expr>)</condition> <block>{<block_content>
+<case>case <expr><literal type="char">'a'</literal></expr>:</case>
+<expr_stmt><expr><name>print_addr</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'b'</literal></expr>:</case>
+
+<break>break;</break>
+<case>case <expr><literal type="char">'C'</literal></expr>:</case>
+<expr_stmt><expr><name>demangle</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'e'</literal></expr>:</case>
+<expr_stmt><expr><name>exe</name> <operator>=</operator> <name>optarg</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'f'</literal></expr>:</case>
+<expr_stmt><expr><name>func</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'i'</literal></expr>:</case>
+<expr_stmt><expr><name>inlines</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'j'</literal></expr>:</case>
+<expr_stmt><expr><name>section</name> <operator>=</operator> <name>optarg</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'p'</literal></expr>:</case>
+<expr_stmt><expr><name>pretty_print</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'s'</literal></expr>:</case>
+<expr_stmt><expr><name>base</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="char">'H'</literal></expr>:</case>
+<expr_stmt><expr><call><name>usage</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<case>case <expr><literal type="char">'V'</literal></expr>:</case>
+<expr_stmt><expr><call><name>version</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<default>default:</default>
+<expr_stmt><expr><call><name>usage</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></switch>
+</block_content>}</block></while>
+
+<expr_stmt><expr><name>argv</name> <operator>+=</operator> <name>optind</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>argc</name> <operator>-=</operator> <name>optind</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>exe</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>exe</name> <operator>=</operator> <literal type="string">"a.out"</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>fd</name> <operator>=</operator> <call><name>open</name><argument_list>(<argument><expr><name>exe</name></expr></argument>, <argument><expr><name>O_RDONLY</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>err</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"%s"</literal></expr></argument>, <argument><expr><name>exe</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>caph_rights_limit</name><argument_list>(<argument><expr><name>fd</name></expr></argument>, <argument><expr><call><name>cap_rights_init</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rights</name></expr></argument>, <argument><expr><name>CAP_FSTAT</name></expr></argument>,
+<argument><expr><name>CAP_MMAP_R</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"caph_rights_limit"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>caph_cache_catpages</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>caph_limit_stdio</name><argument_list>()</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"failed to limit stdio rights"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>caph_enter</name><argument_list>()</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"failed to enter capability mode"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>dwarf_init</name><argument_list>(<argument><expr><name>fd</name></expr></argument>, <argument><expr><name>DW_DLC_READ</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>dbg</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"dwarf_init: %s"</literal></expr></argument>, <argument><expr><call><name>dwarf_errmsg</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>dwarf_get_elf</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>e</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>DW_DLV_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>errx</name><argument_list>(<argument><expr><name>EXIT_FAILURE</name></expr></argument>, <argument><expr><literal type="string">"dwarf_get_elf: %s"</literal></expr></argument>, <argument><expr><call><name>dwarf_errmsg</name><argument_list>(<argument><expr><name>de</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>section</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>find_section_base</name><argument_list>(<argument><expr><name>exe</name></expr></argument>, <argument><expr><name>e</name></expr></argument>, <argument><expr><name>section</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>section_base</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>argc</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>argc</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>translate</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><name>e</name></expr></argument>, <argument><expr><name><name>argv</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for></block_content></block></if>
+<else>else <block>{<block_content>
+<expr_stmt><expr><call><name>setvbuf</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>_IOLBF</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<while>while <condition>(<expr><call><name>fgets</name><argument_list>(<argument><expr><name>line</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>line</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><name>stdin</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>translate</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><name>e</name></expr></argument>, <argument><expr><name>line</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></while>
+</block_content>}</block></else></if_stmt>
+
+<expr_stmt><expr><call><name>dwarf_finish</name><argument_list>(<argument><expr><name>dbg</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>de</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>elf_end</name><argument_list>(<argument><expr><name>e</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+</unit>

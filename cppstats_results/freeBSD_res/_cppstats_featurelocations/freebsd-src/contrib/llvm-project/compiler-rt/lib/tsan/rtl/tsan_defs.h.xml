@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/llvm-project/compiler-rt/lib/tsan/rtl/tsan_defs.h">
+
+
+
+
+
+
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>TSAN_DEFS_H</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>TSAN_DEFS_H</name></cpp:macro></cpp:define>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"sanitizer_common/sanitizer_internal_defs.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"sanitizer_common/sanitizer_libc.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"sanitizer_common/sanitizer_mutex.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"ubsan/ubsan_platform.h"</cpp:file></cpp:include>
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>TSAN_NO_HISTORY</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>TSAN_NO_HISTORY</name></cpp:macro> <cpp:value>0</cpp:value></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>TSAN_CONTAINS_UBSAN</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>CAN_SANITIZE_UB</name> <operator>&amp;&amp;</operator> <operator>!</operator><name>SANITIZER_GO</name></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>TSAN_CONTAINS_UBSAN</name></cpp:macro> <cpp:value>1</cpp:value></cpp:define>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>TSAN_CONTAINS_UBSAN</name></cpp:macro> <cpp:value>0</cpp:value></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<decl_stmt><decl><type><name>namespace</name></type> <name>__tsan</name> <block>{<block_content>
+
+<decl_stmt><decl><type><specifier>const</specifier> <name>int</name></type> <name>kClkBits</name> <init>= <expr><literal type="number">42</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>unsigned</name></type> <name>kMaxTidReuse</name> <init>= <expr><operator>(</operator><literal type="number">1</literal> <operator>&lt;&lt;</operator> <operator>(</operator><literal type="number">64</literal> <operator>-</operator> <name>kClkBits</name><operator>)</operator><operator>)</operator> <operator>-</operator> <literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+<struct>struct <name>ClockElem</name> <block>{
+<decl_stmt><decl><type><name>u64</name></type> <name>epoch</name> <range>: <expr><name>kClkBits</name></expr></range></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>u64</name></type> <name>reused</name> <range>: <expr><literal type="number">64</literal> <operator>-</operator> <name>kClkBits</name></expr></range></decl>;</decl_stmt>
+}</block>;</struct>
+
+<struct>struct <name>ClockBlock</name> <block>{
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>uptr</name></type> <name>kSize</name> <init>= <expr><literal type="number">512</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>uptr</name></type> <name>kTableSize</name> <init>= <expr><name>kSize</name> <operator>/</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>u32</name></expr></argument>)</argument_list></sizeof></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>uptr</name></type> <name>kClockCount</name> <init>= <expr><name>kSize</name> <operator>/</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>ClockElem</name></expr></argument>)</argument_list></sizeof></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>uptr</name></type> <name>kRefIdx</name> <init>= <expr><name>kTableSize</name> <operator>-</operator> <literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>uptr</name></type> <name>kBlockIdx</name> <init>= <expr><name>kTableSize</name> <operator>-</operator> <literal type="number">2</literal></expr></init></decl>;</decl_stmt>
+
+<union>union <block>{
+<decl_stmt><decl><type><name>u32</name></type> <name><name>table</name><index>[<expr><name>kTableSize</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ClockElem</name></type> <name><name>clock</name><index>[<expr><name>kClockCount</name></expr>]</index></name></decl>;</decl_stmt>
+}</block>;</union>
+
+<macro><name>ClockBlock</name><argument_list>()</argument_list></macro> <block>{<block_content>
+</block_content>}</block>
+}</block>;</struct>
+
+<decl_stmt><decl><type><specifier>const</specifier> <name>int</name></type> <name>kTidBits</name> <init>= <expr><literal type="number">13</literal></expr></init></decl>;</decl_stmt>
+
+
+
+<decl_stmt><decl><type><specifier>const</specifier> <name>unsigned</name></type> <name>kMaxTid</name> <init>= <expr><operator>(</operator><literal type="number">1</literal> <operator>&lt;&lt;</operator> <name>kTidBits</name><operator>)</operator> <operator>-</operator> <name>ClockBlock</name><operator>::</operator><name>kClockCount</name></expr></init></decl>;</decl_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><name>SANITIZER_GO</name></expr></cpp:if>
+<decl_stmt><decl><type><specifier>const</specifier> <name>unsigned</name></type> <name>kMaxTidInClock</name> <init>= <expr><name>kMaxTid</name> <operator>*</operator> <literal type="number">2</literal></expr></init></decl>;</decl_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<decl_stmt><decl><type><specifier>const</specifier> <name>unsigned</name></type> <name>kMaxTidInClock</name> <init>= <expr><name>kMaxTid</name></expr></init></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uptr</name></type> <name>kShadowStackSize</name> <init>= <expr><literal type="number">64</literal> <operator>*</operator> <literal type="number">1024</literal></expr></init></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><specifier>const</specifier> <name>uptr</name></type> <name>kShadowCnt</name> <init>= <expr><literal type="number">4</literal></expr></init></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><specifier>const</specifier> <name>uptr</name></type> <name>kShadowCell</name> <init>= <expr><literal type="number">8</literal></expr></init></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><specifier>const</specifier> <name>uptr</name></type> <name>kShadowSize</name> <init>= <expr><literal type="number">8</literal></expr></init></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><specifier>const</specifier> <name>uptr</name></type> <name>kShadowMultiplier</name> <init>= <expr><name>kShadowSize</name> <operator>*</operator> <name>kShadowCnt</name> <operator>/</operator> <name>kShadowCell</name></expr></init></decl>;</decl_stmt>
+
+
+
+<decl_stmt><decl><type><specifier>const</specifier> <name>uptr</name></type> <name>kMetaShadowCell</name> <init>= <expr><literal type="number">8</literal></expr></init></decl>;</decl_stmt>
+
+
+<decl_stmt><decl><type><specifier>const</specifier> <name>uptr</name></type> <name>kMetaShadowSize</name> <init>= <expr><literal type="number">4</literal></expr></init></decl>;</decl_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>TSAN_NO_HISTORY</name></expr></cpp:if>
+<decl_stmt><decl><type><specifier>const</specifier> <name>bool</name></type> <name>kCollectHistory</name> <init>= <expr><name>false</name></expr></init></decl>;</decl_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<decl_stmt><decl><type><specifier>const</specifier> <name>bool</name></type> <name>kCollectHistory</name> <init>= <expr><name>true</name></expr></init></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SANITIZER_DEBUG</name></expr></cpp:if>
+<function_decl><type><name>void</name></type> <name>build_consistency_debug</name><parameter_list>()</parameter_list>;</function_decl>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<function_decl><type><name>void</name></type> <name>build_consistency_release</name><parameter_list>()</parameter_list>;</function_decl>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<function><type><specifier>static</specifier> <specifier>inline</specifier> <name>void</name> <name>USED</name></type> <name>build_consistency</name><parameter_list>()</parameter_list> <block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>SANITIZER_DEBUG</name></expr></cpp:if>
+<expr_stmt><expr><call><name>build_consistency_debug</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><call><name>build_consistency_release</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+<function><type><name><name>template</name><argument_list type="generic">&lt;<argument><expr><name>typename</name> <name>T</name></expr></argument>&gt;</argument_list></name>
+<name>T</name></type> <name>min</name><parameter_list>(<parameter><decl><type><name>T</name></type> <name>a</name></decl></parameter>, <parameter><decl><type><name>T</name></type> <name>b</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<return>return <expr><ternary><condition><expr><name>a</name> <operator>&lt;</operator> <name>b</name></expr> ?</condition><then> <expr><name>a</name></expr> </then><else>: <expr><name>b</name></expr></else></ternary></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name><name>template</name><argument_list type="generic">&lt;<argument><expr><name>typename</name> <name>T</name></expr></argument>&gt;</argument_list></name>
+<name>T</name></type> <name>max</name><parameter_list>(<parameter><decl><type><name>T</name></type> <name>a</name></decl></parameter>, <parameter><decl><type><name>T</name></type> <name>b</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<return>return <expr><ternary><condition><expr><name>a</name> <operator>&gt;</operator> <name>b</name></expr> ?</condition><then> <expr><name>a</name></expr> </then><else>: <expr><name>b</name></expr></else></ternary></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name><name>template</name><argument_list type="generic">&lt;<argument><expr><name>typename</name> <name>T</name></expr></argument>&gt;</argument_list></name>
+<name>T</name></type> <name>RoundUp</name><parameter_list>(<parameter><decl><type><name>T</name></type> <name>p</name></decl></parameter>, <parameter><decl><type><name>u64</name></type> <name>align</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>DCHECK_EQ</name><argument_list>(<argument><expr><name>align</name> <operator>&amp;</operator> <operator>(</operator><name>align</name> <operator>-</operator> <literal type="number">1</literal><operator>)</operator></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>T</name><operator>)</operator><operator>(</operator><operator>(</operator><operator>(</operator><name>u64</name><operator>)</operator><name>p</name> <operator>+</operator> <name>align</name> <operator>-</operator> <literal type="number">1</literal><operator>)</operator> <operator>&amp;</operator> <operator>~</operator><operator>(</operator><name>align</name> <operator>-</operator> <literal type="number">1</literal><operator>)</operator><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name><name>template</name><argument_list type="generic">&lt;<argument><expr><name>typename</name> <name>T</name></expr></argument>&gt;</argument_list></name>
+<name>T</name></type> <name>RoundDown</name><parameter_list>(<parameter><decl><type><name>T</name></type> <name>p</name></decl></parameter>, <parameter><decl><type><name>u64</name></type> <name>align</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>DCHECK_EQ</name><argument_list>(<argument><expr><name>align</name> <operator>&amp;</operator> <operator>(</operator><name>align</name> <operator>-</operator> <literal type="number">1</literal><operator>)</operator></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>T</name><operator>)</operator><operator>(</operator><operator>(</operator><name>u64</name><operator>)</operator><name>p</name> <operator>&amp;</operator> <operator>~</operator><operator>(</operator><name>align</name> <operator>-</operator> <literal type="number">1</literal><operator>)</operator><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><name><name>template</name><argument_list type="generic">&lt;<argument><expr><name>typename</name> <name>T</name></expr></argument>&gt;</argument_list></name>
+<name>T</name></type> <name>GetLsb</name><parameter_list>(<parameter><decl><type><name>T</name></type> <name>v</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>bits</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<return>return <expr><operator>(</operator><name>T</name><operator>)</operator><operator>(</operator><operator>(</operator><name>u64</name><operator>)</operator><name>v</name> <operator>&amp;</operator> <operator>(</operator><operator>(</operator><literal type="number">1ull</literal> <operator>&lt;&lt;</operator> <name>bits</name><operator>)</operator> <operator>-</operator> <literal type="number">1</literal><operator>)</operator><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<struct>struct <name>MD5Hash</name> <block>{
+<decl_stmt><decl><type><name>u64</name></type> <name><name>hash</name><index>[<expr><literal type="number">2</literal></expr>]</index></name></decl>;</decl_stmt>
+<expr_stmt><expr><name>bool</name> <name>operator</name><operator>==</operator><operator>(</operator><specifier>const</specifier> <name>MD5Hash</name> <operator>&amp;</operator><name>other</name><operator>)</operator> <specifier>const</specifier></expr>;</expr_stmt>
+}</block>;</struct>
+
+<function_decl><type><name>MD5Hash</name></type> <name>md5_hash</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>data</name></decl></parameter>, <parameter><decl><type><name>uptr</name></type> <name>size</name></decl></parameter>)</parameter_list>;</function_decl>
+
+<struct_decl>struct <name>Processor</name>;</struct_decl>
+<struct_decl>struct <name>ThreadState</name>;</struct_decl>
+<decl_stmt><decl><type><name>class</name></type> <name>ThreadContext</name></decl>;</decl_stmt>
+<struct_decl>struct <name>Context</name>;</struct_decl>
+<struct_decl>struct <name>ReportStack</name>;</struct_decl>
+<decl_stmt><decl><type><name>class</name></type> <name>ReportDesc</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>class</name></type> <name>RegionAlloc</name></decl>;</decl_stmt>
+
+
+<struct>struct <name>MBlock</name> <block>{
+<decl_stmt><decl><type><name>u64</name></type> <name>siz</name> <range>: <expr><literal type="number">48</literal></expr></range></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>u64</name></type> <name>tag</name> <range>: <expr><literal type="number">16</literal></expr></range></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>u32</name></type> <name>stk</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>u16</name></type> <name>tid</name></decl>;</decl_stmt>
+}</block>;</struct>
+
+<expr_stmt><expr><call><name>COMPILER_CHECK</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>MBlock</name></expr></argument>)</argument_list></sizeof> <operator>==</operator> <literal type="number">16</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<enum>enum <name>ExternalTag</name> : <type><name>uptr</name></type> <block>{
+<decl><name>kExternalTagNone</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>,
+<decl><name>kExternalTagSwiftModifyingAccess</name> <init>= <expr><literal type="number">1</literal></expr></init></decl>,
+<decl><name>kExternalTagFirstUserAvailable</name> <init>= <expr><literal type="number">2</literal></expr></init></decl>,
+<decl><name>kExternalTagMax</name> <init>= <expr><literal type="number">1024</literal></expr></init></decl>,
+
+
+}</block>;</enum>
+
+<enum>enum <name>MutexType</name> <block>{
+<decl><name>MutexTypeTrace</name> <init>= <expr><name>MutexLastCommon</name></expr></init></decl>,
+<decl><name>MutexTypeReport</name></decl>,
+<decl><name>MutexTypeSyncVar</name></decl>,
+<decl><name>MutexTypeAnnotations</name></decl>,
+<decl><name>MutexTypeAtExit</name></decl>,
+<decl><name>MutexTypeFired</name></decl>,
+<decl><name>MutexTypeRacy</name></decl>,
+<decl><name>MutexTypeGlobalProc</name></decl>,
+}</block>;</enum>
+
+</block_content>}</block></decl></decl_stmt>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

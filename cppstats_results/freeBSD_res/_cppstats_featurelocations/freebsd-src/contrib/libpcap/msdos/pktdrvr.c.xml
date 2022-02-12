@@ -1,0 +1,1438 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/libpcap/msdos/pktdrvr.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdio.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;string.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;dos.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"pcap-dos.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"pcap-int.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"msdos/pktdrvr.h"</cpp:file></cpp:include>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>(</operator><name>DOSX</name><operator>)</operator></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>NUM_RX_BUF</name></cpp:macro> <cpp:value>32</cpp:value></cpp:define>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>NUM_RX_BUF</name></cpp:macro> <cpp:value>10</cpp:value></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>DIM</name><parameter_list>(<parameter><type><name>x</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>(sizeof((x)) / sizeof(x[0]))</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>PUTS</name><parameter_list>(<parameter><type><name>s</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>do { if (!pktInfo.quiet) pktInfo.error ? printf ("%s: %s\n", s, pktInfo.error) : printf ("%s\n", pktInfo.error = s); } while (0)</cpp:value></cpp:define>
+
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__HIGHC__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>UINT</name></type> <name>_mwenv</name></decl>;</decl_stmt>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__DJGPP__</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stddef.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;dpmi.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;go32.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;pc.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/farptr.h&gt;</cpp:file></cpp:include>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__WATCOMC__</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;i86.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stddef.h&gt;</cpp:file></cpp:include>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>char</name></type> <name>_Extender</name></decl>;</decl_stmt>
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<function_decl><type><specifier>extern</specifier> <name>void</name> <name>far</name></type> <name>PktReceiver</name> <parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>;</function_decl>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <operator>(</operator><name>DJGPP</name><operator>|</operator><name>DOS4GW</name><operator>)</operator><operator>)</operator></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/pack_on.h&gt;</cpp:file></cpp:include>
+
+<struct>struct <name>DPMI_regs</name> <block>{
+<decl_stmt><decl><type><name>DWORD</name></type> <name>r_di</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DWORD</name></type> <name>r_si</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DWORD</name></type> <name>r_bp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DWORD</name></type> <name>reserved</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DWORD</name></type> <name>r_bx</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DWORD</name></type> <name>r_dx</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DWORD</name></type> <name>r_cx</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DWORD</name></type> <name>r_ax</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>WORD</name></type> <name>r_flags</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>WORD</name></type> <name>r_es</name></decl>, <decl><type ref="prev"/><name>r_ds</name></decl>, <decl><type ref="prev"/><name>r_fs</name></decl>, <decl><type ref="prev"/><name>r_gs</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>WORD</name></type> <name>r_ip</name></decl>, <decl><type ref="prev"/><name>r_cs</name></decl>, <decl><type ref="prev"/><name>r_sp</name></decl>, <decl><type ref="prev"/><name>r_ss</name></decl>;</decl_stmt>
+}</block>;</struct>
+
+
+
+<typedef>typedef <type><struct>struct <block>{
+<decl_stmt><decl><type><name>WORD</name></type> <name>_rxOutOfs</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>WORD</name></type> <name>_rxInOfs</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DWORD</name></type> <name>_pktDrop</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>BYTE</name></type> <name><name>_pktTemp</name> <index>[<expr><literal type="number">20</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>TX_ELEMENT</name></type> <name><name>_pktTxBuf</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>RX_ELEMENT</name></type> <name><name>_pktRxBuf</name><index>[<expr><name>NUM_RX_BUF</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>WORD</name></type> <name><name>_dummy</name><index>[<expr><literal type="number">2</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>BYTE</name></type> <name><name>_fanChars</name><index>[<expr><literal type="number">4</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>WORD</name></type> <name>_fanIndex</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>BYTE</name></type> <name><name>_PktReceiver</name><index>[<expr><literal type="number">15</literal></expr>]</index></name></decl>;</decl_stmt>
+}</block></struct></type> <name>PktRealStub</name>;</typedef>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/pack_off.h&gt;</cpp:file></cpp:include>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>BYTE</name></type> <name><name>real_stub_array</name> <index>[]</index></name> <init>= <expr><block>{
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"pkt_stub.inc"</cpp:file></cpp:include>
+}</block></expr></init></decl>;</decl_stmt>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>rxOutOfs</name></cpp:macro> <cpp:value>offsetof (PktRealStub,_rxOutOfs)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>rxInOfs</name></cpp:macro> <cpp:value>offsetof (PktRealStub,_rxInOfs)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>PktReceiver</name></cpp:macro> <cpp:value>offsetof (PktRealStub,_PktReceiver [para_skip])</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>pktDrop</name></cpp:macro> <cpp:value>offsetof (PktRealStub,_pktDrop)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>pktTemp</name></cpp:macro> <cpp:value>offsetof (PktRealStub,_pktTemp)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>pktTxBuf</name></cpp:macro> <cpp:value>offsetof (PktRealStub,_pktTxBuf)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>FIRST_RX_BUF</name></cpp:macro> <cpp:value>offsetof (PktRealStub,_pktRxBuf [0])</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>LAST_RX_BUF</name></cpp:macro> <cpp:value>offsetof (PktRealStub,_pktRxBuf [NUM_RX_BUF-1])</cpp:value></cpp:define>
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>WORD</name></type> <name>rxOutOfs</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>WORD</name></type> <name>rxInOfs</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>DWORD</name></type> <name>pktDrop</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>BYTE</name></type> <name>pktRxEnd</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><specifier>extern</specifier> <name>RX_ELEMENT</name></type> <name><name>pktRxBuf</name> <index>[<expr><name>NUM_RX_BUF</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>TX_ELEMENT</name></type> <name>pktTxBuf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>char</name></type> <name><name>pktTemp</name><index>[<expr><literal type="number">20</literal></expr>]</index></name></decl>;</decl_stmt>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>FIRST_RX_BUF</name></cpp:macro> <cpp:value>(WORD) &amp;pktRxBuf [0]</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>LAST_RX_BUF</name></cpp:macro> <cpp:value>(WORD) &amp;pktRxBuf [NUM_RX_BUF-1]</cpp:value></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__BORLANDC__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>memcpy</name></cpp:macro> <cpp:value>__memcpy__</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>memcmp</name></cpp:macro> <cpp:value>__memcmp__</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>memset</name></cpp:macro> <cpp:value>__memset__</cpp:value></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>PHARLAP</name><operator>)</operator></expr></cpp:if>
+<function_decl><type><specifier>extern</specifier> <name>void</name></type> <name>PktReceiver</name> <parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><specifier>static</specifier> <name>int</name></type> <name>RealCopy</name> <parameter_list>(<parameter><decl><type><name>ULONG</name></type></decl></parameter>, <parameter><decl><type><name>ULONG</name></type></decl></parameter>, <parameter><decl><type><name>REALPTR</name><modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>FARPTR</name><modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>USHORT</name><modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl>
+
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>FP_SEG</name></cpp:undef>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>FP_OFF</name></cpp:undef>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>FP_OFF</name><parameter_list>(<parameter><type><name>x</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((WORD)(x))</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>FP_SEG</name><parameter_list>(<parameter><type><name>x</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((WORD)(realBase &gt;&gt; 16))</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>DOS_ADDR</name><parameter_list>(<parameter><type><name>s</name></type></parameter>,<parameter><type><name>o</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>(((DWORD)(s) &lt;&lt; 16) + (WORD)(o))</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>r_ax</name></cpp:macro> <cpp:value>eax</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>r_bx</name></cpp:macro> <cpp:value>ebx</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>r_dx</name></cpp:macro> <cpp:value>edx</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>r_cx</name></cpp:macro> <cpp:value>ecx</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>r_si</name></cpp:macro> <cpp:value>esi</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>r_di</name></cpp:macro> <cpp:value>edi</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>r_ds</name></cpp:macro> <cpp:value>ds</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>r_es</name></cpp:macro> <cpp:value>es</cpp:value></cpp:define>
+<decl_stmt><decl><type><name>LOCAL</name> <name>FARPTR</name></type> <name>protBase</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>LOCAL</name> <name>REALPTR</name></type> <name>realBase</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>LOCAL</name> <name>WORD</name></type> <name>realSeg</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>LOCAL</name> <name>SWI_REGS</name></type> <name>reg</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>WORD</name> <name>_far</name> <modifier>*</modifier></type><name>rxOutOfsFp</name></decl>, <decl><type ref="prev"><modifier>*</modifier></type><name>rxInOfsFp</name></decl>;</decl_stmt>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DJGPP</name><operator>)</operator></expr></cpp:elif>
+<decl_stmt><decl><type><specifier>static</specifier> <name>_go32_dpmi_seginfo</name></type> <name>rm_mem</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>__dpmi_regs</name></type> <name>reg</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>DWORD</name></type> <name>realBase</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>para_skip</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>DOS_ADDR</name><parameter_list>(<parameter><type><name>s</name></type></parameter>,<parameter><type><name>o</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>(((WORD)(s) &lt;&lt; 4) + (o))</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>r_ax</name></cpp:macro> <cpp:value>x.ax</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>r_bx</name></cpp:macro> <cpp:value>x.bx</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>r_dx</name></cpp:macro> <cpp:value>x.dx</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>r_cx</name></cpp:macro> <cpp:value>x.cx</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>r_si</name></cpp:macro> <cpp:value>x.si</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>r_di</name></cpp:macro> <cpp:value>x.di</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>r_ds</name></cpp:macro> <cpp:value>x.ds</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>r_es</name></cpp:macro> <cpp:value>x.es</cpp:value></cpp:define>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DOS4GW</name><operator>)</operator></expr></cpp:elif>
+<decl_stmt><decl><type><name>LOCAL</name> <name><name>struct</name> <name>DPMI_regs</name></name></type> <name>reg</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>LOCAL</name> <name>WORD</name></type> <name>rm_base_seg</name></decl>, <decl><type ref="prev"/><name>rm_base_sel</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>LOCAL</name> <name>DWORD</name></type> <name>realBase</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>LOCAL</name> <name>int</name></type> <name>para_skip</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<function_decl><type><name>LOCAL</name> <name>DWORD</name></type> <name>dpmi_get_real_vector</name> <parameter_list>(<parameter><decl><type><name>int</name></type> <name>intr</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><name>LOCAL</name> <name>WORD</name></type> <name>dpmi_real_malloc</name> <parameter_list>(<parameter><decl><type><name>int</name></type> <name>size</name></decl></parameter>, <parameter><decl><type><name>WORD</name> <modifier>*</modifier></type><name>selector</name></decl></parameter>)</parameter_list>;</function_decl>
+<function_decl><type><name>LOCAL</name> <name>void</name></type> <name>dpmi_real_free</name> <parameter_list>(<parameter><decl><type><name>WORD</name></type> <name>selector</name></decl></parameter>)</parameter_list>;</function_decl>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>DOS_ADDR</name><parameter_list>(<parameter><type><name>s</name></type></parameter>,<parameter><type><name>o</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>(((DWORD)(s) &lt;&lt; 4) + (WORD)(o))</cpp:value></cpp:define>
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<struct><specifier>static</specifier> struct <block>{
+<decl_stmt><decl><type><name>WORD</name></type> <name>r_ax</name></decl>, <decl><type ref="prev"/><name>r_bx</name></decl>, <decl><type ref="prev"/><name>r_cx</name></decl>, <decl><type ref="prev"/><name>r_dx</name></decl>, <decl><type ref="prev"/><name>r_bp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>WORD</name></type> <name>r_si</name></decl>, <decl><type ref="prev"/><name>r_di</name></decl>, <decl><type ref="prev"/><name>r_ds</name></decl>, <decl><type ref="prev"/><name>r_es</name></decl>, <decl><type ref="prev"/><name>r_flags</name></decl>;</decl_stmt>
+}</block> <decl><name>reg</name></decl>;</struct>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__HIGHC__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:pragma>#<cpp:directive>pragma</cpp:directive> <name>Alias</name> <name>(</name><name>pktDrop</name><name>,</name> <cpp:literal>"_pktDrop"</cpp:literal><name>)</name></cpp:pragma>
+<cpp:pragma>#<cpp:directive>pragma</cpp:directive> <name>Alias</name> <name>(</name><name>pktRxBuf</name><name>,</name> <cpp:literal>"_pktRxBuf"</cpp:literal><name>)</name></cpp:pragma>
+<cpp:pragma>#<cpp:directive>pragma</cpp:directive> <name>Alias</name> <name>(</name><name>pktTxBuf</name><name>,</name> <cpp:literal>"_pktTxBuf"</cpp:literal><name>)</name></cpp:pragma>
+<cpp:pragma>#<cpp:directive>pragma</cpp:directive> <name>Alias</name> <name>(</name><name>pktTemp</name><name>,</name> <cpp:literal>"_pktTemp"</cpp:literal><name>)</name></cpp:pragma>
+<cpp:pragma>#<cpp:directive>pragma</cpp:directive> <name>Alias</name> <name>(</name><name>rxOutOfs</name><name>,</name> <cpp:literal>"_rxOutOfs"</cpp:literal><name>)</name></cpp:pragma>
+<cpp:pragma>#<cpp:directive>pragma</cpp:directive> <name>Alias</name> <name>(</name><name>rxInOfs</name><name>,</name> <cpp:literal>"_rxInOfs"</cpp:literal><name>)</name></cpp:pragma>
+<cpp:pragma>#<cpp:directive>pragma</cpp:directive> <name>Alias</name> <name>(</name><name>pktRxEnd</name><name>,</name> <cpp:literal>"_pktRxEnd"</cpp:literal><name>)</name></cpp:pragma>
+<cpp:pragma>#<cpp:directive>pragma</cpp:directive> <name>Alias</name> <name>(</name><name>PktReceiver</name><name>,</name><cpp:literal>"_PktReceiver"</cpp:literal><name>)</name></cpp:pragma>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+<decl_stmt><decl><type><name>PUBLIC</name> <name>PKT_STAT</name></type> <name>pktStat</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>PUBLIC</name> <name>PKT_INFO</name></type> <name>pktInfo</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>PUBLIC</name> <name>PKT_RX_MODE</name></type> <name>receiveMode</name> <init>= <expr><name>PDRX_DIRECT</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>PUBLIC</name> <name>ETHER</name></type> <name>myAddress</name> <init>= <expr><block>{ <expr><literal type="number">0</literal></expr>, <expr><literal type="number">0</literal></expr>, <expr><literal type="number">0</literal></expr>, <expr><literal type="number">0</literal></expr>, <expr><literal type="number">0</literal></expr>, <expr><literal type="number">0</literal></expr> }</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>PUBLIC</name> <name>ETHER</name></type> <name>ethBroadcast</name> <init>= <expr><block>{ <expr><literal type="number">255</literal></expr>,<expr><literal type="number">255</literal></expr>,<expr><literal type="number">255</literal></expr>,<expr><literal type="number">255</literal></expr>,<expr><literal type="number">255</literal></expr>,<expr><literal type="number">255</literal></expr> }</block></expr></init></decl>;</decl_stmt>
+
+<macro><name>LOCAL</name></macro> <struct>struct <block>{
+<decl_stmt><decl><type><name>DWORD</name></type> <name>tooSmall</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DWORD</name></type> <name>tooLarge</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DWORD</name></type> <name>badSync</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DWORD</name></type> <name>wrongHandle</name></decl>;</decl_stmt>
+}</block> <decl><name>intStat</name></decl>;</struct>
+
+
+
+<function><type><name>PUBLIC</name> <specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>PktGetErrorStr</name> <parameter_list>(<parameter><decl><type><name>int</name></type> <name>errNum</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name><name>errStr</name><index>[]</index></name> <init>= <expr><block>{
+<expr><literal type="string">""</literal></expr>,
+<expr><literal type="string">"Invalid handle number"</literal></expr>,
+<expr><literal type="string">"No interfaces of specified class found"</literal></expr>,
+<expr><literal type="string">"No interfaces of specified type found"</literal></expr>,
+<expr><literal type="string">"No interfaces of specified number found"</literal></expr>,
+<expr><literal type="string">"Bad packet type specified"</literal></expr>,
+<expr><literal type="string">"Interface does not support multicast"</literal></expr>,
+<expr><literal type="string">"Packet driver cannot terminate"</literal></expr>,
+<expr><literal type="string">"Invalid receiver mode specified"</literal></expr>,
+<expr><literal type="string">"Insufficient memory space"</literal></expr>,
+<expr><literal type="string">"Type previously accessed, and not released"</literal></expr>,
+<expr><literal type="string">"Command out of range, or not implemented"</literal></expr>,
+<expr><literal type="string">"Cannot send packet (usually hardware error)"</literal></expr>,
+<expr><literal type="string">"Cannot change hardware address ( &gt; 1 handle open)"</literal></expr>,
+<expr><literal type="string">"Hardware address has bad length or format"</literal></expr>,
+<expr><literal type="string">"Cannot reset interface (more than 1 handle open)"</literal></expr>,
+<expr><literal type="string">"Bad Check-sum"</literal></expr>,
+<expr><literal type="string">"Bad size"</literal></expr>,
+<expr><literal type="string">"Bad sync"</literal></expr> ,
+<expr><literal type="string">"Source hit"</literal></expr>
+}</block></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>errNum</name> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator> <name>errNum</name> <operator>&gt;=</operator> <call><name>DIM</name><argument_list>(<argument><expr><name>errStr</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="string">"Unknown driver error."</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><name><name>errStr</name> <index>[<expr><name>errNum</name></expr>]</index></name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<function><type><name>PUBLIC</name> <specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>PktGetClassName</name> <parameter_list>(<parameter><decl><type><name>WORD</name></type> <name>class</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<switch>switch <condition>(<expr><name>class</name></expr>)</condition>
+<block>{<block_content>
+<case>case <expr><name>PD_ETHER</name></expr>:</case>
+<return>return <expr><operator>(</operator><literal type="string">"DIX-Ether"</literal><operator>)</operator></expr>;</return>
+<case>case <expr><name>PD_PRONET10</name></expr>:</case>
+<return>return <expr><operator>(</operator><literal type="string">"ProNET-10"</literal><operator>)</operator></expr>;</return>
+<case>case <expr><name>PD_IEEE8025</name></expr>:</case>
+<return>return <expr><operator>(</operator><literal type="string">"IEEE 802.5"</literal><operator>)</operator></expr>;</return>
+<case>case <expr><name>PD_OMNINET</name></expr>:</case>
+<return>return <expr><operator>(</operator><literal type="string">"OmniNet"</literal><operator>)</operator></expr>;</return>
+<case>case <expr><name>PD_APPLETALK</name></expr>:</case>
+<return>return <expr><operator>(</operator><literal type="string">"AppleTalk"</literal><operator>)</operator></expr>;</return>
+<case>case <expr><name>PD_SLIP</name></expr>:</case>
+<return>return <expr><operator>(</operator><literal type="string">"SLIP"</literal><operator>)</operator></expr>;</return>
+<case>case <expr><name>PD_STARTLAN</name></expr>:</case>
+<return>return <expr><operator>(</operator><literal type="string">"StartLAN"</literal><operator>)</operator></expr>;</return>
+<case>case <expr><name>PD_ARCNET</name></expr>:</case>
+<return>return <expr><operator>(</operator><literal type="string">"ArcNet"</literal><operator>)</operator></expr>;</return>
+<case>case <expr><name>PD_AX25</name></expr>:</case>
+<return>return <expr><operator>(</operator><literal type="string">"AX.25"</literal><operator>)</operator></expr>;</return>
+<case>case <expr><name>PD_KISS</name></expr>:</case>
+<return>return <expr><operator>(</operator><literal type="string">"KISS"</literal><operator>)</operator></expr>;</return>
+<case>case <expr><name>PD_IEEE8023_2</name></expr>:</case>
+<return>return <expr><operator>(</operator><literal type="string">"IEEE 802.3 w/802.2 hdr"</literal><operator>)</operator></expr>;</return>
+<case>case <expr><name>PD_FDDI8022</name></expr>:</case>
+<return>return <expr><operator>(</operator><literal type="string">"FDDI w/802.2 hdr"</literal><operator>)</operator></expr>;</return>
+<case>case <expr><name>PD_X25</name></expr>:</case>
+<return>return <expr><operator>(</operator><literal type="string">"X.25"</literal><operator>)</operator></expr>;</return>
+<case>case <expr><name>PD_LANstar</name></expr>:</case>
+<return>return <expr><operator>(</operator><literal type="string">"LANstar"</literal><operator>)</operator></expr>;</return>
+<case>case <expr><name>PD_PPP</name></expr>:</case>
+<return>return <expr><operator>(</operator><literal type="string">"PPP"</literal><operator>)</operator></expr>;</return>
+<default>default:</default>
+<return>return <expr><operator>(</operator><literal type="string">"unknown"</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></switch>
+</block_content>}</block></function>
+
+
+
+<function><type><name>PUBLIC</name> <name>char</name> <specifier>const</specifier> <modifier>*</modifier></type><name>PktRXmodeStr</name> <parameter_list>(<parameter><decl><type><name>PKT_RX_MODE</name></type> <name>mode</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name><name>modeStr</name> <index>[]</index></name> <init>= <expr><block>{
+<expr><literal type="string">"Receiver turned off"</literal></expr>,
+<expr><literal type="string">"Receive only directly addressed packets"</literal></expr>,
+<expr><literal type="string">"Receive direct &amp; broadcast packets"</literal></expr>,
+<expr><literal type="string">"Receive direct,broadcast and limited multicast packets"</literal></expr>,
+<expr><literal type="string">"Receive direct,broadcast and all multicast packets"</literal></expr>,
+<expr><literal type="string">"Receive all packets (promiscuouos mode)"</literal></expr>
+}</block></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>mode</name> <operator>&gt;</operator> <call><name>DIM</name><argument_list>(<argument><expr><name>modeStr</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="string">"??"</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><name><name>modeStr</name> <index>[<expr><name>mode</name><operator>-</operator><literal type="number">1</literal></expr>]</index></name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<function><type><name>LOCAL</name> <name>__inline</name> <name>BOOL</name></type> <name>PktInterrupt</name> <parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>BOOL</name></type> <name>okay</name></decl>;</decl_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>PHARLAP</name><operator>)</operator></expr></cpp:if>
+<expr_stmt><expr><call><name>_dx_real_int</name> <argument_list>(<argument><expr><operator>(</operator><name>UINT</name><operator>)</operator><name><name>pktInfo</name><operator>.</operator><name>intr</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>reg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>okay</name> <operator>=</operator> <operator>(</operator><operator>(</operator><name><name>reg</name><operator>.</operator><name>flags</name></name> <operator>&amp;</operator> <literal type="number">1</literal><operator>)</operator> <operator>==</operator> <literal type="number">0</literal><operator>)</operator></expr>;</expr_stmt>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DJGPP</name><operator>)</operator></expr></cpp:elif>
+<expr_stmt><expr><call><name>__dpmi_int</name> <argument_list>(<argument><expr><operator>(</operator><name>int</name><operator>)</operator><name><name>pktInfo</name><operator>.</operator><name>intr</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>reg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>okay</name> <operator>=</operator> <operator>(</operator><operator>(</operator><name><name>reg</name><operator>.</operator><name>x</name><operator>.</operator><name>flags</name></name> <operator>&amp;</operator> <literal type="number">1</literal><operator>)</operator> <operator>==</operator> <literal type="number">0</literal><operator>)</operator></expr>;</expr_stmt>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DOS4GW</name><operator>)</operator></expr></cpp:elif>
+<decl_stmt><decl><type><name><name>union</name> <name>REGS</name></name></type> <name>r</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>SREGS</name></name></type> <name>s</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>memset</name> <argument_list>(<argument><expr><operator>&amp;</operator><name>r</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>r</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>segread</name> <argument_list>(<argument><expr><operator>&amp;</operator><name>s</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>r</name><operator>.</operator><name>w</name><operator>.</operator><name>ax</name></name> <operator>=</operator> <literal type="number">0x300</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>r</name><operator>.</operator><name>x</name><operator>.</operator><name>ebx</name></name> <operator>=</operator> <name><name>pktInfo</name><operator>.</operator><name>intr</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>r</name><operator>.</operator><name>w</name><operator>.</operator><name>cx</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>s</name><operator>.</operator><name>es</name></name> <operator>=</operator> <call><name>FP_SEG</name> <argument_list>(<argument><expr><operator>&amp;</operator><name>reg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>r</name><operator>.</operator><name>x</name><operator>.</operator><name>edi</name></name> <operator>=</operator> <call><name>FP_OFF</name> <argument_list>(<argument><expr><operator>&amp;</operator><name>reg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_flags</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_ss</name></name> <operator>=</operator> <name><name>reg</name><operator>.</operator><name>r_sp</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>int386x</name> <argument_list>(<argument><expr><literal type="number">0x31</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>r</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>r</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>s</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>okay</name> <operator>=</operator> <operator>(</operator><operator>!</operator><name><name>r</name><operator>.</operator><name>w</name><operator>.</operator><name>cflag</name></name><operator>)</operator></expr>;</expr_stmt>
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_flags</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>intr</name> <argument_list>(<argument><expr><name><name>pktInfo</name><operator>.</operator><name>intr</name></name></expr></argument>, <argument><expr><operator>(</operator>struct <name>REGPACK</name><operator>*</operator><operator>)</operator><operator>&amp;</operator><name>reg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>okay</name> <operator>=</operator> <operator>(</operator><operator>(</operator><name><name>reg</name><operator>.</operator><name>r_flags</name></name> <operator>&amp;</operator> <literal type="number">1</literal><operator>)</operator> <operator>==</operator> <literal type="number">0</literal><operator>)</operator></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<if_stmt><if>if <condition>(<expr><name>okay</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>pktInfo</name><operator>.</operator><name>error</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content> <expr_stmt><expr><name><name>pktInfo</name><operator>.</operator><name>error</name></name> <operator>=</operator> <call><name>PktGetErrorStr</name> <argument_list>(<argument><expr><name><name>reg</name><operator>.</operator><name>r_dx</name></name> <operator>&gt;&gt;</operator> <literal type="number">8</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<return>return <expr><operator>(</operator><name>okay</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+<function><type><name>PUBLIC</name> <name>BOOL</name></type> <name>PktSearchDriver</name> <parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>BYTE</name></type> <name>intr</name> <init>= <expr><literal type="number">0x20</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>BOOL</name></type> <name>found</name> <init>= <expr><name>FALSE</name></expr></init></decl>;</decl_stmt>
+
+<while>while <condition>(<expr><operator>!</operator><name>found</name> <operator>&amp;&amp;</operator> <name>intr</name> <operator>&lt;</operator> <literal type="number">0xFF</literal></expr>)</condition>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>static</specifier> <name>char</name></type> <name><name>str</name><index>[<expr><literal type="number">12</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>char</name></type> <name><name>pktStr</name><index>[<expr><literal type="number">9</literal></expr>]</index></name> <init>= <expr><literal type="string">"PKT DRVR"</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>DWORD</name></type> <name>rp</name></decl>;</decl_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>PHARLAP</name><operator>)</operator></expr></cpp:if>
+<expr_stmt><expr><call><name>_dx_rmiv_get</name> <argument_list>(<argument><expr><name>intr</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>rp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ReadRealMem</name> <argument_list>(<argument><expr><operator>&amp;</operator><name>str</name></expr></argument>, <argument><expr><operator>(</operator><name>REALPTR</name><operator>)</operator><name>rp</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>str</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DJGPP</name><operator>)</operator></expr></cpp:elif>
+<decl_stmt><decl><type><name>__dpmi_raddr</name></type> <name>realAdr</name></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>__dpmi_get_real_mode_interrupt_vector</name> <argument_list>(<argument><expr><name>intr</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>realAdr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>rp</name> <operator>=</operator> <operator>(</operator><name><name>realAdr</name><operator>.</operator><name>segment</name></name> <operator>&lt;&lt;</operator> <literal type="number">4</literal><operator>)</operator> <operator>+</operator> <name><name>realAdr</name><operator>.</operator><name>offset16</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dosmemget</name> <argument_list>(<argument><expr><name>rp</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>str</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><operator>&amp;</operator><name>str</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DOS4GW</name><operator>)</operator></expr></cpp:elif>
+<expr_stmt><expr><name>rp</name> <operator>=</operator> <call><name>dpmi_get_real_vector</name> <argument_list>(<argument><expr><name>intr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memcpy</name> <argument_list>(<argument><expr><operator>&amp;</operator><name>str</name></expr></argument>, <argument><expr><operator>(</operator><name>void</name><operator>*</operator><operator>)</operator><name>rp</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>str</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><call><name>_fmemcpy</name> <argument_list>(<argument><expr><operator>&amp;</operator><name>str</name></expr></argument>, <argument><expr><call><name>getvect</name><argument_list>(<argument><expr><name>intr</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>str</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<expr_stmt><expr><name>found</name> <operator>=</operator> <call><name>memcmp</name> <argument_list>(<argument><expr><operator>&amp;</operator><name><name>str</name><index>[<expr><literal type="number">3</literal></expr>]</index></name></expr></argument>,<argument><expr><operator>&amp;</operator><name>pktStr</name></expr></argument>,<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>pktStr</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>intr</name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></while>
+<expr_stmt><expr><name><name>pktInfo</name><operator>.</operator><name>intr</name></name> <operator>=</operator> <operator>(</operator><ternary><condition><expr><name>found</name></expr> ?</condition><then> <expr><name>intr</name><operator>-</operator><literal type="number">1</literal></expr> </then><else>: <expr><literal type="number">0</literal></expr></else></ternary><operator>)</operator></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>found</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>BOOL</name></type> <name>PktSetAccess</name> <parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_ax</name></name> <operator>=</operator> <literal type="number">0x0200</literal> <operator>+</operator> <name><name>pktInfo</name><operator>.</operator><name>class</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_bx</name></name> <operator>=</operator> <literal type="number">0xFFFF</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_dx</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_cx</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>PHARLAP</name><operator>)</operator></expr></cpp:if>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>ds</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>esi</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>es</name></name> <operator>=</operator> <call><name>RP_SEG</name> <argument_list>(<argument><expr><name>realBase</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>edi</name></name> <operator>=</operator> <operator>(</operator><name>WORD</name><operator>)</operator> <operator>&amp;</operator><name>PktReceiver</name></expr>;</expr_stmt>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DJGPP</name><operator>)</operator></expr></cpp:elif>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>x</name><operator>.</operator><name>ds</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>x</name><operator>.</operator><name>si</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>x</name><operator>.</operator><name>es</name></name> <operator>=</operator> <name><name>rm_mem</name><operator>.</operator><name>rm_segment</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>x</name><operator>.</operator><name>di</name></name> <operator>=</operator> <name>PktReceiver</name></expr>;</expr_stmt>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DOS4GW</name><operator>)</operator></expr></cpp:elif>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_ds</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_si</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_es</name></name> <operator>=</operator> <name>rm_base_seg</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_di</name></name> <operator>=</operator> <name>PktReceiver</name></expr>;</expr_stmt>
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_ds</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_si</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_es</name></name> <operator>=</operator> <call><name>FP_SEG</name> <argument_list>(<argument><expr><operator>&amp;</operator><name>PktReceiver</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_di</name></name> <operator>=</operator> <call><name>FP_OFF</name> <argument_list>(<argument><expr><operator>&amp;</operator><name>PktReceiver</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PktInterrupt</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name><name>pktInfo</name><operator>.</operator><name>handle</name></name> <operator>=</operator> <name><name>reg</name><operator>.</operator><name>r_ax</name></name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>TRUE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<function><type><name>PUBLIC</name> <name>BOOL</name></type> <name>PktReleaseHandle</name> <parameter_list>(<parameter><decl><type><name>WORD</name></type> <name>handle</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_ax</name></name> <operator>=</operator> <literal type="number">0x0300</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_bx</name></name> <operator>=</operator> <name>handle</name></expr>;</expr_stmt>
+<return>return <expr><call><name>PktInterrupt</name><argument_list>()</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<function><type><name>PUBLIC</name> <name>BOOL</name></type> <name>PktTransmit</name> <parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>eth</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>len</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>len</name> <operator>&gt;</operator> <name>ETH_MTU</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_ax</name></name> <operator>=</operator> <literal type="number">0x0400</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_cx</name></name> <operator>=</operator> <name>len</name></expr>;</expr_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DJGPP</name><operator>)</operator></expr></cpp:if>
+<expr_stmt><expr><call><name>dosmemput</name> <argument_list>(<argument><expr><name>eth</name></expr></argument>, <argument><expr><name>len</name></expr></argument>, <argument><expr><name>realBase</name><operator>+</operator><name>pktTxBuf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>x</name><operator>.</operator><name>ds</name></name> <operator>=</operator> <name><name>rm_mem</name><operator>.</operator><name>rm_segment</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>x</name><operator>.</operator><name>si</name></name> <operator>=</operator> <name>pktTxBuf</name></expr>;</expr_stmt>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DOS4GW</name><operator>)</operator></expr></cpp:elif>
+<expr_stmt><expr><call><name>memcpy</name> <argument_list>(<argument><expr><operator>(</operator><name>void</name><operator>*</operator><operator>)</operator><operator>(</operator><name>realBase</name><operator>+</operator><name>pktTxBuf</name><operator>)</operator></expr></argument>, <argument><expr><name>eth</name></expr></argument>, <argument><expr><name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_ds</name></name> <operator>=</operator> <name>rm_base_seg</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_si</name></name> <operator>=</operator> <name>pktTxBuf</name></expr>;</expr_stmt>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>PHARLAP</name><operator>)</operator></expr></cpp:elif>
+<expr_stmt><expr><call><name>memcpy</name> <argument_list>(<argument><expr><operator>&amp;</operator><name>pktTxBuf</name></expr></argument>, <argument><expr><name>eth</name></expr></argument>, <argument><expr><name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_ds</name></name> <operator>=</operator> <call><name>FP_SEG</name> <argument_list>(<argument><expr><operator>&amp;</operator><name>pktTxBuf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_si</name></name> <operator>=</operator> <call><name>FP_OFF</name> <argument_list>(<argument><expr><operator>&amp;</operator><name>pktTxBuf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_ds</name></name> <operator>=</operator> <call><name>FP_SEG</name> <argument_list>(<argument><expr><name>eth</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_si</name></name> <operator>=</operator> <call><name>FP_OFF</name> <argument_list>(<argument><expr><name>eth</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<return>return <expr><call><name>PktInterrupt</name><argument_list>()</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <operator>(</operator><name>DJGPP</name><operator>|</operator><name>DOS4GW</name><operator>)</operator><operator>)</operator></expr></cpp:if>
+<decl_stmt><decl><type><name>LOCAL</name> <name>__inline</name> <name>BOOL</name></type> <name>CheckElement</name> <argument_list>(<argument><expr><name>RX_ELEMENT</name> <operator>*</operator><name>rx</name></expr></argument>)</argument_list>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<name>LOCAL</name> <name>__inline</name> <name>BOOL</name> <name>CheckElement</name> <argument_list>(<argument><expr><name>RX_ELEMENT</name> <name>_far</name> <operator>*</operator><name>rx</name></expr></argument>)</argument_list>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<block>{<block_content>
+<decl_stmt><decl><type><name>WORD</name></type> <name>count_1</name></decl>, <decl><type ref="prev"/><name>count_2</name></decl>;</decl_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name><name>rx</name><operator>-&gt;</operator><name>handle</name></name> <operator>!=</operator> <name><name>pktInfo</name><operator>.</operator><name>handle</name></name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name><name>pktInfo</name><operator>.</operator><name>error</name></name> <operator>=</operator> <literal type="string">"Wrong handle"</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>intStat</name><operator>.</operator><name>wrongHandle</name></name><operator>++</operator></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>PktReleaseHandle</name> <argument_list>(<argument><expr><name><name>rx</name><operator>-&gt;</operator><name>handle</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>count_1</name> <operator>=</operator> <name><name>rx</name><operator>-&gt;</operator><name>firstCount</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name>count_2</name> <operator>=</operator> <name><name>rx</name><operator>-&gt;</operator><name>secondCount</name></name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>count_1</name> <operator>!=</operator> <name>count_2</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name><name>pktInfo</name><operator>.</operator><name>error</name></name> <operator>=</operator> <literal type="string">"Bad sync"</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>intStat</name><operator>.</operator><name>badSync</name></name><operator>++</operator></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>count_1</name> <operator>&gt;</operator> <name>ETH_MAX</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name><name>pktInfo</name><operator>.</operator><name>error</name></name> <operator>=</operator> <literal type="string">"Large esize"</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>intStat</name><operator>.</operator><name>tooLarge</name></name><operator>++</operator></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><literal type="number">0</literal></expr></cpp:if>
+if (count_1 &lt; ETH_MIN)
+{
+pktInfo.error = "Small esize";
+intStat.tooSmall++;
+return (FALSE);
+}
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<return>return <expr><operator>(</operator><name>TRUE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></decl></decl_stmt>
+
+
+
+<function><type><name>PUBLIC</name> <name>BOOL</name></type> <name>PktTerminHandle</name> <parameter_list>(<parameter><decl><type><name>WORD</name></type> <name>handle</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_ax</name></name> <operator>=</operator> <literal type="number">0x0500</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_bx</name></name> <operator>=</operator> <name>handle</name></expr>;</expr_stmt>
+<return>return <expr><call><name>PktInterrupt</name><argument_list>()</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<function><type><name>PUBLIC</name> <name>BOOL</name></type> <name>PktResetInterface</name> <parameter_list>(<parameter><decl><type><name>WORD</name></type> <name>handle</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_ax</name></name> <operator>=</operator> <literal type="number">0x0700</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_bx</name></name> <operator>=</operator> <name>handle</name></expr>;</expr_stmt>
+<return>return <expr><call><name>PktInterrupt</name><argument_list>()</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<function><type><name>PUBLIC</name> <name>BOOL</name></type> <name>PktSetReceiverMode</name> <parameter_list>(<parameter><decl><type><name>PKT_RX_MODE</name></type> <name>mode</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>pktInfo</name><operator>.</operator><name>class</name></name> <operator>==</operator> <name>PD_SLIP</name> <operator>||</operator> <name><name>pktInfo</name><operator>.</operator><name>class</name></name> <operator>==</operator> <name>PD_PPP</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>TRUE</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_ax</name></name> <operator>=</operator> <literal type="number">0x1400</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_bx</name></name> <operator>=</operator> <name><name>pktInfo</name><operator>.</operator><name>handle</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_cx</name></name> <operator>=</operator> <operator>(</operator><name>WORD</name><operator>)</operator><name>mode</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PktInterrupt</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>receiveMode</name> <operator>=</operator> <name>mode</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>TRUE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<function><type><name>PUBLIC</name> <name>BOOL</name></type> <name>PktGetReceiverMode</name> <parameter_list>(<parameter><decl><type><name>PKT_RX_MODE</name> <modifier>*</modifier></type><name>mode</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_ax</name></name> <operator>=</operator> <literal type="number">0x1500</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_bx</name></name> <operator>=</operator> <name><name>pktInfo</name><operator>.</operator><name>handle</name></name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PktInterrupt</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>mode</name> <operator>=</operator> <name><name>reg</name><operator>.</operator><name>r_ax</name></name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>TRUE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>PKT_STAT</name></type> <name>initialStat</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <name>BOOL</name></type> <name>resetStat</name> <init>= <expr><name>FALSE</name></expr></init></decl>;</decl_stmt>
+
+<function><type><name>PUBLIC</name> <name>BOOL</name></type> <name>PktGetStatistics</name> <parameter_list>(<parameter><decl><type><name>WORD</name></type> <name>handle</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_ax</name></name> <operator>=</operator> <literal type="number">0x1800</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_bx</name></name> <operator>=</operator> <name>handle</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PktInterrupt</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>PHARLAP</name><operator>)</operator></expr></cpp:if>
+<expr_stmt><expr><call><name>ReadRealMem</name> <argument_list>(<argument><expr><operator>&amp;</operator><name>pktStat</name></expr></argument>, <argument><expr><call><name>DOS_ADDR</name><argument_list>(<argument><expr><name><name>reg</name><operator>.</operator><name>ds</name></name></expr></argument>,<argument><expr><name><name>reg</name><operator>.</operator><name>esi</name></name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>pktStat</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DJGPP</name><operator>)</operator></expr></cpp:elif>
+<expr_stmt><expr><call><name>dosmemget</name> <argument_list>(<argument><expr><call><name>DOS_ADDR</name><argument_list>(<argument><expr><name><name>reg</name><operator>.</operator><name>x</name><operator>.</operator><name>ds</name></name></expr></argument>,<argument><expr><name><name>reg</name><operator>.</operator><name>x</name><operator>.</operator><name>si</name></name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>pktStat</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><operator>&amp;</operator><name>pktStat</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DOS4GW</name><operator>)</operator></expr></cpp:elif>
+<expr_stmt><expr><call><name>memcpy</name> <argument_list>(<argument><expr><operator>&amp;</operator><name>pktStat</name></expr></argument>, <argument><expr><operator>(</operator><name>void</name><operator>*</operator><operator>)</operator><call><name>DOS_ADDR</name><argument_list>(<argument><expr><name><name>reg</name><operator>.</operator><name>r_ds</name></name></expr></argument>,<argument><expr><name><name>reg</name><operator>.</operator><name>r_si</name></name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>pktStat</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><call><name>_fmemcpy</name> <argument_list>(<argument><expr><operator>&amp;</operator><name>pktStat</name></expr></argument>, <argument><expr><call><name>MK_FP</name><argument_list>(<argument><expr><name><name>reg</name><operator>.</operator><name>r_ds</name></name></expr></argument>,<argument><expr><name><name>reg</name><operator>.</operator><name>r_si</name></name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>pktStat</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<return>return <expr><operator>(</operator><name>TRUE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<function><type><name>PUBLIC</name> <name>BOOL</name></type> <name>PktSessStatistics</name> <parameter_list>(<parameter><decl><type><name>WORD</name></type> <name>handle</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PktGetStatistics</name><argument_list>(<argument><expr><name><name>pktInfo</name><operator>.</operator><name>handle</name></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>resetStat</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name><name>pktStat</name><operator>.</operator><name>inPackets</name></name> <operator>-=</operator> <name><name>initialStat</name><operator>.</operator><name>inPackets</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>pktStat</name><operator>.</operator><name>outPackets</name></name> <operator>-=</operator> <name><name>initialStat</name><operator>.</operator><name>outPackets</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>pktStat</name><operator>.</operator><name>inBytes</name></name> <operator>-=</operator> <name><name>initialStat</name><operator>.</operator><name>inBytes</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>pktStat</name><operator>.</operator><name>outBytes</name></name> <operator>-=</operator> <name><name>initialStat</name><operator>.</operator><name>outBytes</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>pktStat</name><operator>.</operator><name>inErrors</name></name> <operator>-=</operator> <name><name>initialStat</name><operator>.</operator><name>inErrors</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>pktStat</name><operator>.</operator><name>outErrors</name></name> <operator>-=</operator> <name><name>initialStat</name><operator>.</operator><name>outErrors</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>pktStat</name><operator>.</operator><name>outErrors</name></name> <operator>-=</operator> <name><name>initialStat</name><operator>.</operator><name>outErrors</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>pktStat</name><operator>.</operator><name>lost</name></name> <operator>-=</operator> <name><name>initialStat</name><operator>.</operator><name>lost</name></name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>TRUE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<function><type><name>PUBLIC</name> <name>BOOL</name></type> <name>PktResetStatistics</name> <parameter_list>(<parameter><decl><type><name>WORD</name></type> <name>handle</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PktGetStatistics</name><argument_list>(<argument><expr><name><name>pktInfo</name><operator>.</operator><name>handle</name></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>memcpy</name> <argument_list>(<argument><expr><operator>&amp;</operator><name>initialStat</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>pktStat</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>initialStat</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>resetStat</name> <operator>=</operator> <name>TRUE</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>TRUE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<function><type><name>PUBLIC</name> <name>BOOL</name></type> <name>PktGetAddress</name> <parameter_list>(<parameter><decl><type><name>ETHER</name> <modifier>*</modifier></type><name>addr</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_ax</name></name> <operator>=</operator> <literal type="number">0x0600</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_bx</name></name> <operator>=</operator> <name><name>pktInfo</name><operator>.</operator><name>handle</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_cx</name></name> <operator>=</operator> <sizeof>sizeof <argument_list>(<argument><expr><operator>*</operator><name>addr</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DJGPP</name><operator>)</operator></expr></cpp:if>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>x</name><operator>.</operator><name>es</name></name> <operator>=</operator> <name><name>rm_mem</name><operator>.</operator><name>rm_segment</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>x</name><operator>.</operator><name>di</name></name> <operator>=</operator> <name>pktTemp</name></expr>;</expr_stmt>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DOS4GW</name><operator>)</operator></expr></cpp:elif>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_es</name></name> <operator>=</operator> <name>rm_base_seg</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_di</name></name> <operator>=</operator> <name>pktTemp</name></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_es</name></name> <operator>=</operator> <call><name>FP_SEG</name> <argument_list>(<argument><expr><operator>&amp;</operator><name>pktTemp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_di</name></name> <operator>=</operator> <call><name>FP_OFF</name> <argument_list>(<argument><expr><operator>&amp;</operator><name>pktTemp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PktInterrupt</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>PHARLAP</name><operator>)</operator></expr></cpp:if>
+<expr_stmt><expr><call><name>ReadRealMem</name> <argument_list>(<argument><expr><name>addr</name></expr></argument>, <argument><expr><name>realBase</name> <operator>+</operator> <operator>(</operator><name>WORD</name><operator>)</operator><operator>&amp;</operator><name>pktTemp</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>addr</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DJGPP</name><operator>)</operator></expr></cpp:elif>
+<expr_stmt><expr><call><name>dosmemget</name> <argument_list>(<argument><expr><name>realBase</name><operator>+</operator><name>pktTemp</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>addr</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><name>addr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DOS4GW</name><operator>)</operator></expr></cpp:elif>
+<expr_stmt><expr><call><name>memcpy</name> <argument_list>(<argument><expr><name>addr</name></expr></argument>, <argument><expr><operator>(</operator><name>void</name><operator>*</operator><operator>)</operator><operator>(</operator><name>realBase</name><operator>+</operator><name>pktTemp</name><operator>)</operator></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>addr</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><call><name>memcpy</name> <argument_list>(<argument><expr><operator>(</operator><name>void</name><operator>*</operator><operator>)</operator><name>addr</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>pktTemp</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>addr</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<return>return <expr><operator>(</operator><name>TRUE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<function><type><name>PUBLIC</name> <name>BOOL</name></type> <name>PktSetAddress</name> <parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>ETHER</name> <modifier>*</modifier></type><name>addr</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>PHARLAP</name><operator>)</operator></expr></cpp:if>
+<expr_stmt><expr><call><name>WriteRealMem</name> <argument_list>(<argument><expr><name>realBase</name> <operator>+</operator> <operator>(</operator><name>WORD</name><operator>)</operator><operator>&amp;</operator><name>pktTemp</name></expr></argument>, <argument><expr><operator>(</operator><name>void</name><operator>*</operator><operator>)</operator><name>addr</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>addr</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DJGPP</name><operator>)</operator></expr></cpp:elif>
+<expr_stmt><expr><call><name>dosmemput</name> <argument_list>(<argument><expr><name>addr</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>addr</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><name>realBase</name><operator>+</operator><name>pktTemp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DOS4GW</name><operator>)</operator></expr></cpp:elif>
+<expr_stmt><expr><call><name>memcpy</name> <argument_list>(<argument><expr><operator>(</operator><name>void</name><operator>*</operator><operator>)</operator><operator>(</operator><name>realBase</name><operator>+</operator><name>pktTemp</name><operator>)</operator></expr></argument>, <argument><expr><name>addr</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>addr</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><call><name>memcpy</name> <argument_list>(<argument><expr><operator>&amp;</operator><name>pktTemp</name></expr></argument>, <argument><expr><operator>(</operator><name>void</name><operator>*</operator><operator>)</operator><name>addr</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>addr</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_ax</name></name> <operator>=</operator> <literal type="number">0x1900</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_cx</name></name> <operator>=</operator> <sizeof>sizeof <argument_list>(<argument><expr><operator>*</operator><name>addr</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DJGPP</name><operator>)</operator></expr></cpp:if>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>x</name><operator>.</operator><name>es</name></name> <operator>=</operator> <name><name>rm_mem</name><operator>.</operator><name>rm_segment</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>x</name><operator>.</operator><name>di</name></name> <operator>=</operator> <name>pktTemp</name></expr>;</expr_stmt>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DOS4GW</name><operator>)</operator></expr></cpp:elif>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_es</name></name> <operator>=</operator> <name>rm_base_seg</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_di</name></name> <operator>=</operator> <name>pktTemp</name></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_es</name></name> <operator>=</operator> <call><name>FP_SEG</name> <argument_list>(<argument><expr><operator>&amp;</operator><name>pktTemp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_di</name></name> <operator>=</operator> <call><name>FP_OFF</name> <argument_list>(<argument><expr><operator>&amp;</operator><name>pktTemp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<return>return <expr><call><name>PktInterrupt</name><argument_list>()</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<function><type><name>PUBLIC</name> <name>BOOL</name></type> <name>PktGetDriverInfo</name> <parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><name><name>pktInfo</name><operator>.</operator><name>majVer</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>pktInfo</name><operator>.</operator><name>minVer</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name> <argument_list>(<argument><expr><operator>&amp;</operator><name><name>pktInfo</name><operator>.</operator><name>name</name></name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name><name>pktInfo</name><operator>.</operator><name>name</name></name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_ax</name></name> <operator>=</operator> <literal type="number">0x01FF</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_bx</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PktInterrupt</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name><name>pktInfo</name><operator>.</operator><name>number</name></name> <operator>=</operator> <name><name>reg</name><operator>.</operator><name>r_cx</name></name> <operator>&amp;</operator> <literal type="number">0xFF</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>pktInfo</name><operator>.</operator><name>class</name></name> <operator>=</operator> <name><name>reg</name><operator>.</operator><name>r_cx</name></name> <operator>&gt;&gt;</operator> <literal type="number">8</literal></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><literal type="number">0</literal></expr></cpp:if>
+pktInfo.minVer = reg.r_bx % 10;
+pktInfo.majVer = reg.r_bx / 10;
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><name><name>pktInfo</name><operator>.</operator><name>majVer</name></name> <operator>=</operator> <name><name>reg</name><operator>.</operator><name>r_bx</name></name></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<expr_stmt><expr><name><name>pktInfo</name><operator>.</operator><name>funcs</name></name> <operator>=</operator> <name><name>reg</name><operator>.</operator><name>r_ax</name></name> <operator>&amp;</operator> <literal type="number">0xFF</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>pktInfo</name><operator>.</operator><name>type</name></name> <operator>=</operator> <name><name>reg</name><operator>.</operator><name>r_dx</name></name> <operator>&amp;</operator> <literal type="number">0xFF</literal></expr>;</expr_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>PHARLAP</name><operator>)</operator></expr></cpp:if>
+<expr_stmt><expr><call><name>ReadRealMem</name> <argument_list>(<argument><expr><operator>&amp;</operator><name><name>pktInfo</name><operator>.</operator><name>name</name></name></expr></argument>, <argument><expr><call><name>DOS_ADDR</name><argument_list>(<argument><expr><name><name>reg</name><operator>.</operator><name>ds</name></name></expr></argument>,<argument><expr><name><name>reg</name><operator>.</operator><name>esi</name></name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name><name>pktInfo</name><operator>.</operator><name>name</name></name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DJGPP</name><operator>)</operator></expr></cpp:elif>
+<expr_stmt><expr><call><name>dosmemget</name> <argument_list>(<argument><expr><call><name>DOS_ADDR</name><argument_list>(<argument><expr><name><name>reg</name><operator>.</operator><name>x</name><operator>.</operator><name>ds</name></name></expr></argument>,<argument><expr><name><name>reg</name><operator>.</operator><name>x</name><operator>.</operator><name>si</name></name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name><name>pktInfo</name><operator>.</operator><name>name</name></name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>pktInfo</name><operator>.</operator><name>name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DOS4GW</name><operator>)</operator></expr></cpp:elif>
+<expr_stmt><expr><call><name>memcpy</name> <argument_list>(<argument><expr><operator>&amp;</operator><name><name>pktInfo</name><operator>.</operator><name>name</name></name></expr></argument>, <argument><expr><operator>(</operator><name>void</name><operator>*</operator><operator>)</operator><call><name>DOS_ADDR</name><argument_list>(<argument><expr><name><name>reg</name><operator>.</operator><name>r_ds</name></name></expr></argument>,<argument><expr><name><name>reg</name><operator>.</operator><name>r_si</name></name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name><name>pktInfo</name><operator>.</operator><name>name</name></name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><call><name>_fmemcpy</name> <argument_list>(<argument><expr><operator>&amp;</operator><name><name>pktInfo</name><operator>.</operator><name>name</name></name></expr></argument>, <argument><expr><call><name>MK_FP</name><argument_list>(<argument><expr><name><name>reg</name><operator>.</operator><name>r_ds</name></name></expr></argument>,<argument><expr><name><name>reg</name><operator>.</operator><name>r_si</name></name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name><name>pktInfo</name><operator>.</operator><name>name</name></name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<return>return <expr><operator>(</operator><name>TRUE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<function><type><name>PUBLIC</name> <name>BOOL</name></type> <name>PktGetDriverParam</name> <parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><name><name>reg</name><operator>.</operator><name>r_ax</name></name> <operator>=</operator> <literal type="number">0x0A00</literal></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PktInterrupt</name><argument_list>()</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>PHARLAP</name><operator>)</operator></expr></cpp:if>
+<expr_stmt><expr><call><name>ReadRealMem</name> <argument_list>(<argument><expr><operator>&amp;</operator><name><name>pktInfo</name><operator>.</operator><name>majVer</name></name></expr></argument>, <argument><expr><call><name>DOS_ADDR</name><argument_list>(<argument><expr><name><name>reg</name><operator>.</operator><name>es</name></name></expr></argument>,<argument><expr><name><name>reg</name><operator>.</operator><name>edi</name></name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>PKT_PARAM_SIZE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DJGPP</name><operator>)</operator></expr></cpp:elif>
+<expr_stmt><expr><call><name>dosmemget</name> <argument_list>(<argument><expr><call><name>DOS_ADDR</name><argument_list>(<argument><expr><name><name>reg</name><operator>.</operator><name>x</name><operator>.</operator><name>es</name></name></expr></argument>,<argument><expr><name><name>reg</name><operator>.</operator><name>x</name><operator>.</operator><name>di</name></name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>PKT_PARAM_SIZE</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>pktInfo</name><operator>.</operator><name>majVer</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DOS4GW</name><operator>)</operator></expr></cpp:elif>
+<expr_stmt><expr><call><name>memcpy</name> <argument_list>(<argument><expr><operator>&amp;</operator><name><name>pktInfo</name><operator>.</operator><name>majVer</name></name></expr></argument>, <argument><expr><operator>(</operator><name>void</name><operator>*</operator><operator>)</operator><call><name>DOS_ADDR</name><argument_list>(<argument><expr><name><name>reg</name><operator>.</operator><name>r_es</name></name></expr></argument>,<argument><expr><name><name>reg</name><operator>.</operator><name>r_di</name></name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>PKT_PARAM_SIZE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><call><name>_fmemcpy</name> <argument_list>(<argument><expr><operator>&amp;</operator><name><name>pktInfo</name><operator>.</operator><name>majVer</name></name></expr></argument>, <argument><expr><call><name>MK_FP</name><argument_list>(<argument><expr><name><name>reg</name><operator>.</operator><name>r_es</name></name></expr></argument>,<argument><expr><name><name>reg</name><operator>.</operator><name>r_di</name></name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>PKT_PARAM_SIZE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<return>return <expr><operator>(</operator><name>TRUE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>PHARLAP</name><operator>)</operator></expr></cpp:if>
+<function><type><name>PUBLIC</name> <name>int</name></type> <name>PktReceive</name> <parameter_list>(<parameter><decl><type><name>BYTE</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>max</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>WORD</name></type> <name>inOfs</name> <init>= <expr><operator>*</operator><name>rxInOfsFp</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>WORD</name></type> <name>outOfs</name> <init>= <expr><operator>*</operator><name>rxOutOfsFp</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>outOfs</name> <operator>!=</operator> <name>inOfs</name></expr>)</condition>
+<block>{<block_content>
+<decl_stmt><decl><type><name>RX_ELEMENT</name> <name>_far</name> <modifier>*</modifier></type><name>head</name> <init>= <expr><operator>(</operator><name>RX_ELEMENT</name> <name>_far</name><operator>*</operator><operator>)</operator><operator>(</operator><name>protBase</name><operator>+</operator><name>outOfs</name><operator>)</operator></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>size</name></decl>, <decl><type ref="prev"/><name>len</name> <init>= <expr><name>max</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>CheckElement</name><argument_list>(<argument><expr><name>head</name></expr></argument>)</argument_list></call></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>size</name> <operator>=</operator> <call><name>min</name> <argument_list>(<argument><expr><name><name>head</name><operator>-&gt;</operator><name>firstCount</name></name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>RX_ELEMENT</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>len</name> <operator>=</operator> <call><name>min</name> <argument_list>(<argument><expr><name>size</name></expr></argument>, <argument><expr><name>max</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>_fmemcpy</name> <argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>head</name><operator>-&gt;</operator><name>destin</name></name></expr></argument>, <argument><expr><name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>size</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<expr_stmt><expr><name>outOfs</name> <operator>+=</operator> <sizeof>sizeof <argument_list>(<argument><expr><name>RX_ELEMENT</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>outOfs</name> <operator>&gt;</operator> <name>LAST_RX_BUF</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>outOfs</name> <operator>=</operator> <name>FIRST_RX_BUF</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><operator>*</operator><name>rxOutOfsFp</name> <operator>=</operator> <name>outOfs</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>size</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>PUBLIC</name> <name>void</name></type> <name>PktQueueBusy</name> <parameter_list>(<parameter><decl><type><name>BOOL</name></type> <name>busy</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>rxOutOfsFp</name> <operator>=</operator> <ternary><condition><expr><name>busy</name></expr> ?</condition><then> <expr><operator>(</operator><operator>*</operator><name>rxInOfsFp</name> <operator>+</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>RX_ELEMENT</name></expr></argument>)</argument_list></sizeof><operator>)</operator></expr> </then><else>: <expr><operator>*</operator><name>rxInOfsFp</name></expr></else></ternary></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>rxOutOfsFp</name> <operator>&gt;</operator> <name>LAST_RX_BUF</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>*</operator><name>rxOutOfsFp</name> <operator>=</operator> <name>FIRST_RX_BUF</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><operator>*</operator><operator>(</operator><name>DWORD</name> <name>_far</name><operator>*</operator><operator>)</operator><operator>(</operator><name>protBase</name> <operator>+</operator> <operator>(</operator><name>WORD</name><operator>)</operator><operator>&amp;</operator><name>pktDrop</name><operator>)</operator> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>PUBLIC</name> <name>WORD</name></type> <name>PktBuffersUsed</name> <parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>WORD</name></type> <name>inOfs</name> <init>= <expr><operator>*</operator><name>rxInOfsFp</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>WORD</name></type> <name>outOfs</name> <init>= <expr><operator>*</operator><name>rxOutOfsFp</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>inOfs</name> <operator>&gt;=</operator> <name>outOfs</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>inOfs</name> <operator>-</operator> <name>outOfs</name><operator>)</operator> <operator>/</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>RX_ELEMENT</name></expr></argument>)</argument_list></sizeof></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>NUM_RX_BUF</name> <operator>-</operator> <operator>(</operator><name>outOfs</name> <operator>-</operator> <name>inOfs</name><operator>)</operator> <operator>/</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>RX_ELEMENT</name></expr></argument>)</argument_list></sizeof><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>PUBLIC</name> <name>DWORD</name></type> <name>PktRxDropped</name> <parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><operator>*</operator><operator>(</operator><name>DWORD</name> <name>_far</name><operator>*</operator><operator>)</operator><operator>(</operator><name>protBase</name> <operator>+</operator> <operator>(</operator><name>WORD</name><operator>)</operator><operator>&amp;</operator><name>pktDrop</name><operator>)</operator><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DJGPP</name><operator>)</operator></expr></cpp:elif>
+<function><type><name>PUBLIC</name> <name>int</name></type> <name>PktReceive</name> <parameter_list>(<parameter><decl><type><name>BYTE</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>max</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>WORD</name></type> <name>ofs</name> <init>= <expr><call><name>_farpeekw</name> <argument_list>(<argument><expr><name>_dos_ds</name></expr></argument>, <argument><expr><name>realBase</name><operator>+</operator><name>rxOutOfs</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ofs</name> <operator>!=</operator> <call><name>_farpeekw</name> <argument_list>(<argument><expr><name>_dos_ds</name></expr></argument>, <argument><expr><name>realBase</name><operator>+</operator><name>rxInOfs</name></expr></argument>)</argument_list></call></expr>)</condition>
+<block>{<block_content>
+<decl_stmt><decl><type><name>RX_ELEMENT</name></type> <name>head</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>size</name></decl>, <decl><type ref="prev"/><name>len</name> <init>= <expr><name>max</name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>head</name><operator>.</operator><name>firstCount</name></name> <operator>=</operator> <call><name>_farpeekw</name> <argument_list>(<argument><expr><name>_dos_ds</name></expr></argument>, <argument><expr><name>realBase</name><operator>+</operator><name>ofs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>head</name><operator>.</operator><name>secondCount</name></name> <operator>=</operator> <call><name>_farpeekw</name> <argument_list>(<argument><expr><name>_dos_ds</name></expr></argument>, <argument><expr><name>realBase</name><operator>+</operator><name>ofs</name><operator>+</operator><literal type="number">2</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>head</name><operator>.</operator><name>handle</name></name> <operator>=</operator> <call><name>_farpeekw</name> <argument_list>(<argument><expr><name>_dos_ds</name></expr></argument>, <argument><expr><name>realBase</name><operator>+</operator><name>ofs</name><operator>+</operator><literal type="number">4</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>CheckElement</name><argument_list>(<argument><expr><operator>&amp;</operator><name>head</name></expr></argument>)</argument_list></call></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>size</name> <operator>=</operator> <call><name>min</name> <argument_list>(<argument><expr><name><name>head</name><operator>.</operator><name>firstCount</name></name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>RX_ELEMENT</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>len</name> <operator>=</operator> <call><name>min</name> <argument_list>(<argument><expr><name>size</name></expr></argument>, <argument><expr><name>max</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dosmemget</name> <argument_list>(<argument><expr><name>realBase</name><operator>+</operator><name>ofs</name><operator>+</operator><literal type="number">6</literal></expr></argument>, <argument><expr><name>len</name></expr></argument>, <argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>size</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<expr_stmt><expr><name>ofs</name> <operator>+=</operator> <sizeof>sizeof <argument_list>(<argument><expr><name>RX_ELEMENT</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ofs</name> <operator>&gt;</operator> <name>LAST_RX_BUF</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>_farpokew</name> <argument_list>(<argument><expr><name>_dos_ds</name></expr></argument>, <argument><expr><name>realBase</name><operator>+</operator><name>rxOutOfs</name></expr></argument>, <argument><expr><name>FIRST_RX_BUF</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content> <expr_stmt><expr><call><name>_farpokew</name> <argument_list>(<argument><expr><name>_dos_ds</name></expr></argument>, <argument><expr><name>realBase</name><operator>+</operator><name>rxOutOfs</name></expr></argument>, <argument><expr><name>ofs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<return>return <expr><operator>(</operator><name>size</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>PUBLIC</name> <name>void</name></type> <name>PktQueueBusy</name> <parameter_list>(<parameter><decl><type><name>BOOL</name></type> <name>busy</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>WORD</name></type> <name>ofs</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>disable</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>ofs</name> <operator>=</operator> <call><name>_farpeekw</name> <argument_list>(<argument><expr><name>_dos_ds</name></expr></argument>, <argument><expr><name>realBase</name><operator>+</operator><name>rxInOfs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>busy</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>ofs</name> <operator>+=</operator> <sizeof>sizeof <argument_list>(<argument><expr><name>RX_ELEMENT</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ofs</name> <operator>&gt;</operator> <name>LAST_RX_BUF</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>_farpokew</name> <argument_list>(<argument><expr><name>_dos_ds</name></expr></argument>, <argument><expr><name>realBase</name><operator>+</operator><name>rxOutOfs</name></expr></argument>, <argument><expr><name>FIRST_RX_BUF</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content> <expr_stmt><expr><call><name>_farpokew</name> <argument_list>(<argument><expr><name>_dos_ds</name></expr></argument>, <argument><expr><name>realBase</name><operator>+</operator><name>rxOutOfs</name></expr></argument>, <argument><expr><name>ofs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<expr_stmt><expr><call><name>_farpokel</name> <argument_list>(<argument><expr><name>_dos_ds</name></expr></argument>, <argument><expr><name>realBase</name><operator>+</operator><name>pktDrop</name></expr></argument>, <argument><expr><literal type="number">0UL</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>enable</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>PUBLIC</name> <name>WORD</name></type> <name>PktBuffersUsed</name> <parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>WORD</name></type> <name>inOfs</name></decl>, <decl><type ref="prev"/><name>outOfs</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>disable</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>inOfs</name> <operator>=</operator> <call><name>_farpeekw</name> <argument_list>(<argument><expr><name>_dos_ds</name></expr></argument>, <argument><expr><name>realBase</name><operator>+</operator><name>rxInOfs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>outOfs</name> <operator>=</operator> <call><name>_farpeekw</name> <argument_list>(<argument><expr><name>_dos_ds</name></expr></argument>, <argument><expr><name>realBase</name><operator>+</operator><name>rxOutOfs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>enable</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>inOfs</name> <operator>&gt;=</operator> <name>outOfs</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>inOfs</name> <operator>-</operator> <name>outOfs</name><operator>)</operator> <operator>/</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>RX_ELEMENT</name></expr></argument>)</argument_list></sizeof></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>NUM_RX_BUF</name> <operator>-</operator> <operator>(</operator><name>outOfs</name> <operator>-</operator> <name>inOfs</name><operator>)</operator> <operator>/</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>RX_ELEMENT</name></expr></argument>)</argument_list></sizeof><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>PUBLIC</name> <name>DWORD</name></type> <name>PktRxDropped</name> <parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><call><name>_farpeekl</name> <argument_list>(<argument><expr><name>_dos_ds</name></expr></argument>, <argument><expr><name>realBase</name><operator>+</operator><name>pktDrop</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DOS4GW</name><operator>)</operator></expr></cpp:elif>
+<function><type><name>PUBLIC</name> <name>int</name></type> <name>PktReceive</name> <parameter_list>(<parameter><decl><type><name>BYTE</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>max</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>WORD</name></type> <name>ofs</name> <init>= <expr><operator>*</operator><operator>(</operator><name>WORD</name><operator>*</operator><operator>)</operator> <operator>(</operator><name>realBase</name><operator>+</operator><name>rxOutOfs</name><operator>)</operator></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ofs</name> <operator>!=</operator> <operator>*</operator><operator>(</operator><name>WORD</name><operator>*</operator><operator>)</operator> <operator>(</operator><name>realBase</name><operator>+</operator><name>rxInOfs</name><operator>)</operator></expr>)</condition>
+<block>{<block_content>
+<decl_stmt><decl><type><name>RX_ELEMENT</name></type> <name>head</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>size</name></decl>, <decl><type ref="prev"/><name>len</name> <init>= <expr><name>max</name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>head</name><operator>.</operator><name>firstCount</name></name> <operator>=</operator> <operator>*</operator><operator>(</operator><name>WORD</name><operator>*</operator><operator>)</operator> <operator>(</operator><name>realBase</name><operator>+</operator><name>ofs</name><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>head</name><operator>.</operator><name>secondCount</name></name> <operator>=</operator> <operator>*</operator><operator>(</operator><name>WORD</name><operator>*</operator><operator>)</operator> <operator>(</operator><name>realBase</name><operator>+</operator><name>ofs</name><operator>+</operator><literal type="number">2</literal><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>head</name><operator>.</operator><name>handle</name></name> <operator>=</operator> <operator>*</operator><operator>(</operator><name>WORD</name><operator>*</operator><operator>)</operator> <operator>(</operator><name>realBase</name><operator>+</operator><name>ofs</name><operator>+</operator><literal type="number">4</literal><operator>)</operator></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>CheckElement</name><argument_list>(<argument><expr><operator>&amp;</operator><name>head</name></expr></argument>)</argument_list></call></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>size</name> <operator>=</operator> <call><name>min</name> <argument_list>(<argument><expr><name><name>head</name><operator>.</operator><name>firstCount</name></name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>RX_ELEMENT</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>len</name> <operator>=</operator> <call><name>min</name> <argument_list>(<argument><expr><name>size</name></expr></argument>, <argument><expr><name>max</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memcpy</name> <argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><operator>(</operator><specifier>const</specifier> <name>void</name><operator>*</operator><operator>)</operator><operator>(</operator><name>realBase</name><operator>+</operator><name>ofs</name><operator>+</operator><literal type="number">6</literal><operator>)</operator></expr></argument>, <argument><expr><name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>size</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<expr_stmt><expr><name>ofs</name> <operator>+=</operator> <sizeof>sizeof <argument_list>(<argument><expr><name>RX_ELEMENT</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>ofs</name> <operator>&gt;</operator> <name>LAST_RX_BUF</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>*</operator><operator>(</operator><name>WORD</name><operator>*</operator><operator>)</operator> <operator>(</operator><name>realBase</name><operator>+</operator><name>rxOutOfs</name><operator>)</operator> <operator>=</operator> <name>FIRST_RX_BUF</name></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content> <expr_stmt><expr><operator>*</operator><operator>(</operator><name>WORD</name><operator>*</operator><operator>)</operator> <operator>(</operator><name>realBase</name><operator>+</operator><name>rxOutOfs</name><operator>)</operator> <operator>=</operator> <name>ofs</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<return>return <expr><operator>(</operator><name>size</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>PUBLIC</name> <name>void</name></type> <name>PktQueueBusy</name> <parameter_list>(<parameter><decl><type><name>BOOL</name></type> <name>busy</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>WORD</name></type> <name>ofs</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>_disable</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>ofs</name> <operator>=</operator> <operator>*</operator><operator>(</operator><name>WORD</name><operator>*</operator><operator>)</operator> <operator>(</operator><name>realBase</name><operator>+</operator><name>rxInOfs</name><operator>)</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>busy</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>ofs</name> <operator>+=</operator> <sizeof>sizeof <argument_list>(<argument><expr><name>RX_ELEMENT</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ofs</name> <operator>&gt;</operator> <name>LAST_RX_BUF</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>*</operator><operator>(</operator><name>WORD</name><operator>*</operator><operator>)</operator> <operator>(</operator><name>realBase</name><operator>+</operator><name>rxOutOfs</name><operator>)</operator> <operator>=</operator> <name>FIRST_RX_BUF</name></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content> <expr_stmt><expr><operator>*</operator><operator>(</operator><name>WORD</name><operator>*</operator><operator>)</operator> <operator>(</operator><name>realBase</name><operator>+</operator><name>rxOutOfs</name><operator>)</operator> <operator>=</operator> <name>ofs</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<expr_stmt><expr><operator>*</operator><operator>(</operator><name>DWORD</name><operator>*</operator><operator>)</operator> <operator>(</operator><name>realBase</name><operator>+</operator><name>pktDrop</name><operator>)</operator> <operator>=</operator> <literal type="number">0UL</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>_enable</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>PUBLIC</name> <name>WORD</name></type> <name>PktBuffersUsed</name> <parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>WORD</name></type> <name>inOfs</name></decl>, <decl><type ref="prev"/><name>outOfs</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>_disable</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>inOfs</name> <operator>=</operator> <operator>*</operator><operator>(</operator><name>WORD</name><operator>*</operator><operator>)</operator> <operator>(</operator><name>realBase</name><operator>+</operator><name>rxInOfs</name><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name>outOfs</name> <operator>=</operator> <operator>*</operator><operator>(</operator><name>WORD</name><operator>*</operator><operator>)</operator> <operator>(</operator><name>realBase</name><operator>+</operator><name>rxOutOfs</name><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>_enable</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>inOfs</name> <operator>&gt;=</operator> <name>outOfs</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>inOfs</name> <operator>-</operator> <name>outOfs</name><operator>)</operator> <operator>/</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>RX_ELEMENT</name></expr></argument>)</argument_list></sizeof></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>NUM_RX_BUF</name> <operator>-</operator> <operator>(</operator><name>outOfs</name> <operator>-</operator> <name>inOfs</name><operator>)</operator> <operator>/</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>RX_ELEMENT</name></expr></argument>)</argument_list></sizeof><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>PUBLIC</name> <name>DWORD</name></type> <name>PktRxDropped</name> <parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>*</operator><operator>(</operator><name>DWORD</name><operator>*</operator><operator>)</operator> <operator>(</operator><name>realBase</name><operator>+</operator><name>pktDrop</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+
+<function><type><name>PUBLIC</name> <name>int</name></type> <name>PktReceive</name> <parameter_list>(<parameter><decl><type><name>BYTE</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>max</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>rxOutOfs</name> <operator>!=</operator> <name>rxInOfs</name></expr>)</condition>
+<block>{<block_content>
+<decl_stmt><decl><type><name>RX_ELEMENT</name> <name>far</name> <modifier>*</modifier></type><name>head</name> <init>= <expr><operator>(</operator><name>RX_ELEMENT</name> <name>far</name><operator>*</operator><operator>)</operator> <call><name>MK_FP</name> <argument_list>(<argument><expr><name>_DS</name></expr></argument>,<argument><expr><name>rxOutOfs</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>size</name></decl>, <decl><type ref="prev"/><name>len</name> <init>= <expr><name>max</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>CheckElement</name><argument_list>(<argument><expr><name>head</name></expr></argument>)</argument_list></call></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>size</name> <operator>=</operator> <call><name>min</name> <argument_list>(<argument><expr><name><name>head</name><operator>-&gt;</operator><name>firstCount</name></name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>RX_ELEMENT</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>len</name> <operator>=</operator> <call><name>min</name> <argument_list>(<argument><expr><name>size</name></expr></argument>, <argument><expr><name>max</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>_fmemcpy</name> <argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>head</name><operator>-&gt;</operator><name>destin</name></name></expr></argument>, <argument><expr><name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>size</name> <operator>=</operator> <operator>-</operator><literal type="number">1</literal></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<expr_stmt><expr><name>rxOutOfs</name> <operator>+=</operator> <sizeof>sizeof <argument_list>(<argument><expr><name>RX_ELEMENT</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>rxOutOfs</name> <operator>&gt;</operator> <name>LAST_RX_BUF</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>rxOutOfs</name> <operator>=</operator> <name>FIRST_RX_BUF</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>size</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>PUBLIC</name> <name>void</name></type> <name>PktQueueBusy</name> <parameter_list>(<parameter><decl><type><name>BOOL</name></type> <name>busy</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><name>rxOutOfs</name> <operator>=</operator> <ternary><condition><expr><name>busy</name></expr> ?</condition><then> <expr><operator>(</operator><name>rxInOfs</name> <operator>+</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>RX_ELEMENT</name></expr></argument>)</argument_list></sizeof><operator>)</operator></expr> </then><else>: <expr><name>rxInOfs</name></expr></else></ternary></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>rxOutOfs</name> <operator>&gt;</operator> <name>LAST_RX_BUF</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>rxOutOfs</name> <operator>=</operator> <name>FIRST_RX_BUF</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name>pktDrop</name> <operator>=</operator> <literal type="number">0L</literal></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>PUBLIC</name> <name>WORD</name></type> <name>PktBuffersUsed</name> <parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>WORD</name></type> <name>inOfs</name> <init>= <expr><name>rxInOfs</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>WORD</name></type> <name>outOfs</name> <init>= <expr><name>rxOutOfs</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>inOfs</name> <operator>&gt;=</operator> <name>outOfs</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>(</operator><name>inOfs</name> <operator>-</operator> <name>outOfs</name><operator>)</operator> <operator>/</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>RX_ELEMENT</name></expr></argument>)</argument_list></sizeof><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>NUM_RX_BUF</name> <operator>-</operator> <operator>(</operator><name>outOfs</name> <operator>-</operator> <name>inOfs</name><operator>)</operator> <operator>/</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>RX_ELEMENT</name></expr></argument>)</argument_list></sizeof><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>PUBLIC</name> <name>DWORD</name></type> <name>PktRxDropped</name> <parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><name>pktDrop</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+<function><type><name>LOCAL</name> <name>__inline</name> <name>void</name></type> <name>PktFreeMem</name> <parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>PHARLAP</name><operator>)</operator></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name>realSeg</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>_dx_real_free</name> <argument_list>(<argument><expr><name>realSeg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>realSeg</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DJGPP</name><operator>)</operator></expr></cpp:elif>
+<if_stmt><if>if <condition>(<expr><name><name>rm_mem</name><operator>.</operator><name>rm_segment</name></name></expr>)</condition>
+<block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name></type> <name>ofs</name></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>ofs</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>ofs</name> <operator>&lt;</operator> <literal type="number">16</literal> <operator>*</operator> <name><name>rm_mem</name><operator>.</operator><name>size</name></name> <operator>/</operator> <literal type="number">4</literal></expr>;</condition> <incr><expr><name>ofs</name> <operator>+=</operator> <literal type="number">4</literal></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>_farpokel</name> <argument_list>(<argument><expr><name>_dos_ds</name></expr></argument>, <argument><expr><name>realBase</name> <operator>+</operator> <name>ofs</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+<expr_stmt><expr><call><name>_go32_dpmi_free_dos_memory</name> <argument_list>(<argument><expr><operator>&amp;</operator><name>rm_mem</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>rm_mem</name><operator>.</operator><name>rm_segment</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DOS4GW</name><operator>)</operator></expr></cpp:elif>
+<if_stmt><if>if <condition>(<expr><name>rm_base_sel</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>dpmi_real_free</name> <argument_list>(<argument><expr><name>rm_base_sel</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>rm_base_sel</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+
+
+<function><type><name>PUBLIC</name> <name>BOOL</name></type> <name>PktExitDriver</name> <parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>pktInfo</name><operator>.</operator><name>handle</name></name></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PktSetReceiverMode</name><argument_list>(<argument><expr><name>PDRX_BROADCAST</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>PUTS</name> <argument_list>(<argument><expr><literal type="string">"Error restoring receiver mode."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PktReleaseHandle</name><argument_list>(<argument><expr><name><name>pktInfo</name><operator>.</operator><name>handle</name></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>PUTS</name> <argument_list>(<argument><expr><literal type="string">"Error releasing PKT-DRVR handle."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>PktFreeMem</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>pktInfo</name><operator>.</operator><name>handle</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>pcap_pkt_debug</name> <operator>&gt;=</operator> <literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>printf</name> <argument_list>(<argument><expr><literal type="string">"Internal stats: too-small %lu, too-large %lu, bad-sync %lu, "</literal>
+<literal type="string">"wrong-handle %lu\n"</literal></expr></argument>,
+<argument><expr><name><name>intStat</name><operator>.</operator><name>tooSmall</name></name></expr></argument>, <argument><expr><name><name>intStat</name><operator>.</operator><name>tooLarge</name></name></expr></argument>,
+<argument><expr><name><name>intStat</name><operator>.</operator><name>badSync</name></name></expr></argument>, <argument><expr><name><name>intStat</name><operator>.</operator><name>wrongHandle</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>TRUE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <operator>(</operator><name>DJGPP</name><operator>|</operator><name>DOS4GW</name><operator>)</operator><operator>)</operator></expr></cpp:if>
+<function><type><specifier>static</specifier> <name>void</name></type> <name>dump_pkt_stub</name> <parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>fprintf</name> <argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"PktReceiver %lu, pkt_stub[PktReceiver] =\n"</literal></expr></argument>,
+<argument><expr><name>PktReceiver</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <literal type="number">15</literal></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>fprintf</name> <argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"%02X, "</literal></expr></argument>, <argument><expr><name><name>real_stub_array</name><index>[<expr><name>i</name><operator>+</operator><name>PktReceiver</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+<expr_stmt><expr><call><name>fputs</name> <argument_list>(<argument><expr><literal type="string">"\n"</literal></expr></argument>, <argument><expr><name>stderr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+
+
+<function><type><name>PUBLIC</name> <name>BOOL</name></type> <name>PktInitDriver</name> <parameter_list>(<parameter><decl><type><name>PKT_RX_MODE</name></type> <name>mode</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>PKT_RX_MODE</name></type> <name>rxMode</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>BOOL</name></type> <name>writeInfo</name> <init>= <expr><operator>(</operator><name>pcap_pkt_debug</name> <operator>&gt;=</operator> <literal type="number">3</literal><operator>)</operator></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>pktInfo</name><operator>.</operator><name>quiet</name></name> <operator>=</operator> <operator>(</operator><name>pcap_pkt_debug</name> <operator>&lt;</operator> <literal type="number">3</literal><operator>)</operator></expr>;</expr_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>PHARLAP</name><operator>)</operator> <operator>&amp;&amp;</operator> <call><name>defined</name><argument_list>(<argument><expr><name>__HIGHC__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name>_mwenv</name> <operator>!=</operator> <literal type="number">2</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name> <argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"Only Pharlap DOS extender supported.\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>PHARLAP</name><operator>)</operator> <operator>&amp;&amp;</operator> <call><name>defined</name><argument_list>(<argument><expr><name>__WATCOMC__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name>_Extender</name> <operator>!=</operator> <literal type="number">1</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name> <argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"Only DOS4GW style extenders supported.\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PktSearchDriver</name><argument_list>()</argument_list></call></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>PUTS</name> <argument_list>(<argument><expr><literal type="string">"Packet driver not found."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>PktFreeMem</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PktGetDriverInfo</name><argument_list>()</argument_list></call></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>PUTS</name> <argument_list>(<argument><expr><literal type="string">"Error getting pkt-drvr information."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>PktFreeMem</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>PHARLAP</name><operator>)</operator></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><call><name>RealCopy</name><argument_list>(<argument><expr><operator>(</operator><name>ULONG</name><operator>)</operator><operator>&amp;</operator><name>rxOutOfs</name></expr></argument>, <argument><expr><operator>(</operator><name>ULONG</name><operator>)</operator><operator>&amp;</operator><name>pktRxEnd</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>realBase</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>protBase</name></expr></argument>, <argument><expr><operator>(</operator><name>USHORT</name><operator>*</operator><operator>)</operator><operator>&amp;</operator><name>realSeg</name></expr></argument>)</argument_list></call></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><name>rxOutOfsFp</name> <operator>=</operator> <operator>(</operator><name>WORD</name> <name>_far</name> <operator>*</operator><operator>)</operator> <operator>(</operator><name>protBase</name> <operator>+</operator> <operator>(</operator><name>WORD</name><operator>)</operator> <operator>&amp;</operator><name>rxOutOfs</name><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name>rxInOfsFp</name> <operator>=</operator> <operator>(</operator><name>WORD</name> <name>_far</name> <operator>*</operator><operator>)</operator> <operator>(</operator><name>protBase</name> <operator>+</operator> <operator>(</operator><name>WORD</name><operator>)</operator> <operator>&amp;</operator><name>rxInOfs</name><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>rxOutOfsFp</name> <operator>=</operator> <name>FIRST_RX_BUF</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>rxInOfsFp</name> <operator>=</operator> <name>FIRST_RX_BUF</name></expr>;</expr_stmt>
+</block_content>}</block></if>
+<else>else
+<block>{<block_content>
+<expr_stmt><expr><call><name>PUTS</name> <argument_list>(<argument><expr><literal type="string">"Cannot allocate real-mode stub."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></else></if_stmt>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <operator>(</operator><name>DJGPP</name><operator>|</operator><name>DOS4GW</name><operator>)</operator><operator>)</operator></expr></cpp:elif>
+<if_stmt><if>if <condition>(<expr><sizeof>sizeof<argument_list>(<argument><expr><name>real_stub_array</name></expr></argument>)</argument_list></sizeof> <operator>&gt;</operator> <literal type="number">0xFFFF</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name> <argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"`real_stub_array[]' too big.\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DJGPP</name><operator>)</operator></expr></cpp:if>
+<expr_stmt><expr><name><name>rm_mem</name><operator>.</operator><name>size</name></name> <operator>=</operator> <operator>(</operator><sizeof>sizeof<argument_list>(<argument><expr><name>real_stub_array</name></expr></argument>)</argument_list></sizeof> <operator>+</operator> <literal type="number">15</literal><operator>)</operator> <operator>/</operator> <literal type="number">16</literal></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>_go32_dpmi_allocate_dos_memory</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rm_mem</name></expr></argument>)</argument_list></call> <operator>||</operator> <name><name>rm_mem</name><operator>.</operator><name>rm_offset</name></name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>PUTS</name> <argument_list>(<argument><expr><literal type="string">"real-mode init failed."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>realBase</name> <operator>=</operator> <operator>(</operator><name><name>rm_mem</name><operator>.</operator><name>rm_segment</name></name> <operator>&lt;&lt;</operator> <literal type="number">4</literal><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dosmemput</name> <argument_list>(<argument><expr><operator>&amp;</operator><name>real_stub_array</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>real_stub_array</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><name>realBase</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>_farpokel</name> <argument_list>(<argument><expr><name>_dos_ds</name></expr></argument>, <argument><expr><name>realBase</name><operator>+</operator><name>rxOutOfs</name></expr></argument>, <argument><expr><name>FIRST_RX_BUF</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>_farpokel</name> <argument_list>(<argument><expr><name>_dos_ds</name></expr></argument>, <argument><expr><name>realBase</name><operator>+</operator><name>rxInOfs</name></expr></argument>, <argument><expr><name>FIRST_RX_BUF</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DOS4GW</name><operator>)</operator></expr></cpp:elif>
+<expr_stmt><expr><name>rm_base_seg</name> <operator>=</operator> <call><name>dpmi_real_malloc</name> <argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>real_stub_array</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><operator>&amp;</operator><name>rm_base_sel</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>rm_base_seg</name></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>PUTS</name> <argument_list>(<argument><expr><literal type="string">"real-mode init failed."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name>realBase</name> <operator>=</operator> <operator>(</operator><name>rm_base_seg</name> <operator>&lt;&lt;</operator> <literal type="number">4</literal><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memcpy</name> <argument_list>(<argument><expr><operator>(</operator><name>void</name><operator>*</operator><operator>)</operator><name>realBase</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>real_stub_array</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>real_stub_array</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><operator>(</operator><name>WORD</name><operator>*</operator><operator>)</operator> <operator>(</operator><name>realBase</name><operator>+</operator><name>rxOutOfs</name><operator>)</operator> <operator>=</operator> <name>FIRST_RX_BUF</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><operator>(</operator><name>WORD</name><operator>*</operator><operator>)</operator> <operator>(</operator><name>realBase</name><operator>+</operator><name>rxInOfs</name><operator>)</operator> <operator>=</operator> <name>FIRST_RX_BUF</name></expr>;</expr_stmt>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>pushf</name> <init>= <expr><name>PktReceiver</name></expr></init></decl>;</decl_stmt>
+
+<while>while <condition>(<expr><name><name>real_stub_array</name><index>[<expr><name>pushf</name><operator>++</operator></expr>]</index></name> <operator>!=</operator> <literal type="number">0x9C</literal> <operator>&amp;&amp;</operator>
+<name><name>real_stub_array</name><index>[<expr><name>pushf</name></expr>]</index></name> <operator>!=</operator> <literal type="number">0xFA</literal></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>++</operator><name>para_skip</name> <operator>&gt;</operator> <literal type="number">16</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name> <argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"Something wrong with `pkt_stub.inc'.\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>para_skip</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>dump_pkt_stub</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></while>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><operator>(</operator><name>WORD</name><operator>*</operator><operator>)</operator><operator>(</operator><name>real_stub_array</name> <operator>+</operator> <call><name>offsetof</name><argument_list>(<argument><expr><name>PktRealStub</name></expr></argument>,<argument><expr><name>_dummy</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <literal type="number">0xB800</literal></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>fprintf</name> <argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"`real_stub_array[]' is misaligned.\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block>
+
+<if_stmt><if>if <condition>(<expr><name>pcap_pkt_debug</name> <operator>&gt;</operator> <literal type="number">2</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>dump_pkt_stub</name><argument_list>()</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><name>rxOutOfs</name> <operator>=</operator> <name>FIRST_RX_BUF</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>rxInOfs</name> <operator>=</operator> <name>FIRST_RX_BUF</name></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PktSetAccess</name><argument_list>()</argument_list></call></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>PUTS</name> <argument_list>(<argument><expr><literal type="string">"Error setting pkt-drvr access."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>PktFreeMem</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PktGetAddress</name><argument_list>(<argument><expr><operator>&amp;</operator><name>myAddress</name></expr></argument>)</argument_list></call></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>PUTS</name> <argument_list>(<argument><expr><literal type="string">"Error fetching adapter address."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>PktFreeMem</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PktSetReceiverMode</name><argument_list>(<argument><expr><name>mode</name></expr></argument>)</argument_list></call></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>PUTS</name> <argument_list>(<argument><expr><literal type="string">"Error setting receiver mode."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>PktFreeMem</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PktGetReceiverMode</name><argument_list>(<argument><expr><operator>&amp;</operator><name>rxMode</name></expr></argument>)</argument_list></call></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>PUTS</name> <argument_list>(<argument><expr><literal type="string">"Error getting receiver mode."</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>PktFreeMem</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>writeInfo</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>printf</name> <argument_list>(<argument><expr><literal type="string">"Pkt-driver information:\n"</literal>
+<literal type="string">" Version : %d.%d\n"</literal>
+<literal type="string">" Name : %.15s\n"</literal>
+<literal type="string">" Class : %u (%s)\n"</literal>
+<literal type="string">" Type : %u\n"</literal>
+<literal type="string">" Number : %u\n"</literal>
+<literal type="string">" Funcs : %u\n"</literal>
+<literal type="string">" Intr : %Xh\n"</literal>
+<literal type="string">" Handle : %u\n"</literal>
+<literal type="string">" Extended : %s\n"</literal>
+<literal type="string">" Hi-perf : %s\n"</literal>
+<literal type="string">" RX mode : %s\n"</literal>
+<literal type="string">" Eth-addr : %02X:%02X:%02X:%02X:%02X:%02X\n"</literal></expr></argument>,
+
+<argument><expr><name><name>pktInfo</name><operator>.</operator><name>majVer</name></name></expr></argument>, <argument><expr><name><name>pktInfo</name><operator>.</operator><name>minVer</name></name></expr></argument>, <argument><expr><name><name>pktInfo</name><operator>.</operator><name>name</name></name></expr></argument>,
+<argument><expr><name><name>pktInfo</name><operator>.</operator><name>class</name></name></expr></argument>, <argument><expr><call><name>PktGetClassName</name><argument_list>(<argument><expr><name><name>pktInfo</name><operator>.</operator><name>class</name></name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name><name>pktInfo</name><operator>.</operator><name>type</name></name></expr></argument>, <argument><expr><name><name>pktInfo</name><operator>.</operator><name>number</name></name></expr></argument>,
+<argument><expr><name><name>pktInfo</name><operator>.</operator><name>funcs</name></name></expr></argument>, <argument><expr><name><name>pktInfo</name><operator>.</operator><name>intr</name></name></expr></argument>, <argument><expr><name><name>pktInfo</name><operator>.</operator><name>handle</name></name></expr></argument>,
+<argument><expr><ternary><condition><expr><name><name>pktInfo</name><operator>.</operator><name>funcs</name></name> <operator>==</operator> <literal type="number">2</literal> <operator>||</operator> <name><name>pktInfo</name><operator>.</operator><name>funcs</name></name> <operator>==</operator> <literal type="number">6</literal></expr> ?</condition><then> <expr><literal type="string">"Yes"</literal></expr> </then><else>: <expr><literal type="string">"No"</literal></expr></else></ternary></expr></argument>,
+<argument><expr><ternary><condition><expr><name><name>pktInfo</name><operator>.</operator><name>funcs</name></name> <operator>==</operator> <literal type="number">5</literal> <operator>||</operator> <name><name>pktInfo</name><operator>.</operator><name>funcs</name></name> <operator>==</operator> <literal type="number">6</literal></expr> ?</condition><then> <expr><literal type="string">"Yes"</literal></expr> </then><else>: <expr><literal type="string">"No"</literal></expr></else></ternary></expr></argument>,
+<argument><expr><call><name>PktRXmodeStr</name><argument_list>(<argument><expr><name>rxMode</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><name><name>myAddress</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>, <argument><expr><name><name>myAddress</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>, <argument><expr><name><name>myAddress</name><index>[<expr><literal type="number">2</literal></expr>]</index></name></expr></argument>,
+<argument><expr><name><name>myAddress</name><index>[<expr><literal type="number">3</literal></expr>]</index></name></expr></argument>, <argument><expr><name><name>myAddress</name><index>[<expr><literal type="number">4</literal></expr>]</index></name></expr></argument>, <argument><expr><name><name>myAddress</name><index>[<expr><literal type="number">5</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>DEBUG</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>PHARLAP</name><operator>)</operator></expr></cpp:if>
+<if_stmt><if>if <condition>(<expr><name>writeInfo</name></expr>)</condition>
+<block>{<block_content>
+<decl_stmt><decl><type><name>DWORD</name></type> <name>rAdr</name> <init>= <expr><name>realBase</name> <operator>+</operator> <operator>(</operator><name>WORD</name><operator>)</operator><operator>&amp;</operator><name>PktReceiver</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name></type> <name>sel</name></decl>, <decl><type ref="prev"/><name>ofs</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>printf</name> <argument_list>(<argument><expr><literal type="string">"\nReceiver at %04X:%04X\n"</literal></expr></argument>, <argument><expr><call><name>RP_SEG</name><argument_list>(<argument><expr><name>rAdr</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><call><name>RP_OFF</name><argument_list>(<argument><expr><name>rAdr</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name> <argument_list>(<argument><expr><literal type="string">"Realbase = %04X:%04X\n"</literal></expr></argument>, <argument><expr><call><name>RP_SEG</name><argument_list>(<argument><expr><name>realBase</name></expr></argument>)</argument_list></call></expr></argument>,<argument><expr><call><name>RP_OFF</name><argument_list>(<argument><expr><name>realBase</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>sel</name> <operator>=</operator> <call><name>_FP_SEG</name> <argument_list>(<argument><expr><name>protBase</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>ofs</name> <operator>=</operator> <call><name>_FP_OFF</name> <argument_list>(<argument><expr><name>protBase</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name> <argument_list>(<argument><expr><literal type="string">"Protbase = %04X:%08X\n"</literal></expr></argument>, <argument><expr><name>sel</name></expr></argument>,<argument><expr><name>ofs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name> <argument_list>(<argument><expr><literal type="string">"RealSeg = %04X\n"</literal></expr></argument>, <argument><expr><name>realSeg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>sel</name> <operator>=</operator> <call><name>_FP_SEG</name> <argument_list>(<argument><expr><name>rxOutOfsFp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>ofs</name> <operator>=</operator> <call><name>_FP_OFF</name> <argument_list>(<argument><expr><name>rxOutOfsFp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name> <argument_list>(<argument><expr><literal type="string">"rxOutOfsFp = %04X:%08X\n"</literal></expr></argument>, <argument><expr><name>sel</name></expr></argument>,<argument><expr><name>ofs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>sel</name> <operator>=</operator> <call><name>_FP_SEG</name> <argument_list>(<argument><expr><name>rxInOfsFp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>ofs</name> <operator>=</operator> <call><name>_FP_OFF</name> <argument_list>(<argument><expr><name>rxInOfsFp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name> <argument_list>(<argument><expr><literal type="string">"rxInOfsFp = %04X:%08X\n"</literal></expr></argument>, <argument><expr><name>sel</name></expr></argument>,<argument><expr><name>ofs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>printf</name> <argument_list>(<argument><expr><literal type="string">"Ready: *rxOutOfsFp = %04X *rxInOfsFp = %04X\n"</literal></expr></argument>,
+<argument><expr><operator>*</operator><name>rxOutOfsFp</name></expr></argument>, <argument><expr><operator>*</operator><name>rxInOfsFp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>PktQueueBusy</name> <argument_list>(<argument><expr><name>TRUE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>printf</name> <argument_list>(<argument><expr><literal type="string">"Busy: *rxOutOfsFp = %04X *rxInOfsFp = %04X\n"</literal></expr></argument>,
+<argument><expr><operator>*</operator><name>rxOutOfsFp</name></expr></argument>, <argument><expr><operator>*</operator><name>rxInOfsFp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<expr_stmt><expr><call><name>memset</name> <argument_list>(<argument><expr><operator>&amp;</operator><name>pktStat</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>pktStat</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>PktQueueBusy</name> <argument_list>(<argument><expr><name>TRUE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>TRUE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>DOS4GW</name><operator>)</operator></expr></cpp:if>
+<function><type><name>LOCAL</name> <name>DWORD</name></type> <name>dpmi_get_real_vector</name> <parameter_list>(<parameter><decl><type><name>int</name></type> <name>intr</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>union</name> <name>REGS</name></name></type> <name>r</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>r</name><operator>.</operator><name>x</name><operator>.</operator><name>eax</name></name> <operator>=</operator> <literal type="number">0x200</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>r</name><operator>.</operator><name>x</name><operator>.</operator><name>ebx</name></name> <operator>=</operator> <operator>(</operator><name>DWORD</name><operator>)</operator> <name>intr</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>int386</name> <argument_list>(<argument><expr><literal type="number">0x31</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>r</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>r</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>(</operator><name><name>r</name><operator>.</operator><name>w</name><operator>.</operator><name>cx</name></name> <operator>&lt;&lt;</operator> <literal type="number">4</literal><operator>)</operator> <operator>+</operator> <name><name>r</name><operator>.</operator><name>w</name><operator>.</operator><name>dx</name></name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>LOCAL</name> <name>WORD</name></type> <name>dpmi_real_malloc</name> <parameter_list>(<parameter><decl><type><name>int</name></type> <name>size</name></decl></parameter>, <parameter><decl><type><name>WORD</name> <modifier>*</modifier></type><name>selector</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>union</name> <name>REGS</name></name></type> <name>r</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>r</name><operator>.</operator><name>x</name><operator>.</operator><name>eax</name></name> <operator>=</operator> <literal type="number">0x0100</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>r</name><operator>.</operator><name>x</name><operator>.</operator><name>ebx</name></name> <operator>=</operator> <operator>(</operator><name>size</name> <operator>+</operator> <literal type="number">15</literal><operator>)</operator> <operator>/</operator> <literal type="number">16</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>int386</name> <argument_list>(<argument><expr><literal type="number">0x31</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>r</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>r</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>r</name><operator>.</operator><name>w</name><operator>.</operator><name>cflag</name></name> <operator>&amp;</operator> <literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>selector</name> <operator>=</operator> <name><name>r</name><operator>.</operator><name>w</name><operator>.</operator><name>dx</name></name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name><name>r</name><operator>.</operator><name>w</name><operator>.</operator><name>ax</name></name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>LOCAL</name> <name>void</name></type> <name>dpmi_real_free</name> <parameter_list>(<parameter><decl><type><name>WORD</name></type> <name>selector</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>union</name> <name>REGS</name></name></type> <name>r</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>r</name><operator>.</operator><name>x</name><operator>.</operator><name>eax</name></name> <operator>=</operator> <literal type="number">0x101</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>r</name><operator>.</operator><name>x</name><operator>.</operator><name>ebx</name></name> <operator>=</operator> <name>selector</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>int386</name> <argument_list>(<argument><expr><literal type="number">0x31</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>r</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>r</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>DOSX</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator> <operator>(</operator><name>DOSX</name> <operator>&amp;</operator> <name>PHARLAP</name><operator>)</operator></expr></cpp:if>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><name>int</name></type> <name>RealCopy</name> <parameter_list>(<parameter><decl><type><name>ULONG</name></type> <name>start_offs</name></decl></parameter>,
+<parameter><decl><type><name>ULONG</name></type> <name>end_offs</name></decl></parameter>,
+<parameter><decl><type><name>REALPTR</name> <modifier>*</modifier></type><name>real_basep</name></decl></parameter>,
+<parameter><decl><type><name>FARPTR</name> <modifier>*</modifier></type><name>prot_basep</name></decl></parameter>,
+<parameter><decl><type><name>USHORT</name> <modifier>*</modifier></type><name>rmem_adrp</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ULONG</name></type> <name>rm_base</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>UCHAR</name> <modifier>*</modifier></type><name>source</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>FARPTR</name></type> <name>destin</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ULONG</name></type> <name>len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ULONG</name></type> <name>temp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>USHORT</name></type> <name>stemp</name></decl>;</decl_stmt>
+
+
+
+<if_stmt><if>if <condition>(<expr><name>start_offs</name> <operator>&gt;=</operator> <name>end_offs</name> <operator>||</operator> <name>end_offs</name> <operator>&gt;</operator> <literal type="number">0x10000</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+
+
+
+
+<expr_stmt><expr><name>start_offs</name> <operator>&amp;=</operator> <operator>~</operator><literal type="number">15</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>end_offs</name> <operator>=</operator> <operator>(</operator><literal type="number">15</literal> <operator>+</operator> <operator>(</operator><name>end_offs</name> <operator>&lt;&lt;</operator> <literal type="number">4</literal><operator>)</operator><operator>)</operator> <operator>&gt;&gt;</operator> <literal type="number">4</literal></expr>;</expr_stmt>
+
+
+
+
+
+
+
+
+
+
+
+
+<expr_stmt><expr><name>len</name> <operator>=</operator> <operator>(</operator><operator>(</operator><name>end_offs</name> <operator>-</operator> <name>start_offs</name><operator>)</operator> <operator>+</operator> <literal type="number">15</literal><operator>)</operator> <operator>&gt;&gt;</operator> <literal type="number">4</literal></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>_dx_real_above</name><argument_list>(<argument><expr><name>len</name></expr></argument>, <argument><expr><name>rmem_adrp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>stemp</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>_DOSE_NONE</name></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>_dx_cmem_usage</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>temp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>temp</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>_DOSE_NONE</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>_dx_real_above</name><argument_list>(<argument><expr><name>len</name></expr></argument>, <argument><expr><name>rmem_adrp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>stemp</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>_DOSE_NONE</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><operator>*</operator><name>rmem_adrp</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>_dx_cmem_usage</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>temp</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>temp</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>_DOSE_NONE</name></expr>)</condition>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>rmem_adrp</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>_dx_real_free</name> <argument_list>(<argument><expr><operator>*</operator><name>rmem_adrp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>*</operator><name>rmem_adrp</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>FALSE</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+
+
+
+<expr_stmt><expr><name>rm_base</name> <operator>=</operator> <operator>(</operator><operator>(</operator><name>ULONG</name><operator>)</operator> <operator>*</operator><name>rmem_adrp</name><operator>)</operator> <operator>-</operator> <operator>(</operator><name>start_offs</name> <operator>&gt;&gt;</operator> <literal type="number">4</literal><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RP_SET</name> <argument_list>(<argument><expr><operator>*</operator><name>real_basep</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>rm_base</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>FP_SET</name> <argument_list>(<argument><expr><operator>*</operator><name>prot_basep</name></expr></argument>, <argument><expr><name>rm_base</name> <operator>&lt;&lt;</operator> <literal type="number">4</literal></expr></argument>, <argument><expr><name>SS_DOSMEM</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+<expr_stmt><expr><name>source</name> <operator>=</operator> <operator>(</operator><name>UCHAR</name> <operator>*</operator><operator>)</operator> <name>start_offs</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>destin</name> <operator>=</operator> <operator>*</operator><name>prot_basep</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>FP_SET</name> <argument_list>(<argument><expr><name>destin</name></expr></argument>, <argument><expr><call><name>FP_OFF</name><argument_list>(<argument><expr><operator>*</operator><name>prot_basep</name></expr></argument>)</argument_list></call> <operator>+</operator> <name>start_offs</name></expr></argument>, <argument><expr><call><name>FP_SEL</name><argument_list>(<argument><expr><operator>*</operator><name>prot_basep</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>len</name> <operator>=</operator> <name>end_offs</name> <operator>-</operator> <name>start_offs</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>WriteFarMem</name> <argument_list>(<argument><expr><name>destin</name></expr></argument>, <argument><expr><name>source</name></expr></argument>, <argument><expr><name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>TRUE</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

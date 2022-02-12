@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.h">
+
+
+
+
+
+
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>ASAN_MEMINTRIN_H</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ASAN_MEMINTRIN_H</name></cpp:macro></cpp:define>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"asan_interface_internal.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"asan_internal.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"asan_mapping.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"interception/interception.h"</cpp:file></cpp:include>
+
+<macro><name>DECLARE_REAL</name><argument_list>(<argument>void*</argument>, <argument>memcpy</argument>, <argument>void *to</argument>, <argument>const void *from</argument>, <argument>uptr size</argument>)</argument_list></macro>
+<macro><name>DECLARE_REAL</name><argument_list>(<argument>void*</argument>, <argument>memset</argument>, <argument>void *block</argument>, <argument>int c</argument>, <argument>uptr size</argument>)</argument_list></macro>
+
+<decl_stmt><decl><type><name>namespace</name></type> <name>__asan</name> <block>{<block_content>
+
+
+
+<function><type><specifier>static</specifier> <specifier>inline</specifier> <name>bool</name></type> <name>QuickCheckForUnpoisonedRegion</name><parameter_list>(<parameter><decl><type><name>uptr</name></type> <name>beg</name></decl></parameter>, <parameter><decl><type><name>uptr</name></type> <name>size</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>size</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><name>true</name></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>size</name> <operator>&lt;=</operator> <literal type="number">32</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>!</operator><call><name>AddressIsPoisoned</name><argument_list>(<argument><expr><name>beg</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator>
+<operator>!</operator><call><name>AddressIsPoisoned</name><argument_list>(<argument><expr><name>beg</name> <operator>+</operator> <name>size</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator>
+<operator>!</operator><call><name>AddressIsPoisoned</name><argument_list>(<argument><expr><name>beg</name> <operator>+</operator> <name>size</name> <operator>/</operator> <literal type="number">2</literal></expr></argument>)</argument_list></call></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>size</name> <operator>&lt;=</operator> <literal type="number">64</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>!</operator><call><name>AddressIsPoisoned</name><argument_list>(<argument><expr><name>beg</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator>
+<operator>!</operator><call><name>AddressIsPoisoned</name><argument_list>(<argument><expr><name>beg</name> <operator>+</operator> <name>size</name> <operator>/</operator> <literal type="number">4</literal></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator>
+<operator>!</operator><call><name>AddressIsPoisoned</name><argument_list>(<argument><expr><name>beg</name> <operator>+</operator> <name>size</name> <operator>-</operator> <literal type="number">1</literal></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator>
+<operator>!</operator><call><name>AddressIsPoisoned</name><argument_list>(<argument><expr><name>beg</name> <operator>+</operator> <literal type="number">3</literal> <operator>*</operator> <name>size</name> <operator>/</operator> <literal type="number">4</literal></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator>
+<operator>!</operator><call><name>AddressIsPoisoned</name><argument_list>(<argument><expr><name>beg</name> <operator>+</operator> <name>size</name> <operator>/</operator> <literal type="number">2</literal></expr></argument>)</argument_list></call></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><name>false</name></expr>;</return>
+</block_content>}</block></function>
+
+<struct>struct <name>AsanInterceptorContext</name> <block>{
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>interceptor_name</name></decl>;</decl_stmt>
+}</block>;</struct>
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ACCESS_MEMORY_RANGE</name><parameter_list>(<parameter><type><name>ctx</name></type></parameter>, <parameter><type><name>offset</name></type></parameter>, <parameter><type><name>size</name></type></parameter>, <parameter><type><name>isWrite</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>do { uptr __offset = (uptr)(offset); uptr __size = (uptr)(size); uptr __bad = 0; if (__offset &gt; __offset + __size) { GET_STACK_TRACE_FATAL_HERE; ReportStringFunctionSizeOverflow(__offset, __size, &amp;stack); } if (!QuickCheckForUnpoisonedRegion(__offset, __size) &amp;&amp; (__bad = __asan_region_is_poisoned(__offset, __size))) { AsanInterceptorContext *_ctx = (AsanInterceptorContext *)ctx; bool suppressed = false; if (_ctx) { suppressed = IsInterceptorSuppressed(_ctx-&gt;interceptor_name); if (!suppressed &amp;&amp; HaveStackTraceBasedSuppressions()) { GET_STACK_TRACE_FATAL_HERE; suppressed = IsStackTraceSuppressed(&amp;stack); } } if (!suppressed) { GET_CURRENT_PC_BP_SP; ReportGenericError(pc, bp, sp, __bad, isWrite, __size, 0, false);} } } while (0)</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ASAN_MEMCPY_IMPL</name><parameter_list>(<parameter><type><name>ctx</name></type></parameter>, <parameter><type><name>to</name></type></parameter>, <parameter><type><name>from</name></type></parameter>, <parameter><type><name>size</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>do { if (UNLIKELY(!asan_inited)) return internal_memcpy(to, from, size); if (asan_init_is_running) { return REAL(memcpy)(to, from, size); } ENSURE_ASAN_INITED(); if (flags()-&gt;replace_intrin) { if (to != from) { CHECK_RANGES_OVERLAP("memcpy", to, size, from, size); } ASAN_READ_RANGE(ctx, from, size); ASAN_WRITE_RANGE(ctx, to, size); } return REAL(memcpy)(to, from, size); } while (0)</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ASAN_MEMSET_IMPL</name><parameter_list>(<parameter><type><name>ctx</name></type></parameter>, <parameter><type><name>block</name></type></parameter>, <parameter><type><name>c</name></type></parameter>, <parameter><type><name>size</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>do { if (UNLIKELY(!asan_inited)) return internal_memset(block, c, size); if (asan_init_is_running) { return REAL(memset)(block, c, size); } ENSURE_ASAN_INITED(); if (flags()-&gt;replace_intrin) { ASAN_WRITE_RANGE(ctx, block, size); } return REAL(memset)(block, c, size); } while (0)</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ASAN_MEMMOVE_IMPL</name><parameter_list>(<parameter><type><name>ctx</name></type></parameter>, <parameter><type><name>to</name></type></parameter>, <parameter><type><name>from</name></type></parameter>, <parameter><type><name>size</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>do { if (UNLIKELY(!asan_inited)) return internal_memmove(to, from, size); ENSURE_ASAN_INITED(); if (flags()-&gt;replace_intrin) { ASAN_READ_RANGE(ctx, from, size); ASAN_WRITE_RANGE(ctx, to, size); } return internal_memmove(to, from, size); } while (0)</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ASAN_READ_RANGE</name><parameter_list>(<parameter><type><name>ctx</name></type></parameter>, <parameter><type><name>offset</name></type></parameter>, <parameter><type><name>size</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>ACCESS_MEMORY_RANGE(ctx, offset, size, false)</cpp:value></cpp:define>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ASAN_WRITE_RANGE</name><parameter_list>(<parameter><type><name>ctx</name></type></parameter>, <parameter><type><name>offset</name></type></parameter>, <parameter><type><name>size</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>ACCESS_MEMORY_RANGE(ctx, offset, size, true)</cpp:value></cpp:define>
+
+
+
+
+
+<function><type><specifier>static</specifier> <specifier>inline</specifier> <name>bool</name></type> <name>RangesOverlap</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>offset1</name></decl></parameter>, <parameter><decl><type><name>uptr</name></type> <name>length1</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>offset2</name></decl></parameter>, <parameter><decl><type><name>uptr</name></type> <name>length2</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<return>return <expr><operator>!</operator><operator>(</operator><operator>(</operator><name>offset1</name> <operator>+</operator> <name>length1</name> <operator>&lt;=</operator> <name>offset2</name><operator>)</operator> <operator>||</operator> <operator>(</operator><name>offset2</name> <operator>+</operator> <name>length2</name> <operator>&lt;=</operator> <name>offset1</name><operator>)</operator><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>CHECK_RANGES_OVERLAP</name><parameter_list>(<parameter><type><name>name</name></type></parameter>, <parameter><type><name>_offset1</name></type></parameter>, <parameter><type><name>length1</name></type></parameter>, <parameter><type><name>_offset2</name></type></parameter>, <parameter><type><name>length2</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>do { const char *offset1 = (const char *)_offset1; const char *offset2 = (const char *)_offset2; if (RangesOverlap(offset1, length1, offset2, length2)) { GET_STACK_TRACE_FATAL_HERE; bool suppressed = IsInterceptorSuppressed(name); if (!suppressed &amp;&amp; HaveStackTraceBasedSuppressions()) { suppressed = IsStackTraceSuppressed(&amp;stack); } if (!suppressed) { ReportStringFunctionMemoryRangesOverlap(name, offset1, length1, offset2, length2, &amp;stack); } } } while (0)</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</block_content>}</block></decl></decl_stmt>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

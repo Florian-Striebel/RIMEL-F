@@ -1,0 +1,487 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/atf/atf-c/check.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"atf-c/check.h"</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/wait.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;errno.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;fcntl.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdint.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdio.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;string.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;unistd.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"atf-c/build.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"atf-c/defs.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"atf-c/detail/dynstr.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"atf-c/detail/env.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"atf-c/detail/fs.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"atf-c/detail/list.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"atf-c/detail/process.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"atf-c/detail/sanity.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"atf-c/error.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"atf-c/utils.h"</cpp:file></cpp:include>
+
+
+
+
+
+<function><type><specifier>static</specifier>
+<name>atf_error_t</name></type>
+<name>create_tmpdir</name><parameter_list>(<parameter><decl><type><name>atf_fs_path_t</name> <modifier>*</modifier></type><name>dir</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>atf_error_t</name></type> <name>err</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>atf_fs_path_init_fmt</name><argument_list>(<argument><expr><name>dir</name></expr></argument>, <argument><expr><literal type="string">"%s/check.XXXXXX"</literal></expr></argument>,
+<argument><expr><call><name>atf_env_get_with_default</name><argument_list>(<argument><expr><literal type="string">"TMPDIR"</literal></expr></argument>, <argument><expr><literal type="string">"/tmp"</literal></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>atf_fs_mkdtemp</name><argument_list>(<argument><expr><name>dir</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>atf_fs_path_fini</name><argument_list>(<argument><expr><name>dir</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>INV</name><argument_list>(<argument><expr><operator>!</operator><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<label><name>out</name>:</label>
+<return>return <expr><name>err</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier>
+<name>void</name></type>
+<name>cleanup_tmpdir</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>atf_fs_path_t</name> <modifier>*</modifier></type><name>dir</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>atf_fs_path_t</name> <modifier>*</modifier></type><name>outfile</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>atf_fs_path_t</name> <modifier>*</modifier></type><name>errfile</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<block>{<block_content>
+<decl_stmt><decl><type><name>atf_error_t</name></type> <name>err</name> <init>= <expr><call><name>atf_fs_unlink</name><argument_list>(<argument><expr><name>outfile</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>INV</name><argument_list>(<argument><expr><call><name>atf_error_is</name><argument_list>(<argument><expr><name>err</name></expr></argument>, <argument><expr><literal type="string">"libc"</literal></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator>
+<call><name>atf_libc_error_code</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>ENOENT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>atf_error_free</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>INV</name><argument_list>(<argument><expr><operator>!</operator><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block>
+
+<block>{<block_content>
+<decl_stmt><decl><type><name>atf_error_t</name></type> <name>err</name> <init>= <expr><call><name>atf_fs_unlink</name><argument_list>(<argument><expr><name>errfile</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>INV</name><argument_list>(<argument><expr><call><name>atf_error_is</name><argument_list>(<argument><expr><name>err</name></expr></argument>, <argument><expr><literal type="string">"libc"</literal></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator>
+<call><name>atf_libc_error_code</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>ENOENT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>atf_error_free</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>INV</name><argument_list>(<argument><expr><operator>!</operator><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+</block_content>}</block>
+
+<block>{<block_content>
+<decl_stmt><decl><type><name>atf_error_t</name></type> <name>err</name> <init>= <expr><call><name>atf_fs_rmdir</name><argument_list>(<argument><expr><name>dir</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>INV</name><argument_list>(<argument><expr><operator>!</operator><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier>
+<name>int</name></type>
+<name>const_execvp</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>file</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier><specifier>const</specifier> <modifier>*</modifier></type><name>argv</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>UNCONST</name><parameter_list>(<parameter><type><name>a</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((void *)(uintptr_t)(const void *)(a))</cpp:value></cpp:define>
+<return>return <expr><call><name>execvp</name><argument_list>(<argument><expr><name>file</name></expr></argument>, <argument><expr><call><name>UNCONST</name><argument_list>(<argument><expr><name>argv</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</return>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>UNCONST</name></cpp:undef>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier>
+<name>atf_error_t</name></type>
+<name>init_sb</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>atf_fs_path_t</name> <modifier>*</modifier></type><name>path</name></decl></parameter>, <parameter><decl><type><name>atf_process_stream_t</name> <modifier>*</modifier></type><name>sb</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>atf_error_t</name></type> <name>err</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>path</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>atf_process_stream_init_inherit</name><argument_list>(<argument><expr><name>sb</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>atf_process_stream_init_redirect_path</name><argument_list>(<argument><expr><name>sb</name></expr></argument>, <argument><expr><name>path</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<return>return <expr><name>err</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier>
+<name>atf_error_t</name></type>
+<name>init_sbs</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>atf_fs_path_t</name> <modifier>*</modifier></type><name>outfile</name></decl></parameter>, <parameter><decl><type><name>atf_process_stream_t</name> <modifier>*</modifier></type><name>outsb</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>atf_fs_path_t</name> <modifier>*</modifier></type><name>errfile</name></decl></parameter>, <parameter><decl><type><name>atf_process_stream_t</name> <modifier>*</modifier></type><name>errsb</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>atf_error_t</name></type> <name>err</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>init_sb</name><argument_list>(<argument><expr><name>outfile</name></expr></argument>, <argument><expr><name>outsb</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>init_sb</name><argument_list>(<argument><expr><name>errfile</name></expr></argument>, <argument><expr><name>errsb</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>atf_process_stream_fini</name><argument_list>(<argument><expr><name>outsb</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<label><name>out</name>:</label>
+<return>return <expr><name>err</name></expr>;</return>
+</block_content>}</block></function>
+
+<struct>struct <name>exec_data</name> <block>{
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier><specifier>const</specifier> <modifier>*</modifier></type><name>m_argv</name></decl>;</decl_stmt>
+}</block>;</struct>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>void</name></type> <name>exec_child</name><argument_list>(<argument><expr><name>void</name> <operator>*</operator></expr></argument>)</argument_list> <name>ATF_DEFS_ATTRIBUTE_NORETURN</name></decl>;</decl_stmt>
+
+<function><type><specifier>static</specifier>
+<name>void</name></type>
+<name>exec_child</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>v</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>exec_data</name></name> <modifier>*</modifier></type><name>ea</name> <init>= <expr><name>v</name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>const_execvp</name><argument_list>(<argument><expr><name><name>ea</name><operator>-&gt;</operator><name>m_argv</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>, <argument><expr><name><name>ea</name><operator>-&gt;</operator><name>m_argv</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"execvp(%s) failed: %s\n"</literal></expr></argument>, <argument><expr><name><name>ea</name><operator>-&gt;</operator><name>m_argv</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>, <argument><expr><call><name>strerror</name><argument_list>(<argument><expr><name>errno</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr><literal type="number">127</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier>
+<name>atf_error_t</name></type>
+<name>fork_and_wait</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier><specifier>const</specifier> <modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>atf_fs_path_t</name> <modifier>*</modifier></type><name>outfile</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>atf_fs_path_t</name> <modifier>*</modifier></type><name>errfile</name></decl></parameter>, <parameter><decl><type><name>atf_process_status_t</name> <modifier>*</modifier></type><name>status</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>atf_error_t</name></type> <name>err</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>atf_process_child_t</name></type> <name>child</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>atf_process_stream_t</name></type> <name>outsb</name></decl>, <decl><type ref="prev"/><name>errsb</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>exec_data</name></name></type> <name>ea</name> <init>= <expr><block>{ <expr><name>argv</name></expr> }</block></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>init_sbs</name><argument_list>(<argument><expr><name>outfile</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>outsb</name></expr></argument>, <argument><expr><name>errfile</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>errsb</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>atf_process_fork</name><argument_list>(<argument><expr><operator>&amp;</operator><name>child</name></expr></argument>, <argument><expr><name>exec_child</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>outsb</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>errsb</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ea</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out_sbs</name>;</goto></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>atf_process_child_wait</name><argument_list>(<argument><expr><operator>&amp;</operator><name>child</name></expr></argument>, <argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<label><name>out_sbs</name>:</label>
+<expr_stmt><expr><call><name>atf_process_stream_fini</name><argument_list>(<argument><expr><operator>&amp;</operator><name>errsb</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>atf_process_stream_fini</name><argument_list>(<argument><expr><operator>&amp;</operator><name>outsb</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<label><name>out</name>:</label>
+<return>return <expr><name>err</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier>
+<name>void</name></type>
+<name>update_success_from_status</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>progname</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>atf_process_status_t</name> <modifier>*</modifier></type><name>status</name></decl></parameter>, <parameter><decl><type><name>bool</name> <modifier>*</modifier></type><name>success</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>bool</name></type> <name>s</name> <init>= <expr><call><name>atf_process_status_exited</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call> <operator>&amp;&amp;</operator>
+<call><name>atf_process_status_exitstatus</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>EXIT_SUCCESS</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>atf_process_status_exited</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>atf_process_status_exitstatus</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>EXIT_SUCCESS</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>INV</name><argument_list>(<argument><expr><name>s</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else <block>{<block_content>
+<expr_stmt><expr><call><name>INV</name><argument_list>(<argument><expr><operator>!</operator><name>s</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"%s failed with exit code %d\n"</literal></expr></argument>, <argument><expr><name>progname</name></expr></argument>,
+<argument><expr><call><name>atf_process_status_exitstatus</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><call><name>atf_process_status_signaled</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>INV</name><argument_list>(<argument><expr><operator>!</operator><name>s</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"%s failed due to signal %d%s\n"</literal></expr></argument>, <argument><expr><name>progname</name></expr></argument>,
+<argument><expr><call><name>atf_process_status_termsig</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><ternary><condition><expr><call><name>atf_process_status_coredump</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr> ?</condition><then> <expr><literal type="string">" (core dumped)"</literal></expr> </then><else>: <expr><literal type="string">""</literal></expr></else></ternary></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><call><name>INV</name><argument_list>(<argument><expr><operator>!</operator><name>s</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><literal type="string">"%s failed due to unknown reason\n"</literal></expr></argument>, <argument><expr><name>progname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>success</name> <operator>=</operator> <name>s</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier>
+<name>atf_error_t</name></type>
+<name>array_to_list</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier><specifier>const</specifier> <modifier>*</modifier></type><name>a</name></decl></parameter>, <parameter><decl><type><name>atf_list_t</name> <modifier>*</modifier></type><name>l</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>atf_error_t</name></type> <name>err</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>atf_list_init</name><argument_list>(<argument><expr><name>l</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+
+<while>while <condition>(<expr><operator>*</operator><name>a</name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>item</name> <init>= <expr><call><name>strdup</name><argument_list>(<argument><expr><operator>*</operator><name>a</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>item</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>atf_no_memory_error</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>atf_list_append</name><argument_list>(<argument><expr><name>l</name></expr></argument>, <argument><expr><name>item</name></expr></argument>, <argument><expr><name>true</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>a</name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></while>
+
+<label><name>out</name>:</label>
+<return>return <expr><name>err</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>print_array</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier><specifier>const</specifier> <modifier>*</modifier></type><name>array</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>pfx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier><specifier>const</specifier> <modifier>*</modifier></type><name>ptr</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"%s"</literal></expr></argument>, <argument><expr><name>pfx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>ptr</name> <operator>=</operator> <name>array</name></expr>;</init> <condition><expr><operator>*</operator><name>ptr</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>ptr</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">" %s"</literal></expr></argument>, <argument><expr><operator>*</operator><name>ptr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr><literal type="string">"\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier>
+<name>atf_error_t</name></type>
+<name>check_build_run</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier><specifier>const</specifier> <modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><name>bool</name> <modifier>*</modifier></type><name>success</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>atf_error_t</name></type> <name>err</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>atf_process_status_t</name></type> <name>status</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>print_array</name><argument_list>(<argument><expr><name>argv</name></expr></argument>, <argument><expr><literal type="string">"&gt;"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>fork_and_wait</name><argument_list>(<argument><expr><name>argv</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>update_success_from_status</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>status</name></expr></argument>, <argument><expr><name>success</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>atf_process_status_fini</name><argument_list>(<argument><expr><operator>&amp;</operator><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>INV</name><argument_list>(<argument><expr><operator>!</operator><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<label><name>out</name>:</label>
+<return>return <expr><name>err</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+<struct>struct <name>atf_check_result_impl</name> <block>{
+<decl_stmt><decl><type><name>atf_list_t</name></type> <name>m_argv</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>atf_fs_path_t</name></type> <name>m_dir</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>atf_fs_path_t</name></type> <name>m_stdout</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>atf_fs_path_t</name></type> <name>m_stderr</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>atf_process_status_t</name></type> <name>m_status</name></decl>;</decl_stmt>
+}</block>;</struct>
+
+<function><type><specifier>static</specifier>
+<name>atf_error_t</name></type>
+<name>atf_check_result_init</name><parameter_list>(<parameter><decl><type><name>atf_check_result_t</name> <modifier>*</modifier></type><name>r</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier><specifier>const</specifier> <modifier>*</modifier></type><name>argv</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>atf_fs_path_t</name> <modifier>*</modifier></type><name>dir</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>atf_error_t</name></type> <name>err</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>r</name><operator>-&gt;</operator><name>pimpl</name></name> <operator>=</operator> <call><name>malloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr>struct <name>atf_check_result_impl</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>r</name><operator>-&gt;</operator><name>pimpl</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><call><name>atf_no_memory_error</name><argument_list>()</argument_list></call></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>array_to_list</name><argument_list>(<argument><expr><name>argv</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>r</name><operator>-&gt;</operator><name>pimpl</name><operator>-&gt;</operator><name>m_argv</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>atf_fs_path_copy</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>r</name><operator>-&gt;</operator><name>pimpl</name><operator>-&gt;</operator><name>m_dir</name></name></expr></argument>, <argument><expr><name>dir</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>err_argv</name>;</goto></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>atf_fs_path_init_fmt</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>r</name><operator>-&gt;</operator><name>pimpl</name><operator>-&gt;</operator><name>m_stdout</name></name></expr></argument>, <argument><expr><literal type="string">"%s/stdout"</literal></expr></argument>,
+<argument><expr><call><name>atf_fs_path_cstring</name><argument_list>(<argument><expr><name>dir</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>err_dir</name>;</goto></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>atf_fs_path_init_fmt</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>r</name><operator>-&gt;</operator><name>pimpl</name><operator>-&gt;</operator><name>m_stderr</name></name></expr></argument>, <argument><expr><literal type="string">"%s/stderr"</literal></expr></argument>,
+<argument><expr><call><name>atf_fs_path_cstring</name><argument_list>(<argument><expr><name>dir</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>err_stdout</name>;</goto></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>INV</name><argument_list>(<argument><expr><operator>!</operator><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+
+<label><name>err_stdout</name>:</label>
+<expr_stmt><expr><call><name>atf_fs_path_fini</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>r</name><operator>-&gt;</operator><name>pimpl</name><operator>-&gt;</operator><name>m_stdout</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<label><name>err_dir</name>:</label>
+<expr_stmt><expr><call><name>atf_fs_path_fini</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>r</name><operator>-&gt;</operator><name>pimpl</name><operator>-&gt;</operator><name>m_dir</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<label><name>err_argv</name>:</label>
+<expr_stmt><expr><call><name>atf_list_fini</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>r</name><operator>-&gt;</operator><name>pimpl</name><operator>-&gt;</operator><name>m_argv</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<label><name>out</name>:</label>
+<return>return <expr><name>err</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type>
+<name>atf_check_result_fini</name><parameter_list>(<parameter><decl><type><name>atf_check_result_t</name> <modifier>*</modifier></type><name>r</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>atf_process_status_fini</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>r</name><operator>-&gt;</operator><name>pimpl</name><operator>-&gt;</operator><name>m_status</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>cleanup_tmpdir</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>r</name><operator>-&gt;</operator><name>pimpl</name><operator>-&gt;</operator><name>m_dir</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>r</name><operator>-&gt;</operator><name>pimpl</name><operator>-&gt;</operator><name>m_stdout</name></name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name><name>r</name><operator>-&gt;</operator><name>pimpl</name><operator>-&gt;</operator><name>m_stderr</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>atf_fs_path_fini</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>r</name><operator>-&gt;</operator><name>pimpl</name><operator>-&gt;</operator><name>m_stdout</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>atf_fs_path_fini</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>r</name><operator>-&gt;</operator><name>pimpl</name><operator>-&gt;</operator><name>m_stderr</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>atf_fs_path_fini</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>r</name><operator>-&gt;</operator><name>pimpl</name><operator>-&gt;</operator><name>m_dir</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>atf_list_fini</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>r</name><operator>-&gt;</operator><name>pimpl</name><operator>-&gt;</operator><name>m_argv</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>r</name><operator>-&gt;</operator><name>pimpl</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>atf_check_result_stdout</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>atf_check_result_t</name> <modifier>*</modifier></type><name>r</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><call><name>atf_fs_path_cstring</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>r</name><operator>-&gt;</operator><name>pimpl</name><operator>-&gt;</operator><name>m_stdout</name></name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>atf_check_result_stderr</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>atf_check_result_t</name> <modifier>*</modifier></type><name>r</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><call><name>atf_fs_path_cstring</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>r</name><operator>-&gt;</operator><name>pimpl</name><operator>-&gt;</operator><name>m_stderr</name></name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>bool</name></type>
+<name>atf_check_result_exited</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>atf_check_result_t</name> <modifier>*</modifier></type><name>r</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><call><name>atf_process_status_exited</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>r</name><operator>-&gt;</operator><name>pimpl</name><operator>-&gt;</operator><name>m_status</name></name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>atf_check_result_exitcode</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>atf_check_result_t</name> <modifier>*</modifier></type><name>r</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><call><name>atf_process_status_exitstatus</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>r</name><operator>-&gt;</operator><name>pimpl</name><operator>-&gt;</operator><name>m_status</name></name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>bool</name></type>
+<name>atf_check_result_signaled</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>atf_check_result_t</name> <modifier>*</modifier></type><name>r</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><call><name>atf_process_status_signaled</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>r</name><operator>-&gt;</operator><name>pimpl</name><operator>-&gt;</operator><name>m_status</name></name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>atf_check_result_termsig</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>atf_check_result_t</name> <modifier>*</modifier></type><name>r</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><call><name>atf_process_status_termsig</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>r</name><operator>-&gt;</operator><name>pimpl</name><operator>-&gt;</operator><name>m_status</name></name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+<function><type><name>atf_error_t</name></type>
+<name>atf_check_build_c_o</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>sfile</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>ofile</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier><specifier>const</specifier></type> <name><name>optargs</name><index>[]</index></name></decl></parameter>,
+<parameter><decl><type><name>bool</name> <modifier>*</modifier></type><name>success</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>atf_error_t</name></type> <name>err</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>atf_build_c_o</name><argument_list>(<argument><expr><name>sfile</name></expr></argument>, <argument><expr><name>ofile</name></expr></argument>, <argument><expr><name>optargs</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>argv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>check_build_run</name><argument_list>(<argument><expr><operator>(</operator><specifier>const</specifier> <name>char</name> <operator>*</operator><specifier>const</specifier> <operator>*</operator><operator>)</operator><name>argv</name></expr></argument>, <argument><expr><name>success</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>atf_utils_free_charpp</name><argument_list>(<argument><expr><name>argv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<label><name>out</name>:</label>
+<return>return <expr><name>err</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>atf_error_t</name></type>
+<name>atf_check_build_cpp</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>sfile</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>ofile</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier><specifier>const</specifier></type> <name><name>optargs</name><index>[]</index></name></decl></parameter>,
+<parameter><decl><type><name>bool</name> <modifier>*</modifier></type><name>success</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>atf_error_t</name></type> <name>err</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>atf_build_cpp</name><argument_list>(<argument><expr><name>sfile</name></expr></argument>, <argument><expr><name>ofile</name></expr></argument>, <argument><expr><name>optargs</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>argv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>check_build_run</name><argument_list>(<argument><expr><operator>(</operator><specifier>const</specifier> <name>char</name> <operator>*</operator><specifier>const</specifier> <operator>*</operator><operator>)</operator><name>argv</name></expr></argument>, <argument><expr><name>success</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>atf_utils_free_charpp</name><argument_list>(<argument><expr><name>argv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<label><name>out</name>:</label>
+<return>return <expr><name>err</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>atf_error_t</name></type>
+<name>atf_check_build_cxx_o</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>sfile</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>ofile</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier><specifier>const</specifier></type> <name><name>optargs</name><index>[]</index></name></decl></parameter>,
+<parameter><decl><type><name>bool</name> <modifier>*</modifier></type><name>success</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>atf_error_t</name></type> <name>err</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>atf_build_cxx_o</name><argument_list>(<argument><expr><name>sfile</name></expr></argument>, <argument><expr><name>ofile</name></expr></argument>, <argument><expr><name>optargs</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>argv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>check_build_run</name><argument_list>(<argument><expr><operator>(</operator><specifier>const</specifier> <name>char</name> <operator>*</operator><specifier>const</specifier> <operator>*</operator><operator>)</operator><name>argv</name></expr></argument>, <argument><expr><name>success</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>atf_utils_free_charpp</name><argument_list>(<argument><expr><name>argv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<label><name>out</name>:</label>
+<return>return <expr><name>err</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>atf_error_t</name></type>
+<name>atf_check_exec_array</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier><specifier>const</specifier> <modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><name>atf_check_result_t</name> <modifier>*</modifier></type><name>r</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>atf_error_t</name></type> <name>err</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>atf_fs_path_t</name></type> <name>dir</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>create_tmpdir</name><argument_list>(<argument><expr><operator>&amp;</operator><name>dir</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<goto>goto <name>out</name>;</goto></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>atf_check_result_init</name><argument_list>(<argument><expr><name>r</name></expr></argument>, <argument><expr><name>argv</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>dir</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>atf_error_t</name></type> <name>err2</name> <init>= <expr><call><name>atf_fs_rmdir</name><argument_list>(<argument><expr><operator>&amp;</operator><name>dir</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>INV</name><argument_list>(<argument><expr><operator>!</operator><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err2</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>err</name> <operator>=</operator> <call><name>fork_and_wait</name><argument_list>(<argument><expr><name>argv</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>r</name><operator>-&gt;</operator><name>pimpl</name><operator>-&gt;</operator><name>m_stdout</name></name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>r</name><operator>-&gt;</operator><name>pimpl</name><operator>-&gt;</operator><name>m_stderr</name></name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name><name>r</name><operator>-&gt;</operator><name>pimpl</name><operator>-&gt;</operator><name>m_status</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>atf_check_result_fini</name><argument_list>(<argument><expr><name>r</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>out</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>INV</name><argument_list>(<argument><expr><operator>!</operator><call><name>atf_is_error</name><argument_list>(<argument><expr><name>err</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>atf_fs_path_fini</name><argument_list>(<argument><expr><operator>&amp;</operator><name>dir</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<label><name>out</name>:</label>
+<return>return <expr><name>err</name></expr>;</return>
+</block_content>}</block></function>
+</unit>

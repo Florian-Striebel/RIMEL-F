@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/results/redis_res/_cppstats/redis/tests/modules/defragtest.c"><cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"redismodule.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+<decl_stmt><decl><type><specifier>static</specifier> <name>RedisModuleType</name> <modifier>*</modifier></type><name>FragType</name></decl>;</decl_stmt>
+<struct>struct <name>FragObject</name> <block>{
+<decl_stmt><decl><type><name>unsigned</name> <name>long</name></type> <name>len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier><modifier>*</modifier></type><name>values</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>maxstep</name></decl>;</decl_stmt>
+}</block>;</struct>
+<decl_stmt><decl><type><name>unsigned</name> <name>long</name> <name>int</name></type> <name>last_set_cursor</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>long</name> <name>int</name></type> <name>datatype_attempts</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>long</name> <name>int</name></type> <name>datatype_defragged</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>long</name> <name>int</name></type> <name>datatype_resumes</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>long</name> <name>int</name></type> <name>datatype_wrong_cursor</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>long</name> <name>int</name></type> <name>global_attempts</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>long</name> <name>int</name></type> <name>global_defragged</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>global_strings_len</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>RedisModuleString</name> <modifier>*</modifier><modifier>*</modifier></type><name>global_strings</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<function><type><specifier>static</specifier> <name>void</name></type> <name>createGlobalStrings</name><parameter_list>(<parameter><decl><type><name>RedisModuleCtx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>count</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><name>global_strings_len</name> <operator>=</operator> <name>count</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>global_strings</name> <operator>=</operator> <call><name>RedisModule_Alloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>RedisModuleString</name> <operator>*</operator></expr></argument>)</argument_list></sizeof> <operator>*</operator> <name>count</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><decl><type><name>int</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>count</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name><name>global_strings</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <call><name>RedisModule_CreateStringFromLongLong</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>int</name></type> <name>defragGlobalStrings</name><parameter_list>(<parameter><decl><type><name>RedisModuleDefragCtx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<for>for <control>(<init><decl><type><name>int</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>global_strings_len</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>RedisModuleString</name> <modifier>*</modifier></type><name>new</name> <init>= <expr><call><name>RedisModule_DefragRedisModuleString</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name><name>global_strings</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>global_attempts</name><operator>++</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>new</name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>global_strings</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <name>new</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>global_defragged</name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>void</name></type> <name>FragInfo</name><parameter_list>(<parameter><decl><type><name>RedisModuleInfoCtx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>for_crash_report</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>REDISMODULE_NOT_USED</name><argument_list>(<argument><expr><name>for_crash_report</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_InfoAddSection</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"stats"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_InfoAddFieldLongLong</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"datatype_attempts"</literal></expr></argument>, <argument><expr><name>datatype_attempts</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_InfoAddFieldLongLong</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"datatype_defragged"</literal></expr></argument>, <argument><expr><name>datatype_defragged</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_InfoAddFieldLongLong</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"datatype_resumes"</literal></expr></argument>, <argument><expr><name>datatype_resumes</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_InfoAddFieldLongLong</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"datatype_wrong_cursor"</literal></expr></argument>, <argument><expr><name>datatype_wrong_cursor</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_InfoAddFieldLongLong</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"global_attempts"</literal></expr></argument>, <argument><expr><name>global_attempts</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_InfoAddFieldLongLong</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"global_defragged"</literal></expr></argument>, <argument><expr><name>global_defragged</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><name><name>struct</name> <name>FragObject</name></name> <modifier>*</modifier></type><name>createFragObject</name><parameter_list>(<parameter><decl><type><name>unsigned</name> <name>long</name></type> <name>len</name></decl></parameter>, <parameter><decl><type><name>unsigned</name> <name>long</name></type> <name>size</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>maxstep</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>FragObject</name></name> <modifier>*</modifier></type><name>o</name> <init>= <expr><call><name>RedisModule_Alloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>o</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>o</name><operator>-&gt;</operator><name>len</name></name> <operator>=</operator> <name>len</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>o</name><operator>-&gt;</operator><name>values</name></name> <operator>=</operator> <call><name>RedisModule_Alloc</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>RedisModuleString</name><operator>*</operator></expr></argument>)</argument_list></sizeof> <operator>*</operator> <name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>o</name><operator>-&gt;</operator><name>maxstep</name></name> <operator>=</operator> <name>maxstep</name></expr>;</expr_stmt>
+<for>for <control>(<init><decl><type><name>unsigned</name> <name>long</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>len</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name><name>o</name><operator>-&gt;</operator><name>values</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <call><name>RedisModule_Calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>size</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+<return>return <expr><name>o</name></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>int</name></type> <name>fragResetStatsCommand</name><parameter_list>(<parameter><decl><type><name>RedisModuleCtx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>RedisModuleString</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>argc</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>REDISMODULE_NOT_USED</name><argument_list>(<argument><expr><name>argv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>REDISMODULE_NOT_USED</name><argument_list>(<argument><expr><name>argc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>datatype_attempts</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>datatype_defragged</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>datatype_resumes</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>datatype_wrong_cursor</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>global_attempts</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>global_defragged</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_ReplyWithSimpleString</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"OK"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></function>
+<function><type><specifier>static</specifier> <name>int</name></type> <name>fragCreateCommand</name><parameter_list>(<parameter><decl><type><name>RedisModuleCtx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>RedisModuleString</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>argc</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>argc</name> <operator>!=</operator> <literal type="number">5</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><call><name>RedisModule_WrongArity</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr>;</return></block_content></block></if></if_stmt>
+<decl_stmt><decl><type><name>RedisModuleKey</name> <modifier>*</modifier></type><name>key</name> <init>= <expr><call><name>RedisModule_OpenKey</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>,<argument><expr><name><name>argv</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>,
+<argument><expr><name>REDISMODULE_READ</name><operator>|</operator><name>REDISMODULE_WRITE</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>type</name> <init>= <expr><call><name>RedisModule_KeyType</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>type</name> <operator>!=</operator> <name>REDISMODULE_KEYTYPE_EMPTY</name></expr>)</condition>
+<block>{<block_content>
+<return>return <expr><call><name>RedisModule_ReplyWithError</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"ERR key exists"</literal></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<decl_stmt><decl><type><name>long</name> <name>long</name></type> <name>len</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><call><name>RedisModule_StringToLongLong</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr><literal type="number">2</literal></expr>]</index></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>len</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>REDISMODULE_OK</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<return>return <expr><call><name>RedisModule_ReplyWithError</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"ERR invalid len"</literal></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<decl_stmt><decl><type><name>long</name> <name>long</name></type> <name>size</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><call><name>RedisModule_StringToLongLong</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr><literal type="number">3</literal></expr>]</index></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>size</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>REDISMODULE_OK</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<return>return <expr><call><name>RedisModule_ReplyWithError</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"ERR invalid size"</literal></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<decl_stmt><decl><type><name>long</name> <name>long</name></type> <name>maxstep</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><call><name>RedisModule_StringToLongLong</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr><literal type="number">4</literal></expr>]</index></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>maxstep</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>REDISMODULE_OK</name><operator>)</operator></expr>)</condition> <block>{<block_content>
+<return>return <expr><call><name>RedisModule_ReplyWithError</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"ERR invalid maxstep"</literal></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>FragObject</name></name> <modifier>*</modifier></type><name>o</name> <init>= <expr><call><name>createFragObject</name><argument_list>(<argument><expr><name>len</name></expr></argument>, <argument><expr><name>size</name></expr></argument>, <argument><expr><name>maxstep</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>RedisModule_ModuleTypeSetValue</name><argument_list>(<argument><expr><name>key</name></expr></argument>, <argument><expr><name>FragType</name></expr></argument>, <argument><expr><name>o</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_ReplyWithSimpleString</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"OK"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_CloseKey</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>void</name></type> <name>FragFree</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>value</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name><name>struct</name> <name>FragObject</name></name> <modifier>*</modifier></type><name>o</name> <init>= <expr><name>value</name></expr></init></decl>;</decl_stmt>
+<for>for <control>(<init><decl><type><name>unsigned</name> <name>long</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name><name>o</name><operator>-&gt;</operator><name>len</name></name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>RedisModule_Free</name><argument_list>(<argument><expr><name><name>o</name><operator>-&gt;</operator><name>values</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+<expr_stmt><expr><call><name>RedisModule_Free</name><argument_list>(<argument><expr><name><name>o</name><operator>-&gt;</operator><name>values</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_Free</name><argument_list>(<argument><expr><name>o</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+<function><type><name>size_t</name></type> <name>FragFreeEffort</name><parameter_list>(<parameter><decl><type><name>RedisModuleString</name> <modifier>*</modifier></type><name>key</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>void</name> <modifier>*</modifier></type><name>value</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>REDISMODULE_NOT_USED</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name><name>struct</name> <name>FragObject</name></name> <modifier>*</modifier></type><name>o</name> <init>= <expr><name>value</name></expr></init></decl>;</decl_stmt>
+<return>return <expr><name><name>o</name><operator>-&gt;</operator><name>len</name></name></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>int</name></type> <name>FragDefrag</name><parameter_list>(<parameter><decl><type><name>RedisModuleDefragCtx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>RedisModuleString</name> <modifier>*</modifier></type><name>key</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier><modifier>*</modifier></type><name>value</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>REDISMODULE_NOT_USED</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>long</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>steps</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>dbid</name> <init>= <expr><call><name>RedisModule_GetDbIdFromDefragCtx</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>RedisModule_Assert</name><argument_list>(<argument><expr><name>dbid</name> <operator>!=</operator> <operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_DefragCursorGet</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>i</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>REDISMODULE_OK</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>i</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>datatype_resumes</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name>i</name> <operator>!=</operator> <name>last_set_cursor</name></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>datatype_wrong_cursor</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>last_set_cursor</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><name>datatype_wrong_cursor</name><operator>++</operator></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></else></if_stmt>
+<expr_stmt><expr><name>datatype_attempts</name><operator>++</operator></expr>;</expr_stmt>
+<decl_stmt><decl><type><name><name>struct</name> <name>FragObject</name></name> <modifier>*</modifier></type><name>o</name> <init>= <expr><call><name>RedisModule_DefragAlloc</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><operator>*</operator><name>value</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>o</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>o</name> <operator>=</operator> <operator>*</operator><name>value</name></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>value</name> <operator>=</operator> <name>o</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>datatype_defragged</name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+<for>for <control>(<init>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name><name>o</name><operator>-&gt;</operator><name>len</name></name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>datatype_attempts</name><operator>++</operator></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>new</name> <init>= <expr><call><name>RedisModule_DefragAlloc</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name><name>o</name><operator>-&gt;</operator><name>values</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>new</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>o</name><operator>-&gt;</operator><name>values</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <name>new</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>datatype_defragged</name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>o</name><operator>-&gt;</operator><name>maxstep</name></name> <operator>&amp;&amp;</operator> <operator>++</operator><name>steps</name> <operator>&gt;</operator> <name><name>o</name><operator>-&gt;</operator><name>maxstep</name></name><operator>)</operator> <operator>||</operator>
+<operator>(</operator><operator>(</operator><name>i</name> <operator>%</operator> <literal type="number">64</literal> <operator>==</operator> <literal type="number">0</literal><operator>)</operator> <operator>&amp;&amp;</operator> <call><name>RedisModule_DefragShouldStop</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>)</argument_list></call><operator>)</operator></expr>)</condition>
+<block>{<block_content>
+<expr_stmt><expr><call><name>RedisModule_DefragCursorSet</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>last_set_cursor</name> <operator>=</operator> <name>i</name></expr>;</expr_stmt>
+<return>return <expr><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><name>last_set_cursor</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+<function><type><name>int</name></type> <name>RedisModule_OnLoad</name><parameter_list>(<parameter><decl><type><name>RedisModuleCtx</name> <modifier>*</modifier></type><name>ctx</name></decl></parameter>, <parameter><decl><type><name>RedisModuleString</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>argc</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>REDISMODULE_NOT_USED</name><argument_list>(<argument><expr><name>argv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>REDISMODULE_NOT_USED</name><argument_list>(<argument><expr><name>argc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_Init</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"defragtest"</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>REDISMODULE_APIVER_1</name></expr></argument>)</argument_list></call>
+<operator>==</operator> <name>REDISMODULE_ERR</name></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><name>REDISMODULE_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_GetTypeMethodVersion</name><argument_list>()</argument_list></call> <operator>&lt;</operator> <name>REDISMODULE_TYPE_METHOD_VERSION</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>REDISMODULE_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<decl_stmt><decl><type><name>long</name> <name>long</name></type> <name>glen</name></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>argc</name> <operator>!=</operator> <literal type="number">1</literal> <operator>||</operator> <call><name>RedisModule_StringToLongLong</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>, <argument><expr><operator>&amp;</operator><name>glen</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>REDISMODULE_ERR</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>REDISMODULE_ERR</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>createGlobalStrings</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>glen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>RedisModuleTypeMethods</name></type> <name>tm</name> <init>= <expr><block>{
+<expr><operator>.</operator><name>version</name> <operator>=</operator> <name>REDISMODULE_TYPE_METHOD_VERSION</name></expr>,
+<expr><operator>.</operator><name>free</name> <operator>=</operator> <name>FragFree</name></expr>,
+<expr><operator>.</operator><name>free_effort</name> <operator>=</operator> <name>FragFreeEffort</name></expr>,
+<expr><operator>.</operator><name>defrag</name> <operator>=</operator> <name>FragDefrag</name></expr>
+}</block></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>FragType</name> <operator>=</operator> <call><name>RedisModule_CreateDataType</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"frag_type"</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>tm</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>FragType</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content> <return>return <expr><name>REDISMODULE_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_CreateCommand</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"frag.create"</literal></expr></argument>,
+<argument><expr><name>fragCreateCommand</name></expr></argument>, <argument><expr><literal type="string">"write deny-oom"</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call> <operator>==</operator> <name>REDISMODULE_ERR</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>REDISMODULE_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>RedisModule_CreateCommand</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><literal type="string">"frag.resetstats"</literal></expr></argument>,
+<argument><expr><name>fragResetStatsCommand</name></expr></argument>, <argument><expr><literal type="string">"write deny-oom"</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call> <operator>==</operator> <name>REDISMODULE_ERR</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>REDISMODULE_ERR</name></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>RedisModule_RegisterInfoFunc</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>FragInfo</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>RedisModule_RegisterDefragFunc</name><argument_list>(<argument><expr><name>ctx</name></expr></argument>, <argument><expr><name>defragGlobalStrings</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>REDISMODULE_OK</name></expr>;</return>
+</block_content>}</block></function>
+</unit>

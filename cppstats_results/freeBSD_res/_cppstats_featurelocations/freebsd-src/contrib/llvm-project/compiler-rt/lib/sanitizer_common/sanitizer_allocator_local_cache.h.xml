@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/llvm-project/compiler-rt/lib/sanitizer_common/sanitizer_allocator_local_cache.h">
+
+
+
+
+
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>SANITIZER_ALLOCATOR_H</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:error>#<cpp:directive>error</cpp:directive> This file must be included inside sanitizer_allocator.h</cpp:error>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+<macro><name>template</name></macro> <expr_stmt><expr><operator>&lt;</operator><name>class</name> <name>SizeClassAllocator</name><operator>&gt;</operator>
+struct <name>SizeClassAllocator64LocalCache</name> <block>{
+<typedef>typedef <type><name>SizeClassAllocator</name></type> <name>Allocator</name>;</typedef></block></expr></expr_stmt>
+<typedef>typedef <type><name><name>MemoryMapper</name><argument_list type="generic">&lt;<argument><expr><name>Allocator</name></expr></argument>&gt;</argument_list></name></type> <name>MemoryMapperT</name>;</typedef>
+
+<function><type><name>void</name></type> <name>Init</name><parameter_list>(<parameter><decl><type><name>AllocatorGlobalStats</name> <modifier>*</modifier></type><name>s</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name><name>stats_</name><operator>.</operator><name>Init</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>s</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name><name>s</name><operator>-&gt;</operator><name>Register</name></name><argument_list>(<argument><expr><operator>&amp;</operator><name>stats_</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type> <name>Destroy</name><parameter_list>(<parameter><decl><type><name>SizeClassAllocator</name> <modifier>*</modifier></type><name>allocator</name></decl></parameter>, <parameter><decl><type><name>AllocatorGlobalStats</name> <modifier>*</modifier></type><name>s</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>Drain</name><argument_list>(<argument><expr><name>allocator</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>s</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name><name>s</name><operator>-&gt;</operator><name>Unregister</name></name><argument_list>(<argument><expr><operator>&amp;</operator><name>stats_</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+<function><type><name>void</name> <modifier>*</modifier></type><name>Allocate</name><parameter_list>(<parameter><decl><type><name>SizeClassAllocator</name> <modifier>*</modifier></type><name>allocator</name></decl></parameter>, <parameter><decl><type><name>uptr</name></type> <name>class_id</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>CHECK_NE</name><argument_list>(<argument><expr><name>class_id</name></expr></argument>, <argument><expr><literal type="number">0UL</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>CHECK_LT</name><argument_list>(<argument><expr><name>class_id</name></expr></argument>, <argument><expr><name>kNumClasses</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>PerClass</name> <modifier>*</modifier></type><name>c</name> <init>= <expr><operator>&amp;</operator><name><name>per_class_</name><index>[<expr><name>class_id</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>UNLIKELY</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>count</name></name> <operator>==</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>UNLIKELY</name><argument_list>(<argument><expr><operator>!</operator><call><name>Refill</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name>allocator</name></expr></argument>, <argument><expr><name>class_id</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>nullptr</name></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>DCHECK_GT</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>count</name></name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<decl_stmt><decl><type><name>CompactPtrT</name></type> <name>chunk</name> <init>= <expr><name><name>c</name><operator>-&gt;</operator><name>chunks</name><index>[<expr><operator>--</operator><name><name>c</name><operator>-&gt;</operator><name>count</name></name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name><name>stats_</name><operator>.</operator><name>Add</name></name><argument_list>(<argument><expr><name>AllocatorStatAllocated</name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>class_size</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><call><name><name>reinterpret_cast</name><argument_list type="generic">&lt;<argument><expr><name>void</name> <operator>*</operator></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><call><name><name>allocator</name><operator>-&gt;</operator><name>CompactPtrToPointer</name></name><argument_list>(
+<argument><expr><call><name><name>allocator</name><operator>-&gt;</operator><name>GetRegionBeginBySizeClass</name></name><argument_list>(<argument><expr><name>class_id</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>chunk</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type> <name>Deallocate</name><parameter_list>(<parameter><decl><type><name>SizeClassAllocator</name> <modifier>*</modifier></type><name>allocator</name></decl></parameter>, <parameter><decl><type><name>uptr</name></type> <name>class_id</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>p</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>CHECK_NE</name><argument_list>(<argument><expr><name>class_id</name></expr></argument>, <argument><expr><literal type="number">0UL</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>CHECK_LT</name><argument_list>(<argument><expr><name>class_id</name></expr></argument>, <argument><expr><name>kNumClasses</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<decl_stmt><decl><type><name>PerClass</name> <modifier>*</modifier></type><name>c</name> <init>= <expr><operator>&amp;</operator><name><name>per_class_</name><index>[<expr><name>class_id</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>InitCache</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>UNLIKELY</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>count</name></name> <operator>==</operator> <name><name>c</name><operator>-&gt;</operator><name>max_count</name></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>DrainHalfMax</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name>allocator</name></expr></argument>, <argument><expr><name>class_id</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<decl_stmt><decl><type><name>CompactPtrT</name></type> <name>chunk</name> <init>= <expr><call><name><name>allocator</name><operator>-&gt;</operator><name>PointerToCompactPtr</name></name><argument_list>(
+<argument><expr><call><name><name>allocator</name><operator>-&gt;</operator><name>GetRegionBeginBySizeClass</name></name><argument_list>(<argument><expr><name>class_id</name></expr></argument>)</argument_list></call></expr></argument>,
+<argument><expr><call><name><name>reinterpret_cast</name><argument_list type="generic">&lt;<argument><expr><name>uptr</name></expr></argument>&gt;</argument_list></name><argument_list>(<argument><expr><name>p</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>chunks</name><index>[<expr><name><name>c</name><operator>-&gt;</operator><name>count</name></name><operator>++</operator></expr>]</index></name> <operator>=</operator> <name>chunk</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name><name>stats_</name><operator>.</operator><name>Sub</name></name><argument_list>(<argument><expr><name>AllocatorStatAllocated</name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>class_size</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type> <name>Drain</name><parameter_list>(<parameter><decl><type><name>SizeClassAllocator</name> <modifier>*</modifier></type><name>allocator</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>MemoryMapperT</name></type> <name>memory_mapper</name><argument_list>(<argument><expr><operator>*</operator><name>allocator</name></expr></argument>)</argument_list></decl>;</decl_stmt>
+<for>for <control>(<init><decl><type><name>uptr</name></type> <name>i</name> <init>= <expr><literal type="number">1</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>kNumClasses</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>PerClass</name> <modifier>*</modifier></type><name>c</name> <init>= <expr><operator>&amp;</operator><name><name>per_class_</name><index>[<expr><name>i</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<while>while <condition>(<expr><name><name>c</name><operator>-&gt;</operator><name>count</name></name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content> <expr_stmt><expr><call><name>Drain</name><argument_list>(<argument><expr><operator>&amp;</operator><name>memory_mapper</name></expr></argument>, <argument><expr><name>c</name></expr></argument>, <argument><expr><name>allocator</name></expr></argument>, <argument><expr><name>i</name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>count</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></while>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+<label><name>private</name>:</label>
+<typedef>typedef <expr_stmt><expr><name>typename</name> <name>Allocator</name><operator>::</operator><name>SizeClassMapT</name> <name>SizeClassMap</name></expr>;</expr_stmt></typedef>
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>uptr</name></type> <name>kNumClasses</name> <init>= <expr><name>SizeClassMap</name><operator>::</operator><name>kNumClasses</name></expr></init></decl>;</decl_stmt>
+<typedef>typedef <expr_stmt><expr><name>typename</name> <name>Allocator</name><operator>::</operator><name>CompactPtrT</name> <name>CompactPtrT</name></expr>;</expr_stmt></typedef>
+
+<struct>struct <name>PerClass</name> <block>{
+<decl_stmt><decl><type><name>u32</name></type> <name>count</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>u32</name></type> <name>max_count</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uptr</name></type> <name>class_size</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>CompactPtrT</name></type> <name><name>chunks</name><index>[<expr><literal type="number">2</literal> <operator>*</operator> <name>SizeClassMap</name><operator>::</operator><name>kMaxNumCachedHint</name></expr>]</index></name></decl>;</decl_stmt>
+}</block>;</struct>
+<decl_stmt><decl><type><name>PerClass</name></type> <name><name>per_class_</name><index>[<expr><name>kNumClasses</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>AllocatorStats</name></type> <name>stats_</name></decl>;</decl_stmt>
+
+<function><type><name>void</name></type> <name>InitCache</name><parameter_list>(<parameter><decl><type><name>PerClass</name> <modifier>*</modifier></type><name>c</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>LIKELY</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>max_count</name></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+<for>for <control>(<init><decl><type><name>uptr</name></type> <name>i</name> <init>= <expr><literal type="number">1</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>kNumClasses</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>PerClass</name> <modifier>*</modifier></type><name>c</name> <init>= <expr><operator>&amp;</operator><name><name>per_class_</name><index>[<expr><name>i</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uptr</name></type> <name>size</name> <init>= <expr><name>Allocator</name><operator>::</operator><call><name>ClassIdToSize</name><argument_list>(<argument><expr><name>i</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>max_count</name></name> <operator>=</operator> <literal type="number">2</literal> <operator>*</operator> <name>SizeClassMap</name><operator>::</operator><call><name>MaxCachedHint</name><argument_list>(<argument><expr><name>size</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>class_size</name></name> <operator>=</operator> <name>size</name></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><call><name>DCHECK_NE</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>max_count</name></name></expr></argument>, <argument><expr><literal type="number">0UL</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>NOINLINE</name> <name>bool</name></type> <name>Refill</name><parameter_list>(<parameter><decl><type><name>PerClass</name> <modifier>*</modifier></type><name>c</name></decl></parameter>, <parameter><decl><type><name>SizeClassAllocator</name> <modifier>*</modifier></type><name>allocator</name></decl></parameter>,
+<parameter><decl><type><name>uptr</name></type> <name>class_id</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>InitCache</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uptr</name></type> <name>num_requested_chunks</name> <init>= <expr><name><name>c</name><operator>-&gt;</operator><name>max_count</name></name> <operator>/</operator> <literal type="number">2</literal></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>UNLIKELY</name><argument_list>(<argument><expr><operator>!</operator><call><name><name>allocator</name><operator>-&gt;</operator><name>GetFromAllocator</name></name><argument_list>(<argument><expr><operator>&amp;</operator><name>stats_</name></expr></argument>, <argument><expr><name>class_id</name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>chunks</name></name></expr></argument>,
+<argument><expr><name>num_requested_chunks</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>false</name></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>count</name></name> <operator>=</operator> <name>num_requested_chunks</name></expr>;</expr_stmt>
+<return>return <expr><name>true</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>NOINLINE</name> <name>void</name></type> <name>DrainHalfMax</name><parameter_list>(<parameter><decl><type><name>PerClass</name> <modifier>*</modifier></type><name>c</name></decl></parameter>, <parameter><decl><type><name>SizeClassAllocator</name> <modifier>*</modifier></type><name>allocator</name></decl></parameter>,
+<parameter><decl><type><name>uptr</name></type> <name>class_id</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>MemoryMapperT</name></type> <name>memory_mapper</name><argument_list>(<argument><expr><operator>*</operator><name>allocator</name></expr></argument>)</argument_list></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>Drain</name><argument_list>(<argument><expr><operator>&amp;</operator><name>memory_mapper</name></expr></argument>, <argument><expr><name>c</name></expr></argument>, <argument><expr><name>allocator</name></expr></argument>, <argument><expr><name>class_id</name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>max_count</name></name> <operator>/</operator> <literal type="number">2</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type> <name>Drain</name><parameter_list>(<parameter><decl><type><name>MemoryMapperT</name> <modifier>*</modifier></type><name>memory_mapper</name></decl></parameter>, <parameter><decl><type><name>PerClass</name> <modifier>*</modifier></type><name>c</name></decl></parameter>,
+<parameter><decl><type><name>SizeClassAllocator</name> <modifier>*</modifier></type><name>allocator</name></decl></parameter>, <parameter><decl><type><name>uptr</name></type> <name>class_id</name></decl></parameter>, <parameter><decl><type><name>uptr</name></type> <name>count</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>CHECK_GE</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>count</name></name></expr></argument>, <argument><expr><name>count</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uptr</name></type> <name>first_idx_to_drain</name> <init>= <expr><name><name>c</name><operator>-&gt;</operator><name>count</name></name> <operator>-</operator> <name>count</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>count</name></name> <operator>-=</operator> <name>count</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name><name>allocator</name><operator>-&gt;</operator><name>ReturnToAllocator</name></name><argument_list>(<argument><expr><name>memory_mapper</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>stats_</name></expr></argument>, <argument><expr><name>class_id</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name><name>c</name><operator>-&gt;</operator><name>chunks</name><index>[<expr><name>first_idx_to_drain</name></expr>]</index></name></expr></argument>, <argument><expr><name>count</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+};
+
+
+<macro><name>template</name></macro> <expr_stmt><expr><operator>&lt;</operator><name>class</name> <name>SizeClassAllocator</name><operator>&gt;</operator>
+struct <name>SizeClassAllocator32LocalCache</name> <block>{
+<typedef>typedef <type><name>SizeClassAllocator</name></type> <name>Allocator</name>;</typedef></block></expr></expr_stmt>
+<typedef>typedef <expr_stmt><expr><name>typename</name> <name>Allocator</name><operator>::</operator><name>TransferBatch</name> <name>TransferBatch</name></expr>;</expr_stmt></typedef>
+
+<function><type><name>void</name></type> <name>Init</name><parameter_list>(<parameter><decl><type><name>AllocatorGlobalStats</name> <modifier>*</modifier></type><name>s</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name><name>stats_</name><operator>.</operator><name>Init</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>s</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name><name>s</name><operator>-&gt;</operator><name>Register</name></name><argument_list>(<argument><expr><operator>&amp;</operator><name>stats_</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+
+<function><type><name>TransferBatch</name> <modifier>*</modifier></type><name>CreateBatch</name><parameter_list>(<parameter><decl><type><name>uptr</name></type> <name>class_id</name></decl></parameter>, <parameter><decl><type><name>SizeClassAllocator</name> <modifier>*</modifier></type><name>allocator</name></decl></parameter>,
+<parameter><decl><type><name>TransferBatch</name> <modifier>*</modifier></type><name>b</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<decl><type><name>uptr</name></type> <name>batch_class_id</name> <init>= <expr><name><name>per_class_</name><index>[<expr><name>class_id</name></expr>]</index></name><operator>.</operator><name>batch_class_id</name></expr></init></decl>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>TransferBatch</name><operator>*</operator><operator>)</operator><call><name>Allocate</name><argument_list>(<argument><expr><name>allocator</name></expr></argument>, <argument><expr><name>batch_class_id</name></expr></argument>)</argument_list></call></expr>;</return></block_content></block></if></if_stmt>
+<return>return <expr><name>b</name></expr>;</return>
+</block_content>}</block></function>
+
+
+<function><type><name>void</name></type> <name>DestroyBatch</name><parameter_list>(<parameter><decl><type><name>uptr</name></type> <name>class_id</name></decl></parameter>, <parameter><decl><type><name>SizeClassAllocator</name> <modifier>*</modifier></type><name>allocator</name></decl></parameter>,
+<parameter><decl><type><name>TransferBatch</name> <modifier>*</modifier></type><name>b</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<decl><type><name>uptr</name></type> <name>batch_class_id</name> <init>= <expr><name><name>per_class_</name><index>[<expr><name>class_id</name></expr>]</index></name><operator>.</operator><name>batch_class_id</name></expr></init></decl>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Deallocate</name><argument_list>(<argument><expr><name>allocator</name></expr></argument>, <argument><expr><name>batch_class_id</name></expr></argument>, <argument><expr><name>b</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type> <name>Destroy</name><parameter_list>(<parameter><decl><type><name>SizeClassAllocator</name> <modifier>*</modifier></type><name>allocator</name></decl></parameter>, <parameter><decl><type><name>AllocatorGlobalStats</name> <modifier>*</modifier></type><name>s</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>Drain</name><argument_list>(<argument><expr><name>allocator</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>s</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name><name>s</name><operator>-&gt;</operator><name>Unregister</name></name><argument_list>(<argument><expr><operator>&amp;</operator><name>stats_</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+<function><type><name>void</name> <modifier>*</modifier></type><name>Allocate</name><parameter_list>(<parameter><decl><type><name>SizeClassAllocator</name> <modifier>*</modifier></type><name>allocator</name></decl></parameter>, <parameter><decl><type><name>uptr</name></type> <name>class_id</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>CHECK_NE</name><argument_list>(<argument><expr><name>class_id</name></expr></argument>, <argument><expr><literal type="number">0UL</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>CHECK_LT</name><argument_list>(<argument><expr><name>class_id</name></expr></argument>, <argument><expr><name>kNumClasses</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>PerClass</name> <modifier>*</modifier></type><name>c</name> <init>= <expr><operator>&amp;</operator><name><name>per_class_</name><index>[<expr><name>class_id</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>UNLIKELY</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>count</name></name> <operator>==</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>UNLIKELY</name><argument_list>(<argument><expr><operator>!</operator><call><name>Refill</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name>allocator</name></expr></argument>, <argument><expr><name>class_id</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>nullptr</name></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>DCHECK_GT</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>count</name></name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>res</name> <init>= <expr><name><name>c</name><operator>-&gt;</operator><name>batch</name><index>[<expr><operator>--</operator><name><name>c</name><operator>-&gt;</operator><name>count</name></name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>PREFETCH</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>batch</name><index>[<expr><name><name>c</name><operator>-&gt;</operator><name>count</name></name> <operator>-</operator> <literal type="number">1</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name><name>stats_</name><operator>.</operator><name>Add</name></name><argument_list>(<argument><expr><name>AllocatorStatAllocated</name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>class_size</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>res</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type> <name>Deallocate</name><parameter_list>(<parameter><decl><type><name>SizeClassAllocator</name> <modifier>*</modifier></type><name>allocator</name></decl></parameter>, <parameter><decl><type><name>uptr</name></type> <name>class_id</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>p</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>CHECK_NE</name><argument_list>(<argument><expr><name>class_id</name></expr></argument>, <argument><expr><literal type="number">0UL</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>CHECK_LT</name><argument_list>(<argument><expr><name>class_id</name></expr></argument>, <argument><expr><name>kNumClasses</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<decl_stmt><decl><type><name>PerClass</name> <modifier>*</modifier></type><name>c</name> <init>= <expr><operator>&amp;</operator><name><name>per_class_</name><index>[<expr><name>class_id</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>InitCache</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>UNLIKELY</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>count</name></name> <operator>==</operator> <name><name>c</name><operator>-&gt;</operator><name>max_count</name></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Drain</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name>allocator</name></expr></argument>, <argument><expr><name>class_id</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>batch</name><index>[<expr><name><name>c</name><operator>-&gt;</operator><name>count</name></name><operator>++</operator></expr>]</index></name> <operator>=</operator> <name>p</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name><name>stats_</name><operator>.</operator><name>Sub</name></name><argument_list>(<argument><expr><name>AllocatorStatAllocated</name></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>class_size</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type> <name>Drain</name><parameter_list>(<parameter><decl><type><name>SizeClassAllocator</name> <modifier>*</modifier></type><name>allocator</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<for>for <control>(<init><decl><type><name>uptr</name></type> <name>i</name> <init>= <expr><literal type="number">1</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>kNumClasses</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>PerClass</name> <modifier>*</modifier></type><name>c</name> <init>= <expr><operator>&amp;</operator><name><name>per_class_</name><index>[<expr><name>i</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<while>while <condition>(<expr><name><name>c</name><operator>-&gt;</operator><name>count</name></name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>Drain</name><argument_list>(<argument><expr><name>c</name></expr></argument>, <argument><expr><name>allocator</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></while>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+<label><name>private</name>:</label>
+<typedef>typedef <expr_stmt><expr><name>typename</name> <name>Allocator</name><operator>::</operator><name>SizeClassMapT</name> <name>SizeClassMap</name></expr>;</expr_stmt></typedef>
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>uptr</name></type> <name>kBatchClassID</name> <init>= <expr><name>SizeClassMap</name><operator>::</operator><name>kBatchClassID</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>uptr</name></type> <name>kNumClasses</name> <init>= <expr><name>SizeClassMap</name><operator>::</operator><name>kNumClasses</name></expr></init></decl>;</decl_stmt>
+
+
+
+
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>bool</name></type> <name>kUseSeparateSizeClassForBatch</name> <init>=
+<expr><name>Allocator</name><operator>::</operator><name>kUseSeparateSizeClassForBatch</name></expr></init></decl>;</decl_stmt>
+
+<struct>struct <name>PerClass</name> <block>{
+<decl_stmt><decl><type><name>uptr</name></type> <name>count</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uptr</name></type> <name>max_count</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uptr</name></type> <name>class_size</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uptr</name></type> <name>batch_class_id</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name><name>batch</name><index>[<expr><literal type="number">2</literal> <operator>*</operator> <name>TransferBatch</name><operator>::</operator><name>kMaxNumCached</name></expr>]</index></name></decl>;</decl_stmt>
+}</block>;</struct>
+<decl_stmt><decl><type><name>PerClass</name></type> <name><name>per_class_</name><index>[<expr><name>kNumClasses</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>AllocatorStats</name></type> <name>stats_</name></decl>;</decl_stmt>
+
+<function><type><name>void</name></type> <name>InitCache</name><parameter_list>(<parameter><decl><type><name>PerClass</name> <modifier>*</modifier></type><name>c</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>LIKELY</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>max_count</name></name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uptr</name></type> <name>batch_class_id</name> <init>= <expr><name>SizeClassMap</name><operator>::</operator><call><name>ClassID</name><argument_list>(<argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>TransferBatch</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<for>for <control>(<init><decl><type><name>uptr</name></type> <name>i</name> <init>= <expr><literal type="number">1</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>kNumClasses</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>PerClass</name> <modifier>*</modifier></type><name>c</name> <init>= <expr><operator>&amp;</operator><name><name>per_class_</name><index>[<expr><name>i</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uptr</name></type> <name>size</name> <init>= <expr><name>Allocator</name><operator>::</operator><call><name>ClassIdToSize</name><argument_list>(<argument><expr><name>i</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uptr</name></type> <name>max_cached</name> <init>= <expr><name>TransferBatch</name><operator>::</operator><call><name>MaxCached</name><argument_list>(<argument><expr><name>size</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>max_count</name></name> <operator>=</operator> <literal type="number">2</literal> <operator>*</operator> <name>max_cached</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>class_size</name></name> <operator>=</operator> <name>size</name></expr>;</expr_stmt>
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>kUseSeparateSizeClassForBatch</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>batch_class_id</name></name> <operator>=</operator> <ternary><condition><expr><operator>(</operator><name>i</name> <operator>==</operator> <name>kBatchClassID</name><operator>)</operator></expr> ?</condition><then> <expr><literal type="number">0</literal></expr> </then><else>: <expr><name>kBatchClassID</name></expr></else></ternary></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>batch_class_id</name></name> <operator>=</operator> <ternary><condition><expr><operator>(</operator><name>size</name> <operator>&lt;</operator>
+<name>TransferBatch</name><operator>::</operator><call><name>AllocationSizeRequiredForNElements</name><argument_list>(<argument><expr><name>max_cached</name></expr></argument>)</argument_list></call><operator>)</operator></expr> ?</condition><then>
+<expr><name>batch_class_id</name></expr> </then><else>: <expr><literal type="number">0</literal></expr></else></ternary></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><call><name>DCHECK_NE</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>max_count</name></name></expr></argument>, <argument><expr><literal type="number">0UL</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>NOINLINE</name> <name>bool</name></type> <name>Refill</name><parameter_list>(<parameter><decl><type><name>PerClass</name> <modifier>*</modifier></type><name>c</name></decl></parameter>, <parameter><decl><type><name>SizeClassAllocator</name> <modifier>*</modifier></type><name>allocator</name></decl></parameter>,
+<parameter><decl><type><name>uptr</name></type> <name>class_id</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>InitCache</name><argument_list>(<argument><expr><name>c</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>TransferBatch</name> <modifier>*</modifier></type><name>b</name> <init>= <expr><call><name><name>allocator</name><operator>-&gt;</operator><name>AllocateBatch</name></name><argument_list>(<argument><expr><operator>&amp;</operator><name>stats_</name></expr></argument>, <argument><expr><name>this</name></expr></argument>, <argument><expr><name>class_id</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>UNLIKELY</name><argument_list>(<argument><expr><operator>!</operator><name>b</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><name>false</name></expr>;</return></block_content></block></if></if_stmt>
+<expr_stmt><expr><call><name>CHECK_GT</name><argument_list>(<argument><expr><call><name><name>b</name><operator>-&gt;</operator><name>Count</name></name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name><name>b</name><operator>-&gt;</operator><name>CopyToArray</name></name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>batch</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>count</name></name> <operator>=</operator> <call><name><name>b</name><operator>-&gt;</operator><name>Count</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>DestroyBatch</name><argument_list>(<argument><expr><name>class_id</name></expr></argument>, <argument><expr><name>allocator</name></expr></argument>, <argument><expr><name>b</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>true</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>NOINLINE</name> <name>void</name></type> <name>Drain</name><parameter_list>(<parameter><decl><type><name>PerClass</name> <modifier>*</modifier></type><name>c</name></decl></parameter>, <parameter><decl><type><name>SizeClassAllocator</name> <modifier>*</modifier></type><name>allocator</name></decl></parameter>,
+<parameter><decl><type><name>uptr</name></type> <name>class_id</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uptr</name></type> <name>count</name> <init>= <expr><call><name>Min</name><argument_list>(<argument><expr><name><name>c</name><operator>-&gt;</operator><name>max_count</name></name> <operator>/</operator> <literal type="number">2</literal></expr></argument>, <argument><expr><name><name>c</name><operator>-&gt;</operator><name>count</name></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uptr</name></type> <name>first_idx_to_drain</name> <init>= <expr><name><name>c</name><operator>-&gt;</operator><name>count</name></name> <operator>-</operator> <name>count</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>TransferBatch</name> <modifier>*</modifier></type><name>b</name> <init>= <expr><call><name>CreateBatch</name><argument_list>(
+<argument><expr><name>class_id</name></expr></argument>, <argument><expr><name>allocator</name></expr></argument>, <argument><expr><operator>(</operator><name>TransferBatch</name> <operator>*</operator><operator>)</operator><name><name>c</name><operator>-&gt;</operator><name>batch</name><index>[<expr><name>first_idx_to_drain</name></expr>]</index></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>UNLIKELY</name><argument_list>(<argument><expr><operator>!</operator><name>b</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>Report</name><argument_list>(<argument><expr><literal type="string">"FATAL: Internal error: %s's allocator failed to allocate a "</literal>
+<literal type="string">"transfer batch.\n"</literal></expr></argument>, <argument><expr><name>SanitizerToolName</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>Die</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name><name>b</name><operator>-&gt;</operator><name>SetFromArray</name></name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>c</name><operator>-&gt;</operator><name>batch</name><index>[<expr><name>first_idx_to_drain</name></expr>]</index></name></expr></argument>, <argument><expr><name>count</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>c</name><operator>-&gt;</operator><name>count</name></name> <operator>-=</operator> <name>count</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name><name>allocator</name><operator>-&gt;</operator><name>DeallocateBatch</name></name><argument_list>(<argument><expr><operator>&amp;</operator><name>stats_</name></expr></argument>, <argument><expr><name>class_id</name></expr></argument>, <argument><expr><name>b</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+};
+</unit>

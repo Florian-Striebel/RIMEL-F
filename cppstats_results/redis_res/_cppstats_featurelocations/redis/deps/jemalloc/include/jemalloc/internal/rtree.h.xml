@@ -1,0 +1,530 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/results/redis_res/_cppstats_featurelocations/redis/deps/jemalloc/include/jemalloc/internal/rtree.h"><cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>JEMALLOC_INTERNAL_RTREE_H</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>JEMALLOC_INTERNAL_RTREE_H</name></cpp:macro></cpp:define>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"jemalloc/internal/atomic.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"jemalloc/internal/mutex.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"jemalloc/internal/rtree_tsd.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"jemalloc/internal/sc.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"jemalloc/internal/tsd.h"</cpp:file></cpp:include>
+
+
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>RTREE_NHIB</name></cpp:macro> <cpp:value>((1U &lt;&lt; (LG_SIZEOF_PTR+3)) - LG_VADDR)</cpp:value></cpp:define>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>RTREE_NLIB</name></cpp:macro> <cpp:value>LG_PAGE</cpp:value></cpp:define>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>RTREE_NSB</name></cpp:macro> <cpp:value>(LG_VADDR - RTREE_NLIB)</cpp:value></cpp:define>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>RTREE_NSB</name> <operator>&lt;=</operator> <literal type="number">10</literal></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>RTREE_HEIGHT</name></cpp:macro> <cpp:value>1</cpp:value></cpp:define>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><name>RTREE_NSB</name> <operator>&lt;=</operator> <literal type="number">36</literal></expr></cpp:elif>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>RTREE_HEIGHT</name></cpp:macro> <cpp:value>2</cpp:value></cpp:define>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><name>RTREE_NSB</name> <operator>&lt;=</operator> <literal type="number">52</literal></expr></cpp:elif>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>RTREE_HEIGHT</name></cpp:macro> <cpp:value>3</cpp:value></cpp:define>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:error>#<cpp:directive>error</cpp:directive> Unsupported number of significant virtual address bits</cpp:error>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>RTREE_NHIB</name> <operator>&gt;=</operator> <call><name>LG_CEIL</name><argument_list>(<argument><expr><name>SC_NSIZES</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>RTREE_LEAF_COMPACT</name></cpp:macro></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>RTREE_LEAFKEY_INVALID</name></cpp:macro> <cpp:value>((uintptr_t)1)</cpp:value></cpp:define>
+
+<typedef>typedef <type><name><name>struct</name> <name>rtree_node_elm_s</name></name></type> <name>rtree_node_elm_t</name>;</typedef>
+<struct>struct <name>rtree_node_elm_s</name> <block>{
+<decl_stmt><decl><type><name>atomic_p_t</name></type> <name>child</name></decl>;</decl_stmt>
+}</block>;</struct>
+
+<struct>struct <name>rtree_leaf_elm_s</name> <block>{
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>RTREE_LEAF_COMPACT</name></expr></argument>)</argument_list></call></expr></cpp:if>
+
+
+
+
+
+
+
+
+
+
+
+
+<decl_stmt><decl><type><name>atomic_p_t</name></type> <name>le_bits</name></decl>;</decl_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<decl_stmt><decl><type><name>atomic_p_t</name></type> <name>le_extent</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>atomic_u_t</name></type> <name>le_szind</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>atomic_b_t</name></type> <name>le_slab</name></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+}</block>;</struct>
+
+<typedef>typedef <type><name><name>struct</name> <name>rtree_level_s</name></name></type> <name>rtree_level_t</name>;</typedef>
+<struct>struct <name>rtree_level_s</name> <block>{
+
+<decl_stmt><decl><type><name>unsigned</name></type> <name>bits</name></decl>;</decl_stmt>
+
+
+
+
+<decl_stmt><decl><type><name>unsigned</name></type> <name>cumbits</name></decl>;</decl_stmt>
+}</block>;</struct>
+
+<typedef>typedef <type><name><name>struct</name> <name>rtree_s</name></name></type> <name>rtree_t</name>;</typedef>
+<struct>struct <name>rtree_s</name> <block>{
+<decl_stmt><decl><type><name>malloc_mutex_t</name></type> <name>init_lock</name></decl>;</decl_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>RTREE_HEIGHT</name> <operator>&gt;</operator> <literal type="number">1</literal></expr></cpp:if>
+<decl_stmt><decl><type><name>rtree_node_elm_t</name></type> <name><name>root</name><index>[<expr><literal type="number">1U</literal> <operator>&lt;&lt;</operator> <operator>(</operator><name>RTREE_NSB</name><operator>/</operator><name>RTREE_HEIGHT</name><operator>)</operator></expr>]</index></name></decl>;</decl_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<decl_stmt><decl><type><name>rtree_leaf_elm_t</name></type> <name><name>root</name><index>[<expr><literal type="number">1U</literal> <operator>&lt;&lt;</operator> <operator>(</operator><name>RTREE_NSB</name><operator>/</operator><name>RTREE_HEIGHT</name><operator>)</operator></expr>]</index></name></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+}</block>;</struct>
+
+
+
+
+
+
+
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>rtree_level_t</name></type> <name><name>rtree_levels</name><index>[]</index></name> <init>= <expr><block>{
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>RTREE_HEIGHT</name> <operator>==</operator> <literal type="number">1</literal></expr></cpp:if>
+<expr><block>{<expr><name>RTREE_NSB</name></expr>, <expr><name>RTREE_NHIB</name> <operator>+</operator> <name>RTREE_NSB</name></expr>}</block>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><name>RTREE_HEIGHT</name> <operator>==</operator> <literal type="number">2</literal></expr></cpp:elif>
+<block>{<expr><name>RTREE_NSB</name><operator>/</operator><literal type="number">2</literal></expr>, <expr><name>RTREE_NHIB</name> <operator>+</operator> <name>RTREE_NSB</name><operator>/</operator><literal type="number">2</literal></expr>}</block></expr>,
+<expr><block>{<expr><name>RTREE_NSB</name><operator>/</operator><literal type="number">2</literal> <operator>+</operator> <name>RTREE_NSB</name><operator>%</operator><literal type="number">2</literal></expr>, <expr><name>RTREE_NHIB</name> <operator>+</operator> <name>RTREE_NSB</name></expr>}</block>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><name>RTREE_HEIGHT</name> <operator>==</operator> <literal type="number">3</literal></expr></cpp:elif>
+<block>{<expr><name>RTREE_NSB</name><operator>/</operator><literal type="number">3</literal></expr>, <expr><name>RTREE_NHIB</name> <operator>+</operator> <name>RTREE_NSB</name><operator>/</operator><literal type="number">3</literal></expr>}</block></expr>,
+<expr><block>{<expr><name>RTREE_NSB</name><operator>/</operator><literal type="number">3</literal> <operator>+</operator> <name>RTREE_NSB</name><operator>%</operator><literal type="number">3</literal><operator>/</operator><literal type="number">2</literal></expr>,
+<expr><name>RTREE_NHIB</name> <operator>+</operator> <name>RTREE_NSB</name><operator>/</operator><literal type="number">3</literal><operator>*</operator><literal type="number">2</literal> <operator>+</operator> <name>RTREE_NSB</name><operator>%</operator><literal type="number">3</literal><operator>/</operator><literal type="number">2</literal></expr>}</block></expr>,
+<expr><block>{<expr><name>RTREE_NSB</name><operator>/</operator><literal type="number">3</literal> <operator>+</operator> <name>RTREE_NSB</name><operator>%</operator><literal type="number">3</literal> <operator>-</operator> <name>RTREE_NSB</name><operator>%</operator><literal type="number">3</literal><operator>/</operator><literal type="number">2</literal></expr>, <expr><name>RTREE_NHIB</name> <operator>+</operator> <name>RTREE_NSB</name></expr>}</block></expr>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:error>#<cpp:directive>error</cpp:directive> Unsupported rtree height</cpp:error>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+}</block></expr></init></decl>;</decl_stmt>
+
+<function_decl><type><name>bool</name></type> <name>rtree_new</name><parameter_list>(<parameter><decl><type><name>rtree_t</name> <modifier>*</modifier></type><name>rtree</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>zeroed</name></decl></parameter>)</parameter_list>;</function_decl>
+
+<typedef>typedef <function_decl><type><name>rtree_node_elm_t</name> <modifier>*</modifier></type>(<name>rtree_node_alloc_t</name>)<parameter_list>(<parameter><decl><type><name>tsdn_t</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>rtree_t</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>size_t</name></type></decl></parameter>)</parameter_list>;</function_decl></typedef>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>rtree_node_alloc_t</name> <modifier>*</modifier><name>JET_MUTABLE</name></type> <name>rtree_node_alloc</name></decl>;</decl_stmt>
+
+<typedef>typedef <function_decl><type><name>rtree_leaf_elm_t</name> <modifier>*</modifier></type>(<name>rtree_leaf_alloc_t</name>)<parameter_list>(<parameter><decl><type><name>tsdn_t</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>rtree_t</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>size_t</name></type></decl></parameter>)</parameter_list>;</function_decl></typedef>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>rtree_leaf_alloc_t</name> <modifier>*</modifier><name>JET_MUTABLE</name></type> <name>rtree_leaf_alloc</name></decl>;</decl_stmt>
+
+<typedef>typedef <function_decl><type><name>void</name></type> (<name>rtree_node_dalloc_t</name>)<parameter_list>(<parameter><decl><type><name>tsdn_t</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>rtree_t</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>rtree_node_elm_t</name> <modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl></typedef>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>rtree_node_dalloc_t</name> <modifier>*</modifier><name>JET_MUTABLE</name></type> <name>rtree_node_dalloc</name></decl>;</decl_stmt>
+
+<typedef>typedef <function_decl><type><name>void</name></type> (<name>rtree_leaf_dalloc_t</name>)<parameter_list>(<parameter><decl><type><name>tsdn_t</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>rtree_t</name> <modifier>*</modifier></type></decl></parameter>, <parameter><decl><type><name>rtree_leaf_elm_t</name> <modifier>*</modifier></type></decl></parameter>)</parameter_list>;</function_decl></typedef>
+<decl_stmt><decl><type><specifier>extern</specifier> <name>rtree_leaf_dalloc_t</name> <modifier>*</modifier><name>JET_MUTABLE</name></type> <name>rtree_leaf_dalloc</name></decl>;</decl_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>JEMALLOC_JET</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<function_decl><type><name>void</name></type> <name>rtree_delete</name><parameter_list>(<parameter><decl><type><name>tsdn_t</name> <modifier>*</modifier></type><name>tsdn</name></decl></parameter>, <parameter><decl><type><name>rtree_t</name> <modifier>*</modifier></type><name>rtree</name></decl></parameter>)</parameter_list>;</function_decl>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<function_decl><type><name>rtree_leaf_elm_t</name> <modifier>*</modifier></type><name>rtree_leaf_elm_lookup_hard</name><parameter_list>(<parameter><decl><type><name>tsdn_t</name> <modifier>*</modifier></type><name>tsdn</name></decl></parameter>, <parameter><decl><type><name>rtree_t</name> <modifier>*</modifier></type><name>rtree</name></decl></parameter>,
+<parameter><decl><type><name>rtree_ctx_t</name> <modifier>*</modifier></type><name>rtree_ctx</name></decl></parameter>, <parameter><decl><type><name>uintptr_t</name></type> <name>key</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>dependent</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>init_missing</name></decl></parameter>)</parameter_list>;</function_decl>
+
+<function><type><name>JEMALLOC_ALWAYS_INLINE</name> <name>uintptr_t</name></type>
+<name>rtree_leafkey</name><parameter_list>(<parameter><decl><type><name>uintptr_t</name></type> <name>key</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name></type> <name>ptrbits</name> <init>= <expr><call><name>ZU</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call> <operator>&lt;&lt;</operator> <operator>(</operator><name>LG_SIZEOF_PTR</name><operator>+</operator><literal type="number">3</literal><operator>)</operator></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name></type> <name>cumbits</name> <init>= <expr><operator>(</operator><name><name>rtree_levels</name><index>[<expr><name>RTREE_HEIGHT</name><operator>-</operator><literal type="number">1</literal></expr>]</index></name><operator>.</operator><name>cumbits</name> <operator>-</operator>
+<name><name>rtree_levels</name><index>[<expr><name>RTREE_HEIGHT</name><operator>-</operator><literal type="number">1</literal></expr>]</index></name><operator>.</operator><name>bits</name><operator>)</operator></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name></type> <name>maskbits</name> <init>= <expr><name>ptrbits</name> <operator>-</operator> <name>cumbits</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>mask</name> <init>= <expr><operator>~</operator><operator>(</operator><operator>(</operator><call><name>ZU</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call> <operator>&lt;&lt;</operator> <name>maskbits</name><operator>)</operator> <operator>-</operator> <literal type="number">1</literal><operator>)</operator></expr></init></decl>;</decl_stmt>
+<return>return <expr><operator>(</operator><name>key</name> <operator>&amp;</operator> <name>mask</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>JEMALLOC_ALWAYS_INLINE</name> <name>size_t</name></type>
+<name>rtree_cache_direct_map</name><parameter_list>(<parameter><decl><type><name>uintptr_t</name></type> <name>key</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name></type> <name>ptrbits</name> <init>= <expr><call><name>ZU</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call> <operator>&lt;&lt;</operator> <operator>(</operator><name>LG_SIZEOF_PTR</name><operator>+</operator><literal type="number">3</literal><operator>)</operator></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name></type> <name>cumbits</name> <init>= <expr><operator>(</operator><name><name>rtree_levels</name><index>[<expr><name>RTREE_HEIGHT</name><operator>-</operator><literal type="number">1</literal></expr>]</index></name><operator>.</operator><name>cumbits</name> <operator>-</operator>
+<name><name>rtree_levels</name><index>[<expr><name>RTREE_HEIGHT</name><operator>-</operator><literal type="number">1</literal></expr>]</index></name><operator>.</operator><name>bits</name><operator>)</operator></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name></type> <name>maskbits</name> <init>= <expr><name>ptrbits</name> <operator>-</operator> <name>cumbits</name></expr></init></decl>;</decl_stmt>
+<return>return <expr><operator>(</operator><name>size_t</name><operator>)</operator><operator>(</operator><operator>(</operator><name>key</name> <operator>&gt;&gt;</operator> <name>maskbits</name><operator>)</operator> <operator>&amp;</operator> <operator>(</operator><name>RTREE_CTX_NCACHE</name> <operator>-</operator> <literal type="number">1</literal><operator>)</operator><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>JEMALLOC_ALWAYS_INLINE</name> <name>uintptr_t</name></type>
+<name>rtree_subkey</name><parameter_list>(<parameter><decl><type><name>uintptr_t</name></type> <name>key</name></decl></parameter>, <parameter><decl><type><name>unsigned</name></type> <name>level</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name></type> <name>ptrbits</name> <init>= <expr><call><name>ZU</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call> <operator>&lt;&lt;</operator> <operator>(</operator><name>LG_SIZEOF_PTR</name><operator>+</operator><literal type="number">3</literal><operator>)</operator></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name></type> <name>cumbits</name> <init>= <expr><name><name>rtree_levels</name><index>[<expr><name>level</name></expr>]</index></name><operator>.</operator><name>cumbits</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name></type> <name>shiftbits</name> <init>= <expr><name>ptrbits</name> <operator>-</operator> <name>cumbits</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name></type> <name>maskbits</name> <init>= <expr><name><name>rtree_levels</name><index>[<expr><name>level</name></expr>]</index></name><operator>.</operator><name>bits</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>mask</name> <init>= <expr><operator>(</operator><call><name>ZU</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call> <operator>&lt;&lt;</operator> <name>maskbits</name><operator>)</operator> <operator>-</operator> <literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<return>return <expr><operator>(</operator><operator>(</operator><name>key</name> <operator>&gt;&gt;</operator> <name>shiftbits</name><operator>)</operator> <operator>&amp;</operator> <name>mask</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>RTREE_LEAF_COMPACT</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<function><type><name>JEMALLOC_ALWAYS_INLINE</name> <name>uintptr_t</name></type>
+<name>rtree_leaf_elm_bits_read</name><parameter_list>(<parameter><decl><type><name>tsdn_t</name> <modifier>*</modifier></type><name>tsdn</name></decl></parameter>, <parameter><decl><type><name>rtree_t</name> <modifier>*</modifier></type><name>rtree</name></decl></parameter>,
+<parameter><decl><type><name>rtree_leaf_elm_t</name> <modifier>*</modifier></type><name>elm</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>dependent</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<return>return <expr><operator>(</operator><name>uintptr_t</name><operator>)</operator><call><name>atomic_load_p</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>elm</name><operator>-&gt;</operator><name>le_bits</name></name></expr></argument>, <argument><expr><ternary><condition><expr><name>dependent</name></expr>
+?</condition><then> <expr><name>ATOMIC_RELAXED</name></expr> </then><else>: <expr><name>ATOMIC_ACQUIRE</name></expr></else></ternary></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>JEMALLOC_ALWAYS_INLINE</name> <name>extent_t</name> <modifier>*</modifier></type>
+<name>rtree_leaf_elm_bits_extent_get</name><parameter_list>(<parameter><decl><type><name>uintptr_t</name></type> <name>bits</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__aarch64__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+
+
+
+
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>high_bit_mask</name> <init>= <expr><operator>(</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><literal type="number">1</literal> <operator>&lt;&lt;</operator> <name>LG_VADDR</name><operator>)</operator> <operator>-</operator> <literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>low_bit_mask</name> <init>= <expr><operator>~</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>mask</name> <init>= <expr><name>high_bit_mask</name> <operator>&amp;</operator> <name>low_bit_mask</name></expr></init></decl>;</decl_stmt>
+<return>return <expr><operator>(</operator><name>extent_t</name> <operator>*</operator><operator>)</operator><operator>(</operator><name>bits</name> <operator>&amp;</operator> <name>mask</name><operator>)</operator></expr>;</return>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+
+<return>return <expr><operator>(</operator><name>extent_t</name> <operator>*</operator><operator>)</operator><operator>(</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><operator>(</operator><operator>(</operator><name>intptr_t</name><operator>)</operator><operator>(</operator><name>bits</name> <operator>&lt;&lt;</operator> <name>RTREE_NHIB</name><operator>)</operator> <operator>&gt;&gt;</operator>
+<name>RTREE_NHIB</name><operator>)</operator> <operator>&amp;</operator> <operator>~</operator><operator>(</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><literal type="number">0x1</literal><operator>)</operator><operator>)</operator></expr>;</return>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+<function><type><name>JEMALLOC_ALWAYS_INLINE</name> <name>szind_t</name></type>
+<name>rtree_leaf_elm_bits_szind_get</name><parameter_list>(<parameter><decl><type><name>uintptr_t</name></type> <name>bits</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<return>return <expr><operator>(</operator><name>szind_t</name><operator>)</operator><operator>(</operator><name>bits</name> <operator>&gt;&gt;</operator> <name>LG_VADDR</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>JEMALLOC_ALWAYS_INLINE</name> <name>bool</name></type>
+<name>rtree_leaf_elm_bits_slab_get</name><parameter_list>(<parameter><decl><type><name>uintptr_t</name></type> <name>bits</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<return>return <expr><operator>(</operator><name>bool</name><operator>)</operator><operator>(</operator><name>bits</name> <operator>&amp;</operator> <operator>(</operator><name>uintptr_t</name><operator>)</operator><literal type="number">0x1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<function><type><name>JEMALLOC_ALWAYS_INLINE</name> <name>extent_t</name> <modifier>*</modifier></type>
+<name>rtree_leaf_elm_extent_read</name><parameter_list>(<parameter><decl><type><name>tsdn_t</name> <modifier>*</modifier></type><name>tsdn</name></decl></parameter>, <parameter><decl><type><name>rtree_t</name> <modifier>*</modifier></type><name>rtree</name></decl></parameter>,
+<parameter><decl><type><name>rtree_leaf_elm_t</name> <modifier>*</modifier></type><name>elm</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>dependent</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>RTREE_LEAF_COMPACT</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>bits</name> <init>= <expr><call><name>rtree_leaf_elm_bits_read</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>elm</name></expr></argument>, <argument><expr><name>dependent</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<return>return <expr><call><name>rtree_leaf_elm_bits_extent_get</name><argument_list>(<argument><expr><name>bits</name></expr></argument>)</argument_list></call></expr>;</return>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<decl_stmt><decl><type><name>extent_t</name> <modifier>*</modifier></type><name>extent</name> <init>= <expr><operator>(</operator><name>extent_t</name> <operator>*</operator><operator>)</operator><call><name>atomic_load_p</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>elm</name><operator>-&gt;</operator><name>le_extent</name></name></expr></argument>, <argument><expr><ternary><condition><expr><name>dependent</name></expr>
+?</condition><then> <expr><name>ATOMIC_RELAXED</name></expr> </then><else>: <expr><name>ATOMIC_ACQUIRE</name></expr></else></ternary></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<return>return <expr><name>extent</name></expr>;</return>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+<function><type><name>JEMALLOC_ALWAYS_INLINE</name> <name>szind_t</name></type>
+<name>rtree_leaf_elm_szind_read</name><parameter_list>(<parameter><decl><type><name>tsdn_t</name> <modifier>*</modifier></type><name>tsdn</name></decl></parameter>, <parameter><decl><type><name>rtree_t</name> <modifier>*</modifier></type><name>rtree</name></decl></parameter>,
+<parameter><decl><type><name>rtree_leaf_elm_t</name> <modifier>*</modifier></type><name>elm</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>dependent</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>RTREE_LEAF_COMPACT</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>bits</name> <init>= <expr><call><name>rtree_leaf_elm_bits_read</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>elm</name></expr></argument>, <argument><expr><name>dependent</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<return>return <expr><call><name>rtree_leaf_elm_bits_szind_get</name><argument_list>(<argument><expr><name>bits</name></expr></argument>)</argument_list></call></expr>;</return>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<return>return <expr><operator>(</operator><name>szind_t</name><operator>)</operator><call><name>atomic_load_u</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>elm</name><operator>-&gt;</operator><name>le_szind</name></name></expr></argument>, <argument><expr><ternary><condition><expr><name>dependent</name></expr> ?</condition><then> <expr><name>ATOMIC_RELAXED</name></expr>
+</then><else>: <expr><name>ATOMIC_ACQUIRE</name></expr></else></ternary></expr></argument>)</argument_list></call></expr>;</return>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+<function><type><name>JEMALLOC_ALWAYS_INLINE</name> <name>bool</name></type>
+<name>rtree_leaf_elm_slab_read</name><parameter_list>(<parameter><decl><type><name>tsdn_t</name> <modifier>*</modifier></type><name>tsdn</name></decl></parameter>, <parameter><decl><type><name>rtree_t</name> <modifier>*</modifier></type><name>rtree</name></decl></parameter>,
+<parameter><decl><type><name>rtree_leaf_elm_t</name> <modifier>*</modifier></type><name>elm</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>dependent</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>RTREE_LEAF_COMPACT</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>bits</name> <init>= <expr><call><name>rtree_leaf_elm_bits_read</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>elm</name></expr></argument>, <argument><expr><name>dependent</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<return>return <expr><call><name>rtree_leaf_elm_bits_slab_get</name><argument_list>(<argument><expr><name>bits</name></expr></argument>)</argument_list></call></expr>;</return>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<return>return <expr><call><name>atomic_load_b</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>elm</name><operator>-&gt;</operator><name>le_slab</name></name></expr></argument>, <argument><expr><ternary><condition><expr><name>dependent</name></expr> ?</condition><then> <expr><name>ATOMIC_RELAXED</name></expr> </then><else>:
+<expr><name>ATOMIC_ACQUIRE</name></expr></else></ternary></expr></argument>)</argument_list></call></expr>;</return>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <specifier>inline</specifier> <name>void</name></type>
+<name>rtree_leaf_elm_extent_write</name><parameter_list>(<parameter><decl><type><name>tsdn_t</name> <modifier>*</modifier></type><name>tsdn</name></decl></parameter>, <parameter><decl><type><name>rtree_t</name> <modifier>*</modifier></type><name>rtree</name></decl></parameter>,
+<parameter><decl><type><name>rtree_leaf_elm_t</name> <modifier>*</modifier></type><name>elm</name></decl></parameter>, <parameter><decl><type><name>extent_t</name> <modifier>*</modifier></type><name>extent</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>RTREE_LEAF_COMPACT</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>old_bits</name> <init>= <expr><call><name>rtree_leaf_elm_bits_read</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>elm</name></expr></argument>, <argument><expr><name>true</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>bits</name> <init>= <expr><operator>(</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><call><name>rtree_leaf_elm_bits_szind_get</name><argument_list>(<argument><expr><name>old_bits</name></expr></argument>)</argument_list></call> <operator>&lt;&lt;</operator>
+<name>LG_VADDR</name><operator>)</operator> <operator>|</operator> <operator>(</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><name>extent</name> <operator>&amp;</operator> <operator>(</operator><operator>(</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><literal type="number">0x1</literal> <operator>&lt;&lt;</operator> <name>LG_VADDR</name><operator>)</operator> <operator>-</operator> <literal type="number">1</literal><operator>)</operator><operator>)</operator>
+<operator>|</operator> <operator>(</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><call><name>rtree_leaf_elm_bits_slab_get</name><argument_list>(<argument><expr><name>old_bits</name></expr></argument>)</argument_list></call><operator>)</operator></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>atomic_store_p</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>elm</name><operator>-&gt;</operator><name>le_bits</name></name></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name>bits</name></expr></argument>, <argument><expr><name>ATOMIC_RELEASE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><call><name>atomic_store_p</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>elm</name><operator>-&gt;</operator><name>le_extent</name></name></expr></argument>, <argument><expr><name>extent</name></expr></argument>, <argument><expr><name>ATOMIC_RELEASE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <specifier>inline</specifier> <name>void</name></type>
+<name>rtree_leaf_elm_szind_write</name><parameter_list>(<parameter><decl><type><name>tsdn_t</name> <modifier>*</modifier></type><name>tsdn</name></decl></parameter>, <parameter><decl><type><name>rtree_t</name> <modifier>*</modifier></type><name>rtree</name></decl></parameter>,
+<parameter><decl><type><name>rtree_leaf_elm_t</name> <modifier>*</modifier></type><name>elm</name></decl></parameter>, <parameter><decl><type><name>szind_t</name></type> <name>szind</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>szind</name> <operator>&lt;=</operator> <name>SC_NSIZES</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>RTREE_LEAF_COMPACT</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>old_bits</name> <init>= <expr><call><name>rtree_leaf_elm_bits_read</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>elm</name></expr></argument>,
+<argument><expr><name>true</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>bits</name> <init>= <expr><operator>(</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><name>szind</name> <operator>&lt;&lt;</operator> <name>LG_VADDR</name><operator>)</operator> <operator>|</operator>
+<operator>(</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><call><name>rtree_leaf_elm_bits_extent_get</name><argument_list>(<argument><expr><name>old_bits</name></expr></argument>)</argument_list></call> <operator>&amp;</operator>
+<operator>(</operator><operator>(</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><literal type="number">0x1</literal> <operator>&lt;&lt;</operator> <name>LG_VADDR</name><operator>)</operator> <operator>-</operator> <literal type="number">1</literal><operator>)</operator><operator>)</operator> <operator>|</operator>
+<operator>(</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><call><name>rtree_leaf_elm_bits_slab_get</name><argument_list>(<argument><expr><name>old_bits</name></expr></argument>)</argument_list></call><operator>)</operator></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>atomic_store_p</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>elm</name><operator>-&gt;</operator><name>le_bits</name></name></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name>bits</name></expr></argument>, <argument><expr><name>ATOMIC_RELEASE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><call><name>atomic_store_u</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>elm</name><operator>-&gt;</operator><name>le_szind</name></name></expr></argument>, <argument><expr><name>szind</name></expr></argument>, <argument><expr><name>ATOMIC_RELEASE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <specifier>inline</specifier> <name>void</name></type>
+<name>rtree_leaf_elm_slab_write</name><parameter_list>(<parameter><decl><type><name>tsdn_t</name> <modifier>*</modifier></type><name>tsdn</name></decl></parameter>, <parameter><decl><type><name>rtree_t</name> <modifier>*</modifier></type><name>rtree</name></decl></parameter>,
+<parameter><decl><type><name>rtree_leaf_elm_t</name> <modifier>*</modifier></type><name>elm</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>slab</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>RTREE_LEAF_COMPACT</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>old_bits</name> <init>= <expr><call><name>rtree_leaf_elm_bits_read</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>elm</name></expr></argument>,
+<argument><expr><name>true</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>bits</name> <init>= <expr><operator>(</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><call><name>rtree_leaf_elm_bits_szind_get</name><argument_list>(<argument><expr><name>old_bits</name></expr></argument>)</argument_list></call> <operator>&lt;&lt;</operator>
+<name>LG_VADDR</name><operator>)</operator> <operator>|</operator> <operator>(</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><call><name>rtree_leaf_elm_bits_extent_get</name><argument_list>(<argument><expr><name>old_bits</name></expr></argument>)</argument_list></call> <operator>&amp;</operator>
+<operator>(</operator><operator>(</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><literal type="number">0x1</literal> <operator>&lt;&lt;</operator> <name>LG_VADDR</name><operator>)</operator> <operator>-</operator> <literal type="number">1</literal><operator>)</operator><operator>)</operator> <operator>|</operator> <operator>(</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><name>slab</name><operator>)</operator></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>atomic_store_p</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>elm</name><operator>-&gt;</operator><name>le_bits</name></name></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name>bits</name></expr></argument>, <argument><expr><name>ATOMIC_RELEASE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><call><name>atomic_store_b</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>elm</name><operator>-&gt;</operator><name>le_slab</name></name></expr></argument>, <argument><expr><name>slab</name></expr></argument>, <argument><expr><name>ATOMIC_RELEASE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <specifier>inline</specifier> <name>void</name></type>
+<name>rtree_leaf_elm_write</name><parameter_list>(<parameter><decl><type><name>tsdn_t</name> <modifier>*</modifier></type><name>tsdn</name></decl></parameter>, <parameter><decl><type><name>rtree_t</name> <modifier>*</modifier></type><name>rtree</name></decl></parameter>,
+<parameter><decl><type><name>rtree_leaf_elm_t</name> <modifier>*</modifier></type><name>elm</name></decl></parameter>, <parameter><decl><type><name>extent_t</name> <modifier>*</modifier></type><name>extent</name></decl></parameter>, <parameter><decl><type><name>szind_t</name></type> <name>szind</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>slab</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>RTREE_LEAF_COMPACT</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>bits</name> <init>= <expr><operator>(</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><name>szind</name> <operator>&lt;&lt;</operator> <name>LG_VADDR</name><operator>)</operator> <operator>|</operator>
+<operator>(</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><name>extent</name> <operator>&amp;</operator> <operator>(</operator><operator>(</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><literal type="number">0x1</literal> <operator>&lt;&lt;</operator> <name>LG_VADDR</name><operator>)</operator> <operator>-</operator> <literal type="number">1</literal><operator>)</operator><operator>)</operator> <operator>|</operator>
+<operator>(</operator><operator>(</operator><name>uintptr_t</name><operator>)</operator><name>slab</name><operator>)</operator></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>atomic_store_p</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>elm</name><operator>-&gt;</operator><name>le_bits</name></name></expr></argument>, <argument><expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator><name>bits</name></expr></argument>, <argument><expr><name>ATOMIC_RELEASE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><call><name>rtree_leaf_elm_slab_write</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>elm</name></expr></argument>, <argument><expr><name>slab</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>rtree_leaf_elm_szind_write</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>elm</name></expr></argument>, <argument><expr><name>szind</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+<expr_stmt><expr><call><name>rtree_leaf_elm_extent_write</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>elm</name></expr></argument>, <argument><expr><name>extent</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <specifier>inline</specifier> <name>void</name></type>
+<name>rtree_leaf_elm_szind_slab_update</name><parameter_list>(<parameter><decl><type><name>tsdn_t</name> <modifier>*</modifier></type><name>tsdn</name></decl></parameter>, <parameter><decl><type><name>rtree_t</name> <modifier>*</modifier></type><name>rtree</name></decl></parameter>,
+<parameter><decl><type><name>rtree_leaf_elm_t</name> <modifier>*</modifier></type><name>elm</name></decl></parameter>, <parameter><decl><type><name>szind_t</name></type> <name>szind</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>slab</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><operator>!</operator><name>slab</name> <operator>||</operator> <name>szind</name> <operator>&lt;</operator> <name>SC_NBINS</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+
+
+
+<expr_stmt><expr><call><name>rtree_leaf_elm_slab_write</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>elm</name></expr></argument>, <argument><expr><name>slab</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>rtree_leaf_elm_szind_write</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>elm</name></expr></argument>, <argument><expr><name>szind</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>JEMALLOC_ALWAYS_INLINE</name> <name>rtree_leaf_elm_t</name> <modifier>*</modifier></type>
+<name>rtree_leaf_elm_lookup</name><parameter_list>(<parameter><decl><type><name>tsdn_t</name> <modifier>*</modifier></type><name>tsdn</name></decl></parameter>, <parameter><decl><type><name>rtree_t</name> <modifier>*</modifier></type><name>rtree</name></decl></parameter>, <parameter><decl><type><name>rtree_ctx_t</name> <modifier>*</modifier></type><name>rtree_ctx</name></decl></parameter>,
+<parameter><decl><type><name>uintptr_t</name></type> <name>key</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>dependent</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>init_missing</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>key</name> <operator>!=</operator> <literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><operator>!</operator><name>dependent</name> <operator>||</operator> <operator>!</operator><name>init_missing</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>size_t</name></type> <name>slot</name> <init>= <expr><call><name>rtree_cache_direct_map</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>leafkey</name> <init>= <expr><call><name>rtree_leafkey</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>leafkey</name> <operator>!=</operator> <name>RTREE_LEAFKEY_INVALID</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>likely</name><argument_list>(<argument><expr><name><name>rtree_ctx</name><operator>-&gt;</operator><name>cache</name><index>[<expr><name>slot</name></expr>]</index></name><operator>.</operator><name>leafkey</name> <operator>==</operator> <name>leafkey</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>rtree_leaf_elm_t</name> <modifier>*</modifier></type><name>leaf</name> <init>= <expr><name><name>rtree_ctx</name><operator>-&gt;</operator><name>cache</name><index>[<expr><name>slot</name></expr>]</index></name><operator>.</operator><name>leaf</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>leaf</name> <operator>!=</operator> <name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>subkey</name> <init>= <expr><call><name>rtree_subkey</name><argument_list>(<argument><expr><name>key</name></expr></argument>, <argument><expr><name>RTREE_HEIGHT</name><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<return>return <expr><operator>&amp;</operator><name><name>leaf</name><index>[<expr><name>subkey</name></expr>]</index></name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>RTREE_CACHE_CHECK_L2</name><parameter_list>(<parameter><type><name>i</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>do { if (likely(rtree_ctx-&gt;l2_cache[i].leafkey == leafkey)) { rtree_leaf_elm_t *leaf = rtree_ctx-&gt;l2_cache[i].leaf; assert(leaf != NULL); if (i &gt; 0) { rtree_ctx-&gt;l2_cache[i].leafkey = rtree_ctx-&gt;l2_cache[i - 1].leafkey; rtree_ctx-&gt;l2_cache[i].leaf = rtree_ctx-&gt;l2_cache[i - 1].leaf; rtree_ctx-&gt;l2_cache[i - 1].leafkey = rtree_ctx-&gt;cache[slot].leafkey; rtree_ctx-&gt;l2_cache[i - 1].leaf = rtree_ctx-&gt;cache[slot].leaf; } else { rtree_ctx-&gt;l2_cache[0].leafkey = rtree_ctx-&gt;cache[slot].leafkey; rtree_ctx-&gt;l2_cache[0].leaf = rtree_ctx-&gt;cache[slot].leaf; } rtree_ctx-&gt;cache[slot].leafkey = leafkey; rtree_ctx-&gt;cache[slot].leaf = leaf; uintptr_t subkey = rtree_subkey(key, RTREE_HEIGHT-1); return &amp;leaf[subkey]; } } while (0)</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<expr_stmt><expr><call><name>RTREE_CACHE_CHECK_L2</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<for>for <control>(<init><decl><type><name>unsigned</name></type> <name>i</name> <init>= <expr><literal type="number">1</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>RTREE_CTX_NCACHE_L2</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><call><name>RTREE_CACHE_CHECK_L2</name><argument_list>(<argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>RTREE_CACHE_CHECK_L2</name></cpp:undef>
+
+<return>return <expr><call><name>rtree_leaf_elm_lookup_hard</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>rtree_ctx</name></expr></argument>, <argument><expr><name>key</name></expr></argument>,
+<argument><expr><name>dependent</name></expr></argument>, <argument><expr><name>init_missing</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <specifier>inline</specifier> <name>bool</name></type>
+<name>rtree_write</name><parameter_list>(<parameter><decl><type><name>tsdn_t</name> <modifier>*</modifier></type><name>tsdn</name></decl></parameter>, <parameter><decl><type><name>rtree_t</name> <modifier>*</modifier></type><name>rtree</name></decl></parameter>, <parameter><decl><type><name>rtree_ctx_t</name> <modifier>*</modifier></type><name>rtree_ctx</name></decl></parameter>, <parameter><decl><type><name>uintptr_t</name></type> <name>key</name></decl></parameter>,
+<parameter><decl><type><name>extent_t</name> <modifier>*</modifier></type><name>extent</name></decl></parameter>, <parameter><decl><type><name>szind_t</name></type> <name>szind</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>slab</name></decl></parameter>)</parameter_list> <block>{<block_content>
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>extent</name> <operator>!=</operator> <name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>rtree_leaf_elm_t</name> <modifier>*</modifier></type><name>elm</name> <init>= <expr><call><name>rtree_leaf_elm_lookup</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>rtree_ctx</name></expr></argument>,
+<argument><expr><name>key</name></expr></argument>, <argument><expr><name>false</name></expr></argument>, <argument><expr><name>true</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>elm</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>true</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><call><name>rtree_leaf_elm_extent_read</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>elm</name></expr></argument>, <argument><expr><name>false</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>rtree_leaf_elm_write</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>elm</name></expr></argument>, <argument><expr><name>extent</name></expr></argument>, <argument><expr><name>szind</name></expr></argument>, <argument><expr><name>slab</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><name>false</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>JEMALLOC_ALWAYS_INLINE</name> <name>rtree_leaf_elm_t</name> <modifier>*</modifier></type>
+<name>rtree_read</name><parameter_list>(<parameter><decl><type><name>tsdn_t</name> <modifier>*</modifier></type><name>tsdn</name></decl></parameter>, <parameter><decl><type><name>rtree_t</name> <modifier>*</modifier></type><name>rtree</name></decl></parameter>, <parameter><decl><type><name>rtree_ctx_t</name> <modifier>*</modifier></type><name>rtree_ctx</name></decl></parameter>, <parameter><decl><type><name>uintptr_t</name></type> <name>key</name></decl></parameter>,
+<parameter><decl><type><name>bool</name></type> <name>dependent</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>rtree_leaf_elm_t</name> <modifier>*</modifier></type><name>elm</name> <init>= <expr><call><name>rtree_leaf_elm_lookup</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>rtree_ctx</name></expr></argument>,
+<argument><expr><name>key</name></expr></argument>, <argument><expr><name>dependent</name></expr></argument>, <argument><expr><name>false</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>dependent</name> <operator>&amp;&amp;</operator> <name>elm</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>elm</name> <operator>!=</operator> <name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>elm</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>JEMALLOC_ALWAYS_INLINE</name> <name>extent_t</name> <modifier>*</modifier></type>
+<name>rtree_extent_read</name><parameter_list>(<parameter><decl><type><name>tsdn_t</name> <modifier>*</modifier></type><name>tsdn</name></decl></parameter>, <parameter><decl><type><name>rtree_t</name> <modifier>*</modifier></type><name>rtree</name></decl></parameter>, <parameter><decl><type><name>rtree_ctx_t</name> <modifier>*</modifier></type><name>rtree_ctx</name></decl></parameter>,
+<parameter><decl><type><name>uintptr_t</name></type> <name>key</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>dependent</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>rtree_leaf_elm_t</name> <modifier>*</modifier></type><name>elm</name> <init>= <expr><call><name>rtree_read</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>rtree_ctx</name></expr></argument>, <argument><expr><name>key</name></expr></argument>,
+<argument><expr><name>dependent</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>dependent</name> <operator>&amp;&amp;</operator> <name>elm</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>NULL</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><call><name>rtree_leaf_elm_extent_read</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>elm</name></expr></argument>, <argument><expr><name>dependent</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>JEMALLOC_ALWAYS_INLINE</name> <name>szind_t</name></type>
+<name>rtree_szind_read</name><parameter_list>(<parameter><decl><type><name>tsdn_t</name> <modifier>*</modifier></type><name>tsdn</name></decl></parameter>, <parameter><decl><type><name>rtree_t</name> <modifier>*</modifier></type><name>rtree</name></decl></parameter>, <parameter><decl><type><name>rtree_ctx_t</name> <modifier>*</modifier></type><name>rtree_ctx</name></decl></parameter>,
+<parameter><decl><type><name>uintptr_t</name></type> <name>key</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>dependent</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>rtree_leaf_elm_t</name> <modifier>*</modifier></type><name>elm</name> <init>= <expr><call><name>rtree_read</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>rtree_ctx</name></expr></argument>, <argument><expr><name>key</name></expr></argument>,
+<argument><expr><name>dependent</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>dependent</name> <operator>&amp;&amp;</operator> <name>elm</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>SC_NSIZES</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<return>return <expr><call><name>rtree_leaf_elm_szind_read</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>elm</name></expr></argument>, <argument><expr><name>dependent</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+<function><type><name>JEMALLOC_ALWAYS_INLINE</name> <name>bool</name></type>
+<name>rtree_extent_szind_read</name><parameter_list>(<parameter><decl><type><name>tsdn_t</name> <modifier>*</modifier></type><name>tsdn</name></decl></parameter>, <parameter><decl><type><name>rtree_t</name> <modifier>*</modifier></type><name>rtree</name></decl></parameter>, <parameter><decl><type><name>rtree_ctx_t</name> <modifier>*</modifier></type><name>rtree_ctx</name></decl></parameter>,
+<parameter><decl><type><name>uintptr_t</name></type> <name>key</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>dependent</name></decl></parameter>, <parameter><decl><type><name>extent_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>r_extent</name></decl></parameter>, <parameter><decl><type><name>szind_t</name> <modifier>*</modifier></type><name>r_szind</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>rtree_leaf_elm_t</name> <modifier>*</modifier></type><name>elm</name> <init>= <expr><call><name>rtree_read</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>rtree_ctx</name></expr></argument>, <argument><expr><name>key</name></expr></argument>,
+<argument><expr><name>dependent</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>dependent</name> <operator>&amp;&amp;</operator> <name>elm</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>true</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><operator>*</operator><name>r_extent</name> <operator>=</operator> <call><name>rtree_leaf_elm_extent_read</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>elm</name></expr></argument>, <argument><expr><name>dependent</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>r_szind</name> <operator>=</operator> <call><name>rtree_leaf_elm_szind_read</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>elm</name></expr></argument>, <argument><expr><name>dependent</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><name>false</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+<function><type><name>JEMALLOC_ALWAYS_INLINE</name> <name>bool</name></type>
+<name>rtree_szind_slab_read_fast</name><parameter_list>(<parameter><decl><type><name>tsdn_t</name> <modifier>*</modifier></type><name>tsdn</name></decl></parameter>, <parameter><decl><type><name>rtree_t</name> <modifier>*</modifier></type><name>rtree</name></decl></parameter>, <parameter><decl><type><name>rtree_ctx_t</name> <modifier>*</modifier></type><name>rtree_ctx</name></decl></parameter>,
+<parameter><decl><type><name>uintptr_t</name></type> <name>key</name></decl></parameter>, <parameter><decl><type><name>szind_t</name> <modifier>*</modifier></type><name>r_szind</name></decl></parameter>, <parameter><decl><type><name>bool</name> <modifier>*</modifier></type><name>r_slab</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>rtree_leaf_elm_t</name> <modifier>*</modifier></type><name>elm</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>size_t</name></type> <name>slot</name> <init>= <expr><call><name>rtree_cache_direct_map</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>leafkey</name> <init>= <expr><call><name>rtree_leafkey</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>leafkey</name> <operator>!=</operator> <name>RTREE_LEAFKEY_INVALID</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>likely</name><argument_list>(<argument><expr><name><name>rtree_ctx</name><operator>-&gt;</operator><name>cache</name><index>[<expr><name>slot</name></expr>]</index></name><operator>.</operator><name>leafkey</name> <operator>==</operator> <name>leafkey</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>rtree_leaf_elm_t</name> <modifier>*</modifier></type><name>leaf</name> <init>= <expr><name><name>rtree_ctx</name><operator>-&gt;</operator><name>cache</name><index>[<expr><name>slot</name></expr>]</index></name><operator>.</operator><name>leaf</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>leaf</name> <operator>!=</operator> <name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>subkey</name> <init>= <expr><call><name>rtree_subkey</name><argument_list>(<argument><expr><name>key</name></expr></argument>, <argument><expr><name>RTREE_HEIGHT</name><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>elm</name> <operator>=</operator> <operator>&amp;</operator><name><name>leaf</name><index>[<expr><name>subkey</name></expr>]</index></name></expr>;</expr_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>RTREE_LEAF_COMPACT</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>bits</name> <init>= <expr><call><name>rtree_leaf_elm_bits_read</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>,
+<argument><expr><name>elm</name></expr></argument>, <argument><expr><name>true</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><operator>*</operator><name>r_szind</name> <operator>=</operator> <call><name>rtree_leaf_elm_bits_szind_get</name><argument_list>(<argument><expr><name>bits</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>r_slab</name> <operator>=</operator> <call><name>rtree_leaf_elm_bits_slab_get</name><argument_list>(<argument><expr><name>bits</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><operator>*</operator><name>r_szind</name> <operator>=</operator> <call><name>rtree_leaf_elm_szind_read</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>elm</name></expr></argument>, <argument><expr><name>true</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>r_slab</name> <operator>=</operator> <call><name>rtree_leaf_elm_slab_read</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>elm</name></expr></argument>, <argument><expr><name>true</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<return>return <expr><name>true</name></expr>;</return>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<return>return <expr><name>false</name></expr>;</return>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></function>
+<function><type><name>JEMALLOC_ALWAYS_INLINE</name> <name>bool</name></type>
+<name>rtree_szind_slab_read</name><parameter_list>(<parameter><decl><type><name>tsdn_t</name> <modifier>*</modifier></type><name>tsdn</name></decl></parameter>, <parameter><decl><type><name>rtree_t</name> <modifier>*</modifier></type><name>rtree</name></decl></parameter>, <parameter><decl><type><name>rtree_ctx_t</name> <modifier>*</modifier></type><name>rtree_ctx</name></decl></parameter>,
+<parameter><decl><type><name>uintptr_t</name></type> <name>key</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>dependent</name></decl></parameter>, <parameter><decl><type><name>szind_t</name> <modifier>*</modifier></type><name>r_szind</name></decl></parameter>, <parameter><decl><type><name>bool</name> <modifier>*</modifier></type><name>r_slab</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>rtree_leaf_elm_t</name> <modifier>*</modifier></type><name>elm</name> <init>= <expr><call><name>rtree_read</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>rtree_ctx</name></expr></argument>, <argument><expr><name>key</name></expr></argument>,
+<argument><expr><name>dependent</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>dependent</name> <operator>&amp;&amp;</operator> <name>elm</name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<return>return <expr><name>true</name></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>RTREE_LEAF_COMPACT</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>bits</name> <init>= <expr><call><name>rtree_leaf_elm_bits_read</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>elm</name></expr></argument>, <argument><expr><name>dependent</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><operator>*</operator><name>r_szind</name> <operator>=</operator> <call><name>rtree_leaf_elm_bits_szind_get</name><argument_list>(<argument><expr><name>bits</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>r_slab</name> <operator>=</operator> <call><name>rtree_leaf_elm_bits_slab_get</name><argument_list>(<argument><expr><name>bits</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<expr_stmt><expr><operator>*</operator><name>r_szind</name> <operator>=</operator> <call><name>rtree_leaf_elm_szind_read</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>elm</name></expr></argument>, <argument><expr><name>dependent</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>r_slab</name> <operator>=</operator> <call><name>rtree_leaf_elm_slab_read</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>elm</name></expr></argument>, <argument><expr><name>dependent</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<return>return <expr><name>false</name></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <specifier>inline</specifier> <name>void</name></type>
+<name>rtree_szind_slab_update</name><parameter_list>(<parameter><decl><type><name>tsdn_t</name> <modifier>*</modifier></type><name>tsdn</name></decl></parameter>, <parameter><decl><type><name>rtree_t</name> <modifier>*</modifier></type><name>rtree</name></decl></parameter>, <parameter><decl><type><name>rtree_ctx_t</name> <modifier>*</modifier></type><name>rtree_ctx</name></decl></parameter>,
+<parameter><decl><type><name>uintptr_t</name></type> <name>key</name></decl></parameter>, <parameter><decl><type><name>szind_t</name></type> <name>szind</name></decl></parameter>, <parameter><decl><type><name>bool</name></type> <name>slab</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><operator>!</operator><name>slab</name> <operator>||</operator> <name>szind</name> <operator>&lt;</operator> <name>SC_NBINS</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>rtree_leaf_elm_t</name> <modifier>*</modifier></type><name>elm</name> <init>= <expr><call><name>rtree_read</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>rtree_ctx</name></expr></argument>, <argument><expr><name>key</name></expr></argument>, <argument><expr><name>true</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>rtree_leaf_elm_szind_slab_update</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>elm</name></expr></argument>, <argument><expr><name>szind</name></expr></argument>, <argument><expr><name>slab</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <specifier>inline</specifier> <name>void</name></type>
+<name>rtree_clear</name><parameter_list>(<parameter><decl><type><name>tsdn_t</name> <modifier>*</modifier></type><name>tsdn</name></decl></parameter>, <parameter><decl><type><name>rtree_t</name> <modifier>*</modifier></type><name>rtree</name></decl></parameter>, <parameter><decl><type><name>rtree_ctx_t</name> <modifier>*</modifier></type><name>rtree_ctx</name></decl></parameter>,
+<parameter><decl><type><name>uintptr_t</name></type> <name>key</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>rtree_leaf_elm_t</name> <modifier>*</modifier></type><name>elm</name> <init>= <expr><call><name>rtree_read</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>rtree_ctx</name></expr></argument>, <argument><expr><name>key</name></expr></argument>, <argument><expr><name>true</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><call><name>rtree_leaf_elm_extent_read</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>elm</name></expr></argument>, <argument><expr><name>false</name></expr></argument>)</argument_list></call> <operator>!=</operator>
+<name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>rtree_leaf_elm_write</name><argument_list>(<argument><expr><name>tsdn</name></expr></argument>, <argument><expr><name>rtree</name></expr></argument>, <argument><expr><name>elm</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>SC_NSIZES</name></expr></argument>, <argument><expr><name>false</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

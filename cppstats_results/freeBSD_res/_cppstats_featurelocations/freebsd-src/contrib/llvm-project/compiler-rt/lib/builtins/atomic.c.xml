@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/llvm-project/compiler-rt/lib/builtins/atomic.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdbool.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stddef.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdint.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"assembly.h"</cpp:file></cpp:include>
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>memcpy</name></cpp:macro> <cpp:value>__builtin_memcpy</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>memcmp</name></cpp:macro> <cpp:value>__builtin_memcmp</cpp:value></cpp:define>
+
+
+
+<cpp:pragma>#<cpp:directive>pragma</cpp:directive> <name>redefine_extname</name> <name>__atomic_load_c</name> <name>SYMBOL_NAME</name><name>(</name><name>__atomic_load</name><name>)</name></cpp:pragma>
+<cpp:pragma>#<cpp:directive>pragma</cpp:directive> <name>redefine_extname</name> <name>__atomic_store_c</name> <name>SYMBOL_NAME</name><name>(</name><name>__atomic_store</name><name>)</name></cpp:pragma>
+<cpp:pragma>#<cpp:directive>pragma</cpp:directive> <name>redefine_extname</name> <name>__atomic_exchange_c</name> <name>SYMBOL_NAME</name><name>(</name><name>__atomic_exchange</name><name>)</name></cpp:pragma>
+<cpp:pragma>#<cpp:directive>pragma</cpp:directive> <name>redefine_extname</name> <name>__atomic_compare_exchange_c</name> <name>SYMBOL_NAME</name><name>(</name> <name>__atomic_compare_exchange</name><name>)</name></cpp:pragma>
+
+<cpp:pragma>#<cpp:directive>pragma</cpp:directive> <name>redefine_extname</name> <name>__atomic_is_lock_free_c</name> <name>SYMBOL_NAME</name><name>(</name> <name>__atomic_is_lock_free</name><name>)</name></cpp:pragma>
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><operator>!</operator><call><name>defined</name><argument_list>(<argument><expr><name>SPINLOCK_COUNT</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>SPINLOCK_COUNT</name></cpp:macro> <cpp:value>(1 &lt;&lt; 10)</cpp:value></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>long</name></type> <name>SPINLOCK_MASK</name> <init>= <expr><name>SPINLOCK_COUNT</name> <operator>-</operator> <literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__FreeBSD__</name></expr></argument>)</argument_list></call> <operator>||</operator> <call><name>defined</name><argument_list>(<argument><expr><name>__DragonFly__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;errno.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/types.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;machine/atomic.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/umtx.h&gt;</cpp:file></cpp:include>
+
+<typedef>typedef <type><name><name>struct</name> <name>_usem</name></name></type> <name>Lock</name>;</typedef>
+<function><type><name>__inline</name> <specifier>static</specifier> <name>void</name></type> <name>unlock</name><parameter_list>(<parameter><decl><type><name>Lock</name> <modifier>*</modifier></type><name>l</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>__c11_atomic_store</name><argument_list>(<argument><expr><operator>(</operator>_Atomic<operator>(</operator><name>uint32_t</name><operator>)</operator> <operator>*</operator><operator>)</operator><operator>&amp;</operator><name><name>l</name><operator>-&gt;</operator><name>_count</name></name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>__ATOMIC_RELEASE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>__c11_atomic_thread_fence</name><argument_list>(<argument><expr><name>__ATOMIC_SEQ_CST</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>l</name><operator>-&gt;</operator><name>_has_waiters</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>_umtx_op</name><argument_list>(<argument><expr><name>l</name></expr></argument>, <argument><expr><name>UMTX_OP_SEM_WAKE</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+<function><type><name>__inline</name> <specifier>static</specifier> <name>void</name></type> <name>lock</name><parameter_list>(<parameter><decl><type><name>Lock</name> <modifier>*</modifier></type><name>l</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>uint32_t</name></type> <name>old</name> <init>= <expr><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<while>while <condition>(<expr><operator>!</operator><call><name>__c11_atomic_compare_exchange_weak</name><argument_list>(<argument><expr><operator>(</operator>_Atomic<operator>(</operator><name>uint32_t</name><operator>)</operator> <operator>*</operator><operator>)</operator><operator>&amp;</operator><name><name>l</name><operator>-&gt;</operator><name>_count</name></name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>old</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>__ATOMIC_ACQUIRE</name></expr></argument>,
+<argument><expr><name>__ATOMIC_RELAXED</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>_umtx_op</name><argument_list>(<argument><expr><name>l</name></expr></argument>, <argument><expr><name>UMTX_OP_SEM_WAIT</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>old</name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></while>
+</block_content>}</block></function>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>Lock</name></type> <name><name>locks</name><index>[<expr><name>SPINLOCK_COUNT</name></expr>]</index></name> <init>= <expr><block>{<expr><index>[<expr><literal type="number">0</literal> <operator>...</operator> <name>SPINLOCK_COUNT</name> <operator>-</operator> <literal type="number">1</literal></expr>]</index> <operator>=</operator> <block>{<expr><literal type="number">0</literal></expr>, <expr><literal type="number">1</literal></expr>, <expr><literal type="number">0</literal></expr>}</block></expr>}</block></expr></init></decl>;</decl_stmt>
+
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__APPLE__</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;libkern/OSAtomic.h&gt;</cpp:file></cpp:include>
+<typedef>typedef <type><name>OSSpinLock</name></type> <name>Lock</name>;</typedef>
+<function><type><name>__inline</name> <specifier>static</specifier> <name>void</name></type> <name>unlock</name><parameter_list>(<parameter><decl><type><name>Lock</name> <modifier>*</modifier></type><name>l</name></decl></parameter>)</parameter_list> <block>{<block_content> <expr_stmt><expr><call><name>OSSpinLockUnlock</name><argument_list>(<argument><expr><name>l</name></expr></argument>)</argument_list></call></expr>;</expr_stmt> </block_content>}</block></function>
+
+
+<function><type><name>__inline</name> <specifier>static</specifier> <name>void</name></type> <name>lock</name><parameter_list>(<parameter><decl><type><name>Lock</name> <modifier>*</modifier></type><name>l</name></decl></parameter>)</parameter_list> <block>{<block_content> <expr_stmt><expr><call><name>OSSpinLockLock</name><argument_list>(<argument><expr><name>l</name></expr></argument>)</argument_list></call></expr>;</expr_stmt> </block_content>}</block></function>
+<decl_stmt><decl><type><specifier>static</specifier> <name>Lock</name></type> <name><name>locks</name><index>[<expr><name>SPINLOCK_COUNT</name></expr>]</index></name></decl>;</decl_stmt>
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<typedef>typedef <type><atomic>_Atomic<argument_list>(<argument><expr><name>uintptr_t</name></expr></argument>)</argument_list></atomic></type> <name>Lock</name>;</typedef>
+
+<function><type><name>__inline</name> <specifier>static</specifier> <name>void</name></type> <name>unlock</name><parameter_list>(<parameter><decl><type><name>Lock</name> <modifier>*</modifier></type><name>l</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<expr_stmt><expr><call><name>__c11_atomic_store</name><argument_list>(<argument><expr><name>l</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>__ATOMIC_RELEASE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+<function><type><name>__inline</name> <specifier>static</specifier> <name>void</name></type> <name>lock</name><parameter_list>(<parameter><decl><type><name>Lock</name> <modifier>*</modifier></type><name>l</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>uintptr_t</name></type> <name>old</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<while>while <condition>(<expr><operator>!</operator><call><name>__c11_atomic_compare_exchange_weak</name><argument_list>(<argument><expr><name>l</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>old</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>__ATOMIC_ACQUIRE</name></expr></argument>,
+<argument><expr><name>__ATOMIC_RELAXED</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>old</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt></block_content></block></while>
+</block_content>}</block></function>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>Lock</name></type> <name><name>locks</name><index>[<expr><name>SPINLOCK_COUNT</name></expr>]</index></name></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+
+<function><type><specifier>static</specifier> <name>__inline</name> <name>Lock</name> <modifier>*</modifier></type><name>lock_for_pointer</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>ptr</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<decl_stmt><decl><type><name>intptr_t</name></type> <name>hash</name> <init>= <expr><operator>(</operator><name>intptr_t</name><operator>)</operator><name>ptr</name></expr></init></decl>;</decl_stmt>
+
+
+
+<expr_stmt><expr><name>hash</name> <operator>&gt;&gt;=</operator> <literal type="number">4</literal></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>intptr_t</name></type> <name>low</name> <init>= <expr><name>hash</name> <operator>&amp;</operator> <name>SPINLOCK_MASK</name></expr></init></decl>;</decl_stmt>
+
+
+<expr_stmt><expr><name>hash</name> <operator>&gt;&gt;=</operator> <literal type="number">16</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name>hash</name> <operator>^=</operator> <name>low</name></expr>;</expr_stmt>
+
+<return>return <expr><name>locks</name> <operator>+</operator> <operator>(</operator><name>hash</name> <operator>&amp;</operator> <name>SPINLOCK_MASK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ATOMIC_ALWAYS_LOCK_FREE_OR_ALIGNED_LOCK_FREE</name><parameter_list>(<parameter><type><name>size</name></type></parameter>, <parameter><type><name>p</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>(__atomic_always_lock_free(size, p) || (__atomic_always_lock_free(size, 0) &amp;&amp; ((uintptr_t)p % size) == 0))</cpp:value></cpp:define>
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>IS_LOCK_FREE_1</name><parameter_list>(<parameter><type><name>p</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>ATOMIC_ALWAYS_LOCK_FREE_OR_ALIGNED_LOCK_FREE(1, p)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>IS_LOCK_FREE_2</name><parameter_list>(<parameter><type><name>p</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>ATOMIC_ALWAYS_LOCK_FREE_OR_ALIGNED_LOCK_FREE(2, p)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>IS_LOCK_FREE_4</name><parameter_list>(<parameter><type><name>p</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>ATOMIC_ALWAYS_LOCK_FREE_OR_ALIGNED_LOCK_FREE(4, p)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>IS_LOCK_FREE_8</name><parameter_list>(<parameter><type><name>p</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>ATOMIC_ALWAYS_LOCK_FREE_OR_ALIGNED_LOCK_FREE(8, p)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>IS_LOCK_FREE_16</name><parameter_list>(<parameter><type><name>p</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>ATOMIC_ALWAYS_LOCK_FREE_OR_ALIGNED_LOCK_FREE(16, p)</cpp:value></cpp:define>
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>TRY_LOCK_FREE_CASE</name><parameter_list>(<parameter><type><name>n</name></type></parameter>, <parameter><type><name>type</name></type></parameter>, <parameter><type><name>ptr</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>case n: if (IS_LOCK_FREE_##n(ptr)) { LOCK_FREE_ACTION(type); } break;</cpp:value></cpp:define>
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__SIZEOF_INT128__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>TRY_LOCK_FREE_CASE_16</name><parameter_list>(<parameter><type><name>p</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>TRY_LOCK_FREE_CASE(16, __uint128_t, p)</cpp:value></cpp:define>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>TRY_LOCK_FREE_CASE_16</name><parameter_list>(<parameter><type><name>p</name></type></parameter>)</parameter_list></cpp:macro></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>LOCK_FREE_CASES</name><parameter_list>(<parameter><type><name>ptr</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>do { switch (size) { TRY_LOCK_FREE_CASE(1, uint8_t, ptr) TRY_LOCK_FREE_CASE(2, uint16_t, ptr) TRY_LOCK_FREE_CASE(4, uint32_t, ptr) TRY_LOCK_FREE_CASE(8, uint64_t, ptr) TRY_LOCK_FREE_CASE_16(ptr) default: break; } } while (0)</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><name>bool</name></type> <name>__atomic_is_lock_free_c</name><parameter_list>(<parameter><decl><type><name>size_t</name></type> <name>size</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>ptr</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>LOCK_FREE_ACTION</name><parameter_list>(<parameter><type><name>type</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>return true;</cpp:value></cpp:define>
+<expr_stmt><expr><call><name>LOCK_FREE_CASES</name><argument_list>(<argument><expr><name>ptr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>LOCK_FREE_ACTION</name></cpp:undef>
+<return>return <expr><name>false</name></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<function><type><name>void</name></type> <name>__atomic_load_c</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>size</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>src</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>dest</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>model</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>LOCK_FREE_ACTION</name><parameter_list>(<parameter><type><name>type</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>*((type *)dest) = __c11_atomic_load((_Atomic(type) *)src, model); return;</cpp:value></cpp:define>
+
+
+<expr_stmt><expr><call><name>LOCK_FREE_CASES</name><argument_list>(<argument><expr><name>src</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>LOCK_FREE_ACTION</name></cpp:undef>
+<decl_stmt><decl><type><name>Lock</name> <modifier>*</modifier></type><name>l</name> <init>= <expr><call><name>lock_for_pointer</name><argument_list>(<argument><expr><name>src</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>lock</name><argument_list>(<argument><expr><name>l</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>dest</name></expr></argument>, <argument><expr><name>src</name></expr></argument>, <argument><expr><name>size</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>unlock</name><argument_list>(<argument><expr><name>l</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+<function><type><name>void</name></type> <name>__atomic_store_c</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>size</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>dest</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>src</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>model</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>LOCK_FREE_ACTION</name><parameter_list>(<parameter><type><name>type</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>__c11_atomic_store((_Atomic(type) *)dest, *(type *)src, model); return;</cpp:value></cpp:define>
+
+
+<expr_stmt><expr><call><name>LOCK_FREE_CASES</name><argument_list>(<argument><expr><name>dest</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>LOCK_FREE_ACTION</name></cpp:undef>
+<decl_stmt><decl><type><name>Lock</name> <modifier>*</modifier></type><name>l</name> <init>= <expr><call><name>lock_for_pointer</name><argument_list>(<argument><expr><name>dest</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>lock</name><argument_list>(<argument><expr><name>l</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>dest</name></expr></argument>, <argument><expr><name>src</name></expr></argument>, <argument><expr><name>size</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>unlock</name><argument_list>(<argument><expr><name>l</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+
+<function><type><name>int</name></type> <name>__atomic_compare_exchange_c</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>size</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>ptr</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>expected</name></decl></parameter>,
+<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>desired</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>success</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>failure</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>LOCK_FREE_ACTION</name><parameter_list>(<parameter><type><name>type</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>return __c11_atomic_compare_exchange_strong( (_Atomic(type) *)ptr, (type *)expected, *(type *)desired, success, failure)</cpp:value></cpp:define>
+
+
+
+<expr_stmt><expr><call><name>LOCK_FREE_CASES</name><argument_list>(<argument><expr><name>ptr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>LOCK_FREE_ACTION</name></cpp:undef>
+<decl_stmt><decl><type><name>Lock</name> <modifier>*</modifier></type><name>l</name> <init>= <expr><call><name>lock_for_pointer</name><argument_list>(<argument><expr><name>ptr</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>lock</name><argument_list>(<argument><expr><name>l</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>memcmp</name><argument_list>(<argument><expr><name>ptr</name></expr></argument>, <argument><expr><name>expected</name></expr></argument>, <argument><expr><name>size</name></expr></argument>)</argument_list></call> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>ptr</name></expr></argument>, <argument><expr><name>desired</name></expr></argument>, <argument><expr><name>size</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>unlock</name><argument_list>(<argument><expr><name>l</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><literal type="number">1</literal></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>expected</name></expr></argument>, <argument><expr><name>ptr</name></expr></argument>, <argument><expr><name>size</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>unlock</name><argument_list>(<argument><expr><name>l</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><literal type="number">0</literal></expr>;</return>
+</block_content>}</block></function>
+
+
+
+<function><type><name>void</name></type> <name>__atomic_exchange_c</name><parameter_list>(<parameter><decl><type><name>int</name></type> <name>size</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>ptr</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>val</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>old</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>model</name></decl></parameter>)</parameter_list> <block>{<block_content>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>LOCK_FREE_ACTION</name><parameter_list>(<parameter><type><name>type</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>*(type *)old = __c11_atomic_exchange((_Atomic(type) *)ptr, *(type *)val, model); return;</cpp:value></cpp:define>
+
+
+
+<expr_stmt><expr><call><name>LOCK_FREE_CASES</name><argument_list>(<argument><expr><name>ptr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>LOCK_FREE_ACTION</name></cpp:undef>
+<decl_stmt><decl><type><name>Lock</name> <modifier>*</modifier></type><name>l</name> <init>= <expr><call><name>lock_for_pointer</name><argument_list>(<argument><expr><name>ptr</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>lock</name><argument_list>(<argument><expr><name>l</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>old</name></expr></argument>, <argument><expr><name>ptr</name></expr></argument>, <argument><expr><name>size</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>ptr</name></expr></argument>, <argument><expr><name>val</name></expr></argument>, <argument><expr><name>size</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>unlock</name><argument_list>(<argument><expr><name>l</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__SIZEOF_INT128__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>OPTIMISED_CASES</name></cpp:macro> <cpp:value>OPTIMISED_CASE(1, IS_LOCK_FREE_1, uint8_t) OPTIMISED_CASE(2, IS_LOCK_FREE_2, uint16_t) OPTIMISED_CASE(4, IS_LOCK_FREE_4, uint32_t) OPTIMISED_CASE(8, IS_LOCK_FREE_8, uint64_t) OPTIMISED_CASE(16, IS_LOCK_FREE_16, __uint128_t)</cpp:value></cpp:define>
+
+
+
+
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>OPTIMISED_CASES</name></cpp:macro> <cpp:value>OPTIMISED_CASE(1, IS_LOCK_FREE_1, uint8_t) OPTIMISED_CASE(2, IS_LOCK_FREE_2, uint16_t) OPTIMISED_CASE(4, IS_LOCK_FREE_4, uint32_t) OPTIMISED_CASE(8, IS_LOCK_FREE_8, uint64_t)</cpp:value></cpp:define>
+
+
+
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>OPTIMISED_CASE</name><parameter_list>(<parameter><type><name>n</name></type></parameter>, <parameter><type><name>lockfree</name></type></parameter>, <parameter><type><name>type</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>type __atomic_load_##n(type *src, int model) { if (lockfree(src)) return __c11_atomic_load((_Atomic(type) *)src, model); Lock *l = lock_for_pointer(src); lock(l); type val = *src; unlock(l); return val; }</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+
+<decl><type><name>OPTIMISED_CASES</name>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>OPTIMISED_CASE</name></cpp:undef>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>OPTIMISED_CASE</name><parameter_list>(<parameter><type><name>n</name></type></parameter>, <parameter><type><name>lockfree</name></type></parameter>, <parameter><type><name>type</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>void __atomic_store_##n(type *dest, type val, int model) { if (lockfree(dest)) { __c11_atomic_store((_Atomic(type) *)dest, val, model); return; } Lock *l = lock_for_pointer(dest); lock(l); *dest = val; unlock(l); return; }</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+
+
+
+<name>OPTIMISED_CASES</name>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>OPTIMISED_CASE</name></cpp:undef>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>OPTIMISED_CASE</name><parameter_list>(<parameter><type><name>n</name></type></parameter>, <parameter><type><name>lockfree</name></type></parameter>, <parameter><type><name>type</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>type __atomic_exchange_##n(type *dest, type val, int model) { if (lockfree(dest)) return __c11_atomic_exchange((_Atomic(type) *)dest, val, model); Lock *l = lock_for_pointer(dest); lock(l); type tmp = *dest; *dest = val; unlock(l); return tmp; }</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+
+
+<name>OPTIMISED_CASES</name>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>OPTIMISED_CASE</name></cpp:undef>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>OPTIMISED_CASE</name><parameter_list>(<parameter><type><name>n</name></type></parameter>, <parameter><type><name>lockfree</name></type></parameter>, <parameter><type><name>type</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>bool __atomic_compare_exchange_##n(type *ptr, type *expected, type desired, int success, int failure) { if (lockfree(ptr)) return __c11_atomic_compare_exchange_strong( (_Atomic(type) *)ptr, expected, desired, success, failure); Lock *l = lock_for_pointer(ptr); lock(l); if (*ptr == *expected) { *ptr = desired; unlock(l); return true; } *expected = *ptr; unlock(l); return false; }</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<name>OPTIMISED_CASES</name>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>OPTIMISED_CASE</name></cpp:undef>
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>ATOMIC_RMW</name><parameter_list>(<parameter><type><name>n</name></type></parameter>, <parameter><type><name>lockfree</name></type></parameter>, <parameter><type><name>type</name></type></parameter>, <parameter><type><name>opname</name></type></parameter>, <parameter><type><name>op</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>type __atomic_fetch_##opname##_##n(type *ptr, type val, int model) { if (lockfree(ptr)) return __c11_atomic_fetch_##opname((_Atomic(type) *)ptr, val, model); Lock *l = lock_for_pointer(ptr); lock(l); type tmp = *ptr; *ptr = tmp op val; unlock(l); return tmp; }</cpp:value></cpp:define>
+
+
+
+
+
+
+
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>OPTIMISED_CASE</name><parameter_list>(<parameter><type><name>n</name></type></parameter>, <parameter><type><name>lockfree</name></type></parameter>, <parameter><type><name>type</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>ATOMIC_RMW(n, lockfree, type, add, +)</cpp:value></cpp:define>
+<name>OPTIMISED_CASES</name>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>OPTIMISED_CASE</name></cpp:undef>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>OPTIMISED_CASE</name><parameter_list>(<parameter><type><name>n</name></type></parameter>, <parameter><type><name>lockfree</name></type></parameter>, <parameter><type><name>type</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>ATOMIC_RMW(n, lockfree, type, sub, -)</cpp:value></cpp:define>
+<name>OPTIMISED_CASES</name>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>OPTIMISED_CASE</name></cpp:undef>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>OPTIMISED_CASE</name><parameter_list>(<parameter><type><name>n</name></type></parameter>, <parameter><type><name>lockfree</name></type></parameter>, <parameter><type><name>type</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>ATOMIC_RMW(n, lockfree, type, and, &amp;)</cpp:value></cpp:define>
+<name>OPTIMISED_CASES</name>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>OPTIMISED_CASE</name></cpp:undef>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>OPTIMISED_CASE</name><parameter_list>(<parameter><type><name>n</name></type></parameter>, <parameter><type><name>lockfree</name></type></parameter>, <parameter><type><name>type</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>ATOMIC_RMW(n, lockfree, type, or, |)</cpp:value></cpp:define>
+<name>OPTIMISED_CASES</name></type>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>OPTIMISED_CASE</name></cpp:undef>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>OPTIMISED_CASE</name><parameter_list>(<parameter><type><name>n</name></type></parameter>, <parameter><type><name>lockfree</name></type></parameter>, <parameter><type><name>type</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>ATOMIC_RMW(n, lockfree, type, xor, ^)</cpp:value></cpp:define>
+<name>OPTIMISED_CASES</name></decl>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>OPTIMISED_CASE</name></cpp:undef>
+</unit>

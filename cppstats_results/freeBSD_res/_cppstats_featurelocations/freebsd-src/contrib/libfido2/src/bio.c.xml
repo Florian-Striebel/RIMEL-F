@@ -1,0 +1,843 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/contrib/libfido2/src/bio.c">
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"fido.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"fido/bio.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"fido/es256.h"</cpp:file></cpp:include>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>CMD_ENROLL_BEGIN</name></cpp:macro> <cpp:value>0x01</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>CMD_ENROLL_NEXT</name></cpp:macro> <cpp:value>0x02</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>CMD_ENROLL_CANCEL</name></cpp:macro> <cpp:value>0x03</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>CMD_ENUM</name></cpp:macro> <cpp:value>0x04</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>CMD_SET_NAME</name></cpp:macro> <cpp:value>0x05</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>CMD_ENROLL_REMOVE</name></cpp:macro> <cpp:value>0x06</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>CMD_GET_INFO</name></cpp:macro> <cpp:value>0x07</cpp:value></cpp:define>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>bio_prepare_hmac</name><parameter_list>(<parameter><decl><type><name>uint8_t</name></type> <name>cmd</name></decl></parameter>, <parameter><decl><type><name>cbor_item_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>argv</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>argc</name></decl></parameter>,
+<parameter><decl><type><name>cbor_item_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>param</name></decl></parameter>, <parameter><decl><type><name>fido_blob_t</name> <modifier>*</modifier></type><name>hmac_data</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uint8_t</name></type> <name><name>prefix</name><index>[<expr><literal type="number">2</literal></expr>]</index></name> <init>= <expr><block>{ <expr><literal type="number">0x01</literal></expr> , <expr><name>cmd</name></expr> }</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ok</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>cbor_alloc_len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>cbor_len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>cbor</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>argv</name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <name>param</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><call><name>fido_blob_set</name><argument_list>(<argument><expr><name>hmac_data</name></expr></argument>, <argument><expr><name>prefix</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>prefix</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><operator>*</operator><name>param</name> <operator>=</operator> <call><name>cbor_flatten_vector</name><argument_list>(<argument><expr><name>argv</name></expr></argument>, <argument><expr><name>argc</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: cbor_flatten_vector"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>cbor_len</name> <operator>=</operator> <call><name>cbor_serialize_alloc</name><argument_list>(<argument><expr><operator>*</operator><name>param</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>cbor</name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>cbor_alloc_len</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <literal type="number">0</literal> <operator>||</operator> <name>cbor_len</name> <operator>&gt;</operator> <name>SIZE_MAX</name> <operator>-</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>prefix</name></expr></argument>)</argument_list></sizeof></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: cbor_serialize_alloc"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>hmac_data</name><operator>-&gt;</operator><name>ptr</name></name> <operator>=</operator> <call><name>malloc</name><argument_list>(<argument><expr><name>cbor_len</name> <operator>+</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>prefix</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: malloc"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name><name>hmac_data</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>, <argument><expr><name>prefix</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>prefix</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name><name>hmac_data</name><operator>-&gt;</operator><name>ptr</name></name> <operator>+</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>prefix</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><name>cbor</name></expr></argument>, <argument><expr><name>cbor_len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>hmac_data</name><operator>-&gt;</operator><name>len</name></name> <operator>=</operator> <name>cbor_len</name> <operator>+</operator> <sizeof>sizeof<argument_list>(<argument><expr><name>prefix</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>ok</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<label><name>fail</name>:</label>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>cbor</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>ok</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>bio_tx</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><name>uint8_t</name></type> <name>subcmd</name></decl></parameter>, <parameter><decl><type><name>cbor_item_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>sub_argv</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>sub_argc</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>pin</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>fido_blob_t</name> <modifier>*</modifier></type><name>token</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>cbor_item_t</name> <modifier>*</modifier></type><name><name>argv</name><index>[<expr><literal type="number">5</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>es256_pk_t</name> <modifier>*</modifier></type><name>pk</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>fido_blob_t</name> <modifier>*</modifier></type><name>ecdh</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>fido_blob_t</name></type> <name>f</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>fido_blob_t</name></type> <name>hmac</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uint8_t</name></type> <name>cmd</name> <init>= <expr><name>CTAP_CBOR_BIO_ENROLL_PRE</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name> <init>= <expr><name>FIDO_ERR_INTERNAL</name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>f</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>f</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>hmac</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>hmac</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>argv</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>argv</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>argv</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>=</operator> <call><name>cbor_build_uint8</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<operator>(</operator><name><name>argv</name><index>[<expr><literal type="number">1</literal></expr>]</index></name> <operator>=</operator> <call><name>cbor_build_uint8</name><argument_list>(<argument><expr><name>subcmd</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: cbor encode"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>pin</name> <operator>||</operator> <name>token</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><call><name>bio_prepare_hmac</name><argument_list>(<argument><expr><name>subcmd</name></expr></argument>, <argument><expr><name>sub_argv</name></expr></argument>, <argument><expr><name>sub_argc</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>argv</name><index>[<expr><literal type="number">2</literal></expr>]</index></name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>hmac</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: bio_prepare_hmac"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><name>pin</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>fido_do_ecdh</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>pk</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ecdh</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_do_ecdh"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>cbor_add_uv_params</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>cmd</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>hmac</name></expr></argument>, <argument><expr><name>pk</name></expr></argument>, <argument><expr><name>ecdh</name></expr></argument>, <argument><expr><name>pin</name></expr></argument>,
+<argument><expr><name>NULL</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>argv</name><index>[<expr><literal type="number">4</literal></expr>]</index></name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>argv</name><index>[<expr><literal type="number">3</literal></expr>]</index></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: cbor_add_uv_params"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>token</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>argv</name><index>[<expr><literal type="number">3</literal></expr>]</index></name> <operator>=</operator> <call><name>cbor_encode_pin_opt</name><argument_list>(<argument><expr><name>dev</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<operator>(</operator><name><name>argv</name><index>[<expr><literal type="number">4</literal></expr>]</index></name> <operator>=</operator> <call><name>cbor_encode_pin_auth</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>token</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>hmac</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: encode pin"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+<if_stmt><if>if <condition>(<expr><call><name>cbor_build_frame</name><argument_list>(<argument><expr><name>cmd</name></expr></argument>, <argument><expr><name>argv</name></expr></argument>, <argument><expr><call><name>nitems</name><argument_list>(<argument><expr><name>argv</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><operator>&amp;</operator><name>f</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator>
+<call><name>fido_tx</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>CTAP_CMD_CBOR</name></expr></argument>, <argument><expr><name><name>f</name><operator>.</operator><name>ptr</name></name></expr></argument>, <argument><expr><name><name>f</name><operator>.</operator><name>len</name></name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_tx"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_TX</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_OK</name></expr>;</expr_stmt>
+<label><name>fail</name>:</label>
+<expr_stmt><expr><call><name>cbor_vector_free</name><argument_list>(<argument><expr><name>argv</name></expr></argument>, <argument><expr><call><name>nitems</name><argument_list>(<argument><expr><name>argv</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>es256_pk_free</name><argument_list>(<argument><expr><operator>&amp;</operator><name>pk</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fido_blob_free</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ecdh</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>f</name><operator>.</operator><name>ptr</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>hmac</name><operator>.</operator><name>ptr</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>bio_reset_template</name><parameter_list>(<parameter><decl><type><name>fido_bio_template_t</name> <modifier>*</modifier></type><name>t</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>t</name><operator>-&gt;</operator><name>name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>t</name><operator>-&gt;</operator><name>name</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fido_blob_reset</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>t</name><operator>-&gt;</operator><name>id</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>bio_reset_template_array</name><parameter_list>(<parameter><decl><type><name>fido_bio_template_array_t</name> <modifier>*</modifier></type><name>ta</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<for>for <control>(<init><decl><type><name>size_t</name></type> <name>i</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name><name>ta</name><operator>-&gt;</operator><name>n_alloc</name></name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>bio_reset_template</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>ta</name><operator>-&gt;</operator><name>ptr</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>ta</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ta</name><operator>-&gt;</operator><name>ptr</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><name>ta</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name>ta</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>decode_template</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>cbor_item_t</name> <modifier>*</modifier></type><name>key</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>cbor_item_t</name> <modifier>*</modifier></type><name>val</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>fido_bio_template_t</name> <modifier>*</modifier></type><name>t</name> <init>= <expr><name>arg</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>cbor_isa_uint</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name> <operator>||</operator>
+<call><name>cbor_int_get_width</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>CBOR_INT_8</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: cbor type"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<switch>switch <condition>(<expr><call><name>cbor_get_uint8</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<case>case <expr><literal type="number">1</literal></expr>:</case>
+<return>return <expr><operator>(</operator><call><name>fido_blob_decode</name><argument_list>(<argument><expr><name>val</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>t</name><operator>-&gt;</operator><name>id</name></name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+<case>case <expr><literal type="number">2</literal></expr>:</case>
+<return>return <expr><operator>(</operator><call><name>cbor_string_copy</name><argument_list>(<argument><expr><name>val</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>t</name><operator>-&gt;</operator><name>name</name></name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></switch>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>decode_template_array</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>cbor_item_t</name> <modifier>*</modifier></type><name>item</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>fido_bio_template_array_t</name> <modifier>*</modifier></type><name>ta</name> <init>= <expr><name>arg</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>cbor_isa_map</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name> <operator>||</operator>
+<call><name>cbor_map_is_definite</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: cbor type"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>ta</name><operator>-&gt;</operator><name>n_rx</name></name> <operator>&gt;=</operator> <name><name>ta</name><operator>-&gt;</operator><name>n_alloc</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: n_rx &gt;= n_alloc"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>cbor_map_iter</name><argument_list>(<argument><expr><name>item</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>ta</name><operator>-&gt;</operator><name>ptr</name><index>[<expr><name><name>ta</name><operator>-&gt;</operator><name>n_rx</name></name></expr>]</index></name></expr></argument>, <argument><expr><name>decode_template</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: decode_template"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>ta</name><operator>-&gt;</operator><name>n_rx</name></name><operator>++</operator></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>bio_parse_template_array</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>cbor_item_t</name> <modifier>*</modifier></type><name>key</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>cbor_item_t</name> <modifier>*</modifier></type><name>val</name></decl></parameter>,
+<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>fido_bio_template_array_t</name> <modifier>*</modifier></type><name>ta</name> <init>= <expr><name>arg</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>cbor_isa_uint</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name> <operator>||</operator>
+<call><name>cbor_int_get_width</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>CBOR_INT_8</name> <operator>||</operator>
+<call><name>cbor_get_uint8</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">7</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: cbor type"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>cbor_isa_array</name><argument_list>(<argument><expr><name>val</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name> <operator>||</operator>
+<call><name>cbor_array_is_definite</name><argument_list>(<argument><expr><name>val</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: cbor type"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>ta</name><operator>-&gt;</operator><name>ptr</name></name> <operator>!=</operator> <name>NULL</name> <operator>||</operator> <name><name>ta</name><operator>-&gt;</operator><name>n_alloc</name></name> <operator>!=</operator> <literal type="number">0</literal> <operator>||</operator> <name><name>ta</name><operator>-&gt;</operator><name>n_rx</name></name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: ptr != NULL || n_alloc != 0 || n_rx != 0"</literal></expr></argument>,
+<argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>ta</name><operator>-&gt;</operator><name>ptr</name></name> <operator>=</operator> <call><name>calloc</name><argument_list>(<argument><expr><call><name>cbor_array_size</name><argument_list>(<argument><expr><name>val</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><operator>*</operator><name><name>ta</name><operator>-&gt;</operator><name>ptr</name></name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name><name>ta</name><operator>-&gt;</operator><name>n_alloc</name></name> <operator>=</operator> <call><name>cbor_array_size</name><argument_list>(<argument><expr><name>val</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>cbor_array_iter</name><argument_list>(<argument><expr><name>val</name></expr></argument>, <argument><expr><name>ta</name></expr></argument>, <argument><expr><name>decode_template_array</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: decode_template_array"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>bio_rx_template_array</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><name>fido_bio_template_array_t</name> <modifier>*</modifier></type><name>ta</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ms</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>reply</name><index>[<expr><name>FIDO_MAXMSG</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>reply_len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>bio_reset_template_array</name><argument_list>(<argument><expr><name>ta</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>reply_len</name> <operator>=</operator> <call><name>fido_rx</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>CTAP_CMD_CBOR</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>reply</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>reply</name></expr></argument>)</argument_list></sizeof></expr></argument>,
+<argument><expr><name>ms</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_rx"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FIDO_ERR_RX</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>cbor_parse_reply</name><argument_list>(<argument><expr><name>reply</name></expr></argument>, <argument><expr><operator>(</operator><name>size_t</name><operator>)</operator><name>reply_len</name></expr></argument>, <argument><expr><name>ta</name></expr></argument>,
+<argument><expr><name>bio_parse_template_array</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: bio_parse_template_array"</literal></expr></argument> , <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>FIDO_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>bio_get_template_array_wait</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><name>fido_bio_template_array_t</name> <modifier>*</modifier></type><name>ta</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>pin</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ms</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>bio_tx</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>CMD_ENUM</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>pin</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name> <operator>||</operator>
+<operator>(</operator><name>r</name> <operator>=</operator> <call><name>bio_rx_template_array</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>ta</name></expr></argument>, <argument><expr><name>ms</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>FIDO_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>fido_bio_dev_get_template_array</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><name>fido_bio_template_array_t</name> <modifier>*</modifier></type><name>ta</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>pin</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>pin</name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>FIDO_ERR_INVALID_ARGUMENT</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><call><name>bio_get_template_array_wait</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>ta</name></expr></argument>, <argument><expr><name>pin</name></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>bio_set_template_name_wait</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>fido_bio_template_t</name> <modifier>*</modifier></type><name>t</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>pin</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ms</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>cbor_item_t</name> <modifier>*</modifier></type><name><name>argv</name><index>[<expr><literal type="number">2</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name> <init>= <expr><name>FIDO_ERR_INTERNAL</name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>argv</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>argv</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>argv</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>=</operator> <call><name>fido_blob_encode</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>t</name><operator>-&gt;</operator><name>id</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<operator>(</operator><name><name>argv</name><index>[<expr><literal type="number">1</literal></expr>]</index></name> <operator>=</operator> <call><name>cbor_build_string</name><argument_list>(<argument><expr><name><name>t</name><operator>-&gt;</operator><name>name</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: cbor encode"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>bio_tx</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>CMD_SET_NAME</name></expr></argument>, <argument><expr><name>argv</name></expr></argument>, <argument><expr><literal type="number">2</literal></expr></argument>, <argument><expr><name>pin</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name> <operator>||</operator>
+<operator>(</operator><name>r</name> <operator>=</operator> <call><name>fido_rx_cbor_status</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>ms</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: tx/rx"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_OK</name></expr>;</expr_stmt>
+<label><name>fail</name>:</label>
+<expr_stmt><expr><call><name>cbor_vector_free</name><argument_list>(<argument><expr><name>argv</name></expr></argument>, <argument><expr><call><name>nitems</name><argument_list>(<argument><expr><name>argv</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>fido_bio_dev_set_template_name</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>fido_bio_template_t</name> <modifier>*</modifier></type><name>t</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>pin</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>pin</name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <name><name>t</name><operator>-&gt;</operator><name>name</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>FIDO_ERR_INVALID_ARGUMENT</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><call><name>bio_set_template_name_wait</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>t</name></expr></argument>, <argument><expr><name>pin</name></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>bio_reset_enroll</name><parameter_list>(<parameter><decl><type><name>fido_bio_enroll_t</name> <modifier>*</modifier></type><name>e</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><name><name>e</name><operator>-&gt;</operator><name>remaining_samples</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>e</name><operator>-&gt;</operator><name>last_status</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>e</name><operator>-&gt;</operator><name>token</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>fido_blob_free</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>e</name><operator>-&gt;</operator><name>token</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>bio_parse_enroll_status</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>cbor_item_t</name> <modifier>*</modifier></type><name>key</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>cbor_item_t</name> <modifier>*</modifier></type><name>val</name></decl></parameter>,
+<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>fido_bio_enroll_t</name> <modifier>*</modifier></type><name>e</name> <init>= <expr><name>arg</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>x</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>cbor_isa_uint</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name> <operator>||</operator>
+<call><name>cbor_int_get_width</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>CBOR_INT_8</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: cbor type"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<switch>switch <condition>(<expr><call><name>cbor_get_uint8</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<case>case <expr><literal type="number">5</literal></expr>:</case>
+<if_stmt><if>if <condition>(<expr><call><name>cbor_decode_uint64</name><argument_list>(<argument><expr><name>val</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>x</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator> <name>x</name> <operator>&gt;</operator> <name>UINT8_MAX</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: cbor_decode_uint64"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>e</name><operator>-&gt;</operator><name>last_status</name></name> <operator>=</operator> <operator>(</operator><name>uint8_t</name><operator>)</operator><name>x</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="number">6</literal></expr>:</case>
+<if_stmt><if>if <condition>(<expr><call><name>cbor_decode_uint64</name><argument_list>(<argument><expr><name>val</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>x</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator> <name>x</name> <operator>&gt;</operator> <name>UINT8_MAX</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: cbor_decode_uint64"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>e</name><operator>-&gt;</operator><name>remaining_samples</name></name> <operator>=</operator> <operator>(</operator><name>uint8_t</name><operator>)</operator><name>x</name></expr>;</expr_stmt>
+<break>break;</break>
+<default>default:</default>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></switch>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>bio_parse_template_id</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>cbor_item_t</name> <modifier>*</modifier></type><name>key</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>cbor_item_t</name> <modifier>*</modifier></type><name>val</name></decl></parameter>,
+<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>fido_blob_t</name> <modifier>*</modifier></type><name>id</name> <init>= <expr><name>arg</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>cbor_isa_uint</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name> <operator>||</operator>
+<call><name>cbor_int_get_width</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>CBOR_INT_8</name> <operator>||</operator>
+<call><name>cbor_get_uint8</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">4</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: cbor type"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><call><name>fido_blob_decode</name><argument_list>(<argument><expr><name>val</name></expr></argument>, <argument><expr><name>id</name></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>bio_rx_enroll_begin</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><name>fido_bio_template_t</name> <modifier>*</modifier></type><name>t</name></decl></parameter>,
+<parameter><decl><type><name>fido_bio_enroll_t</name> <modifier>*</modifier></type><name>e</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ms</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>reply</name><index>[<expr><name>FIDO_MAXMSG</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>reply_len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>bio_reset_template</name><argument_list>(<argument><expr><name>t</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>e</name><operator>-&gt;</operator><name>remaining_samples</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>e</name><operator>-&gt;</operator><name>last_status</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>reply_len</name> <operator>=</operator> <call><name>fido_rx</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>CTAP_CMD_CBOR</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>reply</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>reply</name></expr></argument>)</argument_list></sizeof></expr></argument>,
+<argument><expr><name>ms</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_rx"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FIDO_ERR_RX</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>cbor_parse_reply</name><argument_list>(<argument><expr><name>reply</name></expr></argument>, <argument><expr><operator>(</operator><name>size_t</name><operator>)</operator><name>reply_len</name></expr></argument>, <argument><expr><name>e</name></expr></argument>,
+<argument><expr><name>bio_parse_enroll_status</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: bio_parse_enroll_status"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>cbor_parse_reply</name><argument_list>(<argument><expr><name>reply</name></expr></argument>, <argument><expr><operator>(</operator><name>size_t</name><operator>)</operator><name>reply_len</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>t</name><operator>-&gt;</operator><name>id</name></name></expr></argument>,
+<argument><expr><name>bio_parse_template_id</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: bio_parse_template_id"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>FIDO_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>bio_enroll_begin_wait</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><name>fido_bio_template_t</name> <modifier>*</modifier></type><name>t</name></decl></parameter>,
+<parameter><decl><type><name>fido_bio_enroll_t</name> <modifier>*</modifier></type><name>e</name></decl></parameter>, <parameter><decl><type><name>uint32_t</name></type> <name>timo_ms</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ms</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>cbor_item_t</name> <modifier>*</modifier></type><name><name>argv</name><index>[<expr><literal type="number">3</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uint8_t</name></type> <name>cmd</name> <init>= <expr><name>CMD_ENROLL_BEGIN</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name> <init>= <expr><name>FIDO_ERR_INTERNAL</name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>argv</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>argv</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>argv</name><index>[<expr><literal type="number">2</literal></expr>]</index></name> <operator>=</operator> <call><name>cbor_build_uint32</name><argument_list>(<argument><expr><name>timo_ms</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: cbor encode"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>bio_tx</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>cmd</name></expr></argument>, <argument><expr><name>argv</name></expr></argument>, <argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name><name>e</name><operator>-&gt;</operator><name>token</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name> <operator>||</operator>
+<operator>(</operator><name>r</name> <operator>=</operator> <call><name>bio_rx_enroll_begin</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>t</name></expr></argument>, <argument><expr><name>e</name></expr></argument>, <argument><expr><name>ms</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: tx/rx"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_OK</name></expr>;</expr_stmt>
+<label><name>fail</name>:</label>
+<expr_stmt><expr><call><name>cbor_vector_free</name><argument_list>(<argument><expr><name>argv</name></expr></argument>, <argument><expr><call><name>nitems</name><argument_list>(<argument><expr><name>argv</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>fido_bio_dev_enroll_begin</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><name>fido_bio_template_t</name> <modifier>*</modifier></type><name>t</name></decl></parameter>,
+<parameter><decl><type><name>fido_bio_enroll_t</name> <modifier>*</modifier></type><name>e</name></decl></parameter>, <parameter><decl><type><name>uint32_t</name></type> <name>timo_ms</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>pin</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>es256_pk_t</name> <modifier>*</modifier></type><name>pk</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>fido_blob_t</name> <modifier>*</modifier></type><name>ecdh</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>fido_blob_t</name> <modifier>*</modifier></type><name>token</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>pin</name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <name><name>e</name><operator>-&gt;</operator><name>token</name></name> <operator>!=</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>FIDO_ERR_INVALID_ARGUMENT</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>token</name> <operator>=</operator> <call><name>fido_blob_new</name><argument_list>()</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_ERR_INTERNAL</name></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>fido_do_ecdh</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>pk</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ecdh</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_do_ecdh"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>fido_dev_get_uv_token</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>CTAP_CBOR_BIO_ENROLL_PRE</name></expr></argument>, <argument><expr><name>pin</name></expr></argument>, <argument><expr><name>ecdh</name></expr></argument>,
+<argument><expr><name>pk</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>token</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_dev_get_uv_token"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>e</name><operator>-&gt;</operator><name>token</name></name> <operator>=</operator> <name>token</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>token</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<label><name>fail</name>:</label>
+<expr_stmt><expr><call><name>es256_pk_free</name><argument_list>(<argument><expr><operator>&amp;</operator><name>pk</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fido_blob_free</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ecdh</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>fido_blob_free</name><argument_list>(<argument><expr><operator>&amp;</operator><name>token</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>r</name> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><call><name>bio_enroll_begin_wait</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>t</name></expr></argument>, <argument><expr><name>e</name></expr></argument>, <argument><expr><name>timo_ms</name></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>bio_rx_enroll_continue</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><name>fido_bio_enroll_t</name> <modifier>*</modifier></type><name>e</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ms</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>reply</name><index>[<expr><name>FIDO_MAXMSG</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>reply_len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>e</name><operator>-&gt;</operator><name>remaining_samples</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>e</name><operator>-&gt;</operator><name>last_status</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>reply_len</name> <operator>=</operator> <call><name>fido_rx</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>CTAP_CMD_CBOR</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>reply</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>reply</name></expr></argument>)</argument_list></sizeof></expr></argument>,
+<argument><expr><name>ms</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_rx"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FIDO_ERR_RX</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>cbor_parse_reply</name><argument_list>(<argument><expr><name>reply</name></expr></argument>, <argument><expr><operator>(</operator><name>size_t</name><operator>)</operator><name>reply_len</name></expr></argument>, <argument><expr><name>e</name></expr></argument>,
+<argument><expr><name>bio_parse_enroll_status</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: bio_parse_enroll_status"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>FIDO_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>bio_enroll_continue_wait</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>fido_bio_template_t</name> <modifier>*</modifier></type><name>t</name></decl></parameter>,
+<parameter><decl><type><name>fido_bio_enroll_t</name> <modifier>*</modifier></type><name>e</name></decl></parameter>, <parameter><decl><type><name>uint32_t</name></type> <name>timo_ms</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ms</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>cbor_item_t</name> <modifier>*</modifier></type><name><name>argv</name><index>[<expr><literal type="number">3</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uint8_t</name></type> <name>cmd</name> <init>= <expr><name>CMD_ENROLL_NEXT</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name> <init>= <expr><name>FIDO_ERR_INTERNAL</name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>argv</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>argv</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>argv</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>=</operator> <call><name>fido_blob_encode</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>t</name><operator>-&gt;</operator><name>id</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name> <operator>||</operator>
+<operator>(</operator><name><name>argv</name><index>[<expr><literal type="number">2</literal></expr>]</index></name> <operator>=</operator> <call><name>cbor_build_uint32</name><argument_list>(<argument><expr><name>timo_ms</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: cbor encode"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>bio_tx</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>cmd</name></expr></argument>, <argument><expr><name>argv</name></expr></argument>, <argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name><name>e</name><operator>-&gt;</operator><name>token</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name> <operator>||</operator>
+<operator>(</operator><name>r</name> <operator>=</operator> <call><name>bio_rx_enroll_continue</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>e</name></expr></argument>, <argument><expr><name>ms</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: tx/rx"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_OK</name></expr>;</expr_stmt>
+<label><name>fail</name>:</label>
+<expr_stmt><expr><call><name>cbor_vector_free</name><argument_list>(<argument><expr><name>argv</name></expr></argument>, <argument><expr><call><name>nitems</name><argument_list>(<argument><expr><name>argv</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>fido_bio_dev_enroll_continue</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>fido_bio_template_t</name> <modifier>*</modifier></type><name>t</name></decl></parameter>,
+<parameter><decl><type><name>fido_bio_enroll_t</name> <modifier>*</modifier></type><name>e</name></decl></parameter>, <parameter><decl><type><name>uint32_t</name></type> <name>timo_ms</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>e</name><operator>-&gt;</operator><name>token</name></name> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>FIDO_ERR_INVALID_ARGUMENT</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><call><name>bio_enroll_continue_wait</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>t</name></expr></argument>, <argument><expr><name>e</name></expr></argument>, <argument><expr><name>timo_ms</name></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>bio_enroll_cancel_wait</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ms</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uint8_t</name></type> <name>cmd</name> <init>= <expr><name>CMD_ENROLL_CANCEL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>bio_tx</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>cmd</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name> <operator>||</operator>
+<operator>(</operator><name>r</name> <operator>=</operator> <call><name>fido_rx_cbor_status</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>ms</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: tx/rx"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>FIDO_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>fido_bio_dev_enroll_cancel</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><call><name>bio_enroll_cancel_wait</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>bio_enroll_remove_wait</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>fido_bio_template_t</name> <modifier>*</modifier></type><name>t</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>pin</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ms</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>cbor_item_t</name> <modifier>*</modifier></type><name><name>argv</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>const</specifier> <name>uint8_t</name></type> <name>cmd</name> <init>= <expr><name>CMD_ENROLL_REMOVE</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name> <init>= <expr><name>FIDO_ERR_INTERNAL</name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><operator>&amp;</operator><name>argv</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>argv</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name><name>argv</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>=</operator> <call><name>fido_blob_encode</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>t</name><operator>-&gt;</operator><name>id</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: cbor encode"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>bio_tx</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>cmd</name></expr></argument>, <argument><expr><name>argv</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>pin</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name> <operator>||</operator>
+<operator>(</operator><name>r</name> <operator>=</operator> <call><name>fido_rx_cbor_status</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>ms</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: tx/rx"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<goto>goto <name>fail</name>;</goto>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>r</name> <operator>=</operator> <name>FIDO_OK</name></expr>;</expr_stmt>
+<label><name>fail</name>:</label>
+<expr_stmt><expr><call><name>cbor_vector_free</name><argument_list>(<argument><expr><name>argv</name></expr></argument>, <argument><expr><call><name>nitems</name><argument_list>(<argument><expr><name>argv</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>fido_bio_dev_enroll_remove</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>fido_bio_template_t</name> <modifier>*</modifier></type><name>t</name></decl></parameter>,
+<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>pin</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><call><name>bio_enroll_remove_wait</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>t</name></expr></argument>, <argument><expr><name>pin</name></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>bio_reset_info</name><parameter_list>(<parameter><decl><type><name>fido_bio_info_t</name> <modifier>*</modifier></type><name>i</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><name><name>i</name><operator>-&gt;</operator><name>type</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>i</name><operator>-&gt;</operator><name>max_samples</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>bio_parse_info</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>cbor_item_t</name> <modifier>*</modifier></type><name>key</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>cbor_item_t</name> <modifier>*</modifier></type><name>val</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>fido_bio_info_t</name> <modifier>*</modifier></type><name>i</name> <init>= <expr><name>arg</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint64_t</name></type> <name>x</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>cbor_isa_uint</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call> <operator>==</operator> <name>false</name> <operator>||</operator>
+<call><name>cbor_int_get_width</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>CBOR_INT_8</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: cbor type"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<switch>switch <condition>(<expr><call><name>cbor_get_uint8</name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<case>case <expr><literal type="number">2</literal></expr>:</case>
+<if_stmt><if>if <condition>(<expr><call><name>cbor_decode_uint64</name><argument_list>(<argument><expr><name>val</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>x</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator> <name>x</name> <operator>&gt;</operator> <name>UINT8_MAX</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: cbor_decode_uint64"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>i</name><operator>-&gt;</operator><name>type</name></name> <operator>=</operator> <operator>(</operator><name>uint8_t</name><operator>)</operator><name>x</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><literal type="number">3</literal></expr>:</case>
+<if_stmt><if>if <condition>(<expr><call><name>cbor_decode_uint64</name><argument_list>(<argument><expr><name>val</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>x</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal> <operator>||</operator> <name>x</name> <operator>&gt;</operator> <name>UINT8_MAX</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: cbor_decode_uint64"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><operator>-</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><name><name>i</name><operator>-&gt;</operator><name>max_samples</name></name> <operator>=</operator> <operator>(</operator><name>uint8_t</name><operator>)</operator><name>x</name></expr>;</expr_stmt>
+<break>break;</break>
+<default>default:</default>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></switch>
+
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>bio_rx_info</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><name>fido_bio_info_t</name> <modifier>*</modifier></type><name>i</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ms</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>unsigned</name> <name>char</name></type> <name><name>reply</name><index>[<expr><name>FIDO_MAXMSG</name></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>reply_len</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>bio_reset_info</name><argument_list>(<argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>reply_len</name> <operator>=</operator> <call><name>fido_rx</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>CTAP_CMD_CBOR</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>reply</name></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>reply</name></expr></argument>)</argument_list></sizeof></expr></argument>,
+<argument><expr><name>ms</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: fido_rx"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>FIDO_ERR_RX</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>cbor_parse_reply</name><argument_list>(<argument><expr><name>reply</name></expr></argument>, <argument><expr><operator>(</operator><name>size_t</name><operator>)</operator><name>reply_len</name></expr></argument>, <argument><expr><name>i</name></expr></argument>,
+<argument><expr><name>bio_parse_info</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: bio_parse_info"</literal></expr></argument> , <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>FIDO_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>bio_get_info_wait</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><name>fido_bio_info_t</name> <modifier>*</modifier></type><name>i</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>ms</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>r</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>r</name> <operator>=</operator> <call><name>bio_tx</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>CMD_GET_INFO</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name> <operator>||</operator>
+<operator>(</operator><name>r</name> <operator>=</operator> <call><name>bio_rx_info</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>i</name></expr></argument>, <argument><expr><name>ms</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>FIDO_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>fido_log_debug</name><argument_list>(<argument><expr><literal type="string">"%s: tx/rx"</literal></expr></argument>, <argument><expr><name>__func__</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>r</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>FIDO_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>fido_bio_dev_get_info</name><parameter_list>(<parameter><decl><type><name>fido_dev_t</name> <modifier>*</modifier></type><name>dev</name></decl></parameter>, <parameter><decl><type><name>fido_bio_info_t</name> <modifier>*</modifier></type><name>i</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><call><name>bio_get_info_wait</name><argument_list>(<argument><expr><name>dev</name></expr></argument>, <argument><expr><name>i</name></expr></argument>, <argument><expr><operator>-</operator><literal type="number">1</literal></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type>
+<name>fido_bio_template_name</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>fido_bio_template_t</name> <modifier>*</modifier></type><name>t</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><name><name>t</name><operator>-&gt;</operator><name>name</name></name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>const</specifier> <name>unsigned</name> <name>char</name> <modifier>*</modifier></type>
+<name>fido_bio_template_id_ptr</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>fido_bio_template_t</name> <modifier>*</modifier></type><name>t</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><name><name>t</name><operator>-&gt;</operator><name>id</name><operator>.</operator><name>ptr</name></name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>size_t</name></type>
+<name>fido_bio_template_id_len</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>fido_bio_template_t</name> <modifier>*</modifier></type><name>t</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><name><name>t</name><operator>-&gt;</operator><name>id</name><operator>.</operator><name>len</name></name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>size_t</name></type>
+<name>fido_bio_template_array_count</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>fido_bio_template_array_t</name> <modifier>*</modifier></type><name>ta</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><name><name>ta</name><operator>-&gt;</operator><name>n_rx</name></name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>fido_bio_template_array_t</name> <modifier>*</modifier></type>
+<name>fido_bio_template_array_new</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><call><name>calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>fido_bio_template_array_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>fido_bio_template_t</name> <modifier>*</modifier></type>
+<name>fido_bio_template_new</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><call><name>calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>fido_bio_template_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type>
+<name>fido_bio_template_array_free</name><parameter_list>(<parameter><decl><type><name>fido_bio_template_array_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>tap</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>fido_bio_template_array_t</name> <modifier>*</modifier></type><name>ta</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>tap</name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <operator>(</operator><name>ta</name> <operator>=</operator> <operator>*</operator><name>tap</name><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>bio_reset_template_array</name><argument_list>(<argument><expr><name>ta</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>ta</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>tap</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type>
+<name>fido_bio_template_free</name><parameter_list>(<parameter><decl><type><name>fido_bio_template_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>tp</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>fido_bio_template_t</name> <modifier>*</modifier></type><name>t</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>tp</name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <operator>(</operator><name>t</name> <operator>=</operator> <operator>*</operator><name>tp</name><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>bio_reset_template</name><argument_list>(<argument><expr><name>t</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>t</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>tp</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>fido_bio_template_set_name</name><parameter_list>(<parameter><decl><type><name>fido_bio_template_t</name> <modifier>*</modifier></type><name>t</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>name</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>t</name><operator>-&gt;</operator><name>name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>t</name><operator>-&gt;</operator><name>name</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>name</name> <operator>&amp;&amp;</operator> <operator>(</operator><name><name>t</name><operator>-&gt;</operator><name>name</name></name> <operator>=</operator> <call><name>strdup</name><argument_list>(<argument><expr><name>name</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>FIDO_ERR_INTERNAL</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>FIDO_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>int</name></type>
+<name>fido_bio_template_set_id</name><parameter_list>(<parameter><decl><type><name>fido_bio_template_t</name> <modifier>*</modifier></type><name>t</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>unsigned</name> <name>char</name> <modifier>*</modifier></type><name>ptr</name></decl></parameter>,
+<parameter><decl><type><name>size_t</name></type> <name>len</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>fido_blob_reset</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>t</name><operator>-&gt;</operator><name>id</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ptr</name> <operator>&amp;&amp;</operator> <call><name>fido_blob_set</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>t</name><operator>-&gt;</operator><name>id</name></name></expr></argument>, <argument><expr><name>ptr</name></expr></argument>, <argument><expr><name>len</name></expr></argument>)</argument_list></call> <operator>&lt;</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>FIDO_ERR_INTERNAL</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>FIDO_OK</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>const</specifier> <name>fido_bio_template_t</name> <modifier>*</modifier></type>
+<name>fido_bio_template</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>fido_bio_template_array_t</name> <modifier>*</modifier></type><name>ta</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>idx</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>idx</name> <operator>&gt;=</operator> <name><name>ta</name><operator>-&gt;</operator><name>n_alloc</name></name></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>NULL</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><operator>&amp;</operator><name><name>ta</name><operator>-&gt;</operator><name>ptr</name><index>[<expr><name>idx</name></expr>]</index></name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>fido_bio_enroll_t</name> <modifier>*</modifier></type>
+<name>fido_bio_enroll_new</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><call><name>calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>fido_bio_enroll_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>fido_bio_info_t</name> <modifier>*</modifier></type>
+<name>fido_bio_info_new</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><call><name>calloc</name><argument_list>(<argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><sizeof>sizeof<argument_list>(<argument><expr><name>fido_bio_info_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>uint8_t</name></type>
+<name>fido_bio_info_type</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>fido_bio_info_t</name> <modifier>*</modifier></type><name>i</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><name><name>i</name><operator>-&gt;</operator><name>type</name></name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>uint8_t</name></type>
+<name>fido_bio_info_max_samples</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>fido_bio_info_t</name> <modifier>*</modifier></type><name>i</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><name><name>i</name><operator>-&gt;</operator><name>max_samples</name></name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type>
+<name>fido_bio_enroll_free</name><parameter_list>(<parameter><decl><type><name>fido_bio_enroll_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>ep</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>fido_bio_enroll_t</name> <modifier>*</modifier></type><name>e</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ep</name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <operator>(</operator><name>e</name> <operator>=</operator> <operator>*</operator><name>ep</name><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>bio_reset_enroll</name><argument_list>(<argument><expr><name>e</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>e</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>ep</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>void</name></type>
+<name>fido_bio_info_free</name><parameter_list>(<parameter><decl><type><name>fido_bio_info_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>ip</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>fido_bio_info_t</name> <modifier>*</modifier></type><name>i</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>ip</name> <operator>==</operator> <name>NULL</name> <operator>||</operator> <operator>(</operator><name>i</name> <operator>=</operator> <operator>*</operator><name>ip</name><operator>)</operator> <operator>==</operator> <name>NULL</name></expr>)</condition><block type="pseudo"><block_content>
+<return>return;</return></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>ip</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><name>uint8_t</name></type>
+<name>fido_bio_enroll_remaining_samples</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>fido_bio_enroll_t</name> <modifier>*</modifier></type><name>e</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><name><name>e</name><operator>-&gt;</operator><name>remaining_samples</name></name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>uint8_t</name></type>
+<name>fido_bio_enroll_last_status</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>fido_bio_enroll_t</name> <modifier>*</modifier></type><name>e</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><name><name>e</name><operator>-&gt;</operator><name>last_status</name></name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+</unit>

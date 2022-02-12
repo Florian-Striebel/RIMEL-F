@@ -1,0 +1,1384 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="/home/user/cppstats/test/freeBSD_res/_cppstats_featurelocations/freebsd-src/cddl/contrib/opensolaris/tools/ctf/cvt/ctf.c">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/types.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdio.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;strings.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;ctype.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;zlib.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;elf.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"ctf_headers.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"ctftools.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"strtab.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"memory.h"</cpp:file></cpp:include>
+
+
+
+
+
+
+
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>char</name> <modifier>*</modifier></type><name>curfile</name></decl>;</decl_stmt>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>CTF_BUF_CHUNK_SIZE</name></cpp:macro> <cpp:value>(64 * 1024)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>RES_BUF_CHUNK_SIZE</name></cpp:macro> <cpp:value>(64 * 1024)</cpp:value></cpp:define>
+
+<struct>struct <name>ctf_buf</name> <block>{
+<decl_stmt><decl><type><name>strtab_t</name></type> <name>ctb_strtab</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>caddr_t</name></type> <name>ctb_base</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>caddr_t</name></type> <name>ctb_end</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>caddr_t</name></type> <name>ctb_ptr</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>ctb_size</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>nptent</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ntholes</name></decl>;</decl_stmt>
+}</block>;</struct>
+
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>BSWAP_8</name><parameter_list>(<parameter><type><name>x</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((x) &amp; 0xff)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>BSWAP_16</name><parameter_list>(<parameter><type><name>x</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((BSWAP_8(x) &lt;&lt; 8) | BSWAP_8((x) &gt;&gt; 8))</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>BSWAP_32</name><parameter_list>(<parameter><type><name>x</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>((BSWAP_16(x) &lt;&lt; 16) | BSWAP_16((x) &gt;&gt; 16))</cpp:value></cpp:define>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>SWAP_16</name><parameter_list>(<parameter><type><name>x</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>(x) = BSWAP_16(x)</cpp:value></cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <cpp:macro><name>SWAP_32</name><parameter_list>(<parameter><type><name>x</name></type></parameter>)</parameter_list></cpp:macro> <cpp:value>(x) = BSWAP_32(x)</cpp:value></cpp:define>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>int</name></type> <name>target_requires_swap</name></decl>;</decl_stmt>
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>parseterminate</name><parameter_list>(<parameter><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>fmt</name></decl></parameter>, <parameter><decl><type><modifier>...</modifier></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><specifier>static</specifier> <name>char</name></type> <name><name>msgbuf</name><index>[<expr><literal type="number">1024</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>va_list</name></type> <name>ap</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>va_start</name><argument_list>(<argument><expr><name>ap</name></expr></argument>, <argument><expr><name>fmt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>vsnprintf</name><argument_list>(<argument><expr><name>msgbuf</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>msgbuf</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><name>fmt</name></expr></argument>, <argument><expr><name>ap</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>va_end</name><argument_list>(<argument><expr><name>ap</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>terminate</name><argument_list>(<argument><expr><literal type="string">"%s: %s\n"</literal></expr></argument>, <argument><expr><name>curfile</name></expr></argument>, <argument><expr><name>msgbuf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>ctf_buf_grow</name><parameter_list>(<parameter><decl><type><name>ctf_buf_t</name> <modifier>*</modifier></type><name>b</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>off_t</name></type> <name>ptroff</name> <init>= <expr><name><name>b</name><operator>-&gt;</operator><name>ctb_ptr</name></name> <operator>-</operator> <name><name>b</name><operator>-&gt;</operator><name>ctb_base</name></name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>b</name><operator>-&gt;</operator><name>ctb_size</name></name> <operator>+=</operator> <name>CTF_BUF_CHUNK_SIZE</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>b</name><operator>-&gt;</operator><name>ctb_base</name></name> <operator>=</operator> <call><name>xrealloc</name><argument_list>(<argument><expr><name><name>b</name><operator>-&gt;</operator><name>ctb_base</name></name></expr></argument>, <argument><expr><name><name>b</name><operator>-&gt;</operator><name>ctb_size</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>b</name><operator>-&gt;</operator><name>ctb_end</name></name> <operator>=</operator> <name><name>b</name><operator>-&gt;</operator><name>ctb_base</name></name> <operator>+</operator> <name><name>b</name><operator>-&gt;</operator><name>ctb_size</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>b</name><operator>-&gt;</operator><name>ctb_ptr</name></name> <operator>=</operator> <name><name>b</name><operator>-&gt;</operator><name>ctb_base</name></name> <operator>+</operator> <name>ptroff</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>ctf_buf_t</name> <modifier>*</modifier></type>
+<name>ctf_buf_new</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ctf_buf_t</name> <modifier>*</modifier></type><name>b</name> <init>= <expr><call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>ctf_buf_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>strtab_create</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>b</name><operator>-&gt;</operator><name>ctb_strtab</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ctf_buf_grow</name><argument_list>(<argument><expr><name>b</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>b</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>ctf_buf_free</name><parameter_list>(<parameter><decl><type><name>ctf_buf_t</name> <modifier>*</modifier></type><name>b</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<expr_stmt><expr><call><name>strtab_destroy</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>b</name><operator>-&gt;</operator><name>ctb_strtab</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name><name>b</name><operator>-&gt;</operator><name>ctb_base</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>b</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>uint_t</name></type>
+<name>ctf_buf_cur</name><parameter_list>(<parameter><decl><type><name>ctf_buf_t</name> <modifier>*</modifier></type><name>b</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<return>return <expr><operator>(</operator><name><name>b</name><operator>-&gt;</operator><name>ctb_ptr</name></name> <operator>-</operator> <name><name>b</name><operator>-&gt;</operator><name>ctb_base</name></name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>ctf_buf_write</name><parameter_list>(<parameter><decl><type><name>ctf_buf_t</name> <modifier>*</modifier></type><name>b</name></decl></parameter>, <parameter><decl><type><name>void</name> <specifier>const</specifier> <modifier>*</modifier></type><name>p</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>n</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>size_t</name></type> <name>len</name></decl>;</decl_stmt>
+
+<while>while <condition>(<expr><name>n</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>b</name><operator>-&gt;</operator><name>ctb_ptr</name></name> <operator>==</operator> <name><name>b</name><operator>-&gt;</operator><name>ctb_end</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>ctf_buf_grow</name><argument_list>(<argument><expr><name>b</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>len</name> <operator>=</operator> <call><name>MIN</name><argument_list>(<argument><expr><operator>(</operator><name>size_t</name><operator>)</operator><operator>(</operator><name><name>b</name><operator>-&gt;</operator><name>ctb_end</name></name> <operator>-</operator> <name><name>b</name><operator>-&gt;</operator><name>ctb_ptr</name></name><operator>)</operator></expr></argument>, <argument><expr><name>n</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>bcopy</name><argument_list>(<argument><expr><name>p</name></expr></argument>, <argument><expr><name><name>b</name><operator>-&gt;</operator><name>ctb_ptr</name></name></expr></argument>, <argument><expr><name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>b</name><operator>-&gt;</operator><name>ctb_ptr</name></name> <operator>+=</operator> <name>len</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>p</name> <operator>=</operator> <operator>(</operator><name>char</name> <specifier>const</specifier> <operator>*</operator><operator>)</operator><name>p</name> <operator>+</operator> <name>len</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>n</name> <operator>-=</operator> <name>len</name></expr>;</expr_stmt>
+</block_content>}</block></while>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>write_label</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg1</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg2</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>labelent_t</name> <modifier>*</modifier></type><name>le</name> <init>= <expr><name>arg1</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ctf_buf_t</name> <modifier>*</modifier></type><name>b</name> <init>= <expr><name>arg2</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ctf_lblent_t</name></type> <name>ctl</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>ctl</name><operator>.</operator><name>ctl_label</name></name> <operator>=</operator> <call><name>strtab_insert</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>b</name><operator>-&gt;</operator><name>ctb_strtab</name></name></expr></argument>, <argument><expr><name><name>le</name><operator>-&gt;</operator><name>le_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ctl</name><operator>.</operator><name>ctl_typeidx</name></name> <operator>=</operator> <name><name>le</name><operator>-&gt;</operator><name>le_idx</name></name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>target_requires_swap</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>SWAP_32</name><argument_list>(<argument><expr><name><name>ctl</name><operator>.</operator><name>ctl_label</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SWAP_32</name><argument_list>(<argument><expr><name><name>ctl</name><operator>.</operator><name>ctl_typeidx</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>ctf_buf_write</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ctl</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>ctl</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>write_objects</name><parameter_list>(<parameter><decl><type><name>iidesc_t</name> <modifier>*</modifier></type><name>idp</name></decl></parameter>, <parameter><decl><type><name>ctf_buf_t</name> <modifier>*</modifier></type><name>b</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ushort_t</name></type> <name>id</name> <init>= <expr><operator>(</operator><ternary><condition><expr><name>idp</name></expr> ?</condition><then> <expr><name><name>idp</name><operator>-&gt;</operator><name>ii_dtype</name><operator>-&gt;</operator><name>t_id</name></name></expr> </then><else>: <expr><literal type="number">0</literal></expr></else></ternary><operator>)</operator></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>target_requires_swap</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>SWAP_16</name><argument_list>(<argument><expr><name>id</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>ctf_buf_write</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>id</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>id</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"Wrote object %s (%d)\n"</literal></expr></argument>, <argument><expr><operator>(</operator><ternary><condition><expr><name>idp</name></expr> ?</condition><then> <expr><name><name>idp</name><operator>-&gt;</operator><name>ii_name</name></name></expr> </then><else>: <expr><literal type="string">"(null)"</literal></expr></else></ternary><operator>)</operator></expr></argument>, <argument><expr><name>id</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>write_functions</name><parameter_list>(<parameter><decl><type><name>iidesc_t</name> <modifier>*</modifier></type><name>idp</name></decl></parameter>, <parameter><decl><type><name>ctf_buf_t</name> <modifier>*</modifier></type><name>b</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ushort_t</name></type> <name><name>fdata</name><index>[<expr><literal type="number">2</literal></expr>]</index></name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ushort_t</name></type> <name>id</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>nargs</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><name>idp</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>fdata</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ctf_buf_write</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><operator>&amp;</operator><name><name>fdata</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name><name>fdata</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"Wrote function (null)\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>nargs</name> <operator>=</operator> <name><name>idp</name><operator>-&gt;</operator><name>ii_nargs</name></name> <operator>+</operator> <operator>(</operator><name><name>idp</name><operator>-&gt;</operator><name>ii_vargs</name></name> <operator>!=</operator> <literal type="number">0</literal><operator>)</operator></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>nargs</name> <operator>&gt;</operator> <name>CTF_MAX_VLEN</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>terminate</name><argument_list>(<argument><expr><literal type="string">"function %s has too many args: %d &gt; %d\n"</literal></expr></argument>,
+<argument><expr><name><name>idp</name><operator>-&gt;</operator><name>ii_name</name></name></expr></argument>, <argument><expr><name>nargs</name></expr></argument>, <argument><expr><name>CTF_MAX_VLEN</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>fdata</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>=</operator> <call><name>CTF_TYPE_INFO</name><argument_list>(<argument><expr><name>CTF_K_FUNCTION</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>, <argument><expr><name>nargs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>fdata</name><index>[<expr><literal type="number">1</literal></expr>]</index></name> <operator>=</operator> <name><name>idp</name><operator>-&gt;</operator><name>ii_dtype</name><operator>-&gt;</operator><name>t_id</name></name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>target_requires_swap</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>SWAP_16</name><argument_list>(<argument><expr><name><name>fdata</name><index>[<expr><literal type="number">0</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SWAP_16</name><argument_list>(<argument><expr><name><name>fdata</name><index>[<expr><literal type="number">1</literal></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>ctf_buf_write</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><name>fdata</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>fdata</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name><name>idp</name><operator>-&gt;</operator><name>ii_nargs</name></name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>id</name> <operator>=</operator> <name><name>idp</name><operator>-&gt;</operator><name>ii_args</name><index>[<expr><name>i</name></expr>]</index></name><operator>-&gt;</operator><name>t_id</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>target_requires_swap</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>SWAP_16</name><argument_list>(<argument><expr><name>id</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>ctf_buf_write</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>id</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>id</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<if_stmt><if>if <condition>(<expr><name><name>idp</name><operator>-&gt;</operator><name>ii_vargs</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>id</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ctf_buf_write</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>id</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>id</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"Wrote function %s (%d args)\n"</literal></expr></argument>, <argument><expr><name><name>idp</name><operator>-&gt;</operator><name>ii_name</name></name></expr></argument>, <argument><expr><name>nargs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>write_sized_type_rec</name><parameter_list>(<parameter><decl><type><name>ctf_buf_t</name> <modifier>*</modifier></type><name>b</name></decl></parameter>, <parameter><decl><type><name>ctf_type_t</name> <modifier>*</modifier></type><name>ctt</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>size</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>size</name> <operator>&gt;</operator> <name>CTF_MAX_SIZE</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>ctt</name><operator>-&gt;</operator><name>ctt_size</name></name> <operator>=</operator> <name>CTF_LSIZE_SENT</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ctt</name><operator>-&gt;</operator><name>ctt_lsizehi</name></name> <operator>=</operator> <call><name>CTF_SIZE_TO_LSIZE_HI</name><argument_list>(<argument><expr><name>size</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ctt</name><operator>-&gt;</operator><name>ctt_lsizelo</name></name> <operator>=</operator> <call><name>CTF_SIZE_TO_LSIZE_LO</name><argument_list>(<argument><expr><name>size</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>target_requires_swap</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>SWAP_32</name><argument_list>(<argument><expr><name><name>ctt</name><operator>-&gt;</operator><name>ctt_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SWAP_16</name><argument_list>(<argument><expr><name><name>ctt</name><operator>-&gt;</operator><name>ctt_info</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SWAP_16</name><argument_list>(<argument><expr><name><name>ctt</name><operator>-&gt;</operator><name>ctt_size</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SWAP_32</name><argument_list>(<argument><expr><name><name>ctt</name><operator>-&gt;</operator><name>ctt_lsizehi</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SWAP_32</name><argument_list>(<argument><expr><name><name>ctt</name><operator>-&gt;</operator><name>ctt_lsizelo</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>ctf_buf_write</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><name>ctt</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><operator>*</operator><name>ctt</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<decl_stmt><decl><type><name>ctf_stype_t</name> <modifier>*</modifier></type><name>cts</name> <init>= <expr><operator>(</operator><name>ctf_stype_t</name> <operator>*</operator><operator>)</operator><name>ctt</name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>cts</name><operator>-&gt;</operator><name>ctt_size</name></name> <operator>=</operator> <operator>(</operator><name>ushort_t</name><operator>)</operator><name>size</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>target_requires_swap</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>SWAP_32</name><argument_list>(<argument><expr><name><name>cts</name><operator>-&gt;</operator><name>ctt_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SWAP_16</name><argument_list>(<argument><expr><name><name>cts</name><operator>-&gt;</operator><name>ctt_info</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SWAP_16</name><argument_list>(<argument><expr><name><name>cts</name><operator>-&gt;</operator><name>ctt_size</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>ctf_buf_write</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><name>cts</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><operator>*</operator><name>cts</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>write_unsized_type_rec</name><parameter_list>(<parameter><decl><type><name>ctf_buf_t</name> <modifier>*</modifier></type><name>b</name></decl></parameter>, <parameter><decl><type><name>ctf_type_t</name> <modifier>*</modifier></type><name>ctt</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ctf_stype_t</name> <modifier>*</modifier></type><name>cts</name> <init>= <expr><operator>(</operator><name>ctf_stype_t</name> <operator>*</operator><operator>)</operator><name>ctt</name></expr></init></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>target_requires_swap</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>SWAP_32</name><argument_list>(<argument><expr><name><name>cts</name><operator>-&gt;</operator><name>ctt_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SWAP_16</name><argument_list>(<argument><expr><name><name>cts</name><operator>-&gt;</operator><name>ctt_info</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SWAP_16</name><argument_list>(<argument><expr><name><name>cts</name><operator>-&gt;</operator><name>ctt_size</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>ctf_buf_write</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><name>cts</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><operator>*</operator><name>cts</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>write_type</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg1</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>arg2</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>tp</name> <init>= <expr><name>arg1</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ctf_buf_t</name> <modifier>*</modifier></type><name>b</name> <init>= <expr><name>arg2</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>elist_t</name> <modifier>*</modifier></type><name>ep</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>mlist_t</name> <modifier>*</modifier></type><name>mp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>intr_t</name> <modifier>*</modifier></type><name>ip</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>size_t</name></type> <name>offset</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint_t</name></type> <name>encoding</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint_t</name></type> <name>data</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>isroot</name> <init>= <expr><name><name>tp</name><operator>-&gt;</operator><name>t_flags</name></name> <operator>&amp;</operator> <name>TDESC_F_ISROOT</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>ctf_type_t</name></type> <name>ctt</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ctf_array_t</name></type> <name>cta</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ctf_member_t</name></type> <name>ctm</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ctf_lmember_t</name></type> <name>ctlm</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ctf_enum_t</name></type> <name>cte</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ushort_t</name></type> <name>id</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>ctlm</name><operator>.</operator><name>ctlm_pad</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><operator>++</operator><name><name>b</name><operator>-&gt;</operator><name>nptent</name></name> <operator>&lt;</operator> <call><name>CTF_TYPE_TO_INDEX</name><argument_list>(<argument><expr><name><name>tp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">2</literal></expr></argument>, <argument><expr><literal type="string">"genctf: type hole from %d &lt; x &lt; %d\n"</literal></expr></argument>,
+<argument><expr><name><name>b</name><operator>-&gt;</operator><name>nptent</name></name> <operator>-</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><call><name>CTF_TYPE_TO_INDEX</name><argument_list>(<argument><expr><name><name>tp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>ctt</name><operator>.</operator><name>ctt_name</name></name> <operator>=</operator> <call><name>CTF_TYPE_NAME</name><argument_list>(<argument><expr><name>CTF_STRTAB_0</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ctt</name><operator>.</operator><name>ctt_info</name></name> <operator>=</operator> <call><name>CTF_TYPE_INFO</name><argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<while>while <condition>(<expr><name><name>b</name><operator>-&gt;</operator><name>nptent</name></name> <operator>&lt;</operator> <call><name>CTF_TYPE_TO_INDEX</name><argument_list>(<argument><expr><name><name>tp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>write_sized_type_rec</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ctt</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>b</name><operator>-&gt;</operator><name>nptent</name></name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></while>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>offset</name> <operator>=</operator> <call><name>strtab_insert</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>b</name><operator>-&gt;</operator><name>ctb_strtab</name></name></expr></argument>, <argument><expr><name><name>tp</name><operator>-&gt;</operator><name>t_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ctt</name><operator>.</operator><name>ctt_name</name></name> <operator>=</operator> <call><name>CTF_TYPE_NAME</name><argument_list>(<argument><expr><name>CTF_STRTAB_0</name></expr></argument>, <argument><expr><name>offset</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<switch>switch <condition>(<expr><name><name>tp</name><operator>-&gt;</operator><name>t_type</name></name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>INTRINSIC</name></expr>:</case>
+<expr_stmt><expr><name>ip</name> <operator>=</operator> <name><name>tp</name><operator>-&gt;</operator><name>t_intr</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>ip</name><operator>-&gt;</operator><name>intr_type</name></name> <operator>==</operator> <name>INTR_INT</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>ctt</name><operator>.</operator><name>ctt_info</name></name> <operator>=</operator> <call><name>CTF_TYPE_INFO</name><argument_list>(<argument><expr><name>CTF_K_INTEGER</name></expr></argument>,
+<argument><expr><name>isroot</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>ctt</name><operator>.</operator><name>ctt_info</name></name> <operator>=</operator> <call><name>CTF_TYPE_INFO</name><argument_list>(<argument><expr><name>CTF_K_FLOAT</name></expr></argument>, <argument><expr><name>isroot</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<expr_stmt><expr><call><name>write_sized_type_rec</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ctt</name></expr></argument>, <argument><expr><name><name>tp</name><operator>-&gt;</operator><name>t_size</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>encoding</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>ip</name><operator>-&gt;</operator><name>intr_type</name></name> <operator>==</operator> <name>INTR_INT</name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>ip</name><operator>-&gt;</operator><name>intr_signed</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>encoding</name> <operator>|=</operator> <name>CTF_INT_SIGNED</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>ip</name><operator>-&gt;</operator><name>intr_iformat</name></name> <operator>==</operator> <literal type="char">'c'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>encoding</name> <operator>|=</operator> <name>CTF_INT_CHAR</name></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name><name>ip</name><operator>-&gt;</operator><name>intr_iformat</name></name> <operator>==</operator> <literal type="char">'b'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>encoding</name> <operator>|=</operator> <name>CTF_INT_BOOL</name></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name><name>ip</name><operator>-&gt;</operator><name>intr_iformat</name></name> <operator>==</operator> <literal type="char">'v'</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>encoding</name> <operator>|=</operator> <name>CTF_INT_VARARGS</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>encoding</name> <operator>=</operator> <name><name>ip</name><operator>-&gt;</operator><name>intr_fformat</name></name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<expr_stmt><expr><name>data</name> <operator>=</operator> <call><name>CTF_INT_DATA</name><argument_list>(<argument><expr><name>encoding</name></expr></argument>, <argument><expr><name><name>ip</name><operator>-&gt;</operator><name>intr_offset</name></name></expr></argument>, <argument><expr><name><name>ip</name><operator>-&gt;</operator><name>intr_nbits</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>target_requires_swap</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>SWAP_32</name><argument_list>(<argument><expr><name>data</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>ctf_buf_write</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>data</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>data</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>POINTER</name></expr>:</case>
+<expr_stmt><expr><name><name>ctt</name><operator>.</operator><name>ctt_info</name></name> <operator>=</operator> <call><name>CTF_TYPE_INFO</name><argument_list>(<argument><expr><name>CTF_K_POINTER</name></expr></argument>, <argument><expr><name>isroot</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ctt</name><operator>.</operator><name>ctt_type</name></name> <operator>=</operator> <name><name>tp</name><operator>-&gt;</operator><name>t_tdesc</name><operator>-&gt;</operator><name>t_id</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>write_unsized_type_rec</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ctt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>ARRAY</name></expr>:</case>
+<expr_stmt><expr><name><name>ctt</name><operator>.</operator><name>ctt_info</name></name> <operator>=</operator> <call><name>CTF_TYPE_INFO</name><argument_list>(<argument><expr><name>CTF_K_ARRAY</name></expr></argument>, <argument><expr><name>isroot</name></expr></argument>, <argument><expr><literal type="number">1</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>write_sized_type_rec</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ctt</name></expr></argument>, <argument><expr><name><name>tp</name><operator>-&gt;</operator><name>t_size</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>cta</name><operator>.</operator><name>cta_contents</name></name> <operator>=</operator> <name><name>tp</name><operator>-&gt;</operator><name>t_ardef</name><operator>-&gt;</operator><name>ad_contents</name><operator>-&gt;</operator><name>t_id</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>cta</name><operator>.</operator><name>cta_index</name></name> <operator>=</operator> <name><name>tp</name><operator>-&gt;</operator><name>t_ardef</name><operator>-&gt;</operator><name>ad_idxtype</name><operator>-&gt;</operator><name>t_id</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>cta</name><operator>.</operator><name>cta_nelems</name></name> <operator>=</operator> <name><name>tp</name><operator>-&gt;</operator><name>t_ardef</name><operator>-&gt;</operator><name>ad_nelems</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>target_requires_swap</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>SWAP_16</name><argument_list>(<argument><expr><name><name>cta</name><operator>.</operator><name>cta_contents</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SWAP_16</name><argument_list>(<argument><expr><name><name>cta</name><operator>.</operator><name>cta_index</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SWAP_32</name><argument_list>(<argument><expr><name><name>cta</name><operator>.</operator><name>cta_nelems</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>ctf_buf_write</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>cta</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>cta</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>STRUCT</name></expr>:</case>
+<case>case <expr><name>UNION</name></expr>:</case>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr><operator>,</operator> <expr><name>mp</name> <operator>=</operator> <name><name>tp</name><operator>-&gt;</operator><name>t_members</name></name></expr>;</init> <condition><expr><name>mp</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>mp</name> <operator>=</operator> <name><name>mp</name><operator>-&gt;</operator><name>ml_next</name></name></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><name>i</name><operator>++</operator></expr>;</expr_stmt></block_content></block></for>
+
+<if_stmt><if>if <condition>(<expr><name>i</name> <operator>&gt;</operator> <name>CTF_MAX_VLEN</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>terminate</name><argument_list>(<argument><expr><literal type="string">"sou %s has too many members: %d &gt; %d\n"</literal></expr></argument>,
+<argument><expr><call><name>tdesc_name</name><argument_list>(<argument><expr><name>tp</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>i</name></expr></argument>, <argument><expr><name>CTF_MAX_VLEN</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>tp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>==</operator> <name>STRUCT</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>ctt</name><operator>.</operator><name>ctt_info</name></name> <operator>=</operator> <call><name>CTF_TYPE_INFO</name><argument_list>(<argument><expr><name>CTF_K_STRUCT</name></expr></argument>, <argument><expr><name>isroot</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>ctt</name><operator>.</operator><name>ctt_info</name></name> <operator>=</operator> <call><name>CTF_TYPE_INFO</name><argument_list>(<argument><expr><name>CTF_K_UNION</name></expr></argument>, <argument><expr><name>isroot</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<expr_stmt><expr><call><name>write_sized_type_rec</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ctt</name></expr></argument>, <argument><expr><name><name>tp</name><operator>-&gt;</operator><name>t_size</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>tp</name><operator>-&gt;</operator><name>t_size</name></name> <operator>&lt;</operator> <name>CTF_LSTRUCT_THRESH</name></expr>)</condition> <block>{<block_content>
+<for>for <control>(<init><expr><name>mp</name> <operator>=</operator> <name><name>tp</name><operator>-&gt;</operator><name>t_members</name></name></expr>;</init> <condition><expr><name>mp</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>mp</name> <operator>=</operator> <name><name>mp</name><operator>-&gt;</operator><name>ml_next</name></name></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>offset</name> <operator>=</operator> <call><name>strtab_insert</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>b</name><operator>-&gt;</operator><name>ctb_strtab</name></name></expr></argument>,
+<argument><expr><name><name>mp</name><operator>-&gt;</operator><name>ml_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>ctm</name><operator>.</operator><name>ctm_name</name></name> <operator>=</operator> <call><name>CTF_TYPE_NAME</name><argument_list>(<argument><expr><name>CTF_STRTAB_0</name></expr></argument>,
+<argument><expr><name>offset</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ctm</name><operator>.</operator><name>ctm_type</name></name> <operator>=</operator> <name><name>mp</name><operator>-&gt;</operator><name>ml_type</name><operator>-&gt;</operator><name>t_id</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ctm</name><operator>.</operator><name>ctm_offset</name></name> <operator>=</operator> <name><name>mp</name><operator>-&gt;</operator><name>ml_offset</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>target_requires_swap</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>SWAP_32</name><argument_list>(<argument><expr><name><name>ctm</name><operator>.</operator><name>ctm_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SWAP_16</name><argument_list>(<argument><expr><name><name>ctm</name><operator>.</operator><name>ctm_type</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SWAP_16</name><argument_list>(<argument><expr><name><name>ctm</name><operator>.</operator><name>ctm_offset</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<expr_stmt><expr><call><name>ctf_buf_write</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ctm</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>ctm</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<for>for <control>(<init><expr><name>mp</name> <operator>=</operator> <name><name>tp</name><operator>-&gt;</operator><name>t_members</name></name></expr>;</init> <condition><expr><name>mp</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>mp</name> <operator>=</operator> <name><name>mp</name><operator>-&gt;</operator><name>ml_next</name></name></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>offset</name> <operator>=</operator> <call><name>strtab_insert</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>b</name><operator>-&gt;</operator><name>ctb_strtab</name></name></expr></argument>,
+<argument><expr><name><name>mp</name><operator>-&gt;</operator><name>ml_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>ctlm</name><operator>.</operator><name>ctlm_name</name></name> <operator>=</operator> <call><name>CTF_TYPE_NAME</name><argument_list>(<argument><expr><name>CTF_STRTAB_0</name></expr></argument>,
+<argument><expr><name>offset</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ctlm</name><operator>.</operator><name>ctlm_type</name></name> <operator>=</operator> <name><name>mp</name><operator>-&gt;</operator><name>ml_type</name><operator>-&gt;</operator><name>t_id</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ctlm</name><operator>.</operator><name>ctlm_offsethi</name></name> <operator>=</operator>
+<call><name>CTF_OFFSET_TO_LMEMHI</name><argument_list>(<argument><expr><name><name>mp</name><operator>-&gt;</operator><name>ml_offset</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ctlm</name><operator>.</operator><name>ctlm_offsetlo</name></name> <operator>=</operator>
+<call><name>CTF_OFFSET_TO_LMEMLO</name><argument_list>(<argument><expr><name><name>mp</name><operator>-&gt;</operator><name>ml_offset</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>target_requires_swap</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>SWAP_32</name><argument_list>(<argument><expr><name><name>ctlm</name><operator>.</operator><name>ctlm_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SWAP_16</name><argument_list>(<argument><expr><name><name>ctlm</name><operator>.</operator><name>ctlm_type</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SWAP_32</name><argument_list>(<argument><expr><name><name>ctlm</name><operator>.</operator><name>ctlm_offsethi</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SWAP_32</name><argument_list>(<argument><expr><name><name>ctlm</name><operator>.</operator><name>ctlm_offsetlo</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>ctf_buf_write</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ctlm</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>ctlm</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></else></if_stmt>
+<break>break;</break>
+
+<case>case <expr><name>ENUM</name></expr>:</case>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr><operator>,</operator> <expr><name>ep</name> <operator>=</operator> <name><name>tp</name><operator>-&gt;</operator><name>t_emem</name></name></expr>;</init> <condition><expr><name>ep</name> <operator>!=</operator> <name>NULL</name></expr>;</condition> <incr><expr><name>ep</name> <operator>=</operator> <name><name>ep</name><operator>-&gt;</operator><name>el_next</name></name></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><name>i</name><operator>++</operator></expr>;</expr_stmt></block_content></block></for>
+
+<if_stmt><if>if <condition>(<expr><name>i</name> <operator>&gt;</operator> <name>CTF_MAX_VLEN</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>i</name> <operator>=</operator> <name>CTF_MAX_VLEN</name></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>ctt</name><operator>.</operator><name>ctt_info</name></name> <operator>=</operator> <call><name>CTF_TYPE_INFO</name><argument_list>(<argument><expr><name>CTF_K_ENUM</name></expr></argument>, <argument><expr><name>isroot</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>write_sized_type_rec</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ctt</name></expr></argument>, <argument><expr><name><name>tp</name><operator>-&gt;</operator><name>t_size</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<for>for <control>(<init><expr><name>ep</name> <operator>=</operator> <name><name>tp</name><operator>-&gt;</operator><name>t_emem</name></name></expr>;</init> <condition><expr><name>ep</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <name>i</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>;</condition> <incr><expr><name>ep</name> <operator>=</operator> <name><name>ep</name><operator>-&gt;</operator><name>el_next</name></name></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>offset</name> <operator>=</operator> <call><name>strtab_insert</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>b</name><operator>-&gt;</operator><name>ctb_strtab</name></name></expr></argument>, <argument><expr><name><name>ep</name><operator>-&gt;</operator><name>el_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>cte</name><operator>.</operator><name>cte_name</name></name> <operator>=</operator> <call><name>CTF_TYPE_NAME</name><argument_list>(<argument><expr><name>CTF_STRTAB_0</name></expr></argument>, <argument><expr><name>offset</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>cte</name><operator>.</operator><name>cte_value</name></name> <operator>=</operator> <name><name>ep</name><operator>-&gt;</operator><name>el_number</name></name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>target_requires_swap</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>SWAP_32</name><argument_list>(<argument><expr><name><name>cte</name><operator>.</operator><name>cte_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SWAP_32</name><argument_list>(<argument><expr><name><name>cte</name><operator>.</operator><name>cte_value</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>ctf_buf_write</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>cte</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>cte</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>i</name><operator>--</operator></expr>;</expr_stmt>
+</block_content>}</block></for>
+<break>break;</break>
+
+<case>case <expr><name>FORWARD</name></expr>:</case>
+<expr_stmt><expr><name><name>ctt</name><operator>.</operator><name>ctt_info</name></name> <operator>=</operator> <call><name>CTF_TYPE_INFO</name><argument_list>(<argument><expr><name>CTF_K_FORWARD</name></expr></argument>, <argument><expr><name>isroot</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ctt</name><operator>.</operator><name>ctt_type</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>write_unsized_type_rec</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ctt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>TYPEDEF</name></expr>:</case>
+<expr_stmt><expr><name><name>ctt</name><operator>.</operator><name>ctt_info</name></name> <operator>=</operator> <call><name>CTF_TYPE_INFO</name><argument_list>(<argument><expr><name>CTF_K_TYPEDEF</name></expr></argument>, <argument><expr><name>isroot</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ctt</name><operator>.</operator><name>ctt_type</name></name> <operator>=</operator> <name><name>tp</name><operator>-&gt;</operator><name>t_tdesc</name><operator>-&gt;</operator><name>t_id</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>write_unsized_type_rec</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ctt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>VOLATILE</name></expr>:</case>
+<expr_stmt><expr><name><name>ctt</name><operator>.</operator><name>ctt_info</name></name> <operator>=</operator> <call><name>CTF_TYPE_INFO</name><argument_list>(<argument><expr><name>CTF_K_VOLATILE</name></expr></argument>, <argument><expr><name>isroot</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ctt</name><operator>.</operator><name>ctt_type</name></name> <operator>=</operator> <name><name>tp</name><operator>-&gt;</operator><name>t_tdesc</name><operator>-&gt;</operator><name>t_id</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>write_unsized_type_rec</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ctt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>CONST</name></expr>:</case>
+<expr_stmt><expr><name><name>ctt</name><operator>.</operator><name>ctt_info</name></name> <operator>=</operator> <call><name>CTF_TYPE_INFO</name><argument_list>(<argument><expr><name>CTF_K_CONST</name></expr></argument>, <argument><expr><name>isroot</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ctt</name><operator>.</operator><name>ctt_type</name></name> <operator>=</operator> <name><name>tp</name><operator>-&gt;</operator><name>t_tdesc</name><operator>-&gt;</operator><name>t_id</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>write_unsized_type_rec</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ctt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>FUNCTION</name></expr>:</case>
+<expr_stmt><expr><name>i</name> <operator>=</operator> <name><name>tp</name><operator>-&gt;</operator><name>t_fndef</name><operator>-&gt;</operator><name>fn_nargs</name></name> <operator>+</operator> <name><name>tp</name><operator>-&gt;</operator><name>t_fndef</name><operator>-&gt;</operator><name>fn_vargs</name></name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>i</name> <operator>&gt;</operator> <name>CTF_MAX_VLEN</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>terminate</name><argument_list>(<argument><expr><literal type="string">"function %s has too many args: %d &gt; %d\n"</literal></expr></argument>,
+<argument><expr><call><name>tdesc_name</name><argument_list>(<argument><expr><name>tp</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>i</name></expr></argument>, <argument><expr><name>CTF_MAX_VLEN</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name><name>ctt</name><operator>.</operator><name>ctt_info</name></name> <operator>=</operator> <call><name>CTF_TYPE_INFO</name><argument_list>(<argument><expr><name>CTF_K_FUNCTION</name></expr></argument>, <argument><expr><name>isroot</name></expr></argument>, <argument><expr><name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ctt</name><operator>.</operator><name>ctt_type</name></name> <operator>=</operator> <name><name>tp</name><operator>-&gt;</operator><name>t_fndef</name><operator>-&gt;</operator><name>fn_ret</name><operator>-&gt;</operator><name>t_id</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>write_unsized_type_rec</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ctt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <operator>(</operator><name>int</name><operator>)</operator> <name><name>tp</name><operator>-&gt;</operator><name>t_fndef</name><operator>-&gt;</operator><name>fn_nargs</name></name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>id</name> <operator>=</operator> <name><name>tp</name><operator>-&gt;</operator><name>t_fndef</name><operator>-&gt;</operator><name>fn_args</name><index>[<expr><name>i</name></expr>]</index></name><operator>-&gt;</operator><name>t_id</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>target_requires_swap</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>SWAP_16</name><argument_list>(<argument><expr><name>id</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>ctf_buf_write</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>id</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>id</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<if_stmt><if>if <condition>(<expr><name><name>tp</name><operator>-&gt;</operator><name>t_fndef</name><operator>-&gt;</operator><name>fn_vargs</name></name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>id</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ctf_buf_write</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>id</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>id</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>i</name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>i</name> <operator>&amp;</operator> <literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>id</name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>ctf_buf_write</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>id</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>id</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+<break>break;</break>
+
+<case>case <expr><name>RESTRICT</name></expr>:</case>
+<expr_stmt><expr><name><name>ctt</name><operator>.</operator><name>ctt_info</name></name> <operator>=</operator> <call><name>CTF_TYPE_INFO</name><argument_list>(<argument><expr><name>CTF_K_RESTRICT</name></expr></argument>, <argument><expr><name>isroot</name></expr></argument>, <argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ctt</name><operator>.</operator><name>ctt_type</name></name> <operator>=</operator> <name><name>tp</name><operator>-&gt;</operator><name>t_tdesc</name><operator>-&gt;</operator><name>t_id</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>write_unsized_type_rec</name><argument_list>(<argument><expr><name>b</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>ctt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+
+<default>default:</default>
+<expr_stmt><expr><call><name>warning</name><argument_list>(<argument><expr><literal type="string">"Can't write unknown type %d\n"</literal></expr></argument>, <argument><expr><name><name>tp</name><operator>-&gt;</operator><name>t_type</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></switch>
+
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"Wrote type %d %s\n"</literal></expr></argument>, <argument><expr><name><name>tp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>, <argument><expr><call><name>tdesc_name</name><argument_list>(<argument><expr><name>tp</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><literal type="number">1</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<typedef>typedef <type><struct>struct <name>resbuf</name> <block>{
+<decl_stmt><decl><type><name>caddr_t</name></type> <name>rb_base</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>caddr_t</name></type> <name>rb_ptr</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>rb_size</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>z_stream</name></type> <name>rb_zstr</name></decl>;</decl_stmt>
+}</block></struct></type> <name>resbuf_t</name>;</typedef>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>rbzs_grow</name><parameter_list>(<parameter><decl><type><name>resbuf_t</name> <modifier>*</modifier></type><name>rb</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>off_t</name></type> <name>ptroff</name> <init>= <expr><operator>(</operator><name>caddr_t</name><operator>)</operator><name><name>rb</name><operator>-&gt;</operator><name>rb_zstr</name><operator>.</operator><name>next_out</name></name> <operator>-</operator> <name><name>rb</name><operator>-&gt;</operator><name>rb_base</name></name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>rb</name><operator>-&gt;</operator><name>rb_size</name></name> <operator>+=</operator> <name>RES_BUF_CHUNK_SIZE</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>rb</name><operator>-&gt;</operator><name>rb_base</name></name> <operator>=</operator> <call><name>xrealloc</name><argument_list>(<argument><expr><name><name>rb</name><operator>-&gt;</operator><name>rb_base</name></name></expr></argument>, <argument><expr><name><name>rb</name><operator>-&gt;</operator><name>rb_size</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>rb</name><operator>-&gt;</operator><name>rb_ptr</name></name> <operator>=</operator> <name><name>rb</name><operator>-&gt;</operator><name>rb_base</name></name> <operator>+</operator> <name>ptroff</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>rb</name><operator>-&gt;</operator><name>rb_zstr</name><operator>.</operator><name>next_out</name></name> <operator>=</operator> <operator>(</operator><name>Bytef</name> <operator>*</operator><operator>)</operator><operator>(</operator><name><name>rb</name><operator>-&gt;</operator><name>rb_ptr</name></name><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>rb</name><operator>-&gt;</operator><name>rb_zstr</name><operator>.</operator><name>avail_out</name></name> <operator>+=</operator> <name>RES_BUF_CHUNK_SIZE</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>compress_start</name><parameter_list>(<parameter><decl><type><name>resbuf_t</name> <modifier>*</modifier></type><name>rb</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>rc</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>rb</name><operator>-&gt;</operator><name>rb_zstr</name><operator>.</operator><name>zalloc</name></name> <operator>=</operator> <operator>(</operator><name>alloc_func</name><operator>)</operator><literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>rb</name><operator>-&gt;</operator><name>rb_zstr</name><operator>.</operator><name>zfree</name></name> <operator>=</operator> <operator>(</operator><name>free_func</name><operator>)</operator><literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>rb</name><operator>-&gt;</operator><name>rb_zstr</name><operator>.</operator><name>opaque</name></name> <operator>=</operator> <operator>(</operator><name>voidpf</name><operator>)</operator><literal type="number">0</literal></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>rc</name> <operator>=</operator> <call><name>deflateInit</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>rb</name><operator>-&gt;</operator><name>rb_zstr</name></name></expr></argument>, <argument><expr><name>Z_BEST_COMPRESSION</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>Z_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>parseterminate</name><argument_list>(<argument><expr><literal type="string">"zlib start failed: %s"</literal></expr></argument>, <argument><expr><call><name>zError</name><argument_list>(<argument><expr><name>rc</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>ssize_t</name></type>
+<name>compress_buffer</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>n</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>data</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>resbuf_t</name> <modifier>*</modifier></type><name>rb</name> <init>= <expr><operator>(</operator><name>resbuf_t</name> <operator>*</operator><operator>)</operator><name>data</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>rc</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>rb</name><operator>-&gt;</operator><name>rb_zstr</name><operator>.</operator><name>next_out</name></name> <operator>=</operator> <operator>(</operator><name>Bytef</name> <operator>*</operator><operator>)</operator><name><name>rb</name><operator>-&gt;</operator><name>rb_ptr</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>rb</name><operator>-&gt;</operator><name>rb_zstr</name><operator>.</operator><name>avail_out</name></name> <operator>=</operator> <name><name>rb</name><operator>-&gt;</operator><name>rb_size</name></name> <operator>-</operator> <operator>(</operator><name><name>rb</name><operator>-&gt;</operator><name>rb_ptr</name></name> <operator>-</operator> <name><name>rb</name><operator>-&gt;</operator><name>rb_base</name></name><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>rb</name><operator>-&gt;</operator><name>rb_zstr</name><operator>.</operator><name>next_in</name></name> <operator>=</operator> <name>buf</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>rb</name><operator>-&gt;</operator><name>rb_zstr</name><operator>.</operator><name>avail_in</name></name> <operator>=</operator> <name>n</name></expr>;</expr_stmt>
+
+<while>while <condition>(<expr><name><name>rb</name><operator>-&gt;</operator><name>rb_zstr</name><operator>.</operator><name>avail_in</name></name></expr>)</condition> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>rb</name><operator>-&gt;</operator><name>rb_zstr</name><operator>.</operator><name>avail_out</name></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>rbzs_grow</name><argument_list>(<argument><expr><name>rb</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>rc</name> <operator>=</operator> <call><name>deflate</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>rb</name><operator>-&gt;</operator><name>rb_zstr</name></name></expr></argument>, <argument><expr><name>Z_NO_FLUSH</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>Z_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>parseterminate</name><argument_list>(<argument><expr><literal type="string">"zlib deflate failed: %s"</literal></expr></argument>, <argument><expr><call><name>zError</name><argument_list>(<argument><expr><name>rc</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></while>
+<expr_stmt><expr><name><name>rb</name><operator>-&gt;</operator><name>rb_ptr</name></name> <operator>=</operator> <operator>(</operator><name>caddr_t</name><operator>)</operator><name><name>rb</name><operator>-&gt;</operator><name>rb_zstr</name><operator>.</operator><name>next_out</name></name></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>n</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>compress_flush</name><parameter_list>(<parameter><decl><type><name>resbuf_t</name> <modifier>*</modifier></type><name>rb</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>type</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>rc</name></decl>;</decl_stmt>
+
+<for>for <control>(<init>;</init><condition>;</condition><incr/>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>rb</name><operator>-&gt;</operator><name>rb_zstr</name><operator>.</operator><name>avail_out</name></name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>rbzs_grow</name><argument_list>(<argument><expr><name>rb</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>rc</name> <operator>=</operator> <call><name>deflate</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>rb</name><operator>-&gt;</operator><name>rb_zstr</name></name></expr></argument>, <argument><expr><name>type</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>type</name> <operator>==</operator> <name>Z_FULL_FLUSH</name> <operator>&amp;&amp;</operator> <name>rc</name> <operator>==</operator> <name>Z_BUF_ERROR</name><operator>)</operator> <operator>||</operator>
+<operator>(</operator><name>type</name> <operator>==</operator> <name>Z_FINISH</name> <operator>&amp;&amp;</operator> <name>rc</name> <operator>==</operator> <name>Z_STREAM_END</name><operator>)</operator></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name>rc</name> <operator>!=</operator> <name>Z_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>parseterminate</name><argument_list>(<argument><expr><literal type="string">"zlib finish failed: %s"</literal></expr></argument>, <argument><expr><call><name>zError</name><argument_list>(<argument><expr><name>rc</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><name><name>rb</name><operator>-&gt;</operator><name>rb_ptr</name></name> <operator>=</operator> <operator>(</operator><name>caddr_t</name><operator>)</operator><name><name>rb</name><operator>-&gt;</operator><name>rb_zstr</name><operator>.</operator><name>next_out</name></name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>compress_end</name><parameter_list>(<parameter><decl><type><name>resbuf_t</name> <modifier>*</modifier></type><name>rb</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>int</name></type> <name>rc</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>compress_flush</name><argument_list>(<argument><expr><name>rb</name></expr></argument>, <argument><expr><name>Z_FINISH</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>rc</name> <operator>=</operator> <call><name>deflateEnd</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>rb</name><operator>-&gt;</operator><name>rb_zstr</name></name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>Z_OK</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>parseterminate</name><argument_list>(<argument><expr><literal type="string">"zlib end failed: %s"</literal></expr></argument>, <argument><expr><call><name>zError</name><argument_list>(<argument><expr><name>rc</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></function>
+
+
+
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>pad_buffer</name><parameter_list>(<parameter><decl><type><name>ctf_buf_t</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>align</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>uint_t</name></type> <name>cur</name> <init>= <expr><call><name>ctf_buf_cur</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ssize_t</name></type> <name>topad</name> <init>= <expr><operator>(</operator><name>align</name> <operator>-</operator> <operator>(</operator><name>cur</name> <operator>%</operator> <name>align</name><operator>)</operator><operator>)</operator> <operator>%</operator> <name>align</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><specifier>static</specifier> <specifier>const</specifier> <name>char</name></type> <name><name>pad</name><index>[<expr><literal type="number">8</literal></expr>]</index></name> <init>= <expr><block>{ <expr><literal type="number">0</literal></expr> }</block></expr></init></decl>;</decl_stmt>
+
+<while>while <condition>(<expr><name>topad</name> <operator>&gt;</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>ctf_buf_write</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><name>pad</name></expr></argument>, <argument><expr><operator>(</operator><ternary><condition><expr><name>topad</name> <operator>&gt;</operator> <literal type="number">8</literal></expr> ?</condition><then> <expr><literal type="number">8</literal></expr> </then><else>: <expr><name>topad</name></expr></else></ternary><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>topad</name> <operator>-=</operator> <literal type="number">8</literal></expr>;</expr_stmt>
+</block_content>}</block></while>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>ssize_t</name></type>
+<name>bcopy_data</name><parameter_list>(<parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>n</name></decl></parameter>, <parameter><decl><type><name>void</name> <modifier>*</modifier></type><name>data</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>caddr_t</name> <modifier>*</modifier></type><name>posp</name> <init>= <expr><operator>(</operator><name>caddr_t</name> <operator>*</operator><operator>)</operator><name>data</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><call><name>bcopy</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><operator>*</operator><name>posp</name></expr></argument>, <argument><expr><name>n</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>posp</name> <operator>+=</operator> <name>n</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>n</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>caddr_t</name></type>
+<name>write_buffer</name><parameter_list>(<parameter><decl><type><name>ctf_header_t</name> <modifier>*</modifier></type><name>h</name></decl></parameter>, <parameter><decl><type><name>ctf_buf_t</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>size_t</name> <modifier>*</modifier></type><name>resszp</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>caddr_t</name></type> <name>outbuf</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>caddr_t</name></type> <name>bufpos</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>outbuf</name> <operator>=</operator> <call><name>xmalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>ctf_header_t</name></expr></argument>)</argument_list></sizeof> <operator>+</operator> <operator>(</operator><name><name>buf</name><operator>-&gt;</operator><name>ctb_ptr</name></name> <operator>-</operator> <name><name>buf</name><operator>-&gt;</operator><name>ctb_base</name></name><operator>)</operator>
+<operator>+</operator> <name><name>buf</name><operator>-&gt;</operator><name>ctb_strtab</name><operator>.</operator><name>str_size</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>bufpos</name> <operator>=</operator> <name>outbuf</name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>bcopy_data</name><argument_list>(<argument><expr><name>h</name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>ctf_header_t</name></expr></argument>)</argument_list></sizeof></expr></argument>, <argument><expr><operator>&amp;</operator><name>bufpos</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>bcopy_data</name><argument_list>(<argument><expr><name><name>buf</name><operator>-&gt;</operator><name>ctb_base</name></name></expr></argument>, <argument><expr><name><name>buf</name><operator>-&gt;</operator><name>ctb_ptr</name></name> <operator>-</operator> <name><name>buf</name><operator>-&gt;</operator><name>ctb_base</name></name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>bufpos</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>strtab_write</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>buf</name><operator>-&gt;</operator><name>ctb_strtab</name></name></expr></argument>, <argument><expr><name>bcopy_data</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>bufpos</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>resszp</name> <operator>=</operator> <name>bufpos</name> <operator>-</operator> <name>outbuf</name></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>outbuf</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>caddr_t</name></type>
+<name>write_compressed_buffer</name><parameter_list>(<parameter><decl><type><name>ctf_header_t</name> <modifier>*</modifier></type><name>h</name></decl></parameter>, <parameter><decl><type><name>ctf_buf_t</name> <modifier>*</modifier></type><name>buf</name></decl></parameter>, <parameter><decl><type><name>size_t</name> <modifier>*</modifier></type><name>resszp</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>resbuf_t</name></type> <name>resbuf</name></decl>;</decl_stmt>
+<expr_stmt><expr><name><name>resbuf</name><operator>.</operator><name>rb_size</name></name> <operator>=</operator> <name>RES_BUF_CHUNK_SIZE</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>resbuf</name><operator>.</operator><name>rb_base</name></name> <operator>=</operator> <call><name>xmalloc</name><argument_list>(<argument><expr><name><name>resbuf</name><operator>.</operator><name>rb_size</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>bcopy</name><argument_list>(<argument><expr><name>h</name></expr></argument>, <argument><expr><name><name>resbuf</name><operator>.</operator><name>rb_base</name></name></expr></argument>, <argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>ctf_header_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>resbuf</name><operator>.</operator><name>rb_ptr</name></name> <operator>=</operator> <name><name>resbuf</name><operator>.</operator><name>rb_base</name></name> <operator>+</operator> <sizeof>sizeof <argument_list>(<argument><expr><name>ctf_header_t</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>compress_start</name><argument_list>(<argument><expr><operator>&amp;</operator><name>resbuf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>compress_buffer</name><argument_list>(<argument><expr><name><name>buf</name><operator>-&gt;</operator><name>ctb_base</name></name></expr></argument>, <argument><expr><name><name>buf</name><operator>-&gt;</operator><name>ctb_ptr</name></name> <operator>-</operator> <name><name>buf</name><operator>-&gt;</operator><name>ctb_base</name></name></expr></argument>,
+<argument><expr><operator>&amp;</operator><name>resbuf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>compress_flush</name><argument_list>(<argument><expr><operator>&amp;</operator><name>resbuf</name></expr></argument>, <argument><expr><name>Z_FULL_FLUSH</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>strtab_write</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>buf</name><operator>-&gt;</operator><name>ctb_strtab</name></name></expr></argument>, <argument><expr><name>compress_buffer</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>resbuf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>compress_end</name><argument_list>(<argument><expr><operator>&amp;</operator><name>resbuf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>resszp</name> <operator>=</operator> <operator>(</operator><name><name>resbuf</name><operator>.</operator><name>rb_ptr</name></name> <operator>-</operator> <name><name>resbuf</name><operator>.</operator><name>rb_base</name></name><operator>)</operator></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name><name>resbuf</name><operator>.</operator><name>rb_base</name></name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><name>caddr_t</name></type>
+<name>ctf_gen</name><parameter_list>(<parameter><decl><type><name>iiburst_t</name> <modifier>*</modifier></type><name>iiburst</name></decl></parameter>, <parameter><decl><type><name>size_t</name> <modifier>*</modifier></type><name>resszp</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>do_compress</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ctf_buf_t</name> <modifier>*</modifier></type><name>buf</name> <init>= <expr><call><name>ctf_buf_new</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ctf_header_t</name></type> <name>h</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>caddr_t</name></type> <name>outbuf</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>target_requires_swap</name> <operator>=</operator> <name>do_compress</name> <operator>&amp;</operator> <name>CTF_SWAP_BYTES</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>do_compress</name> <operator>&amp;=</operator> <operator>~</operator><name>CTF_SWAP_BYTES</name></expr>;</expr_stmt>
+
+
+
+
+
+
+<expr_stmt><expr><name><name>h</name><operator>.</operator><name>cth_magic</name></name> <operator>=</operator> <name>CTF_MAGIC</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>h</name><operator>.</operator><name>cth_version</name></name> <operator>=</operator> <name>CTF_VERSION</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>h</name><operator>.</operator><name>cth_flags</name></name> <operator>=</operator> <ternary><condition><expr><name>do_compress</name></expr> ?</condition><then> <expr><name>CTF_F_COMPRESS</name></expr> </then><else>: <expr><literal type="number">0</literal></expr></else></ternary></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>h</name><operator>.</operator><name>cth_parlabel</name></name> <operator>=</operator> <call><name>strtab_insert</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>buf</name><operator>-&gt;</operator><name>ctb_strtab</name></name></expr></argument>,
+<argument><expr><name><name>iiburst</name><operator>-&gt;</operator><name>iib_td</name><operator>-&gt;</operator><name>td_parlabel</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>h</name><operator>.</operator><name>cth_parname</name></name> <operator>=</operator> <call><name>strtab_insert</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>buf</name><operator>-&gt;</operator><name>ctb_strtab</name></name></expr></argument>,
+<argument><expr><name><name>iiburst</name><operator>-&gt;</operator><name>iib_td</name><operator>-&gt;</operator><name>td_parname</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>h</name><operator>.</operator><name>cth_lbloff</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>list_iter</name><argument_list>(<argument><expr><name><name>iiburst</name><operator>-&gt;</operator><name>iib_td</name><operator>-&gt;</operator><name>td_labels</name></name></expr></argument>, <argument><expr><name>write_label</name></expr></argument>,
+<argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>pad_buffer</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><literal type="number">2</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>h</name><operator>.</operator><name>cth_objtoff</name></name> <operator>=</operator> <call><name>ctf_buf_cur</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name><name>iiburst</name><operator>-&gt;</operator><name>iib_nobjts</name></name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>write_objects</name><argument_list>(<argument><expr><name><name>iiburst</name><operator>-&gt;</operator><name>iib_objts</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+
+<expr_stmt><expr><call><name>pad_buffer</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><literal type="number">2</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>h</name><operator>.</operator><name>cth_funcoff</name></name> <operator>=</operator> <call><name>ctf_buf_cur</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name><name>iiburst</name><operator>-&gt;</operator><name>iib_nfuncs</name></name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>write_functions</name><argument_list>(<argument><expr><name><name>iiburst</name><operator>-&gt;</operator><name>iib_funcs</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>, <argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></for>
+
+<expr_stmt><expr><call><name>pad_buffer</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><literal type="number">4</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>h</name><operator>.</operator><name>cth_typeoff</name></name> <operator>=</operator> <call><name>ctf_buf_cur</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>(</operator><name>void</name><operator>)</operator> <call><name>list_iter</name><argument_list>(<argument><expr><name><name>iiburst</name><operator>-&gt;</operator><name>iib_types</name></name></expr></argument>, <argument><expr><name>write_type</name></expr></argument>, <argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">2</literal></expr></argument>, <argument><expr><literal type="string">"CTF wrote %d types\n"</literal></expr></argument>, <argument><expr><call><name>list_count</name><argument_list>(<argument><expr><name><name>iiburst</name><operator>-&gt;</operator><name>iib_types</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>h</name><operator>.</operator><name>cth_stroff</name></name> <operator>=</operator> <call><name>ctf_buf_cur</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>h</name><operator>.</operator><name>cth_strlen</name></name> <operator>=</operator> <call><name>strtab_size</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>buf</name><operator>-&gt;</operator><name>ctb_strtab</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>target_requires_swap</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>SWAP_16</name><argument_list>(<argument><expr><name><name>h</name><operator>.</operator><name>cth_preamble</name><operator>.</operator><name>ctp_magic</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SWAP_32</name><argument_list>(<argument><expr><name><name>h</name><operator>.</operator><name>cth_parlabel</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SWAP_32</name><argument_list>(<argument><expr><name><name>h</name><operator>.</operator><name>cth_parname</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SWAP_32</name><argument_list>(<argument><expr><name><name>h</name><operator>.</operator><name>cth_lbloff</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SWAP_32</name><argument_list>(<argument><expr><name><name>h</name><operator>.</operator><name>cth_objtoff</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SWAP_32</name><argument_list>(<argument><expr><name><name>h</name><operator>.</operator><name>cth_funcoff</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SWAP_32</name><argument_list>(<argument><expr><name><name>h</name><operator>.</operator><name>cth_typeoff</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SWAP_32</name><argument_list>(<argument><expr><name><name>h</name><operator>.</operator><name>cth_stroff</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>SWAP_32</name><argument_list>(<argument><expr><name><name>h</name><operator>.</operator><name>cth_strlen</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>do_compress</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>outbuf</name> <operator>=</operator> <call><name>write_compressed_buffer</name><argument_list>(<argument><expr><operator>&amp;</operator><name>h</name></expr></argument>, <argument><expr><name>buf</name></expr></argument>, <argument><expr><name>resszp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>outbuf</name> <operator>=</operator> <call><name>write_buffer</name><argument_list>(<argument><expr><operator>&amp;</operator><name>h</name></expr></argument>, <argument><expr><name>buf</name></expr></argument>, <argument><expr><name>resszp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<expr_stmt><expr><call><name>ctf_buf_free</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><name>outbuf</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>get_ctt_size</name><parameter_list>(<parameter><decl><type><name>ctf_type_t</name> <modifier>*</modifier></type><name>ctt</name></decl></parameter>, <parameter><decl><type><name>size_t</name> <modifier>*</modifier></type><name>sizep</name></decl></parameter>, <parameter><decl><type><name>size_t</name> <modifier>*</modifier></type><name>incrementp</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name><name>ctt</name><operator>-&gt;</operator><name>ctt_size</name></name> <operator>==</operator> <name>CTF_LSIZE_SENT</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>sizep</name> <operator>=</operator> <operator>(</operator><name>size_t</name><operator>)</operator><call><name>CTF_TYPE_LSIZE</name><argument_list>(<argument><expr><name>ctt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>incrementp</name> <operator>=</operator> <sizeof>sizeof <argument_list>(<argument><expr><name>ctf_type_t</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><operator>*</operator><name>sizep</name> <operator>=</operator> <name><name>ctt</name><operator>-&gt;</operator><name>ctt_size</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><operator>*</operator><name>incrementp</name> <operator>=</operator> <sizeof>sizeof <argument_list>(<argument><expr><name>ctf_stype_t</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>count_types</name><parameter_list>(<parameter><decl><type><name>ctf_header_t</name> <modifier>*</modifier></type><name>h</name></decl></parameter>, <parameter><decl><type><name>caddr_t</name></type> <name>data</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>caddr_t</name></type> <name>dptr</name> <init>= <expr><name>data</name> <operator>+</operator> <name><name>h</name><operator>-&gt;</operator><name>cth_typeoff</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>count</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>dptr</name> <operator>=</operator> <name>data</name> <operator>+</operator> <name><name>h</name><operator>-&gt;</operator><name>cth_typeoff</name></name></expr>;</expr_stmt>
+<while>while <condition>(<expr><name>dptr</name> <operator>&lt;</operator> <name>data</name> <operator>+</operator> <name><name>h</name><operator>-&gt;</operator><name>cth_stroff</name></name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>v</name> <init>= <expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator> <name>dptr</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ctf_type_t</name> <modifier>*</modifier></type><name>ctt</name> <init>= <expr><name>v</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>vlen</name> <init>= <expr><call><name>CTF_INFO_VLEN</name><argument_list>(<argument><expr><name><name>ctt</name><operator>-&gt;</operator><name>ctt_info</name></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>size</name></decl>, <decl><type ref="prev"/><name>increment</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>get_ctt_size</name><argument_list>(<argument><expr><name>ctt</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>size</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>increment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<switch>switch <condition>(<expr><call><name>CTF_INFO_KIND</name><argument_list>(<argument><expr><name><name>ctt</name><operator>-&gt;</operator><name>ctt_info</name></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>CTF_K_INTEGER</name></expr>:</case>
+<case>case <expr><name>CTF_K_FLOAT</name></expr>:</case>
+<expr_stmt><expr><name>dptr</name> <operator>+=</operator> <literal type="number">4</literal></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>CTF_K_POINTER</name></expr>:</case>
+<case>case <expr><name>CTF_K_FORWARD</name></expr>:</case>
+<case>case <expr><name>CTF_K_TYPEDEF</name></expr>:</case>
+<case>case <expr><name>CTF_K_VOLATILE</name></expr>:</case>
+<case>case <expr><name>CTF_K_CONST</name></expr>:</case>
+<case>case <expr><name>CTF_K_RESTRICT</name></expr>:</case>
+<case>case <expr><name>CTF_K_FUNCTION</name></expr>:</case>
+<expr_stmt><expr><name>dptr</name> <operator>+=</operator> <sizeof>sizeof <argument_list>(<argument><expr><name>ushort_t</name></expr></argument>)</argument_list></sizeof> <operator>*</operator> <operator>(</operator><name>vlen</name> <operator>+</operator> <operator>(</operator><name>vlen</name> <operator>&amp;</operator> <literal type="number">1</literal><operator>)</operator><operator>)</operator></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>CTF_K_ARRAY</name></expr>:</case>
+<expr_stmt><expr><name>dptr</name> <operator>+=</operator> <sizeof>sizeof <argument_list>(<argument><expr><name>ctf_array_t</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>CTF_K_STRUCT</name></expr>:</case>
+<case>case <expr><name>CTF_K_UNION</name></expr>:</case>
+<if_stmt><if>if <condition>(<expr><name>size</name> <operator>&lt;</operator> <name>CTF_LSTRUCT_THRESH</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>dptr</name> <operator>+=</operator> <sizeof>sizeof <argument_list>(<argument><expr><name>ctf_member_t</name></expr></argument>)</argument_list></sizeof> <operator>*</operator> <name>vlen</name></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name>dptr</name> <operator>+=</operator> <sizeof>sizeof <argument_list>(<argument><expr><name>ctf_lmember_t</name></expr></argument>)</argument_list></sizeof> <operator>*</operator> <name>vlen</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<break>break;</break>
+<case>case <expr><name>CTF_K_ENUM</name></expr>:</case>
+<expr_stmt><expr><name>dptr</name> <operator>+=</operator> <sizeof>sizeof <argument_list>(<argument><expr><name>ctf_enum_t</name></expr></argument>)</argument_list></sizeof> <operator>*</operator> <name>vlen</name></expr>;</expr_stmt>
+<break>break;</break>
+<case>case <expr><name>CTF_K_UNKNOWN</name></expr>:</case>
+<break>break;</break>
+<default>default:</default>
+<expr_stmt><expr><call><name>parseterminate</name><argument_list>(<argument><expr><literal type="string">"Unknown CTF type %d (#%d) at %#x"</literal></expr></argument>,
+<argument><expr><call><name>CTF_INFO_KIND</name><argument_list>(<argument><expr><name><name>ctt</name><operator>-&gt;</operator><name>ctt_info</name></name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>count</name></expr></argument>, <argument><expr><name>dptr</name> <operator>-</operator> <name>data</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></switch>
+
+<expr_stmt><expr><name>dptr</name> <operator>+=</operator> <name>increment</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>count</name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></while>
+
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"CTF read %d types\n"</literal></expr></argument>, <argument><expr><name>count</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>count</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>int</name></type>
+<name>resurrect_labels</name><parameter_list>(<parameter><decl><type><name>ctf_header_t</name> <modifier>*</modifier></type><name>h</name></decl></parameter>, <parameter><decl><type><name>tdata_t</name> <modifier>*</modifier></type><name>td</name></decl></parameter>, <parameter><decl><type><name>caddr_t</name></type> <name>ctfdata</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>matchlbl</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>caddr_t</name></type> <name>buf</name> <init>= <expr><name>ctfdata</name> <operator>+</operator> <name><name>h</name><operator>-&gt;</operator><name>cth_lbloff</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>caddr_t</name></type> <name>sbuf</name> <init>= <expr><name>ctfdata</name> <operator>+</operator> <name><name>h</name><operator>-&gt;</operator><name>cth_stroff</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>bufsz</name> <init>= <expr><name><name>h</name><operator>-&gt;</operator><name>cth_objtoff</name></name> <operator>-</operator> <name><name>h</name><operator>-&gt;</operator><name>cth_lbloff</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>lastidx</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>, <decl><type ref="prev"/><name>baseidx</name> <init>= <expr><operator>-</operator><literal type="number">1</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>baselabel</name> <init>= <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ctf_lblent_t</name> <modifier>*</modifier></type><name>ctl</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>v</name> <init>= <expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator> <name>buf</name></expr></init></decl>;</decl_stmt>
+
+<for>for <control>(<init><expr><name>ctl</name> <operator>=</operator> <name>v</name></expr>;</init> <condition><expr><operator>(</operator><name>caddr_t</name><operator>)</operator><name>ctl</name> <operator>&lt;</operator> <name>buf</name> <operator>+</operator> <name>bufsz</name></expr>;</condition> <incr><expr><name>ctl</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>char</name> <modifier>*</modifier></type><name>label</name> <init>= <expr><name>sbuf</name> <operator>+</operator> <name><name>ctl</name><operator>-&gt;</operator><name>ctl_label</name></name></expr></init></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>lastidx</name> <operator>=</operator> <name><name>ctl</name><operator>-&gt;</operator><name>ctl_typeidx</name></name></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"Resurrected label %s type idx %d\n"</literal></expr></argument>, <argument><expr><name>label</name></expr></argument>, <argument><expr><name>lastidx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>tdata_label_add</name><argument_list>(<argument><expr><name>td</name></expr></argument>, <argument><expr><name>label</name></expr></argument>, <argument><expr><name>lastidx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>baseidx</name> <operator>==</operator> <operator>-</operator><literal type="number">1</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name>baseidx</name> <operator>=</operator> <name>lastidx</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>baselabel</name> <operator>=</operator> <name>label</name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>matchlbl</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <call><name>streq</name><argument_list>(<argument><expr><name>matchlbl</name></expr></argument>, <argument><expr><literal type="string">"BASE"</literal></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>lastidx</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>matchlbl</name> <operator>!=</operator> <name>NULL</name> <operator>&amp;&amp;</operator> <call><name>streq</name><argument_list>(<argument><expr><name>label</name></expr></argument>, <argument><expr><name>matchlbl</name></expr></argument>)</argument_list></call></expr>)</condition><block type="pseudo"><block_content>
+<return>return <expr><operator>(</operator><name>lastidx</name><operator>)</operator></expr>;</return></block_content></block></if></if_stmt>
+</block_content>}</block></for>
+
+<if_stmt><if>if <condition>(<expr><name>matchlbl</name> <operator>!=</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+
+<expr_stmt><expr><call><name>warning</name><argument_list>(<argument><expr><literal type="string">"%s: Cannot find label `%s' - using base (%s)\n"</literal></expr></argument>,
+<argument><expr><name>curfile</name></expr></argument>, <argument><expr><name>matchlbl</name></expr></argument>, <argument><expr><operator>(</operator><ternary><condition><expr><name>baselabel</name></expr> ?</condition><then> <expr><name>baselabel</name></expr> </then><else>: <expr><literal type="string">"NONE"</literal></expr></else></ternary><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>tdata_label_free</name><argument_list>(<argument><expr><name>td</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>tdata_label_add</name><argument_list>(<argument><expr><name>td</name></expr></argument>, <argument><expr><name>baselabel</name></expr></argument>, <argument><expr><name>baseidx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>baseidx</name><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<return>return <expr><operator>(</operator><name>lastidx</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>resurrect_objects</name><parameter_list>(<parameter><decl><type><name>ctf_header_t</name> <modifier>*</modifier></type><name>h</name></decl></parameter>, <parameter><decl><type><name>tdata_t</name> <modifier>*</modifier></type><name>td</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>tdarr</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>tdsize</name></decl></parameter>,
+<parameter><decl><type><name>caddr_t</name></type> <name>ctfdata</name></decl></parameter>, <parameter><decl><type><name>symit_data_t</name> <modifier>*</modifier></type><name>si</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>caddr_t</name></type> <name>buf</name> <init>= <expr><name>ctfdata</name> <operator>+</operator> <name><name>h</name><operator>-&gt;</operator><name>cth_objtoff</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>bufsz</name> <init>= <expr><name><name>h</name><operator>-&gt;</operator><name>cth_funcoff</name></name> <operator>-</operator> <name><name>h</name><operator>-&gt;</operator><name>cth_objtoff</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>caddr_t</name></type> <name>dptr</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>symit_reset</name><argument_list>(<argument><expr><name>si</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>dptr</name> <operator>=</operator> <name>buf</name></expr>;</init> <condition><expr><name>dptr</name> <operator>&lt;</operator> <name>buf</name> <operator>+</operator> <name>bufsz</name></expr>;</condition> <incr><expr><name>dptr</name> <operator>+=</operator> <literal type="number">2</literal></expr></incr>)</control> <block>{<block_content>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>v</name> <init>= <expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator> <name>dptr</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ushort_t</name></type> <name>id</name> <init>= <expr><operator>*</operator><operator>(</operator><operator>(</operator><name>ushort_t</name> <operator>*</operator><operator>)</operator><name>v</name><operator>)</operator></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>iidesc_t</name> <modifier>*</modifier></type><name>ii</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>GElf_Sym</name> <modifier>*</modifier></type><name>sym</name></decl>;</decl_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name>sym</name> <operator>=</operator> <call><name>symit_next</name><argument_list>(<argument><expr><name>si</name></expr></argument>, <argument><expr><name>STT_OBJECT</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&amp;&amp;</operator> <name>id</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>parseterminate</name><argument_list>(
+<argument><expr><literal type="string">"Unexpected end of object symbols at %x of %x"</literal></expr></argument>,
+<argument><expr><name>dptr</name> <operator>-</operator> <name>buf</name></expr></argument>, <argument><expr><name>bufsz</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>id</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"Skipping null object\n"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if> <if type="elseif">else if <condition>(<expr><name>id</name> <operator>&gt;=</operator> <name>tdsize</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>parseterminate</name><argument_list>(<argument><expr><literal type="string">"Reference to invalid type %d"</literal></expr></argument>, <argument><expr><name>id</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>ii</name> <operator>=</operator> <call><name>iidesc_new</name><argument_list>(<argument><expr><call><name>symit_name</name><argument_list>(<argument><expr><name>si</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_dtype</name></name> <operator>=</operator> <name><name>tdarr</name><index>[<expr><name>id</name></expr>]</index></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>GELF_ST_BIND</name><argument_list>(<argument><expr><name><name>sym</name><operator>-&gt;</operator><name>st_info</name></name></expr></argument>)</argument_list></call> <operator>==</operator> <name>STB_LOCAL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_type</name></name> <operator>=</operator> <name>II_SVAR</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_owner</name></name> <operator>=</operator> <call><name>xstrdup</name><argument_list>(<argument><expr><call><name>symit_curfile</name><argument_list>(<argument><expr><name>si</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_type</name></name> <operator>=</operator> <name>II_GVAR</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<expr_stmt><expr><call><name>hash_add</name><argument_list>(<argument><expr><name><name>td</name><operator>-&gt;</operator><name>td_iihash</name></name></expr></argument>, <argument><expr><name>ii</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"Resurrected %s object %s (%d) from %s\n"</literal></expr></argument>,
+<argument><expr><operator>(</operator><ternary><condition><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_type</name></name> <operator>==</operator> <name>II_GVAR</name></expr> ?</condition><then> <expr><literal type="string">"global"</literal></expr> </then><else>: <expr><literal type="string">"static"</literal></expr></else></ternary><operator>)</operator></expr></argument>,
+<argument><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_name</name></name></expr></argument>, <argument><expr><name>id</name></expr></argument>, <argument><expr><operator>(</operator><ternary><condition><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_owner</name></name></expr> ?</condition><then> <expr><name><name>ii</name><operator>-&gt;</operator><name>ii_owner</name></name></expr> </then><else>: <expr><literal type="string">"(none)"</literal></expr></else></ternary><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>resurrect_functions</name><parameter_list>(<parameter><decl><type><name>ctf_header_t</name> <modifier>*</modifier></type><name>h</name></decl></parameter>, <parameter><decl><type><name>tdata_t</name> <modifier>*</modifier></type><name>td</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>tdarr</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>tdsize</name></decl></parameter>,
+<parameter><decl><type><name>caddr_t</name></type> <name>ctfdata</name></decl></parameter>, <parameter><decl><type><name>symit_data_t</name> <modifier>*</modifier></type><name>si</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>caddr_t</name></type> <name>buf</name> <init>= <expr><name>ctfdata</name> <operator>+</operator> <name><name>h</name><operator>-&gt;</operator><name>cth_funcoff</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>bufsz</name> <init>= <expr><name><name>h</name><operator>-&gt;</operator><name>cth_typeoff</name></name> <operator>-</operator> <name><name>h</name><operator>-&gt;</operator><name>cth_funcoff</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>caddr_t</name></type> <name>dptr</name> <init>= <expr><name>buf</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>iidesc_t</name> <modifier>*</modifier></type><name>ii</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ushort_t</name></type> <name>info</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ushort_t</name></type> <name>retid</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>GElf_Sym</name> <modifier>*</modifier></type><name>sym</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><call><name>symit_reset</name><argument_list>(<argument><expr><name>si</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<while>while <condition>(<expr><name>dptr</name> <operator>&lt;</operator> <name>buf</name> <operator>+</operator> <name>bufsz</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>v</name> <init>= <expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator> <name>dptr</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>info</name> <operator>=</operator> <operator>*</operator><operator>(</operator><operator>(</operator><name>ushort_t</name> <operator>*</operator><operator>)</operator><name>v</name><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name>dptr</name> <operator>+=</operator> <literal type="number">2</literal></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>!</operator><operator>(</operator><name>sym</name> <operator>=</operator> <call><name>symit_next</name><argument_list>(<argument><expr><name>si</name></expr></argument>, <argument><expr><name>STT_FUNC</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>&amp;&amp;</operator> <name>info</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>parseterminate</name><argument_list>(<argument><expr><literal type="string">"Unexpected end of function symbols"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>info</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"Skipping null function (%s)\n"</literal></expr></argument>,
+<argument><expr><call><name>symit_name</name><argument_list>(<argument><expr><name>si</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<continue>continue;</continue>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><name>v</name> <operator>=</operator> <operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator> <name>dptr</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>retid</name> <operator>=</operator> <operator>*</operator><operator>(</operator><operator>(</operator><name>ushort_t</name> <operator>*</operator><operator>)</operator><name>v</name><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name>dptr</name> <operator>+=</operator> <literal type="number">2</literal></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>retid</name> <operator>&gt;=</operator> <name>tdsize</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>parseterminate</name><argument_list>(<argument><expr><literal type="string">"Reference to invalid type %d"</literal></expr></argument>, <argument><expr><name>retid</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>ii</name> <operator>=</operator> <call><name>iidesc_new</name><argument_list>(<argument><expr><call><name>symit_name</name><argument_list>(<argument><expr><name>si</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_dtype</name></name> <operator>=</operator> <name><name>tdarr</name><index>[<expr><name>retid</name></expr>]</index></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>GELF_ST_BIND</name><argument_list>(<argument><expr><name><name>sym</name><operator>-&gt;</operator><name>st_info</name></name></expr></argument>)</argument_list></call> <operator>==</operator> <name>STB_LOCAL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_type</name></name> <operator>=</operator> <name>II_SFUN</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_owner</name></name> <operator>=</operator> <call><name>xstrdup</name><argument_list>(<argument><expr><call><name>symit_curfile</name><argument_list>(<argument><expr><name>si</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_type</name></name> <operator>=</operator> <name>II_GFUN</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<expr_stmt><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_nargs</name></name> <operator>=</operator> <call><name>CTF_INFO_VLEN</name><argument_list>(<argument><expr><name>info</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>ii</name><operator>-&gt;</operator><name>ii_nargs</name></name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_args</name></name> <operator>=</operator>
+<call><name>xmalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>tdesc_t</name> <operator>*</operator></expr></argument>)</argument_list></sizeof> <operator>*</operator> <name><name>ii</name><operator>-&gt;</operator><name>ii_nargs</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name><name>ii</name><operator>-&gt;</operator><name>ii_nargs</name></name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr><operator>,</operator> <expr><name>dptr</name> <operator>+=</operator> <literal type="number">2</literal></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>v</name> <operator>=</operator> <operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator> <name>dptr</name></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>ushort_t</name></type> <name>id</name> <init>= <expr><operator>*</operator><operator>(</operator><operator>(</operator><name>ushort_t</name> <operator>*</operator><operator>)</operator><name>v</name><operator>)</operator></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name>id</name> <operator>&gt;=</operator> <name>tdsize</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>parseterminate</name><argument_list>(<argument><expr><literal type="string">"Reference to invalid type %d"</literal></expr></argument>,
+<argument><expr><name>id</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<expr_stmt><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_args</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <name><name>tdarr</name><index>[<expr><name>id</name></expr>]</index></name></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<if_stmt><if>if <condition>(<expr><name><name>ii</name><operator>-&gt;</operator><name>ii_nargs</name></name> <operator>&amp;&amp;</operator> <name><name>ii</name><operator>-&gt;</operator><name>ii_args</name><index>[<expr><name><name>ii</name><operator>-&gt;</operator><name>ii_nargs</name></name> <operator>-</operator> <literal type="number">1</literal></expr>]</index></name> <operator>==</operator> <name>NULL</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_nargs</name></name><operator>--</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_vargs</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>hash_add</name><argument_list>(<argument><expr><name><name>td</name><operator>-&gt;</operator><name>td_iihash</name></name></expr></argument>, <argument><expr><name>ii</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"Resurrected %s function %s (%d, %d args)\n"</literal></expr></argument>,
+<argument><expr><operator>(</operator><ternary><condition><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_type</name></name> <operator>==</operator> <name>II_GFUN</name></expr> ?</condition><then> <expr><literal type="string">"global"</literal></expr> </then><else>: <expr><literal type="string">"static"</literal></expr></else></ternary><operator>)</operator></expr></argument>,
+<argument><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_name</name></name></expr></argument>, <argument><expr><name>retid</name></expr></argument>, <argument><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_nargs</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></while>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>void</name></type>
+<name>resurrect_types</name><parameter_list>(<parameter><decl><type><name>ctf_header_t</name> <modifier>*</modifier></type><name>h</name></decl></parameter>, <parameter><decl><type><name>tdata_t</name> <modifier>*</modifier></type><name>td</name></decl></parameter>, <parameter><decl><type><name>tdesc_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>tdarr</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>tdsize</name></decl></parameter>,
+<parameter><decl><type><name>caddr_t</name></type> <name>ctfdata</name></decl></parameter>, <parameter><decl><type><name>int</name></type> <name>maxid</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>caddr_t</name></type> <name>buf</name> <init>= <expr><name>ctfdata</name> <operator>+</operator> <name><name>h</name><operator>-&gt;</operator><name>cth_typeoff</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>bufsz</name> <init>= <expr><name><name>h</name><operator>-&gt;</operator><name>cth_stroff</name></name> <operator>-</operator> <name><name>h</name><operator>-&gt;</operator><name>cth_typeoff</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>caddr_t</name></type> <name>sbuf</name> <init>= <expr><name>ctfdata</name> <operator>+</operator> <name><name>h</name><operator>-&gt;</operator><name>cth_stroff</name></name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>caddr_t</name></type> <name>dptr</name> <init>= <expr><name>buf</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier></type><name>tdp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint_t</name></type> <name>data</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>uint_t</name></type> <name>encoding</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>size</name></decl>, <decl><type ref="prev"/><name>increment</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>tcnt</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>iicnt</name> <init>= <expr><literal type="number">0</literal></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>tid_t</name></type> <name>tid</name></decl>, <decl><type ref="prev"/><name>argid</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>kind</name></decl>, <decl><type ref="prev"/><name>vlen</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>elist_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>epp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>mlist_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>mpp</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>intr_t</name> <modifier>*</modifier></type><name>ip</name></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>ctf_type_t</name> <modifier>*</modifier></type><name>ctt</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ctf_array_t</name> <modifier>*</modifier></type><name>cta</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>ctf_enum_t</name> <modifier>*</modifier></type><name>cte</name></decl>;</decl_stmt>
+
+
+
+
+
+<if_stmt><if>if <condition>(<expr><name>maxid</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>maxid</name> <operator>=</operator> <name>CTF_MAX_TYPE</name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<for>for <control>(<init><expr><name>dptr</name> <operator>=</operator> <name>buf</name></expr><operator>,</operator> <expr><name>tcnt</name> <operator>=</operator> <literal type="number">0</literal></expr><operator>,</operator> <expr><name>tid</name> <operator>=</operator> <literal type="number">1</literal></expr>;</init> <condition><expr><name>dptr</name> <operator>&lt;</operator> <name>buf</name> <operator>+</operator> <name>bufsz</name></expr>;</condition> <incr><expr><name>tcnt</name><operator>++</operator></expr><operator>,</operator> <expr><name>tid</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<if_stmt><if>if <condition>(<expr><name>tid</name> <operator>&gt;</operator> <name>maxid</name></expr>)</condition><block type="pseudo"><block_content>
+<break>break;</break></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>tid</name> <operator>&gt;=</operator> <name>tdsize</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>parseterminate</name><argument_list>(<argument><expr><literal type="string">"Reference to invalid type %d"</literal></expr></argument>, <argument><expr><name>tid</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>v</name> <init>= <expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator> <name>dptr</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>ctt</name> <operator>=</operator> <name>v</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>get_ctt_size</name><argument_list>(<argument><expr><name>ctt</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>size</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>increment</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>dptr</name> <operator>+=</operator> <name>increment</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>tdp</name> <operator>=</operator> <name><name>tdarr</name><index>[<expr><name>tid</name></expr>]</index></name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><call><name>CTF_NAME_STID</name><argument_list>(<argument><expr><name><name>ctt</name><operator>-&gt;</operator><name>ctt_name</name></name></expr></argument>)</argument_list></call> <operator>!=</operator> <name>CTF_STRTAB_0</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>parseterminate</name><argument_list>(
+<argument><expr><literal type="string">"Unable to cope with non-zero strtab id"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<if_stmt><if>if <condition>(<expr><call><name>CTF_NAME_OFFSET</name><argument_list>(<argument><expr><name><name>ctt</name><operator>-&gt;</operator><name>ctt_name</name></name></expr></argument>)</argument_list></call> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_name</name></name> <operator>=</operator>
+<call><name>xstrdup</name><argument_list>(<argument><expr><name>sbuf</name> <operator>+</operator> <call><name>CTF_NAME_OFFSET</name><argument_list>(<argument><expr><name><name>ctt</name><operator>-&gt;</operator><name>ctt_name</name></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if> <else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_name</name></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<expr_stmt><expr><name>kind</name> <operator>=</operator> <call><name>CTF_INFO_KIND</name><argument_list>(<argument><expr><name><name>ctt</name><operator>-&gt;</operator><name>ctt_info</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name>vlen</name> <operator>=</operator> <call><name>CTF_INFO_VLEN</name><argument_list>(<argument><expr><name><name>ctt</name><operator>-&gt;</operator><name>ctt_info</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<switch>switch <condition>(<expr><name>kind</name></expr>)</condition> <block>{<block_content>
+<case>case <expr><name>CTF_K_INTEGER</name></expr>:</case>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>INTRINSIC</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_size</name></name> <operator>=</operator> <name>size</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>v</name> <operator>=</operator> <operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator> <name>dptr</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>data</name> <operator>=</operator> <operator>*</operator><operator>(</operator><operator>(</operator><name>uint_t</name> <operator>*</operator><operator>)</operator><name>v</name><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name>dptr</name> <operator>+=</operator> <sizeof>sizeof <argument_list>(<argument><expr><name>uint_t</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+<expr_stmt><expr><name>encoding</name> <operator>=</operator> <call><name>CTF_INT_ENCODING</name><argument_list>(<argument><expr><name>data</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>ip</name> <operator>=</operator> <call><name>xmalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>intr_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ip</name><operator>-&gt;</operator><name>intr_type</name></name> <operator>=</operator> <name>INTR_INT</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ip</name><operator>-&gt;</operator><name>intr_signed</name></name> <operator>=</operator> <ternary><condition><expr><operator>(</operator><name>encoding</name> <operator>&amp;</operator> <name>CTF_INT_SIGNED</name><operator>)</operator></expr> ?</condition><then> <expr><literal type="number">1</literal></expr> </then><else>: <expr><literal type="number">0</literal></expr></else></ternary></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>encoding</name> <operator>&amp;</operator> <name>CTF_INT_CHAR</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>ip</name><operator>-&gt;</operator><name>intr_iformat</name></name> <operator>=</operator> <literal type="char">'c'</literal></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name>encoding</name> <operator>&amp;</operator> <name>CTF_INT_BOOL</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>ip</name><operator>-&gt;</operator><name>intr_iformat</name></name> <operator>=</operator> <literal type="char">'b'</literal></expr>;</expr_stmt></block_content></block></if>
+<if type="elseif">else if <condition>(<expr><name>encoding</name> <operator>&amp;</operator> <name>CTF_INT_VARARGS</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>ip</name><operator>-&gt;</operator><name>intr_iformat</name></name> <operator>=</operator> <literal type="char">'v'</literal></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>ip</name><operator>-&gt;</operator><name>intr_iformat</name></name> <operator>=</operator> <literal type="char">'\0'</literal></expr>;</expr_stmt></block_content></block></else></if_stmt>
+
+<expr_stmt><expr><name><name>ip</name><operator>-&gt;</operator><name>intr_offset</name></name> <operator>=</operator> <call><name>CTF_INT_OFFSET</name><argument_list>(<argument><expr><name>data</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ip</name><operator>-&gt;</operator><name>intr_nbits</name></name> <operator>=</operator> <call><name>CTF_INT_BITS</name><argument_list>(<argument><expr><name>data</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_intr</name></name> <operator>=</operator> <name>ip</name></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>CTF_K_FLOAT</name></expr>:</case>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>INTRINSIC</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_size</name></name> <operator>=</operator> <name>size</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>v</name> <operator>=</operator> <operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator> <name>dptr</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>data</name> <operator>=</operator> <operator>*</operator><operator>(</operator><operator>(</operator><name>uint_t</name> <operator>*</operator><operator>)</operator><name>v</name><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name>dptr</name> <operator>+=</operator> <sizeof>sizeof <argument_list>(<argument><expr><name>uint_t</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>ip</name> <operator>=</operator> <call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>intr_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ip</name><operator>-&gt;</operator><name>intr_type</name></name> <operator>=</operator> <name>INTR_REAL</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ip</name><operator>-&gt;</operator><name>intr_fformat</name></name> <operator>=</operator> <call><name>CTF_FP_ENCODING</name><argument_list>(<argument><expr><name>data</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ip</name><operator>-&gt;</operator><name>intr_offset</name></name> <operator>=</operator> <call><name>CTF_FP_OFFSET</name><argument_list>(<argument><expr><name>data</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>ip</name><operator>-&gt;</operator><name>intr_nbits</name></name> <operator>=</operator> <call><name>CTF_FP_BITS</name><argument_list>(<argument><expr><name>data</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_intr</name></name> <operator>=</operator> <name>ip</name></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>CTF_K_POINTER</name></expr>:</case>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>POINTER</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_tdesc</name></name> <operator>=</operator> <name><name>tdarr</name><index>[<expr><name><name>ctt</name><operator>-&gt;</operator><name>ctt_type</name></name></expr>]</index></name></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>CTF_K_ARRAY</name></expr>:</case>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>ARRAY</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_size</name></name> <operator>=</operator> <name>size</name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>v</name> <operator>=</operator> <operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator> <name>dptr</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>cta</name> <operator>=</operator> <name>v</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>dptr</name> <operator>+=</operator> <sizeof>sizeof <argument_list>(<argument><expr><name>ctf_array_t</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_ardef</name></name> <operator>=</operator> <call><name>xmalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>ardef_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_ardef</name><operator>-&gt;</operator><name>ad_contents</name></name> <operator>=</operator> <name><name>tdarr</name><index>[<expr><name><name>cta</name><operator>-&gt;</operator><name>cta_contents</name></name></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_ardef</name><operator>-&gt;</operator><name>ad_idxtype</name></name> <operator>=</operator> <name><name>tdarr</name><index>[<expr><name><name>cta</name><operator>-&gt;</operator><name>cta_index</name></name></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_ardef</name><operator>-&gt;</operator><name>ad_nelems</name></name> <operator>=</operator> <name><name>cta</name><operator>-&gt;</operator><name>cta_nelems</name></name></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>CTF_K_STRUCT</name></expr>:</case>
+<case>case <expr><name>CTF_K_UNION</name></expr>:</case>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <operator>(</operator><ternary><condition><expr><name>kind</name> <operator>==</operator> <name>CTF_K_STRUCT</name></expr> ?</condition><then> <expr><name>STRUCT</name></expr> </then><else>: <expr><name>UNION</name></expr></else></ternary><operator>)</operator></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_size</name></name> <operator>=</operator> <name>size</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>size</name> <operator>&lt;</operator> <name>CTF_LSTRUCT_THRESH</name></expr>)</condition> <block>{<block_content>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr><operator>,</operator> <expr><name>mpp</name> <operator>=</operator> <operator>&amp;</operator><name><name>tdp</name><operator>-&gt;</operator><name>t_members</name></name></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>vlen</name></expr>;</condition>
+<incr><expr><name>i</name><operator>++</operator></expr><operator>,</operator> <expr><name>mpp</name> <operator>=</operator> <operator>&amp;</operator><operator>(</operator><name><operator>(</operator><operator>*</operator><name>mpp</name><operator>)</operator><operator>-&gt;</operator><name>ml_next</name></name><operator>)</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>v</name> <operator>=</operator> <operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator> <name>dptr</name></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>ctf_member_t</name> <modifier>*</modifier></type><name>ctm</name> <init>= <expr><name>v</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>dptr</name> <operator>+=</operator> <sizeof>sizeof <argument_list>(<argument><expr><name>ctf_member_t</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>mpp</name> <operator>=</operator> <call><name>xmalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>mlist_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>mpp</name><operator>)</operator><operator>-&gt;</operator><name>ml_name</name></name> <operator>=</operator> <call><name>xstrdup</name><argument_list>(<argument><expr><name>sbuf</name> <operator>+</operator>
+<name><name>ctm</name><operator>-&gt;</operator><name>ctm_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>mpp</name><operator>)</operator><operator>-&gt;</operator><name>ml_type</name></name> <operator>=</operator> <name><name>tdarr</name><index>[<expr><name><name>ctm</name><operator>-&gt;</operator><name>ctm_type</name></name></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>mpp</name><operator>)</operator><operator>-&gt;</operator><name>ml_offset</name></name> <operator>=</operator> <name><name>ctm</name><operator>-&gt;</operator><name>ctm_offset</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>mpp</name><operator>)</operator><operator>-&gt;</operator><name>ml_size</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr><operator>,</operator> <expr><name>mpp</name> <operator>=</operator> <operator>&amp;</operator><name><name>tdp</name><operator>-&gt;</operator><name>t_members</name></name></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>vlen</name></expr>;</condition>
+<incr><expr><name>i</name><operator>++</operator></expr><operator>,</operator> <expr><name>mpp</name> <operator>=</operator> <operator>&amp;</operator><operator>(</operator><name><operator>(</operator><operator>*</operator><name>mpp</name><operator>)</operator><operator>-&gt;</operator><name>ml_next</name></name><operator>)</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>v</name> <operator>=</operator> <operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator> <name>dptr</name></expr>;</expr_stmt>
+<decl_stmt><decl><type><name>ctf_lmember_t</name> <modifier>*</modifier></type><name>ctlm</name> <init>= <expr><name>v</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>dptr</name> <operator>+=</operator> <sizeof>sizeof <argument_list>(<argument><expr><name>ctf_lmember_t</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>mpp</name> <operator>=</operator> <call><name>xmalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>mlist_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>mpp</name><operator>)</operator><operator>-&gt;</operator><name>ml_name</name></name> <operator>=</operator> <call><name>xstrdup</name><argument_list>(<argument><expr><name>sbuf</name> <operator>+</operator>
+<name><name>ctlm</name><operator>-&gt;</operator><name>ctlm_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>mpp</name><operator>)</operator><operator>-&gt;</operator><name>ml_type</name></name> <operator>=</operator>
+<name><name>tdarr</name><index>[<expr><name><name>ctlm</name><operator>-&gt;</operator><name>ctlm_type</name></name></expr>]</index></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>mpp</name><operator>)</operator><operator>-&gt;</operator><name>ml_offset</name></name> <operator>=</operator>
+<operator>(</operator><name>int</name><operator>)</operator><call><name>CTF_LMEM_OFFSET</name><argument_list>(<argument><expr><name>ctlm</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>mpp</name><operator>)</operator><operator>-&gt;</operator><name>ml_size</name></name> <operator>=</operator> <literal type="number">0</literal></expr>;</expr_stmt>
+</block_content>}</block></for>
+</block_content>}</block></else></if_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>mpp</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>CTF_K_ENUM</name></expr>:</case>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>ENUM</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_size</name></name> <operator>=</operator> <name>size</name></expr>;</expr_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr><operator>,</operator> <expr><name>epp</name> <operator>=</operator> <operator>&amp;</operator><name><name>tdp</name><operator>-&gt;</operator><name>t_emem</name></name></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>vlen</name></expr>;</condition>
+<incr><expr><name>i</name><operator>++</operator></expr><operator>,</operator> <expr><name>epp</name> <operator>=</operator> <operator>&amp;</operator><operator>(</operator><name><operator>(</operator><operator>*</operator><name>epp</name><operator>)</operator><operator>-&gt;</operator><name>el_next</name></name><operator>)</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>v</name> <operator>=</operator> <operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator> <name>dptr</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>cte</name> <operator>=</operator> <name>v</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>dptr</name> <operator>+=</operator> <sizeof>sizeof <argument_list>(<argument><expr><name>ctf_enum_t</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+
+<expr_stmt><expr><operator>*</operator><name>epp</name> <operator>=</operator> <call><name>xmalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>elist_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>epp</name><operator>)</operator><operator>-&gt;</operator><name>el_name</name></name> <operator>=</operator> <call><name>xstrdup</name><argument_list>(<argument><expr><name>sbuf</name> <operator>+</operator> <name><name>cte</name><operator>-&gt;</operator><name>cte_name</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><operator>(</operator><operator>*</operator><name>epp</name><operator>)</operator><operator>-&gt;</operator><name>el_number</name></name> <operator>=</operator> <name><name>cte</name><operator>-&gt;</operator><name>cte_value</name></name></expr>;</expr_stmt>
+</block_content>}</block></for>
+<expr_stmt><expr><operator>*</operator><name>epp</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>CTF_K_FORWARD</name></expr>:</case>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>FORWARD</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>list_add</name><argument_list>(<argument><expr><operator>&amp;</operator><name><name>td</name><operator>-&gt;</operator><name>td_fwdlist</name></name></expr></argument>, <argument><expr><name>tdp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>CTF_K_TYPEDEF</name></expr>:</case>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>TYPEDEF</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_tdesc</name></name> <operator>=</operator> <name><name>tdarr</name><index>[<expr><name><name>ctt</name><operator>-&gt;</operator><name>ctt_type</name></name></expr>]</index></name></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>CTF_K_VOLATILE</name></expr>:</case>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>VOLATILE</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_tdesc</name></name> <operator>=</operator> <name><name>tdarr</name><index>[<expr><name><name>ctt</name><operator>-&gt;</operator><name>ctt_type</name></name></expr>]</index></name></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>CTF_K_CONST</name></expr>:</case>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>CONST</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_tdesc</name></name> <operator>=</operator> <name><name>tdarr</name><index>[<expr><name><name>ctt</name><operator>-&gt;</operator><name>ctt_type</name></name></expr>]</index></name></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>CTF_K_FUNCTION</name></expr>:</case>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>FUNCTION</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_fndef</name></name> <operator>=</operator> <call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>fndef_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_fndef</name><operator>-&gt;</operator><name>fn_ret</name></name> <operator>=</operator> <name><name>tdarr</name><index>[<expr><name><name>ctt</name><operator>-&gt;</operator><name>ctt_type</name></name></expr>]</index></name></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>v</name> <operator>=</operator> <operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator> <operator>(</operator><name>dptr</name> <operator>+</operator> <operator>(</operator><sizeof>sizeof <argument_list>(<argument><expr><name>ushort_t</name></expr></argument>)</argument_list></sizeof> <operator>*</operator> <operator>(</operator><name>vlen</name> <operator>-</operator> <literal type="number">1</literal><operator>)</operator><operator>)</operator><operator>)</operator></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name>vlen</name> <operator>&gt;</operator> <literal type="number">0</literal> <operator>&amp;&amp;</operator> <operator>*</operator><operator>(</operator><name>ushort_t</name> <operator>*</operator><operator>)</operator><name>v</name> <operator>==</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_fndef</name><operator>-&gt;</operator><name>fn_vargs</name></name> <operator>=</operator> <literal type="number">1</literal></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_fndef</name><operator>-&gt;</operator><name>fn_nargs</name></name> <operator>=</operator> <name>vlen</name> <operator>-</operator> <name><name>tdp</name><operator>-&gt;</operator><name>t_fndef</name><operator>-&gt;</operator><name>fn_vargs</name></name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_fndef</name><operator>-&gt;</operator><name>fn_args</name></name> <operator>=</operator> <call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>tdesc_t</name></expr></argument>)</argument_list></sizeof> <operator>*</operator>
+<name>vlen</name> <operator>-</operator> <name><name>tdp</name><operator>-&gt;</operator><name>t_fndef</name><operator>-&gt;</operator><name>fn_vargs</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">0</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;</operator> <name>vlen</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name>v</name> <operator>=</operator> <operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator> <name>dptr</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>argid</name> <operator>=</operator> <operator>*</operator><operator>(</operator><name>ushort_t</name> <operator>*</operator><operator>)</operator><name>v</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>dptr</name> <operator>+=</operator> <sizeof>sizeof <argument_list>(<argument><expr><name>ushort_t</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>argid</name> <operator>!=</operator> <literal type="number">0</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_fndef</name><operator>-&gt;</operator><name>fn_args</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <name><name>tdarr</name><index>[<expr><name>argid</name></expr>]</index></name></expr>;</expr_stmt></block_content></block></if></if_stmt>
+</block_content>}</block></for>
+
+<if_stmt><if>if <condition>(<expr><name>vlen</name> <operator>&amp;</operator> <literal type="number">1</literal></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name>dptr</name> <operator>+=</operator> <sizeof>sizeof <argument_list>(<argument><expr><name>ushort_t</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt></block_content></block></if></if_stmt>
+<break>break;</break>
+
+<case>case <expr><name>CTF_K_RESTRICT</name></expr>:</case>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>=</operator> <name>RESTRICT</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_tdesc</name></name> <operator>=</operator> <name><name>tdarr</name><index>[<expr><name><name>ctt</name><operator>-&gt;</operator><name>ctt_type</name></name></expr>]</index></name></expr>;</expr_stmt>
+<break>break;</break>
+
+<case>case <expr><name>CTF_K_UNKNOWN</name></expr>:</case>
+<break>break;</break>
+
+<default>default:</default>
+<expr_stmt><expr><call><name>warning</name><argument_list>(<argument><expr><literal type="string">"Can't parse unknown CTF type %d\n"</literal></expr></argument>, <argument><expr><name>kind</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></switch>
+
+<if_stmt><if>if <condition>(<expr><call><name>CTF_INFO_ISROOT</name><argument_list>(<argument><expr><name><name>ctt</name><operator>-&gt;</operator><name>ctt_info</name></name></expr></argument>)</argument_list></call></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>iidesc_t</name> <modifier>*</modifier></type><name>ii</name> <init>= <expr><call><name>iidesc_new</name><argument_list>(<argument><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_name</name></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>==</operator> <name>STRUCT</name> <operator>||</operator> <name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>==</operator> <name>UNION</name> <operator>||</operator>
+<name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name> <operator>==</operator> <name>ENUM</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_type</name></name> <operator>=</operator> <name>II_SOU</name></expr>;</expr_stmt></block_content></block></if>
+<else>else<block type="pseudo"><block_content>
+<expr_stmt><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_type</name></name> <operator>=</operator> <name>II_TYPE</name></expr>;</expr_stmt></block_content></block></else></if_stmt>
+<expr_stmt><expr><name><name>ii</name><operator>-&gt;</operator><name>ii_dtype</name></name> <operator>=</operator> <name>tdp</name></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>hash_add</name><argument_list>(<argument><expr><name><name>td</name><operator>-&gt;</operator><name>td_iihash</name></name></expr></argument>, <argument><expr><name>ii</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name>iicnt</name><operator>++</operator></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"Resurrected %d %stype %s (%d)\n"</literal></expr></argument>, <argument><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_type</name></name></expr></argument>,
+<argument><expr><operator>(</operator><ternary><condition><expr><call><name>CTF_INFO_ISROOT</name><argument_list>(<argument><expr><name><name>ctt</name><operator>-&gt;</operator><name>ctt_info</name></name></expr></argument>)</argument_list></call></expr> ?</condition><then> <expr><literal type="string">"root "</literal></expr> </then><else>: <expr><literal type="string">""</literal></expr></else></ternary><operator>)</operator></expr></argument>,
+<argument><expr><call><name>tdesc_name</name><argument_list>(<argument><expr><name>tdp</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name><name>tdp</name><operator>-&gt;</operator><name>t_id</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"Resurrected %d types (%d were roots)\n"</literal></expr></argument>, <argument><expr><name>tcnt</name></expr></argument>, <argument><expr><name>iicnt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+<function><type><specifier>static</specifier> <name>tdata_t</name> <modifier>*</modifier></type>
+<name>ctf_parse</name><parameter_list>(<parameter><decl><type><name>ctf_header_t</name> <modifier>*</modifier></type><name>h</name></decl></parameter>, <parameter><decl><type><name>caddr_t</name></type> <name>buf</name></decl></parameter>, <parameter><decl><type><name>symit_data_t</name> <modifier>*</modifier></type><name>si</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>label</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>tdata_t</name> <modifier>*</modifier></type><name>td</name> <init>= <expr><call><name>tdata_new</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>tdesc_t</name> <modifier>*</modifier><modifier>*</modifier></type><name>tdarr</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>ntypes</name> <init>= <expr><call><name>count_types</name><argument_list>(<argument><expr><name>h</name></expr></argument>, <argument><expr><name>buf</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>idx</name></decl>, <decl><type ref="prev"/><name>i</name></decl>;</decl_stmt>
+
+
+<expr_stmt><expr><name>tdarr</name> <operator>=</operator> <call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>tdesc_t</name> <operator>*</operator></expr></argument>)</argument_list></sizeof> <operator>*</operator> <operator>(</operator><name>ntypes</name> <operator>+</operator> <literal type="number">1</literal><operator>)</operator></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdarr</name><index>[<expr><literal type="number">0</literal></expr>]</index></name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+<for>for <control>(<init><expr><name>i</name> <operator>=</operator> <literal type="number">1</literal></expr>;</init> <condition><expr><name>i</name> <operator>&lt;=</operator> <name>ntypes</name></expr>;</condition> <incr><expr><name>i</name><operator>++</operator></expr></incr>)</control> <block>{<block_content>
+<expr_stmt><expr><name><name>tdarr</name><index>[<expr><name>i</name></expr>]</index></name> <operator>=</operator> <call><name>xcalloc</name><argument_list>(<argument><expr><sizeof>sizeof <argument_list>(<argument><expr><name>tdesc_t</name></expr></argument>)</argument_list></sizeof></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>tdarr</name><index>[<expr><name>i</name></expr>]</index></name><operator>-&gt;</operator><name>t_id</name> <operator>=</operator> <name>i</name></expr>;</expr_stmt>
+</block_content>}</block></for>
+
+<expr_stmt><expr><name><name>td</name><operator>-&gt;</operator><name>td_parlabel</name></name> <operator>=</operator> <call><name>xstrdup</name><argument_list>(<argument><expr><name>buf</name> <operator>+</operator> <name><name>h</name><operator>-&gt;</operator><name>cth_stroff</name></name> <operator>+</operator> <name><name>h</name><operator>-&gt;</operator><name>cth_parlabel</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+
+<expr_stmt><expr><name>idx</name> <operator>=</operator> <call><name>resurrect_labels</name><argument_list>(<argument><expr><name>h</name></expr></argument>, <argument><expr><name>td</name></expr></argument>, <argument><expr><name>buf</name></expr></argument>, <argument><expr><name>label</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>resurrect_objects</name><argument_list>(<argument><expr><name>h</name></expr></argument>, <argument><expr><name>td</name></expr></argument>, <argument><expr><name>tdarr</name></expr></argument>, <argument><expr><name>ntypes</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><name>buf</name></expr></argument>, <argument><expr><name>si</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>resurrect_functions</name><argument_list>(<argument><expr><name>h</name></expr></argument>, <argument><expr><name>td</name></expr></argument>, <argument><expr><name>tdarr</name></expr></argument>, <argument><expr><name>ntypes</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><name>buf</name></expr></argument>, <argument><expr><name>si</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<expr_stmt><expr><call><name>resurrect_types</name><argument_list>(<argument><expr><name>h</name></expr></argument>, <argument><expr><name>td</name></expr></argument>, <argument><expr><name>tdarr</name></expr></argument>, <argument><expr><name>ntypes</name> <operator>+</operator> <literal type="number">1</literal></expr></argument>, <argument><expr><name>buf</name></expr></argument>, <argument><expr><name>idx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>tdarr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>td</name><operator>-&gt;</operator><name>td_nextid</name></name> <operator>=</operator> <name>ntypes</name> <operator>+</operator> <literal type="number">1</literal></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>td</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+<function><type><specifier>static</specifier> <name>size_t</name></type>
+<name>decompress_ctf</name><parameter_list>(<parameter><decl><type><name>caddr_t</name></type> <name>cbuf</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>cbufsz</name></decl></parameter>, <parameter><decl><type><name>caddr_t</name></type> <name>dbuf</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>dbufsz</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>z_stream</name></type> <name>zstr</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>rc</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name><name>zstr</name><operator>.</operator><name>zalloc</name></name> <operator>=</operator> <operator>(</operator><name>alloc_func</name><operator>)</operator><literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>zstr</name><operator>.</operator><name>zfree</name></name> <operator>=</operator> <operator>(</operator><name>free_func</name><operator>)</operator><literal type="number">0</literal></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>zstr</name><operator>.</operator><name>opaque</name></name> <operator>=</operator> <operator>(</operator><name>voidpf</name><operator>)</operator><literal type="number">0</literal></expr>;</expr_stmt>
+
+<expr_stmt><expr><name><name>zstr</name><operator>.</operator><name>next_in</name></name> <operator>=</operator> <operator>(</operator><name>Bytef</name> <operator>*</operator><operator>)</operator><name>cbuf</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>zstr</name><operator>.</operator><name>avail_in</name></name> <operator>=</operator> <name>cbufsz</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>zstr</name><operator>.</operator><name>next_out</name></name> <operator>=</operator> <operator>(</operator><name>Bytef</name> <operator>*</operator><operator>)</operator><name>dbuf</name></expr>;</expr_stmt>
+<expr_stmt><expr><name><name>zstr</name><operator>.</operator><name>avail_out</name></name> <operator>=</operator> <name>dbufsz</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>rc</name> <operator>=</operator> <call><name>inflateInit</name><argument_list>(<argument><expr><operator>&amp;</operator><name>zstr</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>Z_OK</name> <operator>||</operator>
+<operator>(</operator><name>rc</name> <operator>=</operator> <call><name>inflate</name><argument_list>(<argument><expr><operator>&amp;</operator><name>zstr</name></expr></argument>, <argument><expr><name>Z_NO_FLUSH</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>Z_STREAM_END</name> <operator>||</operator>
+<operator>(</operator><name>rc</name> <operator>=</operator> <call><name>inflateEnd</name><argument_list>(<argument><expr><operator>&amp;</operator><name>zstr</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator> <name>Z_OK</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>warning</name><argument_list>(<argument><expr><literal type="string">"CTF decompress zlib error %s\n"</literal></expr></argument>, <argument><expr><call><name>zError</name><argument_list>(<argument><expr><name>rc</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<return>return <expr><operator>(</operator><literal type="number">0</literal><operator>)</operator></expr>;</return>
+</block_content>}</block></if></if_stmt>
+
+<expr_stmt><expr><call><name>debug</name><argument_list>(<argument><expr><literal type="number">3</literal></expr></argument>, <argument><expr><literal type="string">"reflated %lu bytes to %lu, pointer at %d\n"</literal></expr></argument>,
+<argument><expr><name><name>zstr</name><operator>.</operator><name>total_in</name></name></expr></argument>, <argument><expr><name><name>zstr</name><operator>.</operator><name>total_out</name></name></expr></argument>, <argument><expr><operator>(</operator><name>caddr_t</name><operator>)</operator><name><name>zstr</name><operator>.</operator><name>next_in</name></name> <operator>-</operator> <name>cbuf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name><name>zstr</name><operator>.</operator><name>total_out</name></name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+
+
+
+
+
+
+
+
+<function><type><name>tdata_t</name> <modifier>*</modifier></type>
+<name>ctf_load</name><parameter_list>(<parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>file</name></decl></parameter>, <parameter><decl><type><name>caddr_t</name></type> <name>buf</name></decl></parameter>, <parameter><decl><type><name>size_t</name></type> <name>bufsz</name></decl></parameter>, <parameter><decl><type><name>symit_data_t</name> <modifier>*</modifier></type><name>si</name></decl></parameter>, <parameter><decl><type><name>char</name> <modifier>*</modifier></type><name>label</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+<decl_stmt><decl><type><name>ctf_header_t</name> <modifier>*</modifier></type><name>h</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>caddr_t</name></type> <name>ctfdata</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>size_t</name></type> <name>ctfdatasz</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>tdata_t</name> <modifier>*</modifier></type><name>td</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>curfile</name> <operator>=</operator> <name>file</name></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name>bufsz</name> <operator>&lt;</operator> <sizeof>sizeof <argument_list>(<argument><expr><name>ctf_header_t</name></expr></argument>)</argument_list></sizeof></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>parseterminate</name><argument_list>(<argument><expr><literal type="string">"Corrupt CTF - short header"</literal></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<decl_stmt><decl><type><name>void</name> <modifier>*</modifier></type><name>v</name> <init>= <expr><operator>(</operator><name>void</name> <operator>*</operator><operator>)</operator> <name>buf</name></expr></init></decl>;</decl_stmt>
+<expr_stmt><expr><name>h</name> <operator>=</operator> <name>v</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>buf</name> <operator>+=</operator> <sizeof>sizeof <argument_list>(<argument><expr><name>ctf_header_t</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+<expr_stmt><expr><name>bufsz</name> <operator>-=</operator> <sizeof>sizeof <argument_list>(<argument><expr><name>ctf_header_t</name></expr></argument>)</argument_list></sizeof></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>h</name><operator>-&gt;</operator><name>cth_magic</name></name> <operator>!=</operator> <name>CTF_MAGIC</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>parseterminate</name><argument_list>(<argument><expr><literal type="string">"Corrupt CTF - bad magic 0x%x"</literal></expr></argument>, <argument><expr><name><name>h</name><operator>-&gt;</operator><name>cth_magic</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>h</name><operator>-&gt;</operator><name>cth_version</name></name> <operator>!=</operator> <name>CTF_VERSION</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>parseterminate</name><argument_list>(<argument><expr><literal type="string">"Unknown CTF version %d"</literal></expr></argument>, <argument><expr><name><name>h</name><operator>-&gt;</operator><name>cth_version</name></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>ctfdatasz</name> <operator>=</operator> <name><name>h</name><operator>-&gt;</operator><name>cth_stroff</name></name> <operator>+</operator> <name><name>h</name><operator>-&gt;</operator><name>cth_strlen</name></name></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><name><name>h</name><operator>-&gt;</operator><name>cth_flags</name></name> <operator>&amp;</operator> <name>CTF_F_COMPRESS</name></expr>)</condition> <block>{<block_content>
+<decl_stmt><decl><type><name>size_t</name></type> <name>actual</name></decl>;</decl_stmt>
+
+<expr_stmt><expr><name>ctfdata</name> <operator>=</operator> <call><name>xmalloc</name><argument_list>(<argument><expr><name>ctfdatasz</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<if_stmt><if>if <condition>(<expr><operator>(</operator><name>actual</name> <operator>=</operator> <call><name>decompress_ctf</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><name>bufsz</name></expr></argument>, <argument><expr><name>ctfdata</name></expr></argument>, <argument><expr><name>ctfdatasz</name></expr></argument>)</argument_list></call><operator>)</operator> <operator>!=</operator>
+<name>ctfdatasz</name></expr>)</condition> <block>{<block_content>
+<expr_stmt><expr><call><name>parseterminate</name><argument_list>(<argument><expr><literal type="string">"Corrupt CTF - short decompression "</literal>
+<literal type="string">"(was %d, expecting %d)"</literal></expr></argument>, <argument><expr><name>actual</name></expr></argument>, <argument><expr><name>ctfdatasz</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+</block_content>}</block></if></if_stmt>
+</block_content>}</block></if> <else>else <block>{<block_content>
+<expr_stmt><expr><name>ctfdata</name> <operator>=</operator> <name>buf</name></expr>;</expr_stmt>
+<expr_stmt><expr><name>ctfdatasz</name> <operator>=</operator> <name>bufsz</name></expr>;</expr_stmt>
+</block_content>}</block></else></if_stmt>
+
+<expr_stmt><expr><name>td</name> <operator>=</operator> <call><name>ctf_parse</name><argument_list>(<argument><expr><name>h</name></expr></argument>, <argument><expr><name>ctfdata</name></expr></argument>, <argument><expr><name>si</name></expr></argument>, <argument><expr><name>label</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<if_stmt><if>if <condition>(<expr><name><name>h</name><operator>-&gt;</operator><name>cth_flags</name></name> <operator>&amp;</operator> <name>CTF_F_COMPRESS</name></expr>)</condition><block type="pseudo"><block_content>
+<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>ctfdata</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></block_content></block></if></if_stmt>
+
+<expr_stmt><expr><name>curfile</name> <operator>=</operator> <name>NULL</name></expr>;</expr_stmt>
+
+<return>return <expr><operator>(</operator><name>td</name><operator>)</operator></expr>;</return>
+</block_content>}</block></function>
+</unit>
